@@ -1,59 +1,35 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Search, Send, MoreHorizontal, Phone, Video, Paperclip, Smile } from 'lucide-react'
-import {
-  LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  TrendingUp, MessageCircle, Settings, Briefcase, Users, BarChart2,
-} from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 
-const STUDENT_NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard/student' },
-  { icon: Zap,             label: 'Matches',      to: '/matches'           },
-  { icon: Briefcase,       label: 'Opportunities',to: '/opportunities'     },
-  { icon: FileText,        label: 'Applications', to: '/applications'      },
-  { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'        },
-  { icon: Bookmark,        label: 'Saved',        to: '/saved'             },
-  { icon: MessageCircle,   label: 'Messages',     to: '/messages', badge: '3' },
-  { icon: Settings,        label: 'Settings',     to: '/settings'          },
-]
-
-const NGO_NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',     to: '/dashboard/ngo'  },
-  { icon: Briefcase,       label: 'Opportunities', to: '/opportunities'  },
-  { icon: Users,           label: 'Applicants',    to: '/applicants'     },
-  { icon: Zap,             label: 'Matches',       to: '/matches'        },
-  { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'     },
-  { icon: BarChart2,       label: 'Analytics',     to: '/analytics'      },
-  { icon: MessageCircle,   label: 'Messages',      to: '/messages', badge: '2' },
-  { icon: Settings,        label: 'Settings',      to: '/settings'       },
-]
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const CONVERSATIONS = [
   {
     id: 1, name: 'Elem – Youth in Distress', role: 'NGO · Tel Aviv',
     last: "Looking forward to our call tomorrow! We'll discuss the project scope.",
-    time: '10:42', unread: 2, online: true,
+    time: '10:42', unread: 2, online: true, type: 'ngo',
   },
   {
     id: 2, name: 'Amir Cohen', role: 'Program Manager · BINA',
     last: 'Thanks for your application. We reviewed your profile and...',
-    time: '09:18', unread: 1, online: false,
+    time: '09:18', unread: 1, online: false, type: 'ngo',
   },
   {
     id: 3, name: 'GreenFuture Initiative', role: 'NGO · Jerusalem',
     last: 'Your match score is 89%. Would you like to schedule a chat?',
-    time: 'Yesterday', unread: 0, online: true,
+    time: 'Yesterday', unread: 0, online: true, type: 'ngo',
   },
   {
     id: 4, name: 'Hive Support', role: 'Hive Team',
     last: 'Welcome to Hive! Let us know if you need anything.',
-    time: 'Mon', unread: 0, online: true,
+    time: 'Mon', unread: 0, online: true, type: 'support',
   },
 ]
 
-const MESSAGES = {
+const INITIAL_MESSAGES = {
   1: [
     { id: 1, from: 'them', text: "Hi! We reviewed your Hive profile and think you'd be a great fit for our digital outreach project.", time: '10:20' },
     { id: 2, from: 'me',   text: "Thanks so much! I'd love to learn more about the role. What skills are most important?", time: '10:25' },
@@ -61,131 +37,285 @@ const MESSAGES = {
     { id: 4, from: 'me',   text: "That's exactly what I've been working on. I built a dashboard for a food bank project last semester.", time: '10:35' },
     { id: 5, from: 'them', text: "Looking forward to our call tomorrow! We'll discuss the project scope.", time: '10:42' },
   ],
+  2: [
+    { id: 1, from: 'them', text: "Hello! We've reviewed your application for the Content Strategist role.", time: '09:10' },
+    { id: 2, from: 'them', text: "Your profile is strong. We'd like to learn more about your experience with NGO communications.", time: '09:18' },
+  ],
+  3: [
+    { id: 1, from: 'them', text: "Hi there! Hive matched you to our Environmental Education Coordinator role at 89%.", time: 'Yesterday' },
+    { id: 2, from: 'them', text: "Would you be open to a quick 20-minute chat to explore this further?", time: 'Yesterday' },
+  ],
+  4: [
+    { id: 1, from: 'them', text: "Welcome to Hive! 🐝 You're all set up. Your profile is live and we're matching you now.", time: 'Mon' },
+    { id: 2, from: 'them', text: "Tip: The more detail you add to your profile, the better your AI matches will be.", time: 'Mon' },
+  ],
 }
+
+const SUGGESTED_REPLIES = {
+  1: [
+    "Looking forward to it! I'll prepare some questions about the project.",
+    "Could we also cover the timeline and your main deliverables?",
+    "Great, I'll join the call 5 minutes early. See you then!",
+  ],
+  2: [
+    "Thank you! I'd be happy to share more about my NGO communications work.",
+    "I'm available for a call this week — what time works for you?",
+    "I've attached some examples of my previous campaigns. Would that be helpful?",
+  ],
+  3: [
+    "Absolutely! I'm very interested in the Environmental Education role.",
+    "A 20-minute chat sounds perfect — I'm free Thursday or Friday afternoon.",
+    "Yes, I'd love to learn more about the day-to-day of this role.",
+  ],
+  4: [
+    "Thanks for the welcome! Is there anything I can do to improve my matches?",
+    "Quick question — how does the AI matching engine work?",
+    "Love the platform so far! How long does matching usually take?",
+  ],
+}
+
+const INTERVIEW_INVITE_TEMPLATE = (name, date = 'Thursday, May 14 at 10:00 AM', type = 'video') =>
+  `Hi ${name},\n\nWe'd love to invite you to an interview for the role.\n\n📅 ${date}\n📹 ${type === 'video' ? 'Video call (link will follow)' : 'Phone call'}\n⏱ ~30 minutes\n\nPlease confirm if this works for you or suggest an alternative time.\n\nLooking forward to speaking with you!\n\nBest regards`
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Messages() {
   const { user } = useApp()
-  const [active, setActive] = useState(1)
-  const [input, setInput] = useState('')
-  const navItems = user?.role === 'ngo' ? NGO_NAV : STUDENT_NAV
-  const msgs = MESSAGES[active] || []
-  const conv = CONVERSATIONS.find(c => c.id === active)
+  const [active, setActive]     = useState(1)
+  const [input, setInput]       = useState('')
+  const [msgState, setMsgState] = useState(INITIAL_MESSAGES)
+  const [showSuggestions, setShowSuggestions] = useState(true)
+  const [showInviteForm, setShowInviteForm]   = useState(false)
+  const [inviteDate, setInviteDate]           = useState('')
+  const [inviteType, setInviteType]           = useState('video')
+  const [searchQ, setSearchQ]                 = useState('')
+  const bottomRef = useRef(null)
 
-  function send() {
-    if (!input.trim()) return
+  const msgs = msgState[active] || []
+  const conv = CONVERSATIONS.find(c => c.id === active)
+  const suggestions = SUGGESTED_REPLIES[active] || []
+
+  const filtered = CONVERSATIONS.filter(c =>
+    c.name.toLowerCase().includes(searchQ.toLowerCase())
+  )
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [msgs.length, active])
+
+  function send(text = input) {
+    const t = (text || '').trim()
+    if (!t) return
+    const newMsg = { id: Date.now(), from: 'me', text: t, time: new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false }) }
+    setMsgState(s => ({ ...s, [active]: [...(s[active] || []), newMsg] }))
+    setInput('')
+    setShowSuggestions(false)
+  }
+
+  function sendInvite() {
+    const name = conv?.name || 'there'
+    const msg = INTERVIEW_INVITE_TEMPLATE(name, inviteDate || 'a time TBD', inviteType)
+    send(msg)
+    setShowInviteForm(false)
+  }
+
+  function switchConv(id) {
+    setActive(id)
+    setShowSuggestions(true)
+    setShowInviteForm(false)
     setInput('')
   }
 
   return (
-      <div className="flex h-screen" style={{ background: '#F8F9FB' }}>
+    <div className="flex h-[calc(100vh-0px)] overflow-hidden" style={{ background:'#F8F9FB' }}>
 
-        {/* ── Conversation list ── */}
-        <div className="w-[300px] shrink-0 bg-white flex flex-col"
-          style={{ borderRight: '1px solid rgba(13,24,61,0.08)' }}>
+      {/* ── Conversation list ── */}
+      <div className="w-[280px] shrink-0 bg-white flex flex-col"
+        style={{ borderRight:'1px solid rgba(13,24,61,0.08)' }}>
 
-          <div className="px-4 py-4" style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
-            <h2 className="text-[15px] font-extrabold text-[#0D183D] mb-3">Messages</h2>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8F9FB]"
-              style={{ border: '1px solid rgba(13,24,61,0.08)' }}>
-              <Search size={13} className="text-[#4B6382] shrink-0" />
-              <input placeholder="Search conversations…" className="bg-transparent text-[12px] flex-1 outline-none text-[#0D183D] placeholder-[#4B6382]/50" />
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {CONVERSATIONS.map(c => (
-              <button key={c.id} onClick={() => setActive(c.id)}
-                className={`w-full text-left px-4 py-3.5 flex items-start gap-3 transition-colors ${active === c.id ? 'bg-[#FAF6EF]' : 'hover:bg-[#F8F9FB]'}`}
-                style={{ borderBottom: '1px solid rgba(13,24,61,0.05)' }}>
-                <div className="relative shrink-0">
-                  <GradientAvatar name={c.name} size={40} radius="0.75rem" />
-                  {c.online && (
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[13px] font-bold text-[#0D183D] truncate">{c.name}</p>
-                    <span className="text-[10px] text-[#4B6382] shrink-0 ml-2">{c.time}</span>
-                  </div>
-                  <p className="text-[11px] text-[#4B6382] truncate leading-snug">{c.last}</p>
-                </div>
-                {c.unread > 0 && (
-                  <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white mt-0.5"
-                    style={{ background: '#FFB703' }}>{c.unread}</span>
-                )}
-              </button>
-            ))}
+        <div className="px-4 pt-5 pb-3" style={{ borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
+          <h2 className="text-[15px] font-extrabold text-[#0D183D] mb-3">Messages</h2>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8F9FB]"
+            style={{ border:'1px solid rgba(13,24,61,0.08)' }}>
+            <Search size={12} className="text-[#4B6382] shrink-0"/>
+            <input value={searchQ} onChange={e => setSearchQ(e.target.value)}
+              placeholder="Search conversations…"
+              className="bg-transparent text-[12px] flex-1 outline-none text-[#0D183D] placeholder-[#4B6382]/50"/>
           </div>
         </div>
 
-        {/* ── Chat panel ── */}
-        {conv ? (
-          <div className="flex-1 flex flex-col">
-            {/* Header */}
-            <div className="bg-white px-6 py-4 flex items-center justify-between shrink-0"
-              style={{ borderBottom: '1px solid rgba(13,24,61,0.08)' }}>
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={conv.name} size={38} radius="0.65rem" />
-                <div>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{conv.name}</p>
-                  <p className="text-[11px] text-[#4B6382]">{conv.online ? '🟢 Online' : conv.role}</p>
+        <div className="flex-1 overflow-y-auto">
+          {filtered.map(c => (
+            <button key={c.id} onClick={() => switchConv(c.id)}
+              className={`w-full text-left px-4 py-3.5 flex items-start gap-3 transition-colors ${
+                active === c.id ? 'bg-[#FAF6EF]' : 'hover:bg-[#F8F9FB]'
+              }`}
+              style={{ borderBottom:'1px solid rgba(13,24,61,0.05)' }}>
+              <div className="relative shrink-0">
+                <GradientAvatar name={c.name} size={40} radius="0.75rem"/>
+                {c.online && <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white"/>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-[13px] font-bold text-[#0D183D] truncate">{c.name}</p>
+                  <span className="text-[10px] text-[#4B6382] shrink-0 ml-2">{c.time}</span>
                 </div>
+                <p className="text-[11px] text-[#4B6382] truncate">{c.last}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"><Phone size={14}/></button>
-                <button className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"><Video size={14}/></button>
-                <button className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"><MoreHorizontal size={14}/></button>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
-              {msgs.map(m => (
-                <div key={m.id} className={`flex items-end gap-2.5 ${m.from === 'me' ? 'flex-row-reverse' : ''}`}>
-                  {m.from === 'them' && <GradientAvatar name={conv.name} size={28} radius="0.5rem" />}
-                  <div className={`max-w-[65%] px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
-                    m.from === 'me'
-                      ? 'text-white rounded-br-sm'
-                      : 'text-[#0D183D] rounded-bl-sm'
-                  }`} style={{
-                    background: m.from === 'me' ? '#0D183D' : 'white',
-                    boxShadow: '0 1px 8px rgba(13,24,61,0.08)',
-                  }}>
-                    {m.text}
-                    <p className={`text-[10px] mt-1 ${m.from === 'me' ? 'text-white/40' : 'text-[#4B6382]'}`}>{m.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div className="bg-white px-6 py-4 shrink-0"
-              style={{ borderTop: '1px solid rgba(13,24,61,0.08)' }}>
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-                style={{ background: '#F8F9FB', border: '1.5px solid rgba(13,24,61,0.1)' }}>
-                <button className="text-[#4B6382] hover:text-[#0D183D] transition-colors"><Paperclip size={15}/></button>
-                <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && send()}
-                  placeholder="Type a message…"
-                  className="flex-1 bg-transparent text-[13px] text-[#0D183D] placeholder-[#4B6382]/50 outline-none"
-                />
-                <button className="text-[#4B6382] hover:text-[#0D183D] transition-colors"><Smile size={15}/></button>
-                <button onClick={send}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 active:scale-95"
-                  style={{ background: '#FFB703' }}>
-                  <Send size={13}/>
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-[#4B6382] text-sm">Select a conversation</p>
-          </div>
-        )}
+              {c.unread > 0 && (
+                <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white mt-0.5"
+                  style={{ background:'#FFB703' }}>{c.unread}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* ── Chat panel ── */}
+      {conv ? (
+        <div className="flex-1 flex flex-col min-w-0">
+
+          {/* Chat header */}
+          <div className="bg-white px-6 py-3.5 flex items-center justify-between shrink-0"
+            style={{ borderBottom:'1px solid rgba(13,24,61,0.08)' }}>
+            <div className="flex items-center gap-3">
+              <GradientAvatar name={conv.name} size={36} radius="0.6rem"/>
+              <div>
+                <p className="text-[14px] font-bold text-[#0D183D] leading-snug">{conv.name}</p>
+                <p className="text-[11px] text-[#4B6382]">
+                  {conv.online ? <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"/>Online</span> : conv.role}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {user?.role === 'ngo' && (
+                <button
+                  onClick={() => setShowInviteForm(v => !v)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all border"
+                  style={showInviteForm
+                    ? { background:'#0D183D', color:'white', borderColor:'#0D183D' }
+                    : { color:'#4B6382', borderColor:'rgba(13,24,61,0.1)', background:'white' }}>
+                  <Calendar size={12}/> Invite to interview
+                </button>
+              )}
+              <button className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
+                <MoreHorizontal size={15}/>
+              </button>
+            </div>
+          </div>
+
+          {/* Interview invite form */}
+          <AnimatePresence>
+            {showInviteForm && (
+              <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}
+                transition={{ duration:0.18 }}
+                className="bg-white px-6 py-4 shrink-0"
+                style={{ borderBottom:'1px solid rgba(13,24,61,0.08)', background:'rgba(255,183,3,0.03)' }}>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <p className="text-[12px] font-bold text-[#0D183D]">Interview invitation</p>
+                  <input type="datetime-local" value={inviteDate} onChange={e => setInviteDate(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl text-[11px] outline-none border"
+                    style={{ borderColor:'rgba(13,24,61,0.12)', background:'white', color:'#0D183D' }}/>
+                  <div className="flex gap-2">
+                    {[{id:'video',label:'📹 Video'},{id:'phone',label:'📞 Phone'},{id:'onsite',label:'🤝 In-person'}].map(t => (
+                      <button key={t.id} onClick={() => setInviteType(t.id)}
+                        className="px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition-all"
+                        style={inviteType === t.id
+                          ? { background:'#0D183D', color:'white', borderColor:'#0D183D' }
+                          : { background:'white', color:'#4B6382', borderColor:'rgba(13,24,61,0.1)' }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={sendInvite}
+                    className="px-4 py-1.5 rounded-xl text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                    style={{ background:'#FFB703' }}>
+                    Send invitation →
+                  </button>
+                  <button onClick={() => setShowInviteForm(false)}
+                    className="ml-auto text-[#4B6382] hover:text-[#0D183D] transition-colors"><X size={14}/></button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3.5">
+            {msgs.map(m => (
+              <motion.div key={m.id}
+                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+                className={`flex items-end gap-2.5 ${m.from === 'me' ? 'flex-row-reverse' : ''}`}>
+                {m.from === 'them' && <GradientAvatar name={conv.name} size={26} radius="0.45rem"/>}
+                <div className={`max-w-[65%] px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
+                  m.from === 'me' ? 'rounded-br-sm text-white' : 'rounded-bl-sm text-[#0D183D]'
+                }`} style={{
+                  background: m.from === 'me' ? '#0D183D' : 'white',
+                  boxShadow: '0 1px 8px rgba(13,24,61,0.08)',
+                  whiteSpace: 'pre-line',
+                }}>
+                  {m.text}
+                  <p className={`text-[10px] mt-1 ${m.from === 'me' ? 'text-white/40' : 'text-[#4B6382]'}`}>{m.time}</p>
+                </div>
+              </motion.div>
+            ))}
+            <div ref={bottomRef}/>
+          </div>
+
+          {/* AI suggested replies */}
+          <AnimatePresence>
+            {showSuggestions && suggestions.length > 0 && (
+              <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:4 }}
+                transition={{ duration:0.2 }}
+                className="px-6 py-3 flex items-center gap-2 shrink-0 flex-wrap"
+                style={{ borderTop:'1px solid rgba(13,24,61,0.06)', background:'rgba(255,183,3,0.03)' }}>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Sparkles size={11} style={{ color:'#FFB703' }}/>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color:'#D99E00' }}>Suggested</span>
+                </div>
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => setInput(s)}
+                    className="px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all hover:shadow-sm hover:-translate-y-px border"
+                    style={{ background:'white', color:'#4B6382', borderColor:'rgba(13,24,61,0.09)' }}>
+                    {s}
+                  </button>
+                ))}
+                <button onClick={() => setShowSuggestions(false)} className="ml-auto text-[#4B6382] hover:text-[#0D183D] p-0.5"><X size={12}/></button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Input */}
+          <div className="bg-white px-5 py-4 shrink-0"
+            style={{ borderTop:'1px solid rgba(13,24,61,0.08)' }}>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+              style={{ background:'#F8F9FB', border:'1.5px solid rgba(13,24,61,0.09)' }}>
+              <button className="text-[#4B6382] hover:text-[#0D183D] transition-colors shrink-0"><Paperclip size={14}/></button>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+                placeholder="Type a message…"
+                className="flex-1 bg-transparent text-[13px] text-[#0D183D] placeholder-[#4B6382]/50 outline-none"
+              />
+              {!showSuggestions && suggestions.length > 0 && (
+                <button onClick={() => setShowSuggestions(true)}
+                  className="text-[#4B6382] hover:text-[#FFB703] transition-colors shrink-0">
+                  <RefreshCw size={13}/>
+                </button>
+              )}
+              <button onClick={() => send()}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 active:scale-95 shrink-0"
+                style={{ background: input.trim() ? '#FFB703' : 'rgba(13,24,61,0.15)' }}>
+                <Send size={13}/>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-[#4B6382] text-sm">Select a conversation</p>
+        </div>
+      )}
+    </div>
   )
 }

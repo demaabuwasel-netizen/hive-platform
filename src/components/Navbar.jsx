@@ -1,22 +1,60 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from './Avatar'
 import HiveLogo from './HiveLogo'
 
 const NAV_LINKS = [
-  { label: 'How it works', href: '/#how-it-works' },
-  { label: 'For Students', href: '/auth?mode=signup&role=student' },
-  { label: 'For NGOs',     href: '/auth?mode=signup&role=ngo'     },
-  { label: 'About',        href: '/'                              },
+  { label: 'How it works', section: 'how-it-works' },
+  { label: 'For Students', section: 'for-students'  },
+  { label: 'For NGOs',     section: 'for-ngos'      },
+  { label: 'About',        section: 'about'          },
 ]
 
 export default function Navbar({ minimal = false }) {
   const { user, profile, logout } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState(null)
   const avatarSrc = profile?.avatar || user?.avatar || null
+
+  // Track which section is in view as user scrolls (only on landing page)
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setActiveSection(null)
+      return
+    }
+    function onScroll() {
+      const ids = NAV_LINKS.map(l => l.section)
+      let current = null
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= 100) current = id
+      }
+      setActiveSection(current)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [location.pathname])
+
+  function scrollToSection(section) {
+    const el = document.getElementById(section)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function handleNavClick(e, section) {
+    e.preventDefault()
+    setMobileOpen(false)
+    if (location.pathname === '/') {
+      scrollToSection(section)
+    } else {
+      navigate('/')
+      setTimeout(() => scrollToSection(section), 380)
+    }
+  }
 
   function handleLogout() {
     logout()
@@ -37,13 +75,24 @@ export default function Navbar({ minimal = false }) {
         {/* Centre nav — shown when NOT logged in, desktop only */}
         {!minimal && !user && (
           <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
-            {NAV_LINKS.map(link => (
-              <Link key={link.label} to={link.href}
-                className="text-sm font-medium px-3 py-2 rounded-xl transition-all duration-150 hover:bg-[#0D183D]/[0.05]"
-                style={{ color: '#4B6382' }}>
-                {link.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map(link => {
+              const isActive = activeSection === link.section
+              return (
+                <a key={link.label}
+                  href={`/#${link.section}`}
+                  onClick={e => handleNavClick(e, link.section)}
+                  className="text-sm font-medium px-3 py-2 rounded-xl transition-all duration-150 relative"
+                  style={{
+                    color: isActive ? '#0D183D' : '#4B6382',
+                    background: isActive ? 'rgba(13,24,61,0.06)' : 'transparent',
+                  }}>
+                  {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FFB703]" />
+                  )}
+                </a>
+              )
+            })}
           </div>
         )}
 
@@ -120,11 +169,14 @@ export default function Navbar({ minimal = false }) {
         <div className="sm:hidden px-6 py-4 flex flex-col gap-1"
           style={{ borderTop: '1px solid rgba(13,24,61,0.07)', background: '#FFF7E6' }}>
           {!user && NAV_LINKS.map(link => (
-            <Link key={link.label} to={link.href} onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05]"
-              style={{ color: '#4B6382' }}>
+            <a key={link.label}
+              href={`/#${link.section}`}
+              onClick={e => handleNavClick(e, link.section)}
+              className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05] transition-colors"
+              style={{ color: activeSection === link.section ? '#0D183D' : '#4B6382',
+                       fontWeight: activeSection === link.section ? 600 : 500 }}>
               {link.label}
-            </Link>
+            </a>
           ))}
           {user ? (
             <>

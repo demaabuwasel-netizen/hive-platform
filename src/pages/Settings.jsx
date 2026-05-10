@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
   TrendingUp, MessageCircle, Settings as SettingsIcon, Briefcase, Users, BarChart2,
-  User, Bell, Lock, Globe, Palette, LogOut, ChevronRight, Camera, Check,
+  User, Bell, Lock, Globe, Palette, LogOut, ChevronRight, Camera, Check, Pencil,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -115,7 +116,15 @@ export default function Settings() {
 
             {section === 'profile' && (
               <div>
-                <h2 className="text-[15px] font-extrabold text-[#0D183D] mb-6">Profile</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[15px] font-extrabold text-[#0D183D]">Profile</h2>
+                  <Link
+                    to={user?.role === 'ngo' ? '/profile/ngo/edit' : '/profile/student/edit'}
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-semibold border transition-all hover:bg-[rgba(13,24,61,0.03)]"
+                    style={{ color:'#4B6382', borderColor:'rgba(13,24,61,0.12)' }}>
+                    <Pencil size={12}/> Edit full profile
+                  </Link>
+                </div>
 
                 {/* Avatar */}
                 <div className="flex items-center gap-5 mb-8 pb-7" style={{ borderBottom:'1px solid rgba(13,24,61,0.07)' }}>

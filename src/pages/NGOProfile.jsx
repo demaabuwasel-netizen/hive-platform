@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { Pencil } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Navbar from '../components/Navbar'
 import { AvatarDisplay } from '../components/Avatar'
@@ -17,9 +18,10 @@ export default function NGOProfile() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
 
-  const data = profile?.name ? profile : mockNGOs[0]
+  const data = profile || mockNGOs[0]
   const orgName = data.name || user?.name || 'Your NGO'
   const avatarSrc = data.imageUrl || data.avatar
+  const isOwnProfile = !!(user && user.onboardingComplete)
 
   return (
     <div className="min-h-screen bg-[#FFF7E6]">
@@ -129,13 +131,22 @@ export default function NGOProfile() {
           </div>
 
           {/* CTA */}
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => navigate('/matches')}
               className="btn-navy text-base px-8 py-3.5"
             >
               Find matching students →
             </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => navigate('/profile/ngo/edit')}
+                className="flex items-center gap-2 text-base px-8 py-3.5 rounded-2xl font-semibold border-2 transition-all hover:bg-[rgba(13,24,61,0.04)]"
+                style={{ color: '#0D183D', borderColor: 'rgba(13,24,61,0.18)' }}
+              >
+                <Pencil size={16} /> Edit profile
+              </button>
+            )}
           </div>
         </motion.div>
       </div>

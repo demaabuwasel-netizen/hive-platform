@@ -344,7 +344,10 @@ export default function Landing() {
           FEATURE CARDS — For Students | For NGOs | For Impact
           img2 / img3 / img4 — equal height, clean composition
       ══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-6 bg-white">
+      {/* invisible anchor so both For Students and For NGOs nav links land here */}
+      <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
+
+      <section id="for-students" className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-12">
@@ -465,7 +468,7 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-6 bg-white">
+      <section id="how-it-works" className="py-24 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-14">
@@ -546,6 +549,86 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          ABOUT — Mission, AI, Impact
+      ══════════════════════════════════════════════════════ */}
+      <section id="about" className="py-24 px-6 bg-white" style={{ borderTop:'1px solid rgba(13,24,61,0.07)' }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-1.5 rounded-full border mb-5"
+              style={{ background:'rgba(255,183,3,0.08)', borderColor:'rgba(255,183,3,0.2)', color:C.honey }}>
+              <HiveLogo size={13} showName={false} />
+              Our mission
+            </span>
+            <h2 className="text-[2rem] font-bold mb-4 leading-tight" style={{ color:C.primary }}>
+              We believe skills should serve<br />more than careers.
+            </h2>
+            <p className="text-base max-w-lg mx-auto leading-relaxed" style={{ color:C.muted }}>
+              Hive was built on one idea: the most capable students and the most mission-driven organisations rarely find each other — not because the fit doesn't exist, but because the path to discovery is broken.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-5 mb-16">
+            {[
+              {
+                icon: '✦',
+                iconBg: 'rgba(255,183,3,0.1)',
+                iconColor: C.honey,
+                title: 'Semantic AI matching',
+                body: 'We don\'t match on keywords. Our AI reads context — "built a CRM for a refugee clinic" signals skills, ownership, and compassion simultaneously. The result: matches that feel right from day one.',
+              },
+              {
+                icon: '🌍',
+                iconBg: 'rgba(6,182,212,0.1)',
+                iconColor: '#0891B2',
+                title: 'Inclusive by design',
+                body: 'Hive was designed for diverse communities — Arab, Jewish, immigrant, and international students. Language signals matter in our model. Arabic native speakers get surfaced to NGOs that genuinely need that bridge.',
+              },
+              {
+                icon: '🤝',
+                iconBg: 'rgba(16,185,129,0.1)',
+                iconColor: '#059669',
+                title: 'Transparent connections',
+                body: 'Every match comes with a plain-language explanation. Students know exactly why an NGO appeared. NGOs understand what makes a student the right fit. No black boxes, no guessing.',
+              },
+            ].map((item, i) => (
+              <motion.div key={item.title}
+                initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.42 }}
+                className="rounded-3xl p-7 border"
+                style={{ background:C.bg, borderColor:'rgba(13,24,61,0.07)' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-5"
+                  style={{ background:item.iconBg }}>
+                  {item.icon}
+                </div>
+                <h3 className="text-[0.95rem] font-bold mb-3" style={{ color:C.primary }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color:C.muted }}>{item.body}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Vision strip */}
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} transition={{ duration:0.5 }}
+            className="rounded-3xl px-10 py-10 text-center relative overflow-hidden"
+            style={{ background:C.primary }}>
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+              style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z' fill='white'/%3E%3C/svg%3E")` }}
+              aria-hidden="true" />
+            <div className="relative">
+              <p className="text-[1.15rem] font-semibold text-white leading-relaxed max-w-2xl mx-auto mb-6">
+                "A student who helps an NGO reach 500 more people — that's not just a portfolio line.<br />
+                <span style={{ color:C.honey }}>That's a life changed. Sometimes several."</span>
+              </p>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color:'rgba(255,255,255,0.3)' }}>
+                Hive's founding vision
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 

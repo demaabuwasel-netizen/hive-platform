@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { Pencil } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Navbar from '../components/Navbar'
 import { AvatarDisplay } from '../components/Avatar'
@@ -32,7 +33,7 @@ export default function StudentProfile() {
     ? data.interests
     : (data.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
 
-  const isOwnProfile = !!profile?.field
+  const isOwnProfile = !!(user && user.onboardingComplete)
 
   return (
     <div className="min-h-screen bg-[#FFF7E6]">
@@ -45,13 +46,21 @@ export default function StudentProfile() {
           transition={{ duration: 0.45 }}
         >
           {/* Profile header */}
-          <div className="card mb-6 flex flex-col sm:flex-row items-start gap-6">
+          <div className="card mb-6 flex flex-col sm:flex-row items-start gap-6 relative">
             <AvatarDisplay src={avatarSrc} name={displayName} size="xl" />
 
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-2xl font-bold text-[#0D183D]">{displayName}</h1>
                 <span className="bg-honey-100 text-honey-700 text-xs font-semibold px-2.5 py-1 rounded-full">Student</span>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => navigate('/profile/student/edit')}
+                    className="flex items-center gap-1.5 ml-1 px-3 py-1 rounded-xl text-xs font-semibold border transition-all hover:bg-[rgba(13,24,61,0.04)]"
+                    style={{ color:'#4B6382', borderColor:'rgba(13,24,61,0.12)' }}>
+                    <Pencil size={11}/> Edit profile
+                  </button>
+                )}
               </div>
 
               <p className="text-[#4B6382] text-sm mb-1">
@@ -179,13 +188,22 @@ export default function StudentProfile() {
           </div>
 
           {/* CTA */}
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => navigate('/matches')}
               className="btn-honey text-base px-8 py-3.5"
             >
               See my matches →
             </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => navigate('/profile/student/edit')}
+                className="flex items-center gap-2 text-base px-8 py-3.5 rounded-2xl font-semibold border-2 transition-all hover:bg-[rgba(13,24,61,0.04)]"
+                style={{ color: '#0D183D', borderColor: 'rgba(13,24,61,0.18)' }}
+              >
+                <Pencil size={16} /> Edit profile
+              </button>
+            )}
           </div>
         </motion.div>
       </div>
