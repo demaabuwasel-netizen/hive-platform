@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" fill="none">
+  <defs>
+    <filter id="sh1">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0D183D" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="360" fill="#F9F6EF"/>
+  <circle cx="240" cy="168" r="155" fill="#DBEAFE" opacity="0.35"/>
+  <circle cx="240" cy="168" r="110" fill="#DBEAFE" opacity="0.25"/>
+
+  <!-- Ground shadow -->
+  <ellipse cx="238" cy="340" rx="130" ry="14" fill="#ADC4E8" opacity="0.35"/>
+
+  <!-- Blue beanbag / seat -->
+  <path d="M100 295 Q98 350 238 354 Q378 350 376 295 Q372 256 238 248 Q104 256 100 295Z" fill="#4B7BF5"/>
+  <path d="M112 290 Q110 340 238 343 Q366 340 364 290 Q361 263 238 257 Q115 263 112 290Z" fill="#5C8CF7"/>
+  <ellipse cx="238" cy="295" rx="128" ry="30" fill="#6B96FF" opacity="0.4"/>
+
+  <!-- Character legs (crossed, sitting) -->
+  <path d="M192 280 Q165 296 145 310" stroke="#C68B4F" stroke-width="30" stroke-linecap="round"/>
+  <path d="M284 280 Q311 296 331 310" stroke="#C68B4F" stroke-width="30" stroke-linecap="round"/>
+  <!-- Shoes -->
+  <ellipse cx="142" cy="314" rx="22" ry="13" fill="#0D183D" transform="rotate(-18 142 314)"/>
+  <ellipse cx="334" cy="314" rx="22" ry="13" fill="#0D183D" transform="rotate(18 334 314)"/>
+  <!-- Sock detail -->
+  <ellipse cx="155" cy="309" rx="14" ry="8" fill="#E8DFC9" transform="rotate(-18 155 309)"/>
+  <ellipse cx="321" cy="309" rx="14" ry="8" fill="#E8DFC9" transform="rotate(18 321 309)"/>
+
+  <!-- Body — honey sweater -->
+  <path d="M168 220 Q165 272 238 276 Q311 272 308 220 Q308 194 238 188 Q168 194 168 220Z" fill="#FFB703"/>
+  <!-- Sweater ribbing at bottom -->
+  <path d="M170 270 Q238 278 306 270" stroke="#D99E00" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <!-- Pocket -->
+  <rect x="216" y="236" width="44" height="28" rx="10" fill="#D99E00" opacity="0.35"/>
+  <!-- Small hex logo on sweater -->
+  <polygon points="238,202 244,205.5 244,212.5 238,216 232,212.5 232,205.5" fill="#D99E00" opacity="0.55"/>
+
+  <!-- Laptop on lap -->
+  <rect x="140" y="258" width="196" height="104" rx="10" fill="#1a2547" filter="url(#sh1)"/>
+  <rect x="148" y="265" width="180" height="90" rx="7" fill="#243468"/>
+  <rect x="155" y="272" width="166" height="76" rx="4" fill="#111c38"/>
+
+  <!-- Screen content — code editor -->
+  <rect x="163" y="281" width="80" height="7" rx="3.5" fill="#FFB703" opacity="0.9"/>
+  <rect x="163" y="292" width="110" height="4" rx="2" fill="white" opacity="0.28"/>
+  <rect x="163" y="300" width="88" height="4" rx="2" fill="white" opacity="0.22"/>
+  <rect x="169" y="308" width="76" height="4" rx="2" fill="white" opacity="0.22"/>
+  <rect x="169" y="316" width="94" height="4" rx="2" fill="white" opacity="0.22"/>
+  <rect x="163" y="324" width="58" height="4" rx="2" fill="#4ADE80" opacity="0.6"/>
+  <rect x="163" y="332" width="70" height="4" rx="2" fill="white" opacity="0.18"/>
+  <!-- Right panel on screen -->
+  <rect x="284" y="278" width="28" height="64" rx="4" fill="#0D183D" opacity="0.5"/>
+  <circle cx="298" cy="290" r="6" fill="#FFB703" opacity="0.5"/>
+  <rect x="288" y="300" width="20" height="3" rx="1.5" fill="white" opacity="0.25"/>
+  <rect x="288" y="307" width="16" height="3" rx="1.5" fill="white" opacity="0.2"/>
+  <!-- Laptop keyboard base -->
+  <rect x="132" y="362" width="212" height="10" rx="5" fill="#0D183D"/>
+  <rect x="200" y="358" width="76" height="6" rx="3" fill="#0D183D" opacity="0.6"/>
+
+  <!-- Arms reaching to keyboard -->
+  <path d="M175 226 Q155 248 155 268" stroke="#C68B4F" stroke-width="26" stroke-linecap="round"/>
+  <path d="M301 226 Q321 248 321 268" stroke="#C68B4F" stroke-width="26" stroke-linecap="round"/>
+  <!-- Hands on keyboard -->
+  <ellipse cx="160" cy="270" rx="18" ry="12" fill="#C68B4F" transform="rotate(-10 160 270)"/>
+  <ellipse cx="316" cy="270" rx="18" ry="12" fill="#C68B4F" transform="rotate(10 316 270)"/>
+
+  <!-- Neck -->
+  <rect x="225" y="172" width="26" height="24" rx="12" fill="#C68B4F"/>
+
+  <!-- Head -->
+  <circle cx="238" cy="142" r="54" fill="#C68B4F"/>
+
+  <!-- Hair (natural voluminous) -->
+  <path d="M184 132 Q186 84 238 80 Q290 84 292 132 Q287 102 238 99 Q189 102 184 132Z" fill="#2D1200"/>
+  <path d="M184 135 Q179 150 181 176 Q176 162 176 146 Q176 134 184 135Z" fill="#2D1200"/>
+  <path d="M292 135 Q297 150 295 176 Q300 162 300 146 Q300 134 292 135Z" fill="#2D1200"/>
+  <!-- Hair side volume -->
+  <path d="M186 128 Q180 143 183 160" stroke="#2D1200" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+  <path d="M290 128 Q296 143 293 160" stroke="#2D1200" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Ears -->
+  <ellipse cx="185" cy="146" rx="10" ry="13" fill="#C68B4F"/>
+  <ellipse cx="291" cy="146" rx="10" ry="13" fill="#C68B4F"/>
+  <!-- Honey earrings -->
+  <circle cx="185" cy="159" r="6" fill="#FFB703"/>
+  <circle cx="291" cy="159" r="6" fill="#FFB703"/>
+  <circle cx="186.5" cy="157.5" r="2" fill="white" opacity="0.6"/>
+  <circle cx="292.5" cy="157.5" r="2" fill="white" opacity="0.6"/>
+
+  <!-- Glasses left frame -->
+  <circle cx="220" cy="142" r="22" fill="none" stroke="#E8D5B8" stroke-width="3.5"/>
+  <!-- Glasses right frame -->
+  <circle cx="256" cy="142" r="22" fill="none" stroke="#E8D5B8" stroke-width="3.5"/>
+  <!-- Bridge -->
+  <line x1="242" y1="142" x2="234" y2="142" stroke="#E8D5B8" stroke-width="3" stroke-linecap="round"/>
+  <!-- Temples -->
+  <line x1="198" y1="142" x2="185" y2="146" stroke="#E8D5B8" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="278" y1="142" x2="291" y2="146" stroke="#E8D5B8" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Eyes -->
+  <circle cx="220" cy="142" r="10" fill="#1a0a00"/>
+  <circle cx="256" cy="142" r="10" fill="#1a0a00"/>
+  <circle cx="223" cy="139" r="3.5" fill="white"/>
+  <circle cx="259" cy="139" r="3.5" fill="white"/>
+  <circle cx="224.5" cy="140.5" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="260.5" cy="140.5" r="1.5" fill="white" opacity="0.55"/>
+
+  <!-- Eyebrows -->
+  <path d="M202 124 Q220 118 238 124" stroke="#1E0C00" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M238 124 Q256 118 274 124" stroke="#1E0C00" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Nose -->
+  <path d="M232 157 Q238 164 244 157" stroke="#8a4a1c" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Smile -->
+  <path d="M224 172 Q238 182 252 172" stroke="#7a3810" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Cheek blush -->
+  <circle cx="202" cy="160" r="14" fill="#F59E0B" opacity="0.12"/>
+  <circle cx="274" cy="160" r="14" fill="#F59E0B" opacity="0.12"/>
+
+  <!-- Plant decoration left -->
+  <ellipse cx="56" cy="342" rx="28" ry="8" fill="#8B6030" opacity="0.6"/>
+  <rect x="42" y="296" width="28" height="48" rx="8" fill="#9B7040"/>
+  <rect x="44" y="298" width="24" height="10" rx="4" fill="#7A5830" opacity="0.35"/>
+  <path d="M 56 296 Q 32 268 28 248 Q 46 260 56 296 Z" fill="#52B86A"/>
+  <path d="M 56 296 Q 80 266 84 246 Q 66 260 56 296 Z" fill="#3d8c52"/>
+  <path d="M 56 286 Q 34 264 34 248 Q 48 266 56 286 Z" fill="#66C880"/>
+
+  <!-- Floating notification card top right -->
+  <rect x="348" y="68" width="114" height="52" rx="14" fill="white" filter="url(#sh1)"/>
+  <rect x="358" y="80" width="30" height="28" rx="8" fill="#EBF2FF"/>
+  <circle cx="373" cy="94" r="9" fill="#4B7BF5" opacity="0.45"/>
+  <circle cx="373" cy="94" r="5" fill="#4B7BF5"/>
+  <rect x="396" y="81" width="54" height="5.5" rx="2.8" fill="#0D183D" opacity="0.7"/>
+  <rect x="396" y="90" width="40" height="4.5" rx="2.2" fill="#4a7ab5" opacity="0.5"/>
+  <rect x="396" y="100" width="48" height="9" rx="4.5" fill="#FFB703" opacity="0.85"/>
+
+  <!-- Sparkles -->
+  <path d="M 352 40 L 355 32 L 358 40 L 366 43 L 358 46 L 355 54 L 352 46 L 344 43 Z" fill="#FFB703" opacity="0.75"/>
+  <circle cx="378" cy="28" r="4" fill="#FFD56A" opacity="0.6"/>
+  <circle cx="340" cy="56" r="3" fill="#FFD56A" opacity="0.4"/>
+</svg>

@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 380" fill="none">
+  <defs>
+    <filter id="sh3">
+      <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#0D183D" flood-opacity="0.09"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="380" fill="#F9F6EF"/>
+  <circle cx="200" cy="200" r="155" fill="#FFF3CD" opacity="0.45"/>
+  <circle cx="200" cy="200" r="105" fill="#FFE8A3" opacity="0.22"/>
+
+  <!-- Ground shadow -->
+  <ellipse cx="200" cy="360" rx="90" ry="13" fill="#D4B880" opacity="0.35"/>
+
+  <!-- Ground line / floor -->
+  <line x1="80" y1="355" x2="320" y2="355" stroke="#E8DFC9" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Decorative elements -->
+  <path d="M 62 96 L 64 88 L 66 96 L 74 98 L 66 100 L 64 108 L 62 100 L 54 98Z" fill="#FFB703" opacity="0.75"/>
+  <circle cx="82" cy="80" r="5" fill="#FFD56A" opacity="0.65"/>
+  <circle cx="52" cy="118" r="3.5" fill="#FFD56A" opacity="0.45"/>
+  <path d="M 318 82 L 320 74 L 322 82 L 330 84 L 322 86 L 320 94 L 318 86 L 310 84Z" fill="#52B86A" opacity="0.65"/>
+  <circle cx="338" cy="68" r="4.5" fill="#FFD56A" opacity="0.55"/>
+  <circle cx="314" cy="106" r="3" fill="#4B7BF5" opacity="0.5"/>
+
+  <!-- Motion / wave lines (emanating from raised hand) -->
+  <path d="M 298 148 Q 312 138 320 126" stroke="#FFD56A" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+  <path d="M 304 162 Q 320 156 330 146" stroke="#FFD56A" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 306 178 Q 324 175 336 167" stroke="#FFD56A" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Small floating badge -->
+  <rect x="50" y="200" width="98" height="48" rx="14" fill="white" filter="url(#sh3)"/>
+  <circle cx="68" cy="224" r="10" fill="#FFB703" opacity="0.3"/>
+  <circle cx="68" cy="224" r="5.5" fill="#FFB703"/>
+  <rect x="84" y="214" width="52" height="5.5" rx="2.8" fill="#0D183D" opacity="0.7"/>
+  <rect x="84" y="223" width="40" height="4.5" rx="2.2" fill="#4a7ab5" opacity="0.5"/>
+  <rect x="84" y="233" width="46" height="9" rx="4.5" fill="#FFB703" opacity="0.85"/>
+
+  <!-- Body — orange/honey colored top -->
+  <path d="M 132 320 L 132 268 C 132 251 144 243 160 240 L 182 237 L 196 236 L 210 237 L 232 240 C 248 243 260 251 260 268 L 260 320 Z" fill="#FFB703"/>
+  <!-- Top pocket detail -->
+  <rect x="180" y="264" width="32" height="22" rx="9" fill="#D99E00" opacity="0.38"/>
+  <!-- Belt / waist detail -->
+  <rect x="134" y="316" width="124" height="8" rx="4" fill="#D99E00" opacity="0.35"/>
+
+  <!-- Pants / legs -->
+  <rect x="158" y="322" width="28" height="52" rx="13" fill="#1a2547"/>
+  <rect x="206" y="322" width="28" height="52" rx="13" fill="#1a2547"/>
+  <!-- Shoes -->
+  <ellipse cx="172" cy="375" rx="22" ry="12" fill="#0D183D"/>
+  <ellipse cx="220" cy="375" rx="22" ry="12" fill="#0D183D"/>
+  <!-- Shoe highlight -->
+  <ellipse cx="165" cy="370" rx="10" ry="5" fill="white" opacity="0.12"/>
+  <ellipse cx="213" cy="370" rx="10" ry="5" fill="white" opacity="0.12"/>
+
+  <!-- Left arm (relaxed, angled slightly forward) -->
+  <path d="M 136 273 Q 112 298 105 324" stroke="#C68B4F" stroke-width="28" stroke-linecap="round"/>
+  <!-- Left hand (relaxed) -->
+  <ellipse cx="104" cy="327" rx="18" ry="13" fill="#C68B4F" transform="rotate(-12 104 327)"/>
+
+  <!-- Right arm raised in BIG WAVE (diagonal up-right) -->
+  <path d="M 258 266 Q 290 228 302 178" stroke="#C68B4F" stroke-width="30" stroke-linecap="round"/>
+  <!-- Waving hand (fingers spread open) -->
+  <circle cx="307" cy="171" r="19" fill="#C68B4F"/>
+  <!-- Five fingers spread in wave -->
+  <path d="M 293 155 Q 289 138 293 128" stroke="#C68B4F" stroke-width="7.5" stroke-linecap="round"/>
+  <path d="M 303 150 Q 301 133 305 123" stroke="#C68B4F" stroke-width="7.5" stroke-linecap="round"/>
+  <path d="M 312 150 Q 313 133 317 123" stroke="#C68B4F" stroke-width="7.5" stroke-linecap="round"/>
+  <path d="M 320 154 Q 325 138 328 129" stroke="#C68B4F" stroke-width="7.5" stroke-linecap="round"/>
+  <path d="M 325 163 Q 333 150 336 141" stroke="#C68B4F" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <rect x="188" y="220" width="22" height="22" rx="11" fill="#C68B4F"/>
+  <!-- Head -->
+  <circle cx="199" cy="195" r="46" fill="#C68B4F"/>
+
+  <!-- Hair (natural curly/voluminous) -->
+  <path d="M 154 186 Q 156 146 199 142 Q 242 146 244 186 Q 239 160 199 156 Q 159 160 154 186 Z" fill="#2D1200"/>
+  <path d="M 154 188 Q 148 204 150 224 Q 145 210 145 194 Q 145 184 154 188 Z" fill="#2D1200"/>
+  <path d="M 244 188 Q 250 204 248 224 Q 253 210 253 194 Q 253 184 244 188 Z" fill="#2D1200"/>
+  <path d="M 158 182 Q 152 196 154 214" stroke="#2D1200" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+  <path d="M 240 182 Q 246 196 244 214" stroke="#2D1200" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+
+  <!-- Ears -->
+  <ellipse cx="154" cy="199" rx="10" ry="13" fill="#C68B4F"/>
+  <ellipse cx="244" cy="199" rx="10" ry="13" fill="#C68B4F"/>
+  <!-- Honey earrings -->
+  <circle cx="154" cy="212" r="6" fill="#FFB703"/>
+  <circle cx="244" cy="212" r="6" fill="#FFB703"/>
+  <circle cx="155.5" cy="210.5" r="2" fill="white" opacity="0.6"/>
+  <circle cx="245.5" cy="210.5" r="2" fill="white" opacity="0.6"/>
+
+  <!-- Eyes (happy squinting / joyful) -->
+  <path d="M 182 192 Q 188 186 194 192" stroke="#1a0a00" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M 204 192 Q 210 186 216 192" stroke="#1a0a00" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <!-- Eye sparkle above -->
+  <circle cx="183" cy="190" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="216" cy="190" r="1.5" fill="white" opacity="0.7"/>
+
+  <!-- Eyebrows -->
+  <path d="M 174 178 Q 188 171 202 178" stroke="#1E0C00" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M 196 178 Q 210 171 224 178" stroke="#1E0C00" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Nose -->
+  <path d="M 194 206 Q 199 213 204 206" stroke="#8a4a1c" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Big joyful smile -->
+  <path d="M 182 222 Q 199 235 216 222" stroke="#7a3810" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <ellipse cx="199" cy="227" rx="13" ry="8" fill="#D97040" opacity="0.2"/>
+
+  <!-- Cheek blush -->
+  <circle cx="168" cy="212" r="14" fill="#F59E0B" opacity="0.13"/>
+  <circle cx="230" cy="212" r="14" fill="#F59E0B" opacity="0.13"/>
+
+  <!-- Small decorative plant bottom left -->
+  <rect x="44" y="316" width="18" height="42" rx="7" fill="#9B7040"/>
+  <path d="M 53 316 Q 32 292 30 272 Q 48 284 53 316 Z" fill="#52B86A"/>
+  <path d="M 53 316 Q 74 290 76 270 Q 58 284 53 316 Z" fill="#3d8c52"/>
+  <path d="M 53 306 Q 34 286 36 270 Q 50 286 53 306 Z" fill="#66C880"/>
+  <ellipse cx="53" cy="356" rx="22" ry="7" fill="#8B6030" opacity="0.55"/>
+</svg>

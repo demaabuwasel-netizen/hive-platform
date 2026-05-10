@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(kill %1)",
+      "Bash(curl *)",
+      "Bash(sed -i '' 's/bg-navy-800 text-white shadow-soft/bg-\\\\[#0F172A\\\\] text-white shadow-soft/g' src/pages/StudentDashboard.jsx src/pages/NGODashboard.jsx)",
+      "Bash(sed -i '' 's/className=\"bg-navy-800 /className=\"bg-\\\\[#0F172A\\\\] /g' src/pages/StudentDashboard.jsx src/pages/NGODashboard.jsx)",
+      "Bash(xargs sed -i '' 's/#FAF6EF/#FFF7E6/g')",
+      "Bash(xargs sed -i '' 's/#F5A623/#FFB703/g')",
+      "Bash(xargs sed -i '' 's/#0F172A/#0D183D/g')",
+      "Bash(xargs sed -i '' 's/rgba\\(245,166,35/rgba\\(255,183,3/g')",
+      "Bash(xargs sed -i '' 's/rgba\\(15,23,42/rgba\\(13,24,61/g')",
+      "Bash(xargs sed -i '' \"s/%23F5A623/%23FFB703/g\")",
+      "Bash(xargs sed -i '' \"s/%230F172A/%230D183D/g\")",
+      "Bash(xargs sed -i '' \"s/%23FAF6EF/%23FFF7E6/g\")",
+      "Bash(npx --yes puppeteer --version)",
+      "Bash(npx playwright *)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(sed -i '' \"s|import heroIllustration from '../assets/hero-illustration.png'|import img3 from '../assets/img3.png'  // woman w/ laptop — impact context|\" src/pages/StudentDashboard.jsx)",
+      "Bash(sed -i '' 's/src={heroIllustration}/src={img3}/g' src/pages/StudentDashboard.jsx)",
+      "Bash(sed -i '' \"s|// ─── Impact illustration — src/assets/hero-illustration.png ──────────────────|// ─── Impact illustration ──────────────────────────────────────────────────────|\" src/pages/StudentDashboard.jsx)",
+      "Bash(sed -i '' \"s|import heroIllustration from '../assets/hero-illustration.png'|import img3 from '../assets/img3.png'  // woman w/ laptop — community impact|\" src/pages/NGODashboard.jsx)",
+      "Bash(sed -i '' 's/src={heroIllustration}/src={img3}/g' src/pages/NGODashboard.jsx)",
+      "Bash(python3 *)",
+      "Bash(sed -i '' \"s|avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=MayaC'|avatar: null|g\" src/data/mockData.js)",
+      "Bash(sed -i '' \"s|avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=OmarK'|avatar: null|g\" src/data/mockData.js)",
+      "Bash(sed -i '' \"s|avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=LinaM'|avatar: null|g\" src/data/mockData.js)",
+      "Bash(sed -i '' \"s|avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Elem&backgroundColor=2d5a9e'|avatar: null|g\" src/data/mockData.js)",
+      "Bash(sed -i '' \"s|avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Majd&backgroundColor=166534'|avatar: null|g\" src/data/mockData.js)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 380" fill="none">
+  <defs>
+    <filter id="sh2">
+      <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#0D183D" flood-opacity="0.09"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="560" height="380" fill="#F9F6EF"/>
+  <circle cx="280" cy="195" r="165" fill="#FFF3CD" opacity="0.45"/>
+  <circle cx="280" cy="195" r="115" fill="#FFF3CD" opacity="0.3"/>
+
+  <!-- Ground shadow -->
+  <ellipse cx="280" cy="356" rx="200" ry="16" fill="#D4B880" opacity="0.3"/>
+
+  <!-- Confetti / celebration elements -->
+  <rect x="88" y="46" width="12" height="12" rx="3" fill="#FFB703" opacity="0.7" transform="rotate(25 88 46)"/>
+  <rect x="440" y="38" width="10" height="10" rx="2.5" fill="#52B86A" opacity="0.65" transform="rotate(-20 440 38)"/>
+  <rect x="158" y="28" width="9" height="9" rx="2" fill="#4B7BF5" opacity="0.6" transform="rotate(40 158 28)"/>
+  <rect x="370" y="22" width="11" height="11" rx="3" fill="#FFB703" opacity="0.55" transform="rotate(-35 370 22)"/>
+  <rect x="68" y="110" width="8" height="8" rx="2" fill="#4B7BF5" opacity="0.5" transform="rotate(15 68 110)"/>
+  <rect x="490" y="102" width="9" height="9" rx="2" fill="#FFB703" opacity="0.5" transform="rotate(-25 490 102)"/>
+  <path d="M120 68 L122 60 L124 68 L132 70 L124 72 L122 80 L120 72 L112 70Z" fill="#FFB703" opacity="0.8"/>
+  <path d="M430 60 L432 52 L434 60 L442 62 L434 64 L432 72 L430 64 L422 62Z" fill="#52B86A" opacity="0.65"/>
+  <circle cx="198" cy="50" r="5" fill="#FFD56A" opacity="0.7"/>
+  <circle cx="356" cy="44" r="4" fill="#4B7BF5" opacity="0.55"/>
+  <circle cx="480" cy="78" r="5" fill="#FFD56A" opacity="0.6"/>
+  <circle cx="72" cy="82" r="4" fill="#52B86A" opacity="0.5"/>
+
+  <!-- ══ LEFT CHARACTER (teal outfit, arm raised) ══ -->
+
+  <!-- Body / teal top -->
+  <path d="M 52 330 L 52 284 C 52 269 62 262 76 259 L 96 256 L 108 255 L 120 256 L 140 259 C 154 262 164 269 164 284 L 164 330 Z" fill="#0EA5E9"/>
+  <!-- Pants / legs -->
+  <rect x="78" y="326" width="26" height="46" rx="12" fill="#1a2547"/>
+  <rect x="108" y="326" width="26" height="46" rx="12" fill="#1a2547"/>
+  <!-- Shoes -->
+  <ellipse cx="91" cy="374" rx="20" ry="11" fill="#0D183D"/>
+  <ellipse cx="121" cy="374" rx="20" ry="11" fill="#0D183D"/>
+
+  <!-- Left arm (relaxed at side) -->
+  <path d="M 56 288 Q 36 308 30 330" stroke="#D4935A" stroke-width="26" stroke-linecap="round"/>
+  <ellipse cx="29" cy="333" rx="16" ry="11" fill="#D4935A" transform="rotate(-10 29 333)"/>
+
+  <!-- Right arm raised UP celebrating -->
+  <path d="M 162 284 Q 182 254 190 214" stroke="#D4935A" stroke-width="26" stroke-linecap="round"/>
+  <!-- Hand with fingers spread -->
+  <circle cx="194" cy="208" r="16" fill="#D4935A"/>
+  <path d="M 185 196 Q 182 182 186 173" stroke="#D4935A" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 193 192 Q 192 178 196 169" stroke="#D4935A" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 200 194 Q 202 180 205 172" stroke="#D4935A" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 207 200 Q 212 187 215 180" stroke="#D4935A" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <rect x="100" y="224" width="18" height="34" rx="9" fill="#D4935A"/>
+  <!-- Head -->
+  <circle cx="109" cy="203" r="38" fill="#D4935A"/>
+  <!-- Hair (braids/locs) -->
+  <path d="M 72 198 Q 73 166 109 163 Q 145 166 146 198 Q 142 174 109 171 Q 76 174 72 198 Z" fill="#2D1200"/>
+  <path d="M 72 200 Q 67 213 69 233 Q 64 220 64 206 Q 64 198 72 200 Z" fill="#2D1200"/>
+  <path d="M 146 200 Q 151 213 149 233 Q 154 220 154 206 Q 154 198 146 200 Z" fill="#2D1200"/>
+  <!-- Hair texture lines -->
+  <path d="M 80 194 Q 76 207 80 222" stroke="#1A0800" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <path d="M 138 194 Q 142 207 138 222" stroke="#1A0800" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <!-- Ears -->
+  <ellipse cx="72" cy="207" rx="8" ry="10" fill="#D4935A"/>
+  <ellipse cx="146" cy="207" rx="8" ry="10" fill="#D4935A"/>
+  <!-- Earring honey -->
+  <circle cx="72" cy="217" r="4.5" fill="#FFB703"/>
+  <circle cx="146" cy="217" r="4.5" fill="#FFB703"/>
+  <!-- Eyes -->
+  <circle cx="97" cy="205" r="7.5" fill="#1a0a00"/>
+  <circle cx="121" cy="205" r="7.5" fill="#1a0a00"/>
+  <circle cx="99.5" cy="202.5" r="2.6" fill="white"/>
+  <circle cx="123.5" cy="202.5" r="2.6" fill="white"/>
+  <!-- Eyebrows -->
+  <path d="M 87 192 Q 97 187 107 192" stroke="#2D1200" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M 111 192 Q 121 187 131 192" stroke="#2D1200" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Smile (big open joy) -->
+  <path d="M 96 218 Q 109 228 122 218" stroke="#7a3810" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <ellipse cx="109" cy="222" rx="11" ry="6" fill="#D97040" opacity="0.2"/>
+  <!-- Blush -->
+  <circle cx="83" cy="212" r="11" fill="#F59E0B" opacity="0.12"/>
+  <circle cx="135" cy="212" r="11" fill="#F59E0B" opacity="0.12"/>
+
+  <!-- ══ CENTER CHARACTER (honey outfit, BOTH arms raised highest) ══ -->
+
+  <!-- Body / honey yellow top -->
+  <path d="M 196 326 L 196 278 C 196 261 208 253 224 250 L 248 247 L 262 246 L 276 247 L 300 250 C 316 253 328 261 328 278 L 328 326 Z" fill="#FFB703"/>
+  <!-- Pocket detail -->
+  <rect x="244" y="274" width="36" height="24" rx="9" fill="#D99E00" opacity="0.38"/>
+  <!-- Pants / legs -->
+  <rect x="222" y="322" width="28" height="50" rx="13" fill="#C68B4F"/>
+  <rect x="274" y="322" width="28" height="50" rx="13" fill="#C68B4F"/>
+  <!-- Shoes -->
+  <ellipse cx="236" cy="374" rx="22" ry="12" fill="#0D183D"/>
+  <ellipse cx="288" cy="374" rx="22" ry="12" fill="#0D183D"/>
+
+  <!-- Left arm raised HIGH + diagonal -->
+  <path d="M 200 282 Q 158 244 140 194" stroke="#C68B4F" stroke-width="30" stroke-linecap="round"/>
+  <!-- Left hand -->
+  <circle cx="135" cy="188" r="18" fill="#C68B4F"/>
+  <path d="M 123 174 Q 118 158 122 147" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 132 169 Q 130 153 134 143" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 141 168 Q 142 152 146 142" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 149 173 Q 154 158 157 149" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Right arm raised HIGH + diagonal -->
+  <path d="M 324 282 Q 366 244 384 194" stroke="#C68B4F" stroke-width="30" stroke-linecap="round"/>
+  <!-- Right hand -->
+  <circle cx="389" cy="188" r="18" fill="#C68B4F"/>
+  <path d="M 378 174 Q 373 158 377 147" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 387 169 Q 385 153 389 143" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 396 168 Q 397 152 401 142" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 404 173 Q 409 158 412 149" stroke="#C68B4F" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <rect x="250" y="212" width="24" height="38" rx="12" fill="#C68B4F"/>
+  <!-- Head -->
+  <circle cx="262" cy="188" r="48" fill="#C68B4F"/>
+  <!-- Hair (afro / natural curly) -->
+  <circle cx="262" cy="160" r="40" fill="#1A0800"/>
+  <circle cx="238" cy="166" r="28" fill="#1A0800"/>
+  <circle cx="286" cy="166" r="28" fill="#1A0800"/>
+  <circle cx="262" cy="180" r="26" fill="#C68B4F"/>
+  <!-- Ears -->
+  <ellipse cx="215" cy="192" rx="10" ry="14" fill="#C68B4F"/>
+  <ellipse cx="309" cy="192" rx="10" ry="14" fill="#C68B4F"/>
+  <!-- Honey earrings -->
+  <circle cx="215" cy="206" r="6" fill="#FFB703"/>
+  <circle cx="309" cy="206" r="6" fill="#FFB703"/>
+  <circle cx="216.5" cy="204.5" r="2" fill="white" opacity="0.6"/>
+  <circle cx="310.5" cy="204.5" r="2" fill="white" opacity="0.6"/>
+  <!-- Eyes -->
+  <circle cx="248" cy="190" r="9" fill="#1a0a00"/>
+  <circle cx="276" cy="190" r="9" fill="#1a0a00"/>
+  <circle cx="251" cy="187" r="3.2" fill="white"/>
+  <circle cx="279" cy="187" r="3.2" fill="white"/>
+  <circle cx="252.5" cy="188.5" r="1.4" fill="white" opacity="0.55"/>
+  <circle cx="280.5" cy="188.5" r="1.4" fill="white" opacity="0.55"/>
+  <!-- Eyebrows -->
+  <path d="M 234 173 Q 248 167 262 173" stroke="#1A0800" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M 262 173 Q 276 167 290 173" stroke="#1A0800" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Big joyful smile -->
+  <path d="M 246 208 Q 262 222 278 208" stroke="#7a3810" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <ellipse cx="262" cy="213" rx="13" ry="7" fill="#D97040" opacity="0.22"/>
+  <!-- Blush -->
+  <circle cx="230" cy="200" rx="12" ry="12" fill="#F59E0B" opacity="0.13"/>
+  <circle cx="294" cy="200" rx="12" ry="12" fill="#F59E0B" opacity="0.13"/>
+
+  <!-- ══ RIGHT CHARACTER (navy outfit, one arm raised) ══ -->
+
+  <!-- Body / navy-blue top -->
+  <path d="M 394 330 L 394 284 C 394 269 403 262 416 259 L 434 256 L 445 255 L 456 256 L 474 259 C 487 262 496 269 496 284 L 496 330 Z" fill="#2D5F8A"/>
+  <!-- Pants -->
+  <rect x="419" y="326" width="24" height="46" rx="11" fill="#1a2547"/>
+  <rect x="447" y="326" width="24" height="46" rx="11" fill="#1a2547"/>
+  <!-- Shoes -->
+  <ellipse cx="431" cy="374" rx="20" ry="11" fill="#0D183D"/>
+  <ellipse cx="459" cy="374" rx="20" ry="11" fill="#0D183D"/>
+
+  <!-- Left arm (relaxed down / angled) -->
+  <path d="M 396 286 Q 376 308 370 330" stroke="#EDAA8A" stroke-width="24" stroke-linecap="round"/>
+  <ellipse cx="369" cy="333" rx="15" ry="10" fill="#EDAA8A" transform="rotate(-8 369 333)"/>
+
+  <!-- Right arm raised UP -->
+  <path d="M 494 282 Q 516 254 524 212" stroke="#EDAA8A" stroke-width="26" stroke-linecap="round"/>
+  <!-- Hand -->
+  <circle cx="527" cy="205" r="16" fill="#EDAA8A"/>
+  <path d="M 517 192 Q 515 177 519 168" stroke="#EDAA8A" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M 525 188 Q 524 173 528 164" stroke="#EDAA8A" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M 533 190 Q 535 175 538 167" stroke="#EDAA8A" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M 539 198 Q 544 184 546 177" stroke="#EDAA8A" stroke-width="6.5" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <rect x="436" y="224" width="18" height="34" rx="9" fill="#EDAA8A"/>
+  <!-- Head -->
+  <circle cx="445" cy="204" r="36" fill="#EDAA8A"/>
+  <!-- Hair (straight, dark) -->
+  <path d="M 410 197 Q 411 166 445 163 Q 479 166 480 197 Q 476 173 445 170 Q 414 173 410 197 Z" fill="#1A0800"/>
+  <path d="M 410 198 Q 406 210 408 228 Q 403 216 403 202 Q 403 195 410 198 Z" fill="#1A0800"/>
+  <!-- Right side longer hair -->
+  <path d="M 480 198 Q 486 212 488 230" stroke="#1A0800" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+  <!-- Ears -->
+  <ellipse cx="410" cy="208" rx="8" ry="10" fill="#EDAA8A"/>
+  <ellipse cx="480" cy="208" rx="8" ry="10" fill="#EDAA8A"/>
+  <!-- Eyes -->
+  <circle cx="433" cy="206" r="6.5" fill="#1a0a00"/>
+  <circle cx="457" cy="206" r="6.5" fill="#1a0a00"/>
+  <circle cx="435.5" cy="203.5" r="2.3" fill="white"/>
+  <circle cx="459.5" cy="203.5" r="2.3" fill="white"/>
+  <!-- Eyebrows -->
+  <path d="M 424 194 Q 433 190 442 194" stroke="#1A0800" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+  <path d="M 448 194 Q 457 190 466 194" stroke="#1A0800" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+  <!-- Smile -->
+  <path d="M 433 218 Q 445 227 457 218" stroke="#8a4a1c" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Blush -->
+  <circle cx="420" cy="214" r="10" fill="#F59E0B" opacity="0.11"/>
+  <circle cx="470" cy="214" r="10" fill="#F59E0B" opacity="0.11"/>
+</svg>

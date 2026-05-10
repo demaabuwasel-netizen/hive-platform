@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: #FFF7E6;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #0D183D;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+@layer components {
+  /* ── Primary brand button (honey) ── */
+  .btn-honey {
+    @apply inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97];
+    background: #FFB703;
+    color: #fff;
+    padding: 0.65rem 1.4rem;
+    box-shadow: 0 2px 12px rgba(255,183,3,0.25);
+  }
+  .btn-honey:hover { background: #D99E00; }
+
+  /* ── Navy button ── */
+  .btn-navy {
+    @apply inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97];
+    background: #0D183D;
+    color: #fff;
+    padding: 0.65rem 1.4rem;
+    box-shadow: 0 2px 12px rgba(13,24,61,0.18);
+  }
+  .btn-navy:hover { background: #1a2e5a; }
+
+  /* ── Secondary / ghost button ── */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97];
+    background: transparent;
+    color: #0D183D;
+    padding: 0.65rem 1.4rem;
+    border: 1.5px solid rgba(13,24,61,0.15);
+  }
+  .btn-secondary:hover { background: rgba(13,24,61,0.04); }
+
+  /* ── Orange (kept for legacy / impact cards) ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97];
+    background: #f97316;
+    color: #fff;
+    padding: 0.65rem 1.4rem;
+  }
+  .btn-primary:hover { background: #ea6c0a; }
+
+  /* ── Card ── */
+  .card {
+    @apply bg-white rounded-3xl p-6;
+    box-shadow: 0 2px 12px rgba(13,24,61,0.06);
+    border: 1px solid rgba(13,24,61,0.06);
+  }
+
+  /* ── Form fields ── */
+  .input-field {
+    @apply w-full rounded-2xl px-4 py-3 text-[#0D183D] transition-all duration-200;
+    background: #FFF7E6;
+    border: 1.5px solid rgba(13,24,61,0.12);
+    font-size: 0.9rem;
+  }
+  .input-field::placeholder { color: #4B6382; opacity: 0.55; }
+  .input-field:focus {
+    outline: none;
+    border-color: #FFB703;
+    box-shadow: 0 0 0 3px rgba(255,183,3,0.14);
+  }
+
+  .textarea-field {
+    @apply w-full rounded-2xl px-4 py-3 text-[#0D183D] transition-all duration-200 resize-none;
+    background: #FFF7E6;
+    border: 1.5px solid rgba(13,24,61,0.12);
+    font-size: 0.9rem;
+  }
+  .textarea-field::placeholder { color: #4B6382; opacity: 0.55; }
+  .textarea-field:focus {
+    outline: none;
+    border-color: #FFB703;
+    box-shadow: 0 0 0 3px rgba(255,183,3,0.14);
+  }
+}
