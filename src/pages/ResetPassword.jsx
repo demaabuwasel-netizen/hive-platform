@@ -19,24 +19,31 @@ export default function ResetPassword() {
   const [sessionReady, setReady]  = useState(false)
   const [invalidLink, setInvalid] = useState(false)
 
-  // Supabase delivers the session via a URL fragment (#access_token=...) after
-  // the user clicks the email link. onAuthStateChange fires once Supabase has
-  // parsed that fragment — at that point we know the session is live.
+  // Supabase parses the #access_token fragment and fires PASSWORD_RECOVERY via
+  // onAuthStateChange. But AppContext registers its own listener first (at app
+  // boot), so the event may have already fired by the time this component
+  // mounts. We therefore check getSession() immediately as well, so both
+  // timings are covered.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setReady(true)
-      } else if (event === 'SIGNED_IN' && !sessionReady) {
-        // Fallback: some Supabase versions fire SIGNED_IN instead
+    const hash = window.location.hash
+    const hasToken = hash.includes('access_token') || hash.includes('type=recovery')
+
+    if (!hasToken) {
+      setInvalid(true)
+      return
+    }
+
+    // Case 1: token was already exchanged before this component mounted
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
+    })
+
+    // Case 2: token exchange fires after this component mounts
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setReady(true)
       }
     })
-
-    // If no token fragment at all, this isn't a valid reset link
-    const hash = window.location.hash
-    if (!hash.includes('access_token') && !hash.includes('type=recovery')) {
-      setInvalid(true)
-    }
 
     return () => subscription.unsubscribe()
   }, [])

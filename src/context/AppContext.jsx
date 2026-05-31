@@ -48,10 +48,12 @@ export function AppProvider({ children }) {
 
   // Bootstrap: get current session, then subscribe to auth changes
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) await hydrateUser(session.user)
-      setLoading(false)
-    })
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (session?.user) await hydrateUser(session.user)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
