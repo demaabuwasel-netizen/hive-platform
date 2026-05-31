@@ -10,52 +10,9 @@ import GradientAvatar from '../components/GradientAvatar'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const STUDENT_UPCOMING = [
-  {
-    id: 1, ngo: 'Elem – Youth in Distress', role: 'Web Developer – Community Platform',
-    date: 'Tomorrow', time: '14:00', type: 'video', status: 'confirmed', prep: 76,
-  },
-  {
-    id: 2, ngo: 'BINA – The Jewish Movement', role: 'Content Strategist',
-    date: 'Friday', time: '10:30', type: 'phone', status: 'pending', prep: 42,
-  },
-]
+const STUDENT_UPCOMING = []
 
-const NGO_INTERVIEWS = [
-  {
-    id: 1, candidate: 'Maya Cohen', field: 'Computer Science', score: 93,
-    role: 'Web Developer – Community Platform',
-    date: 'Tomorrow', time: '14:00', type: 'video', status: 'confirmed',
-    questions: [
-      'Walk me through your strongest React project and the architecture decisions you made.',
-      'How would you approach building a volunteer management dashboard from scratch?',
-      'Tell me about working with a non-technical stakeholder. How did you communicate constraints?',
-      'What does meaningful impact mean to you, and how does this role align with that?',
-    ],
-  },
-  {
-    id: 2, candidate: 'Sharon Bloomstein', field: 'Digital Marketing', score: 85,
-    role: 'Content Strategist – Digital Outreach',
-    date: 'Friday', time: '10:30', type: 'phone', status: 'pending',
-    questions: [
-      'How would you build a content calendar for an NGO with limited resources?',
-      'Describe a campaign where you significantly grew an audience — key tactics?',
-      'How do you adapt messaging for a multilingual, multicultural audience?',
-      'What KPIs would you track for our community outreach program?',
-    ],
-  },
-  {
-    id: 3, candidate: 'Ethan Galvin', field: 'Computer Science', score: 90,
-    role: 'Data Analyst – Impact Reports',
-    date: 'Next Monday', time: '11:00', type: 'video', status: 'pending',
-    questions: [
-      'Walk us through a data pipeline you built end-to-end.',
-      'How would you visualize program impact for a board presentation?',
-      'What tools do you use for data cleaning and what\'s your quality-check process?',
-      'How would you approach measuring the social impact of our youth programs?',
-    ],
-  },
-]
+const NGO_INTERVIEWS = []
 
 const STUDENT_QUESTIONS = [
   { id: 1, q: 'Tell me about a project where you had to learn a new skill quickly. How did you approach it?', cat: 'Adaptability', done: true },

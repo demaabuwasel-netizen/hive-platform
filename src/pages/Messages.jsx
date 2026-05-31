@@ -6,73 +6,11 @@ import GradientAvatar from '../components/GradientAvatar'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const CONVERSATIONS = [
-  {
-    id: 1, name: 'Elem – Youth in Distress', role: 'NGO · Tel Aviv',
-    last: "Looking forward to our call tomorrow! We'll discuss the project scope.",
-    time: '10:42', unread: 2, online: true, type: 'ngo',
-  },
-  {
-    id: 2, name: 'Amir Cohen', role: 'Program Manager · BINA',
-    last: 'Thanks for your application. We reviewed your profile and...',
-    time: '09:18', unread: 1, online: false, type: 'ngo',
-  },
-  {
-    id: 3, name: 'GreenFuture Initiative', role: 'NGO · Jerusalem',
-    last: 'Your match score is 89%. Would you like to schedule a chat?',
-    time: 'Yesterday', unread: 0, online: true, type: 'ngo',
-  },
-  {
-    id: 4, name: 'Hive Support', role: 'Hive Team',
-    last: 'Welcome to Hive! Let us know if you need anything.',
-    time: 'Mon', unread: 0, online: true, type: 'support',
-  },
-]
+const CONVERSATIONS = []
 
-const INITIAL_MESSAGES = {
-  1: [
-    { id: 1, from: 'them', text: "Hi! We reviewed your Hive profile and think you'd be a great fit for our digital outreach project.", time: '10:20' },
-    { id: 2, from: 'me',   text: "Thanks so much! I'd love to learn more about the role. What skills are most important?", time: '10:25' },
-    { id: 3, from: 'them', text: 'We mainly need someone with React and basic data visualization. Your GitHub projects look perfect.', time: '10:31' },
-    { id: 4, from: 'me',   text: "That's exactly what I've been working on. I built a dashboard for a food bank project last semester.", time: '10:35' },
-    { id: 5, from: 'them', text: "Looking forward to our call tomorrow! We'll discuss the project scope.", time: '10:42' },
-  ],
-  2: [
-    { id: 1, from: 'them', text: "Hello! We've reviewed your application for the Content Strategist role.", time: '09:10' },
-    { id: 2, from: 'them', text: "Your profile is strong. We'd like to learn more about your experience with NGO communications.", time: '09:18' },
-  ],
-  3: [
-    { id: 1, from: 'them', text: "Hi there! Hive matched you to our Environmental Education Coordinator role at 89%.", time: 'Yesterday' },
-    { id: 2, from: 'them', text: "Would you be open to a quick 20-minute chat to explore this further?", time: 'Yesterday' },
-  ],
-  4: [
-    { id: 1, from: 'them', text: "Welcome to Hive! 🐝 You're all set up. Your profile is live and we're matching you now.", time: 'Mon' },
-    { id: 2, from: 'them', text: "Tip: The more detail you add to your profile, the better your AI matches will be.", time: 'Mon' },
-  ],
-}
+const INITIAL_MESSAGES = {}
 
-const SUGGESTED_REPLIES = {
-  1: [
-    "Looking forward to it! I'll prepare some questions about the project.",
-    "Could we also cover the timeline and your main deliverables?",
-    "Great, I'll join the call 5 minutes early. See you then!",
-  ],
-  2: [
-    "Thank you! I'd be happy to share more about my NGO communications work.",
-    "I'm available for a call this week — what time works for you?",
-    "I've attached some examples of my previous campaigns. Would that be helpful?",
-  ],
-  3: [
-    "Absolutely! I'm very interested in the Environmental Education role.",
-    "A 20-minute chat sounds perfect — I'm free Thursday or Friday afternoon.",
-    "Yes, I'd love to learn more about the day-to-day of this role.",
-  ],
-  4: [
-    "Thanks for the welcome! Is there anything I can do to improve my matches?",
-    "Quick question — how does the AI matching engine work?",
-    "Love the platform so far! How long does matching usually take?",
-  ],
-}
+const SUGGESTED_REPLIES = {}
 
 const INTERVIEW_INVITE_TEMPLATE = (name, date = 'Thursday, May 14 at 10:00 AM', type = 'video') =>
   `Hi ${name},\n\nWe'd love to invite you to an interview for the role.\n\n📅 ${date}\n📹 ${type === 'video' ? 'Video call (link will follow)' : 'Phone call'}\n⏱ ~30 minutes\n\nPlease confirm if this works for you or suggest an alternative time.\n\nLooking forward to speaking with you!\n\nBest regards`

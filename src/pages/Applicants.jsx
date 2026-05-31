@@ -7,107 +7,11 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
+import CategorizedSkillTags from '../components/CategorizedSkillTags'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const APPLICANTS = [
-  {
-    id: 1, name: 'Maya Cohen', field: 'Computer Science', uni: 'Tel Aviv University', year: '3rd year',
-    match: 93, status: 'shortlisted',
-    skills: ['React', 'TypeScript', 'UX Design', 'Figma', 'Python'],
-    languages: ['English', 'Hebrew'],
-    interests: ['Human-Computer Interaction', 'Social Good', 'Accessibility'],
-    availability: 'Immediately', weeklyHours: '15–20 hrs/week', location: 'Tel Aviv',
-    bio: 'CS student with a strong design sensibility. Rare combo of frontend engineering and UX. Has completed two nonprofit tech projects with measurable outcomes.',
-    applied: '1 day ago',
-    matchReasons: [
-      'React + TypeScript + UX design is a rare full-stack/design hybrid that matches your exact gap',
-      'Accessibility focus is directly relevant to your platform\'s inclusion goals',
-      'Available immediately in Tel Aviv — fastest possible start time',
-    ],
-    projects: ['Accessible web app for a disability NGO (React + ARIA)', 'UX research study for a youth organization'],
-  },
-  {
-    id: 2, name: 'Ethan Galvin', field: 'Computer Science', uni: 'Tel Aviv University', year: '3rd year',
-    match: 90, status: 'new',
-    skills: ['Python', 'React', 'ML', 'Data Analysis'],
-    languages: ['English', 'Hebrew'],
-    interests: ['Social Impact Tech', 'Open Source', 'Education'],
-    availability: 'Immediately', weeklyHours: '15–20 hrs/week', location: 'Tel Aviv',
-    bio: 'CS student focused on data-driven solutions for social good. Strong background in ML pipelines and open-source contribution. Looking to apply technical skills where data drives meaningful decisions.',
-    applied: '2 days ago',
-    matchReasons: [
-      'Python and ML expertise directly supports your data tracking and program analytics needs',
-      'Prior open-source work shows strong independent ownership and initiative',
-      'Based in Tel Aviv — available for on-site collaboration',
-    ],
-    projects: ['Automated data pipeline for a food bank serving 4,000 families', 'Open-source ML library with 220+ GitHub stars'],
-  },
-  {
-    id: 3, name: 'Sharon Bloomstein', field: 'Digital Marketing', uni: 'Hebrew University', year: '4th year',
-    match: 85, status: 'interview',
-    skills: ['SEO', 'Social Media', 'Canva', 'Google Analytics'],
-    languages: ['English', 'Hebrew', 'Russian'],
-    interests: ['Community Building', 'Content Strategy', 'NGO Communications'],
-    availability: 'Part-time', weeklyHours: '20 hrs/week', location: 'Jerusalem',
-    bio: 'Digital marketing specialist with 3 years helping nonprofits grow their online presence. Passionate about amplifying meaningful missions through strategic content and community-driven campaigns.',
-    applied: '4 days ago',
-    matchReasons: [
-      'SEO and social media expertise directly addresses your community outreach goals',
-      'Track record growing nonprofit audiences by 300% — proven, measurable results',
-      'Trilingual (English, Hebrew, Russian) — valuable for your diverse community',
-    ],
-    projects: ['Grew NGO social media from 1,200 to 4,800 followers in 6 months', 'Content strategy for 5 nonprofits in 2024'],
-  },
-  {
-    id: 4, name: 'Nour Haddad', field: 'Public Health', uni: 'Ben-Gurion University', year: '2nd year MSc',
-    match: 80, status: 'new',
-    skills: ['Research', 'Statistics', 'Arabic', 'Academic Writing'],
-    languages: ['Arabic', 'English', 'Hebrew'],
-    interests: ['Health Equity', 'Community Research', 'Youth Programs'],
-    availability: 'Flexible', weeklyHours: '10–15 hrs/week', location: 'Beer Sheva',
-    bio: 'Public health researcher specializing in health equity for underserved communities. Published in 2 peer-reviewed journals. Evidence-based approach with deep community connection.',
-    applied: '5 days ago',
-    matchReasons: [
-      'Native Arabic speaker with community research background — rare for fieldwork',
-      'Health equity focus aligns strongly with your youth mission and target communities',
-      'Peer-reviewed research strengthens grant applications and impact reporting',
-    ],
-    projects: ['Community health study across 3 regions with 1,200+ participants', 'Data analysis internship at WHO Geneva'],
-  },
-  {
-    id: 5, name: 'Daniel Reiss', field: 'Software Engineering', uni: 'Technion', year: '4th year',
-    match: 78, status: 'new',
-    skills: ['Node.js', 'React', 'PostgreSQL', 'Docker'],
-    languages: ['English', 'Hebrew'],
-    interests: ['Ed-Tech', 'Open Source', 'Social Innovation'],
-    availability: '20 hrs/week', weeklyHours: '20 hrs/week', location: 'Haifa',
-    bio: 'Full-stack developer with experience in nonprofit-sector projects. Built and maintained production systems for two NGOs during his studies.',
-    applied: '1 week ago',
-    matchReasons: [
-      'Full-stack Node.js + React covers your technical infrastructure needs end-to-end',
-      'Prior NGO project experience means less onboarding and faster first contribution',
-      'Haifa location — can do hybrid on-site if needed',
-    ],
-    projects: ['Volunteer tracking system for a nonprofit (PostgreSQL + Node)', 'Contributed to open-source ed-tech platform'],
-  },
-  {
-    id: 6, name: 'Emma Weiss', field: 'Graphic Design', uni: 'Bezalel Academy', year: '3rd year',
-    match: 74, status: 'rejected',
-    skills: ['Figma', 'Illustrator', 'Brand Design', 'Animation'],
-    languages: ['English', 'Hebrew', 'German'],
-    interests: ['Visual Storytelling', 'Social Impact', 'Accessibility Design'],
-    availability: 'Freelance', weeklyHours: '5–10 hrs/week', location: 'Jerusalem',
-    bio: 'Visual storyteller passionate about social impact design. Creates brand identities and campaigns for mission-driven organizations.',
-    applied: '1 week ago',
-    matchReasons: [
-      'Figma and brand design skills directly support your visual communication needs',
-      'Bezalel training brings professional design standards to NGO materials',
-      'Freelance availability offers scheduling flexibility',
-    ],
-    projects: ['Brand identity for a youth literacy NGO', 'Annual report design for 3 organizations'],
-  },
-]
+const APPLICANTS = []
 
 const STATUS_CONFIG = {
   new:         { label: 'New',         color: 'text-indigo-600',  bg: 'bg-indigo-50'   },
@@ -434,12 +338,7 @@ export default function Applicants() {
                     {/* Skills */}
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">Skills</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {selected.skills.map(s => (
-                          <span key={s} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg border"
-                            style={{ background:'#F8F9FB', color:'#0D183D', borderColor:'rgba(13,24,61,0.09)' }}>{s}</span>
-                        ))}
-                      </div>
+                      <CategorizedSkillTags skills={selected.skills} showLevel />
                     </div>
 
                     <div className="h-px" style={{ background:'rgba(13,24,61,0.07)' }}/>

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle2, Sparkles, MessageCircle, Send } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import Navbar from '../components/Navbar'
 import MatchScoreBadge from '../components/MatchScoreBadge'
 import EmptyState from '../components/EmptyState'
 import GradientAvatar from '../components/GradientAvatar'
@@ -12,7 +11,6 @@ import { mockMatches, mockStudents, mockNGOs } from '../data/mockData'
 // Enough diversity for meaningful matching across different student profiles.
 
 const NGO_POOL = [
-  ...mockNGOs,
   {
     id: 'n4',
     name: 'Tsofen – Tech for Arabs',
@@ -591,18 +589,14 @@ export default function MatchResults() {
   // Incomplete onboarding
   if (user && !user.onboardingComplete) {
     return (
-      <div className="min-h-screen bg-[#FFF7E6]">
-        <Navbar />
-        <div className="max-w-2xl mx-auto px-6 py-10">
-          <EmptyState
-            emoji="🔍"
-            title="No matches yet"
-            description="Complete your profile so our AI can find NGOs that match your skills and values. It only takes a few minutes."
-            actionLabel="Complete my profile"
-            actionHref="/role-selection"
-            secondary={{ label: 'See example matches first', href: '/matches?preview=1' }}
-          />
-        </div>
+      <div className="max-w-2xl mx-auto px-8 py-10">
+        <EmptyState
+          emoji="🔍"
+          title="No matches yet"
+          description="Complete your profile so our AI can find NGOs that match your skills and values. It only takes a few minutes."
+          actionLabel="Complete my profile"
+          actionHref="/role-selection"
+        />
       </div>
     )
   }
@@ -623,10 +617,8 @@ export default function MatchResults() {
   const [activeMatch, setActiveMatch] = useState(null)
 
   return (
-    <div className="min-h-screen bg-[#FFF7E6]">
-      <Navbar />
-
-      <div className="max-w-4xl mx-auto px-6 py-10">
+    <>
+    <div className="max-w-4xl mx-auto px-8 py-7">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -750,6 +742,6 @@ export default function MatchResults() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </>
   )
 }

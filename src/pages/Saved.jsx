@@ -19,12 +19,7 @@ const STUDENT_NAV = [
   { icon: Settings,        label: 'Settings',     to: '/settings'          },
 ]
 
-const SAVED_ITEMS = [
-  { id:1, ngo:'BINA – The Jewish Movement', cat:'Education', loc:'Jerusalem', match:89, skills:['Content Writing','Marketing','SEO'], desc:'Create educational content that bridges different communities across Israel.' },
-  { id:2, ngo:'Access Israel', cat:'Accessibility', loc:'Ramat Gan', match:76, skills:['UX Research','Figma','Accessibility'], desc:'Design accessible digital experiences for people with disabilities.' },
-  { id:3, ngo:'Latet – Israeli Food Bank', cat:'Social Services', loc:'Tel Aviv', match:72, skills:['Logistics','Excel','Communication'], desc:'Help coordinate food distribution programs for families in need.' },
-  { id:4, ngo:'Perach Tutorial Project', cat:'Education', loc:'Multiple', match:84, skills:['Teaching','Mentoring','Any field'], desc:'Tutor underprivileged students in your area of expertise.' },
-]
+const SAVED_ITEMS = []
 
 export default function Saved() {
   const [items, setItems] = useState(SAVED_ITEMS)

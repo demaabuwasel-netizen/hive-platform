@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -6,10 +6,10 @@ import { AvatarDisplay } from './Avatar'
 import HiveLogo from './HiveLogo'
 
 const NAV_LINKS = [
-  { label: 'How it works', section: 'how-it-works' },
-  { label: 'For Students', section: 'for-students'  },
-  { label: 'For NGOs',     section: 'for-ngos'      },
-  { label: 'About',        section: 'about'          },
+  { label: 'Home',         to: '/'             },
+  { label: 'For Students', to: '/for-students' },
+  { label: 'For NGOs',     to: '/for-ngos'     },
+  { label: 'About',        to: '/about'        },
 ]
 
 export default function Navbar({ minimal = false }) {
@@ -17,44 +17,10 @@ export default function Navbar({ minimal = false }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState(null)
   const avatarSrc = profile?.avatar || user?.avatar || null
-
-  // Track which section is in view as user scrolls (only on landing page)
-  useEffect(() => {
-    if (location.pathname !== '/') {
-      setActiveSection(null)
-      return
-    }
-    function onScroll() {
-      const ids = NAV_LINKS.map(l => l.section)
-      let current = null
-      for (const id of ids) {
-        const el = document.getElementById(id)
-        if (el && el.getBoundingClientRect().top <= 100) current = id
-      }
-      setActiveSection(current)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [location.pathname])
-
-  function scrollToSection(section) {
-    const el = document.getElementById(section)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  function handleNavClick(e, section) {
-    e.preventDefault()
-    setMobileOpen(false)
-    if (location.pathname === '/') {
-      scrollToSection(section)
-    } else {
-      navigate('/')
-      setTimeout(() => scrollToSection(section), 380)
-    }
-  }
+  const PUBLIC_PAGES = ['/', '/for-students', '/for-ngos', '/how-it-works', '/about']
+  const isPublicPage = PUBLIC_PAGES.includes(location.pathname)
+  const loggedIn = user && !isPublicPage
 
   function handleLogout() {
     logout()
@@ -73,31 +39,30 @@ export default function Navbar({ minimal = false }) {
         </Link>
 
         {/* Centre nav — shown when NOT logged in, desktop only */}
-        {!minimal && !user && (
+        {!minimal && !loggedIn && (
           <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             {NAV_LINKS.map(link => {
-              const isActive = activeSection === link.section
+              const isActive = location.pathname === link.to
               return (
-                <a key={link.label}
-                  href={`/#${link.section}`}
-                  onClick={e => handleNavClick(e, link.section)}
+                <Link key={link.label} to={link.to}
                   className="text-sm font-medium px-3 py-2 rounded-xl transition-all duration-150 relative"
                   style={{
                     color: isActive ? '#0D183D' : '#4B6382',
                     background: isActive ? 'rgba(13,24,61,0.06)' : 'transparent',
+                    fontWeight: isActive ? 600 : 500,
                   }}>
                   {link.label}
                   {isActive && (
                     <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FFB703]" />
                   )}
-                </a>
+                </Link>
               )
             })}
           </div>
         )}
 
         {/* "Matching now" chip — logged-in users, desktop */}
-        {!minimal && user && user.onboardingComplete && (
+        {!minimal && loggedIn && user.onboardingComplete && (
           <div className="hidden md:flex flex-1 justify-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
               style={{ background: 'rgba(255,183,3,0.1)', color: '#FFB703', border: '1px solid rgba(255,183,3,0.25)' }}>
@@ -108,12 +73,12 @@ export default function Navbar({ minimal = false }) {
         )}
 
         {/* Spacer when no centre content */}
-        {!minimal && !user && <div className="hidden lg:block" />}
+        {!minimal && !loggedIn && <div className="hidden lg:block" />}
 
         {/* Right actions — desktop */}
         {!minimal && (
           <div className="hidden sm:flex items-center gap-3">
-            {user ? (
+            {loggedIn ? (
               <>
                 <Link to="/matches"
                   className="text-sm font-medium px-3 py-2 rounded-xl transition-all hover:bg-[#0D183D]/[0.05]"
@@ -168,17 +133,16 @@ export default function Navbar({ minimal = false }) {
       {!minimal && mobileOpen && (
         <div className="sm:hidden px-6 py-4 flex flex-col gap-1"
           style={{ borderTop: '1px solid rgba(13,24,61,0.07)', background: '#FFF7E6' }}>
-          {!user && NAV_LINKS.map(link => (
-            <a key={link.label}
-              href={`/#${link.section}`}
-              onClick={e => handleNavClick(e, link.section)}
+          {!loggedIn && NAV_LINKS.map(link => (
+            <Link key={link.label} to={link.to}
+              onClick={() => setMobileOpen(false)}
               className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05] transition-colors"
-              style={{ color: activeSection === link.section ? '#0D183D' : '#4B6382',
-                       fontWeight: activeSection === link.section ? 600 : 500 }}>
+              style={{ color: location.pathname === link.to ? '#0D183D' : '#4B6382',
+                       fontWeight: location.pathname === link.to ? 600 : 500 }}>
               {link.label}
-            </a>
+            </Link>
           ))}
-          {user ? (
+          {loggedIn ? (
             <>
               <Link to="/matches" onClick={() => setMobileOpen(false)}
                 className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05]"

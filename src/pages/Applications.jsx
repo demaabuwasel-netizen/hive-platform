@@ -19,13 +19,7 @@ const STUDENT_NAV = [
   { icon: Settings,        label: 'Settings',     to: '/settings'          },
 ]
 
-const APPS = [
-  { id:1, ngo:'Elem – Youth in Distress', role:'Web Developer', loc:'Tel Aviv', match:94, status:'interview', statusLabel:'Interview scheduled', date:'Applied 3 days ago', next:'Interview: Tomorrow 14:00' },
-  { id:2, ngo:'BINA – The Jewish Movement', role:'Content Lead', loc:'Jerusalem', match:89, status:'review', statusLabel:'Under review', date:'Applied 5 days ago', next:'Expected response: 3–5 days' },
-  { id:3, ngo:'GreenFuture Initiative', role:'Marketing Intern', loc:'Tel Aviv', match:87, status:'applied', statusLabel:'Application sent', date:'Applied 1 week ago', next:'Awaiting response' },
-  { id:4, ngo:'Tsofen – Tech for Arabs', role:'Frontend Developer', loc:'Nazareth', match:80, status:'applied', statusLabel:'Application sent', date:'Applied 2 weeks ago', next:'Awaiting response' },
-  { id:5, ngo:'PHR – Physicians for Human Rights', role:'Data Analyst', loc:'Jaffa', match:82, status:'rejected', statusLabel:'Not selected', date:'Applied 3 weeks ago', next: '' },
-]
+const APPS = []
 
 const STATUS_CFG = {
   interview: { color:'text-emerald-700', bg:'bg-emerald-50', icon: Calendar },

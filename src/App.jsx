@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Landing from './pages/Landing'
+import ForStudents from './pages/ForStudents'
+import ForNGOs from './pages/ForNGOs'
+import HowItWorks from './pages/HowItWorks'
+import About from './pages/About'
 import Auth from './pages/Auth'
 import RoleSelection from './pages/RoleSelection'
 import StudentOnboarding from './pages/StudentOnboarding'
@@ -25,6 +29,7 @@ import EditNGOProfile from './pages/EditNGOProfile'
 import DashboardLayout from './components/DashboardLayout'
 import { AppProvider, useApp } from './context/AppContext'
 import HiveLogo from './components/HiveLogo'
+import ScrollToTop from './components/ScrollToTop'
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -89,8 +94,11 @@ function AppRoutes() {
     <Routes>
       {/* ── Public ── */}
       <Route path="/" element={<Landing />} />
+      <Route path="/for-students"  element={<ForStudents />} />
+      <Route path="/for-ngos"      element={<ForNGOs />} />
+      <Route path="/how-it-works"  element={<HowItWorks />} />
+      <Route path="/about"         element={<About />} />
       <Route path="/auth" element={<GuestOnly><Auth /></GuestOnly>} />
-      <Route path="/matches" element={<MatchResults />} />
       <Route path="/match/:id" element={<MatchExplanation />} />
 
       {/* ── Onboarding ── */}
@@ -98,9 +106,9 @@ function AppRoutes() {
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
-      {/* ── Profile ── */}
-      <Route path="/profile/student"      element={<RequireAuth><StudentProfile /></RequireAuth>} />
-      <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
+      {/* ── Profile — redirected to settings ── */}
+      <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
+      <Route path="/profile/student/edit" element={<Navigate to="/settings" replace />} />
       <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
       <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
 
@@ -119,6 +127,7 @@ function AppRoutes() {
         <Route path="/settings"          element={<Settings />} />
         <Route path="/applications"      element={<Applications />} />
         <Route path="/saved"             element={<Saved />} />
+        <Route path="/matches"           element={<MatchResults />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -130,6 +139,7 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <AppRoutes />
       </BrowserRouter>
     </AppProvider>

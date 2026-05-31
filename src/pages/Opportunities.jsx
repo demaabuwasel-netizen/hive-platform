@@ -12,21 +12,9 @@ import GradientAvatar from '../components/GradientAvatar'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const NGOS = [
-  { id:1, name:'Elem – Youth in Distress', cat:'Youth Services', loc:'Tel Aviv', match:94, skills:['React','UX Design','Data Analysis'], desc:'Support at-risk youth through digital programs. We need a developer to help build our community platform.', openings:2, hours:'10–15 hrs/week', duration:'3–6 months', workMode:'hybrid', saved:false, mission:'Elem supports tens of thousands of at-risk youth across Israel through a network of drop-in centers, digital programs, and community workers.' },
-  { id:2, name:'BINA – The Jewish Movement', cat:'Education', loc:'Jerusalem', match:89, skills:['Content Writing','Marketing','SEO'], desc:'Create educational content that bridges different communities across Israel.', openings:1, hours:'8–12 hrs/week', duration:'2–3 months', workMode:'remote', saved:true, mission:'BINA creates pluralistic Jewish educational experiences and social action programs that build bridges across Israeli society.' },
-  { id:3, name:'GreenFuture Initiative', cat:'Environment', loc:'Tel Aviv', match:87, skills:['Canva','Social Media','Analytics'], desc:'Build digital tools and campaigns to promote sustainable living.', openings:3, hours:'5–10 hrs/week', duration:'Ongoing', workMode:'remote', saved:false, mission:'GreenFuture empowers communities to adopt sustainable lifestyles through education, advocacy, and grassroots organizing.' },
-  { id:4, name:'PHR – Physicians for Human Rights', cat:'Healthcare', loc:'Jaffa', match:82, skills:['Python','Statistics','Research'], desc:'Analyze health data to support advocacy work for underserved populations.', openings:1, hours:'10–15 hrs/week', duration:'3–6 months', workMode:'onsite', saved:false, mission:'PHR Israel promotes health rights and equal access to healthcare for vulnerable populations including asylum seekers and unrecognized communities.' },
-  { id:5, name:'Tsofen – Tech for Arabs', cat:'Technology', loc:'Nazareth', match:80, skills:['React','Node.js','Teaching'], desc:'Help bridge the tech employment gap for Arab citizens through coding bootcamps.', openings:2, hours:'15–20 hrs/week', duration:'6–12 months', workMode:'hybrid', saved:false, mission:'Tsofen promotes hi-tech employment among Arab citizens of Israel through bootcamps, mentoring, and industry partnerships.' },
-  { id:6, name:'Access Israel', cat:'Accessibility', loc:'Ramat Gan', match:76, skills:['UX Research','Figma','Accessibility'], desc:'Design accessible digital experiences for people with disabilities.', openings:1, hours:'8–12 hrs/week', duration:'3–6 months', workMode:'hybrid', saved:true, mission:'Access Israel works to make Israel fully accessible to people with disabilities — in the physical world and online.' },
-]
+const NGOS = []
 
-const NGO_OPPORTUNITIES = [
-  { id:'1', title:'Web Developer – Community Platform',    status:'Active', applicants:12, match:'94% avg', posted:'3 days ago'  },
-  { id:'2', title:'Content Strategist – Digital Outreach', status:'Active', applicants:8,  match:'87% avg', posted:'1 week ago'  },
-  { id:'3', title:'Data Analyst – Impact Reports',         status:'Paused', applicants:5,  match:'82% avg', posted:'2 weeks ago' },
-  { id:'4', title:'UI/UX Designer – Youth App',            status:'Draft',  applicants:0,  match:'—',       posted:'Not posted'  },
-]
+const NGO_OPPORTUNITIES = []
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 

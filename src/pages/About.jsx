@@ -1,0 +1,133 @@
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import Navbar from '../components/Navbar'
+import HiveLogo from '../components/HiveLogo'
+
+const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+}
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } }
+
+const VALUES = [
+  { emoji: '🎯', title: 'Precision over volume', desc: 'One well-matched placement beats ten random ones. We optimise for quality and genuine fit.' },
+  { emoji: '🔍', title: 'Transparency', desc: 'Every match comes with a full explanation. No black boxes — you always know why.' },
+  { emoji: '🌍', title: 'Inclusion', desc: 'We build for diverse communities. Language, background, and geography are features, not obstacles.' },
+  { emoji: '🤝', title: 'Mutual benefit', desc: 'A good match works for both sides. Students grow. NGOs move their mission forward.' },
+]
+
+export default function About() {
+  return (
+    <div className="flex flex-col min-h-screen" style={{ background: C.bg }}>
+      <Navbar />
+
+      {/* Hero */}
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10 text-center">
+        <motion.div variants={stagger} initial="hidden" animate="show">
+          <motion.h1 variants={fadeUp}
+            className="text-[3rem] font-extrabold leading-[1.08] tracking-tight mb-5"
+            style={{ color: C.primary }}>
+            We believe talent and<br />mission belong together.
+          </motion.h1>
+          <motion.p variants={fadeUp} className="text-[1.05rem] leading-relaxed max-w-2xl mx-auto" style={{ color: C.muted }}>
+            Hive was built to close the gap between ambitious students who want to make an impact
+            and NGOs that need skilled, motivated collaborators — but struggle to find them.
+          </motion.p>
+        </motion.div>
+      </section>
+
+      {/* Mission */}
+      <section className="max-w-4xl mx-auto px-6 py-14">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="rounded-3xl p-10"
+          style={{ background: C.primary }}>
+          <p className="text-[1.5rem] font-extrabold text-white leading-snug">
+            "Make every student's skills accessible to every NGO that needs them —
+            and make every NGO's mission accessible to every student who cares."
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Story */}
+      <section className="max-w-4xl mx-auto px-6 py-10">
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+          className="bg-white rounded-2xl border p-10"
+          style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+          <h2 className="text-[1.6rem] font-extrabold mb-5" style={{ color: C.primary }}>The problem we're solving</h2>
+          <div className="flex flex-col gap-4 text-[14px] leading-relaxed" style={{ color: C.muted }}>
+            <p>
+              Every year, thousands of students graduate with strong technical and creative skills,
+              desperate for real-world experience that matters. At the same time, NGOs across the country
+              struggle to find volunteers who can actually help — not just show up, but contribute meaningfully.
+            </p>
+            <p>
+              The problem isn't a shortage of talent or a shortage of need. It's a matching problem.
+              A Python developer and a data-hungry NGO might be 10 minutes apart and never find each other.
+              A bilingual student could be exactly what an Arab-Jewish community centre needs — but neither knows it.
+            </p>
+            <p>
+              Hive fixes that. We use AI to read the meaning behind profiles — skills, experience, languages,
+              values — and surface connections that would otherwise never happen.
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Values */}
+      <section className="max-w-6xl mx-auto px-6 py-14">
+        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+          className="text-[1.9rem] font-extrabold text-center mb-12" style={{ color: C.primary }}>
+          What we stand for
+        </motion.h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {VALUES.map((v, i) => (
+            <motion.div key={v.title}
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
+              className="bg-white rounded-2xl border p-6 flex flex-col gap-3"
+              style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+              <span className="text-3xl">{v.emoji}</span>
+              <p className="text-[14px] font-bold" style={{ color: C.primary }}>{v.title}</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{v.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="rounded-3xl px-10 py-14 text-center"
+          style={{ background: 'rgba(255,183,3,0.08)', border: '1px solid rgba(255,183,3,0.2)' }}>
+          <p className="text-[2rem] font-extrabold mb-3" style={{ color: C.primary }}>Join the Hive.</p>
+          <p className="text-[15px] mb-8" style={{ color: C.muted }}>
+            Whether you're a student looking to make an impact, or an NGO looking for your next collaborator —
+            we'd love to have you.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/auth?mode=signup"
+              className="px-8 py-3.5 rounded-2xl text-[15px] font-bold text-white transition-all hover:opacity-90"
+              style={{ background: C.honey, boxShadow: '0 4px 20px rgba(255,183,3,0.35)' }}>
+              Get started →
+            </Link>
+            <Link to="/how-it-works"
+              className="px-8 py-3.5 rounded-2xl text-[15px] font-semibold border transition-all hover:bg-[rgba(13,24,61,0.04)]"
+              style={{ color: C.primary, borderColor: 'rgba(13,24,61,0.15)' }}>
+              See how it works
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      <div className="py-10 text-center text-[12px]" style={{ color: C.muted }}>
+        © {new Date().getFullYear()} Hive. All rights reserved.
+      </div>
+    </div>
+  )
+}

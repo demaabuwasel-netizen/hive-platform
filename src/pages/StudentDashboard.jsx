@@ -16,35 +16,7 @@ import img5 from '../assets/img5.png'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const TOP_MATCHES = [
-  {
-    id: 'gf', name: 'GreenFuture', category: 'Environmental Education', location: 'Tel Aviv',
-    bannerGrad: 'from-emerald-300 via-teal-400 to-emerald-600',
-    avatars: ['NoorA', 'LinaM', 'AhmadS'], skills: ['Canva', 'Marketing', 'Accessibility'], match: 89,
-    desc: 'Create content to educate communities on sustainable living and climate action.',
-    hours: '10–15 hrs/week', duration: '3–6 months', workMode: 'hybrid',
-    mission: 'GreenFuture empowers communities across Israel to adopt sustainable lifestyles through education, advocacy, and grassroots organizing.',
-    reasons: ['Canva and visual design skills match their content production needs', 'Marketing background aligns with their digital outreach goals', 'Shared interest in environmental sustainability and community impact'],
-  },
-  {
-    id: 'om', name: 'OpenMind', category: 'Mental Health Support', location: 'Jerusalem',
-    bannerGrad: 'from-violet-300 via-purple-400 to-indigo-500',
-    avatars: ['MayaC', 'OmarK', 'YasminB'], skills: ['Psychology', 'Writing', 'Design'], match: 87,
-    desc: 'Design digital resources helping young people access mental health support.',
-    hours: '8–12 hrs/week', duration: '3–6 months', workMode: 'remote',
-    mission: 'OpenMind creates accessible, youth-friendly digital resources that break the stigma around mental health and connect young people to support.',
-    reasons: ['Writing and design skills support content creation for their digital platform', 'Empathy for mental health aligns with their youth-first mission', 'Remote-friendly role with flexible hours'],
-  },
-  {
-    id: 'cfg', name: 'Code for Good', category: 'Education Technology', location: 'Haifa',
-    bannerGrad: 'from-sky-400 via-blue-500 to-blue-700',
-    avatars: ['DanielR', 'EmmaW', 'SarahK'], skills: ['React', 'Python', 'UX Design'], match: 85,
-    desc: 'Build ed-tech tools that increase digital literacy in underserved communities.',
-    hours: '15–20 hrs/week', duration: '6–12 months', workMode: 'onsite',
-    mission: 'Code for Good builds tech infrastructure for nonprofits and runs digital literacy bootcamps for underserved youth across northern Israel.',
-    reasons: ['React and UX design skills are exactly what their platform team needs', 'Ed-tech focus matches your interest in education and social impact', 'Hands-on project work leads to a strong portfolio piece'],
-  },
-]
+const TOP_MATCHES = []
 
 // AI-generated application message based on student profile + NGO mission
 function generateAppMessage(profile, ngo) {
@@ -389,7 +361,7 @@ export default function StudentDashboard() {
   const [chattingWith, setChattingWith] = useState(null)
   const [appCount, setAppCount]        = useState(() => {
     const saved = JSON.parse(localStorage.getItem('hive_student_applications') || '[]')
-    return 5 + saved.length
+    return saved.length
   })
 
   function handleApplySuccess() {
@@ -397,14 +369,14 @@ export default function StudentDashboard() {
   }
 
   const STATS = [
-    { icon: '✦',  label: 'Matches',      value: '24',            accent: 'text-[#D99E00]'   },
+    { icon: '✦',  label: 'Matches',      value: '0',             accent: 'text-[#D99E00]'   },
     { icon: '📄', label: 'Applications', value: String(appCount), accent: 'text-blue-600'    },
-    { icon: '💬', label: 'Interviews',   value: '8',             accent: 'text-emerald-600' },
+    { icon: '💬', label: 'Interviews',   value: '0',             accent: 'text-emerald-600' },
   ]
 
   return (
     <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-      <div className="px-8 py-7 max-w-[1100px]">
+      <div className="px-8 py-7 max-w-[1100px] mx-auto">
 
         {/* Greeting */}
         <motion.div initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}

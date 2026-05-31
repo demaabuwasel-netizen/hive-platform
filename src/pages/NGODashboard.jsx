@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import HiveLogo from '../components/HiveLogo'
+import CategorizedSkillTags from '../components/CategorizedSkillTags'
 import { AvatarDisplay } from '../components/Avatar'
 import img3 from '../assets/img3.png'  // woman w/ laptop — community impact
 
@@ -61,90 +62,11 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const NGO_STATS = [
-  { icon: Briefcase,  label: 'Open Opportunities', value: '4',    color: 'text-[#D99E00]', bg: 'bg-amber-50'    },
-  { icon: Users,      label: 'Students Applied',   value: '46',   color: 'text-indigo-500', bg: 'bg-indigo-50'  },
-  { icon: Star,       label: 'Avg Match Score',    value: '89%',  color: 'text-emerald-500', bg: 'bg-emerald-50'},
-  { icon: Globe,      label: 'Community Reach',    value: '1.2K', color: 'text-violet-500',  bg: 'bg-violet-50' },
-]
+const NGO_STATS = []
 
-const STUDENT_MATCHES = [
-  {
-    id: 'ethan',
-    name: 'Ethan Galvin',
-    field: 'Computer Science',
-    uni: 'Tel Aviv University',
-    year: '3rd year',
-    match: 90,
-    skills: ['Python', 'Data Analysis', 'Machine Learning', 'React'],
-    interests: ['Social Impact Tech', 'Open Source', 'Education'],
-    availability: 'Available immediately',
-    location: 'Tel Aviv',
-    languages: ['English', 'Hebrew'],
-    bio: 'CS student with a focus on data-driven solutions for social good. Strong background in ML pipelines and open-source contribution. Looking to apply technical skills in a mission-driven environment where data can drive meaningful decisions.',
-    matchReasons: [
-      'Python and ML expertise directly supports your data tracking and program analytics needs',
-      'Prior open-source contribution and nonprofit data pipeline work aligns with your digital infrastructure goals',
-      'Based in Tel Aviv and available immediately — ideal for your upcoming Q3 initiatives',
-    ],
-    projects: [
-      'Automated data pipeline for a food bank serving 4,000 families weekly',
-      'Open-source ML library with 220+ GitHub stars',
-    ],
-  },
-  {
-    id: 'sharon',
-    name: 'Sharon Bloomstein',
-    field: 'Digital Marketing',
-    uni: 'Hebrew University',
-    year: '4th year',
-    match: 85,
-    skills: ['SEO', 'Social Media', 'Canva', 'Google Analytics'],
-    interests: ['Community Building', 'Content Strategy', 'NGO Communications'],
-    availability: 'Part-time · 20 hrs/week',
-    location: 'Jerusalem',
-    languages: ['English', 'Hebrew', 'Russian'],
-    bio: 'Digital marketing specialist with 3 years of hands-on experience helping nonprofits grow their online presence. Passionate about amplifying meaningful missions through strategic content and community-driven campaigns.',
-    matchReasons: [
-      'SEO and social media expertise directly addresses your community outreach goals',
-      'Track record growing nonprofit audiences by 300% within 6 months — proven results',
-      'Trilingual communicator (English, Hebrew, Russian) valuable for your diverse community',
-    ],
-    projects: [
-      'Grew NGO social media following from 1,200 to 4,800 in 6 months',
-      'Content strategy lead for 5 nonprofits throughout 2024',
-    ],
-  },
-  {
-    id: 'nour',
-    name: 'Nour Haddad',
-    field: 'Public Health',
-    uni: 'Ben-Gurion University',
-    year: '2nd year MSc',
-    match: 80,
-    skills: ['Research', 'Statistics', 'Arabic', 'Academic Writing'],
-    interests: ['Health Equity', 'Community Research', 'Youth Programs'],
-    availability: 'Flexible',
-    location: 'Beer Sheva',
-    languages: ['Arabic', 'English', 'Hebrew'],
-    bio: 'Public health researcher specializing in health equity for underserved communities. Published in 2 peer-reviewed journals. Brings a rigorous evidence-based approach to community programs, with a deep personal connection to the communities served.',
-    matchReasons: [
-      'Native Arabic speaker with community research experience — a rare combination for NGO fieldwork',
-      'Health equity focus and underserved community experience aligns with your youth mission',
-      'Peer-reviewed research background can strengthen your grant applications and impact reporting',
-    ],
-    projects: [
-      'Community health study across 3 regions with 1,200+ participants',
-      'Data analysis internship with WHO Geneva office',
-    ],
-  },
-]
+const STUDENT_MATCHES = []
 
-const AI_QUESTIONS = [
-  'How do you prioritize when managing multiple projects with competing deadlines?',
-  'Describe a time you achieved an ambitious goal with limited resources.',
-  'How would you present complex findings to a non-technical community audience?',
-]
+const AI_QUESTIONS = []
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard',     to: '/dashboard/ngo'  },
@@ -343,15 +265,7 @@ function StudentProfileModal({ student, onClose, orgName = 'Majd – Arab Youth 
           {/* Skills */}
           <section>
             <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2.5">Skills</p>
-            <div className="flex flex-wrap gap-1.5">
-              {student.skills.map(s => (
-                <span key={s}
-                  className="text-[11px] font-semibold px-2.5 py-1 rounded-lg border"
-                  style={{ background: '#FAFAFA', color: '#0D183D', borderColor: 'rgba(13,24,61,0.1)' }}>
-                  {s}
-                </span>
-              ))}
-            </div>
+            <CategorizedSkillTags skills={student.skills} showLevel />
           </section>
 
           {/* Interests */}

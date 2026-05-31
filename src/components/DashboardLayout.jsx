@@ -70,7 +70,7 @@ export default function DashboardLayout() {
 
         {/* Logo */}
         <div className="px-5 py-[14px] shrink-0" style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
-          <Link to="/"><HiveLogo size={24} nameSize="text-base" /></Link>
+          <Link to={user?.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'}><HiveLogo size={24} nameSize="text-base" /></Link>
         </div>
 
         {/* Nav */}

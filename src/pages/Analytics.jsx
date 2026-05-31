@@ -18,29 +18,15 @@ const NGO_NAV = [
   { icon: Settings,        label: 'Settings',      to: '/settings'       },
 ]
 
-const STATS = [
-  { label:'Total applicants', value:'46', delta:'+12%', up:true,  icon:Users,    color:'text-indigo-500', bg:'bg-indigo-50' },
-  { label:'Avg match score',  value:'87%',delta:'+4%',  up:true,  icon:Star,     color:'text-[#D99E00]',  bg:'bg-amber-50'  },
-  { label:'Active volunteers',value:'8',  delta:'+2',   up:true,  icon:Globe,    color:'text-emerald-500',bg:'bg-emerald-50'},
-  { label:'Interviews held',  value:'12', delta:'-3%',  up:false, icon:Calendar, color:'text-violet-500', bg:'bg-violet-50' },
-]
+const STATS = []
 
-const MONTHLY = [28, 35, 31, 42, 38, 46, 51, 44, 58, 62, 55, 70]
-const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-const MAX_VAL = Math.max(...MONTHLY)
+const MONTHLY = []
+const MONTHS  = []
+const MAX_VAL = MONTHLY.length > 0 ? Math.max(...MONTHLY) : 1
 
-const TOP_SKILLS = [
-  { skill:'React / Frontend', pct:82 }, { skill:'Data Analysis', pct:67 },
-  { skill:'Content Writing',  pct:58 }, { skill:'UX Design',     pct:51 },
-  { skill:'Python / ML',      pct:44 }, { skill:'Marketing',     pct:38 },
-]
+const TOP_SKILLS = []
 
-const RECENT_MATCHES = [
-  { name:'Ethan Galvin',    field:'Computer Science',  score:90 },
-  { name:'Maya Cohen',      field:'Computer Science',  score:93 },
-  { name:'Sharon Bloomstein',field:'Digital Marketing',score:85 },
-  { name:'Nour Haddad',     field:'Public Health',     score:80 },
-]
+const RECENT_MATCHES = []
 
 export default function Analytics() {
   return (

@@ -226,11 +226,7 @@ const FEATURE_CARDS = [
   },
 ]
 
-const VOICES = [
-  { quote: "Hive helped me land my first real-world project — building a registration site for a youth NGO that genuinely needed the help.", name:'Maya Cohen',   role:'CS Student · Tel Aviv University' },
-  { quote: "The match felt authentic. Hive understood what I was looking for — not just the skills on my CV, but the impact I wanted to have.", name:'Omar Khatib',   role:'Info Systems · Univ. of Haifa'   },
-  { quote: "We described our needs in plain language and got a volunteer who understood our community from day one.", name:'Rania Nassar',  role:'Director · Majd – Arab Youth Hub' },
-]
+const VOICES = []
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Landing() {
@@ -252,14 +248,6 @@ export default function Landing() {
 
           {/* ── Left copy ── */}
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-[520px]">
-
-            <motion.div variants={fadeUp} className="mb-5">
-              <span className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-1.5 rounded-full border"
-                style={{ background:'rgba(255,183,3,0.08)', borderColor:'rgba(255,183,3,0.2)', color:C.honey }}>
-                <HiveLogo size={13} showName={false} />
-                AI-powered opportunity matching
-              </span>
-            </motion.div>
 
             <motion.h1 variants={fadeUp}
               className="text-[3.2rem] md:text-[3.6rem] font-extrabold leading-[1.05] tracking-tight mb-5"
@@ -293,22 +281,6 @@ export default function Landing() {
               </Link>
             </motion.div>
 
-            {/* Avatar trust row */}
-            <motion.div variants={fadeUp} className="flex items-center gap-3" style={{ color:C.muted }}>
-              <div className="flex -space-x-2.5">
-                {[['Maya Cohen','#6366F1','#8B5CF6'],['Omar Khatib','#10B981','#059669'],['Lina Mansour','#06B6D4','#3B82F6'],['Noor Ahmad','#EC4899','#F43F5E'],['Ahmad S','#FFB703','#F97316']].map(([name,c1,c2])=>(
-                  <div key={name}
-                    className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white select-none font-bold shrink-0"
-                    style={{ background:`linear-gradient(135deg,${c1},${c2})`, fontSize:10 }}
-                    title={name}>
-                    {name.split(' ').map(w=>w[0]).join('').slice(0,2)}
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm">
-                Joined by <strong style={{ color:C.primary }}>200+ students</strong> from around the world
-              </span>
-            </motion.div>
           </motion.div>
 
           {/* ── Right illustration ── */}
@@ -503,19 +475,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          STATS
-      ══════════════════════════════════════════════════════ */}
-      <section className="py-16 px-6 relative overflow-hidden" style={{ background:C.primary }}>
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z' fill='white'/%3E%3C/svg%3E")` }}
-          aria-hidden="true" />
-        <div className="max-w-3xl mx-auto grid grid-cols-3 gap-10 relative">
-          <AnimatedStat raw="200+" label="Students matched"  delay={0}   />
-          <AnimatedStat raw="50+"  label="NGO partners"       delay={0.1} />
-          <AnimatedStat raw="94%"  label="Match satisfaction" delay={0.2} />
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════
           VOICES
@@ -611,24 +570,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Vision strip */}
-          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} transition={{ duration:0.5 }}
-            className="rounded-3xl px-10 py-10 text-center relative overflow-hidden"
-            style={{ background:C.primary }}>
-            <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z' fill='white'/%3E%3C/svg%3E")` }}
-              aria-hidden="true" />
-            <div className="relative">
-              <p className="text-[1.15rem] font-semibold text-white leading-relaxed max-w-2xl mx-auto mb-6">
-                "A student who helps an NGO reach 500 more people — that's not just a portfolio line.<br />
-                <span style={{ color:C.honey }}>That's a life changed. Sometimes several."</span>
-              </p>
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color:'rgba(255,255,255,0.3)' }}>
-                Hive's founding vision
-              </p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
