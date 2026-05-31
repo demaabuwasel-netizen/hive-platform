@@ -3,6 +3,11 @@
 
 import { supabase } from './supabase'
 
+// Normalize skills from DB: could be string[] (old data) or {name,level}[] (new)
+function normalizeSkills(raw) {
+  return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
+}
+
 // ── Student profiles ──────────────────────────────────────────────────────────
 
 function dbToStudent(row) {
@@ -10,7 +15,7 @@ function dbToStudent(row) {
   return {
     field:        row.field,
     university:   row.university,
-    skills:       row.skills       ?? [],
+    skills:       normalizeSkills(row.skills),
     courses:      row.courses      ?? [],
     interests:    row.interests    ?? [],
     experience:   row.experience,

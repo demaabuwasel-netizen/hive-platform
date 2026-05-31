@@ -69,6 +69,20 @@ export async function updateUserRow(userId, updates) {
   return data
 }
 
+// ── Password reset ────────────────────────────────────────────────────────────
+
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function updatePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error(error.message)
+}
+
 // Ensure a user row exists after OAuth sign-in.
 // Called in AppContext after every SIGNED_IN event.
 export async function ensureUserRow(authUser) {

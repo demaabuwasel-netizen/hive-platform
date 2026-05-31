@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import ProgressBar from '../components/ProgressBar'
 import TagInput from '../components/TagInput'
+import SkillPicker from '../components/SkillPicker'
 import { AvatarPicker } from '../components/Avatar'
 import HiveLogo from '../components/HiveLogo'
 import img2 from '../assets/img2.png'  // student w/ phone — success context
@@ -25,7 +26,7 @@ const STEPS = [
     title: 'What are your skills and interests?',
     subtitle: 'Type each one and press Enter or comma. "Figma", "Python", "grant writing" tells more than "tech stuff".',
     fields: [
-      { name: 'skills', label: 'Skills', placeholder: 'e.g. React, Python, Canva, Arabic copywriting…', type: 'tags' },
+      { name: 'skills', label: 'Skills', type: 'skills' },
       { name: 'courses', label: 'Relevant courses', placeholder: 'e.g. Data Ethics, UX Design, Nonprofit Communications…', type: 'tags' },
       { name: 'interests', label: 'Topics or causes you care about', placeholder: 'e.g. education, youth empowerment, Arab-Jewish coexistence, health equity…', type: 'tags', color: 'orange' },
     ],
@@ -244,16 +245,17 @@ export default function StudentOnboarding() {
     if (step < STEPS.length - 1) {
       setStep(s => s + 1)
     } else {
-      const skills = Array.isArray(data.skills) ? data.skills : (data.skills?.split(',').map(s => s.trim()).filter(Boolean) || [])
-      const courses = Array.isArray(data.courses) ? data.courses : (data.courses?.split(',').map(s => s.trim()).filter(Boolean) || [])
+      const skills    = Array.isArray(data.skills)    ? data.skills    : []
+      const courses   = Array.isArray(data.courses)   ? data.courses   : (data.courses?.split(',').map(s => s.trim()).filter(Boolean) || [])
       const interests = Array.isArray(data.interests) ? data.interests : (data.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
+      const skillNames = skills.map(s => s.name).filter(Boolean)
       const profile = {
         ...data,
         skills,
         courses,
         interests,
         links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
-        summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skills.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
+        summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
       }
       await completeOnboarding(profile)
       setDone(true)
@@ -363,6 +365,11 @@ export default function StudentOnboarding() {
                     <LanguagePicker
                       value={data.languages || []}
                       onChange={val => update('languages', val)}
+                    />
+                  ) : field.type === 'skills' ? (
+                    <SkillPicker
+                      value={data.skills || []}
+                      onChange={val => update('skills', val)}
                     />
                   ) : field.type === 'tags' ? (
                     <TagInput

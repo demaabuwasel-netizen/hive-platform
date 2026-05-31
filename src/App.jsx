@@ -6,6 +6,7 @@ import ForNGOs from './pages/ForNGOs'
 import HowItWorks from './pages/HowItWorks'
 import About from './pages/About'
 import Auth from './pages/Auth'
+import ResetPassword from './pages/ResetPassword'
 import RoleSelection from './pages/RoleSelection'
 import StudentOnboarding from './pages/StudentOnboarding'
 import NGOOnboarding from './pages/NGOOnboarding'
@@ -98,7 +99,8 @@ function AppRoutes() {
       <Route path="/for-ngos"      element={<ForNGOs />} />
       <Route path="/how-it-works"  element={<HowItWorks />} />
       <Route path="/about"         element={<About />} />
-      <Route path="/auth" element={<GuestOnly><Auth /></GuestOnly>} />
+      <Route path="/auth"           element={<GuestOnly><Auth /></GuestOnly>} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/match/:id" element={<MatchExplanation />} />
 
       {/* ── Onboarding ── */}
@@ -106,9 +108,9 @@ function AppRoutes() {
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
-      {/* ── Profile — redirected to settings ── */}
+      {/* ── Profile ── */}
       <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
-      <Route path="/profile/student/edit" element={<Navigate to="/settings" replace />} />
+      <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
       <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
       <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
 

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
-import { signUp, logIn, signInWithGoogle, updateUserRow } from '../services/auth'
+import { signUp, logIn, signInWithGoogle, updateUserRow, requestPasswordReset } from '../services/auth'
 
 // ── Google brand icon ─────────────────────────────────────────────────────────
 
@@ -25,12 +25,16 @@ export default function Auth() {
   const initialMode   = params.get('mode') === 'signup' ? 'signup' : 'login'
   const prefilledRole = params.get('role')   // 'student' | 'ngo' from landing CTAs
 
-  const [mode, setMode]             = useState(initialMode)
-  const [form, setForm]             = useState({ name: '', email: '', password: '' })
-  const [showPassword, setShow]     = useState(false)
-  const [error, setError]           = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [googleLoading, setGLoading] = useState(false)
+  const [mode, setMode]               = useState(initialMode)
+  const [form, setForm]               = useState({ name: '', email: '', password: '' })
+  const [showPassword, setShow]       = useState(false)
+  const [error, setError]             = useState('')
+  const [submitting, setSubmitting]   = useState(false)
+  const [googleLoading, setGLoading]  = useState(false)
+  const [forgotOpen, setForgotOpen]   = useState(false)
+  const [resetEmail, setResetEmail]   = useState('')
+  const [resetState, setResetState]   = useState('idle') // 'idle' | 'sending' | 'sent' | 'error'
+  const [resetError, setResetError]   = useState('')
 
   const navigate = useNavigate()
 
@@ -96,6 +100,27 @@ export default function Auth() {
       setError(err.message)
       setGLoading(false)
     }
+  }
+
+  async function handleResetRequest(e) {
+    e.preventDefault()
+    if (!resetEmail.trim()) { setResetError('Please enter your email address.'); return }
+    setResetState('sending')
+    setResetError('')
+    try {
+      await requestPasswordReset(resetEmail.trim())
+      setResetState('sent')
+    } catch (err) {
+      setResetError(err.message)
+      setResetState('error')
+    }
+  }
+
+  function closeForgot() {
+    setForgotOpen(false)
+    setResetEmail('')
+    setResetState('idle')
+    setResetError('')
   }
 
   return (
@@ -206,7 +231,11 @@ export default function Auth() {
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-sm font-medium text-navy-700">Password</label>
                   {mode === 'login' && (
-                    <button type="button" className="text-xs text-navy-400 hover:text-navy-600 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => { setForgotOpen(true); setResetEmail(form.email) }}
+                      className="text-xs text-navy-400 hover:text-navy-600 transition-colors"
+                    >
                       Forgot password?
                     </button>
                   )}
@@ -279,6 +308,111 @@ export default function Auth() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Forgot-password modal ── */}
+      <AnimatePresence>
+        {forgotOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-[#0D183D]/40 backdrop-blur-sm"
+              onClick={closeForgot}
+            />
+
+            {/* Modal */}
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-6 pointer-events-none"
+            >
+              <div className="card w-full max-w-sm pointer-events-auto">
+                {resetState === 'sent' ? (
+                  <div className="text-center py-4">
+                    <div className="text-4xl mb-4">📬</div>
+                    <h2 className="text-lg font-bold text-[#0D183D] mb-2">Check your email</h2>
+                    <p className="text-sm text-[#4B6382] leading-relaxed mb-6">
+                      We sent a password reset link to{' '}
+                      <span className="font-semibold text-[#0D183D]">{resetEmail}</span>.
+                      It may take a minute to arrive.
+                    </p>
+                    <button onClick={closeForgot} className="btn-honey w-full py-3">
+                      Back to login
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center mb-6">
+                      <div className="text-3xl mb-3">🔑</div>
+                      <h2 className="text-lg font-bold text-[#0D183D] mb-1">Reset your password</h2>
+                      <p className="text-sm text-[#4B6382]">
+                        Enter your email and we'll send you a reset link.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-navy-700 mb-1.5">
+                          Email address
+                        </label>
+                        <input
+                          type="email"
+                          value={resetEmail}
+                          onChange={e => { setResetEmail(e.target.value); setResetError('') }}
+                          placeholder="you@example.com"
+                          autoComplete="email"
+                          className="input-field"
+                        />
+                      </div>
+
+                      <AnimatePresence>
+                        {resetError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2"
+                          >
+                            {resetError}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+
+                      <button
+                        type="submit"
+                        disabled={resetState === 'sending'}
+                        className="btn-honey w-full py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {resetState === 'sending' ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <motion.span
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                              className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full"
+                            />
+                            Sending…
+                          </span>
+                        ) : 'Send reset link'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={closeForgot}
+                        className="text-sm text-navy-400 hover:text-navy-600 transition-colors text-center"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   Briefcase, MapPin, Globe, Clock, Sparkles,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import SkillPicker from '../components/SkillPicker'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -134,7 +135,6 @@ export default function CreateOpportunity() {
   const [published, setPublished] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [focusedField, setFocused] = useState(null)
-  const [skillInput, setSkillInput] = useState('')
   const [errors, setErrors]       = useState({})
 
   const [form, setForm] = useState({
@@ -144,7 +144,7 @@ export default function CreateOpportunity() {
     field:         editData?.field         || '',
     description:   editData?.description   || '',
     missionImpact: editData?.missionImpact || '',
-    skills:        editData?.skills        || [],
+    skills:        (editData?.skills || []).map(s => typeof s === 'string' ? { name: s, level: '' } : s),
     languages:     editData?.languages     || [],
     weeklyHours:   editData?.weeklyHours   || '',
     duration:      editData?.duration      || '',
@@ -165,13 +165,6 @@ export default function CreateOpportunity() {
     setErrors(e => ({ ...e, [key]: undefined }))
   }
 
-  // Skills tag input
-  function addSkill() {
-    const s = skillInput.trim().replace(/,+$/, '')
-    if (s && !form.skills.includes(s)) set('skills', [...form.skills, s])
-    setSkillInput('')
-  }
-  function removeSkill(s) { set('skills', form.skills.filter(x => x !== s)) }
   function toggleLang(lang) {
     set('languages', form.languages.includes(lang)
       ? form.languages.filter(l => l !== lang)
@@ -506,40 +499,17 @@ export default function CreateOpportunity() {
                     <p className="text-[13px]" style={{ color: '#4B6382' }}>What skills and commitment does this role need?</p>
                   </div>
 
-                  {/* Skills tag input */}
+                  {/* Skills */}
                   <div>
                     <FieldLabel>Required skills</FieldLabel>
-                    <p className="text-[11px] mb-2" style={{ color: '#4B6382' }}>Press Enter or comma after each skill.</p>
-                    <div
-                      className="flex flex-wrap gap-2 p-3 rounded-xl min-h-[52px] transition-all"
-                      style={{ background: 'white',
-                        border: `1.5px solid ${focusedField === 'skills' ? '#FFB703' : 'rgba(13,24,61,0.1)'}` }}>
-                      {form.skills.map(s => (
-                        <span key={s}
-                          className="flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-lg text-white"
-                          style={{ background: '#0D183D' }}>
-                          {s}
-                          <button type="button" onClick={() => removeSkill(s)}
-                            className="opacity-50 hover:opacity-100 transition-opacity ml-0.5">
-                            <X size={10} />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        value={skillInput}
-                        onChange={e => setSkillInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill() }
-                          else if (e.key === 'Backspace' && !skillInput && form.skills.length)
-                            removeSkill(form.skills.at(-1))
-                        }}
-                        onFocus={() => setFocused('skills')}
-                        onBlur={() => { setFocused(null); if (skillInput.trim()) addSkill() }}
-                        placeholder={form.skills.length ? '' : 'React, Python, Canva, Research…'}
-                        className="flex-1 min-w-[140px] bg-transparent text-[12px] outline-none placeholder-[#4B6382]/40"
-                        style={{ color: '#0D183D' }}
-                      />
-                    </div>
+                    <p className="text-[11px] mb-2" style={{ color: '#4B6382' }}>
+                      Search for a skill, then set the minimum level you need.
+                    </p>
+                    <SkillPicker
+                      value={form.skills}
+                      onChange={v => set('skills', v)}
+                      levelLabel="Minimum level required"
+                    />
                     <ErrMsg msg={errors.skills} />
                   </div>
 

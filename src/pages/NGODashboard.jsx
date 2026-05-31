@@ -117,8 +117,8 @@ const TONES = [
 
 function generateMessage(student, tone, orgName) {
   const firstName = student.name.split(' ')[0]
-  const skill1 = student.skills[0]
-  const skill2 = student.skills[1] || student.skills[0]
+  const skill1 = student.skills[0]?.name ?? student.skills[0] ?? ''
+  const skill2 = (student.skills[1]?.name ?? student.skills[1]) || skill1
   const reason = student.matchReasons?.[0] || `your ${skill1} experience aligns with our mission`
 
   const messages = {
@@ -472,13 +472,16 @@ function StudentCard({ student, onOpen, index }) {
         </div>
         <p className="text-[11px] text-[#4B6382] mb-2 truncate">{student.field} · {student.uni}</p>
         <div className="flex items-center gap-1 flex-wrap">
-          {student.skills.slice(0, 3).map(s => (
-            <span key={s}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
-              style={{ background: '#F8F9FB', color: '#4B6382', borderColor: 'rgba(13,24,61,0.09)' }}>
-              {s}
-            </span>
-          ))}
+          {student.skills.slice(0, 3).map(s => {
+            const name = s?.name ?? s
+            return (
+              <span key={name}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
+                style={{ background: '#F8F9FB', color: '#4B6382', borderColor: 'rgba(13,24,61,0.09)' }}>
+                {name}
+              </span>
+            )
+          })}
           {student.skills.length > 3 && (
             <span className="text-[10px] text-[#4B6382] opacity-60 font-medium px-0.5">
               +{student.skills.length - 3}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, X, Check, CheckCircle2, Plus } from 'lucide-react'
+import SkillPicker from '../components/SkillPicker'
 import { useApp } from '../context/AppContext'
 import { saveStudentProfile } from '../services/storage'
 import { updateUserRow } from '../services/auth'
@@ -220,7 +221,7 @@ export default function EditStudentProfile() {
     university:  src.university || '',
     field:       src.field || '',
     summary:     src.summary || '',
-    skills:      toArray(src.skills),
+    skills:      (Array.isArray(src.skills) ? src.skills : []).map(s => typeof s === 'string' ? { name: s, level: '' } : s),
     interests:   toArray(src.interests),
     languages:   Array.isArray(src.languages) ? src.languages : [],
     experience:  src.experience || '',
@@ -346,10 +347,8 @@ export default function EditStudentProfile() {
 
         {/* Skills */}
         <Section title="Skills">
-          <Field label="Your skills" hint="Press Enter or comma after each skill.">
-            <TagInput value={form.skills} onChange={v => set('skills', v)}
-              placeholder="React, Python, Canva, Research…"
-              colorClass="bg-navy-50 text-navy-700 border border-navy-100"/>
+          <Field label="Your skills" hint="Search or type a skill, then choose your proficiency level.">
+            <SkillPicker value={form.skills} onChange={v => set('skills', v)} />
           </Field>
         </Section>
 

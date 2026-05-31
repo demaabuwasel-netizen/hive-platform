@@ -1,5 +1,9 @@
 import { supabase } from './supabase'
 
+function normalizeSkills(raw) {
+  return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
+}
+
 function dbToOpp(row) {
   if (!row) return null
   return {
@@ -11,7 +15,7 @@ function dbToOpp(row) {
     field:          row.field,
     description:    row.description,
     missionImpact:  row.mission_impact,
-    skills:         row.skills        ?? [],
+    skills:         normalizeSkills(row.skills),
     languages:      row.languages     ?? [],
     weeklyHours:    row.weekly_hours,
     duration:       row.duration,
