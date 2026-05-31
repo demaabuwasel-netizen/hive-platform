@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Landing from './pages/Landing'
 import ForStudents from './pages/ForStudents'
@@ -85,6 +86,31 @@ function ProtectedDashboard() {
   return <DashboardLayout />
 }
 
+// ─── OAuth callback handler ───────────────────────────────────────────────────
+// AppProvider sits outside BrowserRouter and cannot call useNavigate.
+// This component runs inside the router and handles the redirect after
+// Google (or any OAuth) redirects back to the app with #access_token in the URL.
+
+function OAuthCallback() {
+  const { user, loading } = useApp()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const hash = window.location.hash
+    // Only handle OAuth bearer callbacks — not password-reset recovery links
+    if (!hash.includes('access_token') || hash.includes('type=recovery')) return
+    if (loading || !user) return
+
+    const dest = user.onboardingComplete
+      ? (user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo')
+      : '/role-selection'
+
+    navigate(dest, { replace: true })
+  }, [user, loading, navigate])
+
+  return null
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 function AppRoutes() {
@@ -92,7 +118,9 @@ function AppRoutes() {
   if (loading) return <LoadingScreen />
 
   return (
-    <Routes>
+    <>
+      <OAuthCallback />
+      <Routes>
       {/* ── Public ── */}
       <Route path="/" element={<Landing />} />
       <Route path="/for-students"  element={<ForStudents />} />
@@ -134,6 +162,7 @@ function AppRoutes() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }
 
