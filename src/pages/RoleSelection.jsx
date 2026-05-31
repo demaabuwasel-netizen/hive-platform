@@ -18,8 +18,8 @@ export default function RoleSelection() {
   const { user, updateRole } = useApp()
   const navigate = useNavigate()
 
-  function select(role) {
-    updateRole(role)
+  async function select(role) {
+    await updateRole(role)
     navigate(role === 'student' ? '/onboarding/student' : '/onboarding/ngo')
   }
 

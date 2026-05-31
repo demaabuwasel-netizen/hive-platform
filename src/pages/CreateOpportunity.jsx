@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { createOpportunity, updateOpportunity } from '../services/opportunities'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, X, Check, CheckCircle2,
@@ -41,22 +42,6 @@ const STEPS = [
   { n: 3, label: 'Requirements' },
   { n: 4, label: 'Logistics'    },
 ]
-
-// ─── Storage ─────────────────────────────────────────────────────────────────
-
-function saveOppToStorage(data, status) {
-  const existing = JSON.parse(localStorage.getItem('hive_ngo_opportunities') || '[]')
-  const opp = {
-    id: `opp_${Date.now()}`,
-    ...data,
-    status,
-    createdAt: new Date().toISOString(),
-    applicants: 0,
-    posted: 'Just now',
-  }
-  localStorage.setItem('hive_ngo_opportunities', JSON.stringify([opp, ...existing]))
-  return opp
-}
 
 // ─── Field helpers ────────────────────────────────────────────────────────────
 
@@ -139,12 +124,8 @@ export default function CreateOpportunity() {
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
 
-  // Resolve edit data: check localStorage first, then static fallback
-  const editData = (() => {
-    if (!editId) return null
-    const stored = JSON.parse(localStorage.getItem('hive_ngo_opportunities') || '[]')
-    return stored.find(o => o.id === editId) || STATIC_OPP_DATA[editId] || null
-  })()
+  // Resolve edit data from static fallback (real DB edit will be wired in Phase 3)
+  const editData = editId ? (STATIC_OPP_DATA[editId] || null) : null
 
   const isEdit = !!editData
 
@@ -229,16 +210,34 @@ export default function CreateOpportunity() {
     setStep(s => Math.max(1, s - 1))
   }
 
-  function saveDraft() {
-    saveOppToStorage(form, 'draft')
-    setDraftSaved(true)
-    setTimeout(() => setDraftSaved(false), 2200)
+  async function saveDraft() {
+    if (!user?.id) return
+    try {
+      if (isEdit && editData?.id && !editData.id.startsWith('opp_')) {
+        await updateOpportunity(editData.id, user.id, form, 'draft')
+      } else {
+        await createOpportunity(user.id, form, 'draft')
+      }
+      setDraftSaved(true)
+      setTimeout(() => setDraftSaved(false), 2200)
+    } catch (err) {
+      console.error('Save draft error:', err)
+    }
   }
 
-  function publish() {
+  async function publish() {
     if (!validate()) return
-    saveOppToStorage(form, 'published')
-    setPublished(true)
+    if (!user?.id) return
+    try {
+      if (isEdit && editData?.id && !editData.id.startsWith('opp_')) {
+        await updateOpportunity(editData.id, user.id, form, 'active')
+      } else {
+        await createOpportunity(user.id, form, 'active')
+      }
+      setPublished(true)
+    } catch (err) {
+      console.error('Publish error:', err)
+    }
   }
 
   function resetForm() {

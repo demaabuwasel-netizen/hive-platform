@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, X, Check, CheckCircle2, Plus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { saveProfile } from '../services/storage'
-import { updateStoredUser } from '../services/auth'
+import { saveNgoProfile } from '../services/storage'
+import { updateUserRow } from '../services/auth'
 import { AvatarPicker } from '../components/Avatar'
 
 // ─── Tag input ────────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ function validatePhone(p) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EditNGOProfile() {
-  const { user, profile, setProfile, setUser } = useApp()
+  const { user, profile, setProfile } = useApp()
   const navigate = useNavigate()
 
   const src = profile || {}
@@ -162,12 +162,11 @@ export default function EditNGOProfile() {
       },
     }
 
-    saveProfile(user.id, updated)
+    saveNgoProfile(user.id, updated).catch(console.error)
     setProfile(updated)
 
     if (form.name.trim() !== user.name) {
-      updateStoredUser(user.id, { name: form.name.trim() })
-      setUser(u => ({ ...u, name: form.name.trim() }))
+      updateUserRow(user.id, { name: form.name.trim() }).catch(console.error)
     }
 
     setToast(true)

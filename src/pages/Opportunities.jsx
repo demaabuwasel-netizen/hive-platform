@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
@@ -31,7 +32,7 @@ function generateAppMessage(user, ngo) {
 
 // ─── Apply Modal ──────────────────────────────────────────────────────────────
 
-function ApplyModal({ ngo, user, onClose }) {
+function ApplyModal({ ngo, user, studentId, onClose }) {
   const [step, setStep]     = useState('form')
   const [message, setMsg]   = useState(() => generateAppMessage(user, ngo))
   const [links, setLinks]   = useState({ linkedin:'', github:'', portfolio:'' })
@@ -46,10 +47,19 @@ function ApplyModal({ ngo, user, onClose }) {
     setTimeout(() => { setMsg(generateAppMessage(user, ngo)); setGen(false) }, 600)
   }
 
-  function submit() {
-    const apps = JSON.parse(localStorage.getItem('hive_student_applications') || '[]')
-    apps.unshift({ id:`app_${Date.now()}`, ngoId:ngo.id, ngoName:ngo.name, match:ngo.match, message, links, avail, status:'submitted', submittedAt:new Date().toISOString() })
-    localStorage.setItem('hive_student_applications', JSON.stringify(apps))
+  async function submit() {
+    try {
+      await submitApplication({
+        studentId:     studentId,
+        opportunityId: ngo.opportunityId ?? null,
+        ngoId:         ngo.ngoId ?? String(ngo.id),
+        message,
+        availability:  avail,
+        links,
+      })
+    } catch (err) {
+      console.error('Apply error:', err)
+    }
     setStep('success')
   }
 
@@ -321,6 +331,7 @@ export default function Opportunities() {
             key="apply"
             ngo={applyingTo}
             user={user}
+            studentId={user?.id}
             onClose={() => setApplyingTo(null)}
           />
         )}

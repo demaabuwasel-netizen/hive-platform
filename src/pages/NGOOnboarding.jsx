@@ -105,7 +105,7 @@ export default function NGOOnboarding() {
     return Object.keys(newErrors).length === 0
   }
 
-  function next() {
+  async function next() {
     if (!validate()) return
     if (step === 1 && !showAISummary) {
       setShowAISummary(true)
@@ -122,7 +122,7 @@ export default function NGOOnboarding() {
         links: { website: data.website, instagram: data.instagram, twitter: data.twitter },
         tags: [],
       }
-      completeOnboarding(profile)
+      await completeOnboarding(profile)
       setDone(true)
     }
   }

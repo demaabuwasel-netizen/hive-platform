@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
@@ -84,7 +85,7 @@ function NGOBanner({ grad, avatars, match }) {
 
 // ─── Apply Modal ─────────────────────────────────────────────────────────────
 
-function ApplyModal({ ngo, profile, onClose, onSuccess }) {
+function ApplyModal({ ngo, profile, studentId, onClose, onSuccess }) {
   const [step, setStep]         = useState('form')  // 'form' | 'success'
   const [message, setMessage]   = useState(() => generateAppMessage(profile, ngo))
   const [links, setLinks]       = useState({ linkedin:'', github:'', portfolio:'' })
@@ -99,16 +100,19 @@ function ApplyModal({ ngo, profile, onClose, onSuccess }) {
     setTimeout(() => { setMessage(generateAppMessage(profile, ngo)); setGen(false) }, 600)
   }
 
-  function submit() {
-    // Save to localStorage
-    const apps = JSON.parse(localStorage.getItem('hive_student_applications') || '[]')
-    apps.unshift({
-      id: `app_${Date.now()}`,
-      ngoId: ngo.id, ngoName: ngo.name, category: ngo.category, location: ngo.location,
-      match: ngo.match, message, links, availability,
-      status: 'submitted', submittedAt: new Date().toISOString(),
-    })
-    localStorage.setItem('hive_student_applications', JSON.stringify(apps))
+  async function submit() {
+    try {
+      await submitApplication({
+        studentId:     profile?.id || studentId,
+        opportunityId: ngo.opportunityId ?? null,
+        ngoId:         ngo.ngoId ?? ngo.id,
+        message,
+        availability,
+        links,
+      })
+    } catch (err) {
+      console.error('Apply error:', err)
+    }
     setStep('success')
     onSuccess?.()
   }
@@ -359,10 +363,14 @@ export default function StudentDashboard() {
 
   const [applyingTo, setApplyingTo]   = useState(null)
   const [chattingWith, setChattingWith] = useState(null)
-  const [appCount, setAppCount]        = useState(() => {
-    const saved = JSON.parse(localStorage.getItem('hive_student_applications') || '[]')
-    return saved.length
-  })
+  const [appCount, setAppCount]        = useState(0)
+
+  useEffect(() => {
+    if (!user?.id) return
+    import('../services/applications').then(({ fetchStudentApplications }) => {
+      fetchStudentApplications(user.id).then(apps => setAppCount(apps.length)).catch(() => {})
+    })
+  }, [user?.id])
 
   function handleApplySuccess() {
     setAppCount(n => n + 1)
@@ -532,6 +540,7 @@ export default function StudentDashboard() {
             key="apply"
             ngo={applyingTo}
             profile={profile || user}
+            studentId={user?.id}
             onClose={() => setApplyingTo(null)}
             onSuccess={handleApplySuccess}
           />

@@ -238,7 +238,7 @@ export default function StudentOnboarding() {
     return Object.keys(newErrors).length === 0
   }
 
-  function next() {
+  async function next() {
     if (!validate()) return
     setDirection(1)
     if (step < STEPS.length - 1) {
@@ -255,7 +255,7 @@ export default function StudentOnboarding() {
         links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
         summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skills.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
       }
-      completeOnboarding(profile)
+      await completeOnboarding(profile)
       setDone(true)
     }
   }
