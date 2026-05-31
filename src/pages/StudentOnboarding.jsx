@@ -6,6 +6,19 @@ import ProgressBar from '../components/ProgressBar'
 import TagInput from '../components/TagInput'
 import SkillPicker from '../components/SkillPicker'
 import AutocompleteInput from '../components/AutocompleteInput'
+import TopicPicker from '../components/TopicPicker'
+
+const CAUSES = [
+  'Education', 'Youth Empowerment', 'Arab-Jewish Coexistence',
+  'Mental Health', 'Environment', 'Climate Action',
+  'Community Building', 'Women Empowerment', 'Accessibility',
+  'Public Health', 'Food Security', 'Refugee Support',
+  'Elderly Support', 'Digital Literacy', 'Social Equality',
+  'Human Rights', 'Animal Welfare', 'Arts and Culture',
+  'Technology for Good', 'Economic Opportunity',
+  'Civic Engagement', 'Minority Rights', 'Housing',
+  'Child Welfare', 'Violence Prevention', 'Immigration',
+]
 
 const FIELDS_OF_STUDY = [
   'Computer Science', 'Software Engineering', 'Information Systems',
@@ -68,7 +81,7 @@ const STEPS = [
     fields: [
       { name: 'skills', label: 'Skills', type: 'skills' },
       { name: 'courses', label: 'Relevant courses', placeholder: 'e.g. Data Ethics, UX Design, Nonprofit Communications…', type: 'tags' },
-      { name: 'interests', label: 'Topics or causes you care about', placeholder: 'e.g. education, youth empowerment, Arab-Jewish coexistence, health equity…', type: 'tags', color: 'orange' },
+      { name: 'interests', label: 'Topics or causes you care about', type: 'topics', options: CAUSES },
     ],
   },
   {
@@ -418,6 +431,12 @@ export default function StudentOnboarding() {
                     <SkillPicker
                       value={data.skills || []}
                       onChange={val => update('skills', val)}
+                    />
+                  ) : field.type === 'topics' ? (
+                    <TopicPicker
+                      value={data[field.name] || []}
+                      onChange={val => update(field.name, val)}
+                      options={field.options || []}
                     />
                   ) : field.type === 'tags' ? (
                     <TagInput

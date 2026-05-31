@@ -4,6 +4,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, X, Check, CheckCircle2, Plus } from 'lucide-react'
 import SkillPicker from '../components/SkillPicker'
 import AutocompleteInput from '../components/AutocompleteInput'
+import TopicPicker from '../components/TopicPicker'
+
+const CAUSES = [
+  'Education', 'Youth Empowerment', 'Arab-Jewish Coexistence',
+  'Mental Health', 'Environment', 'Climate Action',
+  'Community Building', 'Women Empowerment', 'Accessibility',
+  'Public Health', 'Food Security', 'Refugee Support',
+  'Elderly Support', 'Digital Literacy', 'Social Equality',
+  'Human Rights', 'Animal Welfare', 'Arts and Culture',
+  'Technology for Good', 'Economic Opportunity',
+  'Civic Engagement', 'Minority Rights', 'Housing',
+  'Child Welfare', 'Violence Prevention', 'Immigration',
+]
 
 const FIELDS_OF_STUDY = [
   'Computer Science', 'Software Engineering', 'Information Systems',
@@ -405,9 +418,11 @@ export default function EditStudentProfile() {
         {/* Interests */}
         <Section title="Interests &amp; Causes">
           <Field label="Causes you care about" hint="Helps match you with NGOs that share your values.">
-            <TagInput value={form.interests} onChange={v => set('interests', v)}
-              placeholder="Education, Climate, Youth Programs…"
-              colorClass="bg-[#FFF7E6] text-[#92610a] border border-[rgba(255,183,3,0.25)]"/>
+            <TopicPicker
+              value={form.interests}
+              onChange={v => set('interests', v)}
+              options={CAUSES}
+            />
           </Field>
         </Section>
 
