@@ -48,12 +48,18 @@ export function AppProvider({ children }) {
 
   // Bootstrap: get current session, then subscribe to auth changes
   useEffect(() => {
+    // Hard 6-second bail-out so a hanging network call never blocks the UI
+    const bail = setTimeout(() => setLoading(false), 6000)
+
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
         if (session?.user) await hydrateUser(session.user)
       })
       .catch(console.error)
-      .finally(() => setLoading(false))
+      .finally(() => {
+        clearTimeout(bail)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
