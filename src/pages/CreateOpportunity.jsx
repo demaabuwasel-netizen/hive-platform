@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { createOpportunity, updateOpportunity } from '../services/opportunities'
+import { createOpportunity, updateOpportunity, fetchOpportunity } from '../services/opportunities'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, X, Check, CheckCircle2,
@@ -111,24 +111,13 @@ const slide = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-// Static fallback data for edit mode (maps NGO_OPPORTUNITIES IDs)
-const STATIC_OPP_DATA = {
-  '1': { title:'Web Developer – Community Platform',    orgName:'Majd – Arab Youth Hub', category:'Technology',  field:'Frontend Development', description:'Build and maintain our volunteer coordination platform using React. Work with our product team to design user flows, implement new features, and optimize performance for mobile users.', missionImpact:'Your code will directly serve coordinators managing 500+ youth interactions per month. A faster, more intuitive platform means more kids reached.', skills:['React','TypeScript','Node.js','UX Design'], languages:['Hebrew','English'], weeklyHours:'10–15 hrs/week', duration:'3–6 months', location:'Tel Aviv', workMode:'hybrid', deadline:'' },
-  '2': { title:'Content Strategist – Digital Outreach', orgName:'Majd – Arab Youth Hub', category:'Education',   field:'Digital Marketing', description:'Develop and execute a content strategy across our social media channels and newsletter. Create compelling stories about our programs and the youth we serve.', missionImpact:'Every post you write helps us reach 1,000+ families who may not know our services exist. Good content is a direct lifeline for youth in need.', skills:['Content Writing','SEO','Social Media','Canva'], languages:['Hebrew','Arabic','English'], weeklyHours:'8–12 hrs/week', duration:'2–3 months', location:'Jerusalem', workMode:'remote', deadline:'' },
-  '3': { title:'Data Analyst – Impact Reports',         orgName:'Majd – Arab Youth Hub', category:'Research',    field:'Data Science', description:'Analyze program data to generate quarterly impact reports for funders and stakeholders. Build dashboards that help our team make evidence-based decisions.', missionImpact:'Our funders decide how much to invest based on your reports. Clean, compelling data analysis directly funds programs that serve at-risk youth.', skills:['Python','Statistics','Data Visualization','Excel'], languages:['Hebrew','English'], weeklyHours:'10–15 hrs/week', duration:'2–3 months', location:'Tel Aviv', workMode:'hybrid', deadline:'' },
-  '4': { title:'UI/UX Designer – Youth App',            orgName:'Majd – Arab Youth Hub', category:'Technology',  field:'UX/UI Design', description:'Design a mobile-first app interface for youth to self-refer to our services. Conduct user research with teenagers and translate insights into intuitive designs.', missionImpact:'Young people in crisis need to find help fast and without stigma. Your design choices will determine whether they reach out — or close the app.', skills:['Figma','User Research','Prototyping','Accessibility'], languages:['Hebrew','Arabic'], weeklyHours:'8–12 hrs/week', duration:'3–6 months', location:'Tel Aviv', workMode:'remote', deadline:'' },
-}
-
 export default function CreateOpportunity() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
 
-  // Resolve edit data from static fallback (real DB edit will be wired in Phase 3)
-  const editData = editId ? (STATIC_OPP_DATA[editId] || null) : null
-
-  const isEdit = !!editData
+  const isEdit = !!editId
 
   const [step, setStep]           = useState(1)
   const [dir, setDir]             = useState(1)
@@ -136,22 +125,50 @@ export default function CreateOpportunity() {
   const [draftSaved, setDraftSaved] = useState(false)
   const [focusedField, setFocused] = useState(null)
   const [errors, setErrors]       = useState({})
+  const [loadingEdit, setLoadingEdit] = useState(!!editId)
 
   const [form, setForm] = useState({
-    title:         editData?.title         || '',
-    orgName:       editData?.orgName       || profile?.name || user?.name || '',
-    category:      editData?.category      || '',
-    field:         editData?.field         || '',
-    description:   editData?.description   || '',
-    missionImpact: editData?.missionImpact || '',
-    skills:        (editData?.skills || []).map(s => typeof s === 'string' ? { name: s, level: '' } : s),
-    languages:     editData?.languages     || [],
-    weeklyHours:   editData?.weeklyHours   || '',
-    duration:      editData?.duration      || '',
-    location:      editData?.location      || profile?.location || '',
-    workMode:      editData?.workMode      || '',
-    deadline:      editData?.deadline      || '',
+    title: '', orgName: profile?.name || user?.name || '',
+    category: '', field: '', description: '', missionImpact: '',
+    skills: [], languages: [], weeklyHours: '', duration: '',
+    location: profile?.location || '', workMode: '', deadline: '',
   })
+
+  // Fetch existing opportunity when editing
+  useEffect(() => {
+    if (!editId) return
+    fetchOpportunity(editId).then(opp => {
+      if (!opp) { setLoadingEdit(false); return }
+      setForm({
+        title:         opp.title         || '',
+        orgName:       opp.orgName       || profile?.name || user?.name || '',
+        category:      opp.category      || '',
+        field:         opp.field         || '',
+        description:   opp.description   || '',
+        missionImpact: opp.missionImpact || '',
+        skills:        (opp.skills || []).map(s => typeof s === 'string' ? { name: s, level: '' } : s),
+        languages:     opp.languages     || [],
+        weeklyHours:   opp.weeklyHours   || '',
+        duration:      opp.duration      || '',
+        location:      opp.location      || profile?.location || '',
+        workMode:      opp.workMode      || '',
+        deadline:      opp.deadline      || '',
+      })
+      setLoadingEdit(false)
+    }).catch(() => setLoadingEdit(false))
+  }, [editId]) // eslint-disable-line
+
+  if (loadingEdit) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
+        <div className="text-center">
+          <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 1.4 }}
+            className="text-3xl mb-3">✏️</motion.div>
+          <p className="text-[13px] text-[#4B6382]">Loading opportunity…</p>
+        </div>
+      </div>
+    )
+  }
 
   // Focus helpers
   const fo = key => ({

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -8,6 +8,8 @@ import {
   CheckCircle2, Clock, Languages, RefreshCw, Send, ArrowLeft,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { fetchNgoApplicants } from '../services/applications'
+import { fetchNgoOpportunities } from '../services/opportunities'
 import HiveLogo from '../components/HiveLogo'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
 import { AvatarDisplay } from '../components/Avatar'
@@ -59,12 +61,6 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
     </div>
   )
 }
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const NGO_STATS = []
-
-const STUDENT_MATCHES = []
 
 const AI_QUESTIONS = []
 
@@ -553,7 +549,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, ngoStats, loadingData }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -584,7 +580,7 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName }) {
 
           {/* ── Stats ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {NGO_STATS.map((s, i) => (
+            {ngoStats.map((s, i) => (
               <motion.div key={s.label}
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04, duration: 0.28 }}
@@ -594,7 +590,9 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName }) {
                   <s.icon size={15} className={s.color} strokeWidth={2}/>
                 </div>
                 <div>
-                  <p className="text-[20px] font-extrabold text-[#0D183D] leading-none tracking-tight">{s.value}</p>
+                  <p className="text-[20px] font-extrabold text-[#0D183D] leading-none tracking-tight">
+                    {loadingData ? '—' : s.value}
+                  </p>
                   <p className="text-[10px] text-[#4B6382] mt-0.5 leading-snug">{s.label}</p>
                 </div>
               </motion.div>
@@ -604,25 +602,48 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName }) {
           {/* ── Body ── */}
           <div className="grid lg:grid-cols-[1fr_264px] gap-5">
 
-            {/* Student matches */}
+            {/* Applicants */}
             <section>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Suggested Matches</h2>
-                  <p className="text-[11px] text-[#4B6382] mt-0.5">AI-matched to your open opportunities</p>
+                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Recent Applicants</h2>
+                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who applied to your opportunities</p>
                 </div>
-                <Link to="/matches"
+                <Link to="/applicants"
                   className="text-[11px] font-semibold flex items-center gap-0.5 transition-opacity hover:opacity-70"
                   style={{ color: '#FFB703' }}>
                   See all <ChevronRight size={11} strokeWidth={2.5}/>
                 </Link>
               </div>
 
-              <div className="flex flex-col gap-2">
-                {STUDENT_MATCHES.map((s, i) => (
-                  <StudentCard key={s.id} student={s} onOpen={setActiveStudent} index={i}/>
-                ))}
-              </div>
+              {loadingData ? (
+                <div className="flex flex-col gap-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white rounded-2xl border px-5 py-4 h-[76px] animate-pulse"
+                      style={{ borderColor: 'rgba(13,24,61,0.08)' }} />
+                  ))}
+                </div>
+              ) : applicants.length === 0 ? (
+                <div className="bg-white rounded-2xl border px-6 py-10 text-center"
+                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                  <p className="text-3xl mb-3">📭</p>
+                  <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No applicants yet</p>
+                  <p className="text-[12px] text-[#4B6382] leading-relaxed">
+                    Once students apply to your opportunities, they'll appear here.
+                  </p>
+                  <Link to="/opportunities/new"
+                    className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+                    style={{ background: '#FFB703' }}>
+                    Post an opportunity
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {applicants.slice(0, 5).map((s, i) => (
+                    <StudentCard key={s.id} student={s} onOpen={setActiveStudent} index={i}/>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Right column */}
@@ -720,8 +741,32 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName }) {
 
 export default function NGODashboard() {
   const { user, profile } = useApp()
-  const [activeStudent, setActiveStudent] = useState(null)
+  const [activeStudent,  setActiveStudent]  = useState(null)
+  const [applicants,     setApplicants]     = useState([])
+  const [oppCount,       setOppCount]       = useState(0)
+  const [loadingData,    setLoadingData]    = useState(true)
+
   const orgName = profile?.name || user?.name || 'Your NGO'
+
+  useEffect(() => {
+    if (!user?.id) return
+    setLoadingData(true)
+    Promise.all([
+      fetchNgoApplicants(user.id).catch(() => []),
+      fetchNgoOpportunities(user.id).catch(() => []),
+    ]).then(([apps, opps]) => {
+      setApplicants(apps)
+      setOppCount(opps.length)
+    }).finally(() => setLoadingData(false))
+  }, [user?.id])
+
+  // Build stat cards from real data
+  const ngoStats = [
+    { icon: Briefcase,  label: 'Opportunities', value: oppCount,                                              color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { icon: Users,      label: 'Total applicants', value: applicants.length,                                   color: 'text-[#FFB703]',  bg: 'bg-amber-50'  },
+    { icon: Clock,      label: 'Pending review',   value: applicants.filter(a => a.status === 'submitted').length, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { icon: CheckCircle2, label: 'Accepted',       value: applicants.filter(a => a.status === 'accepted').length,  color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  ]
 
   return (
     <>
@@ -730,6 +775,9 @@ export default function NGODashboard() {
         profile={profile}
         setActiveStudent={setActiveStudent}
         orgName={orgName}
+        applicants={applicants}
+        ngoStats={ngoStats}
+        loadingData={loadingData}
       />
       <AnimatePresence>
         {activeStudent && (
