@@ -5,6 +5,46 @@ import { useApp } from '../context/AppContext'
 import ProgressBar from '../components/ProgressBar'
 import TagInput from '../components/TagInput'
 import SkillPicker from '../components/SkillPicker'
+import AutocompleteInput from '../components/AutocompleteInput'
+
+const FIELDS_OF_STUDY = [
+  'Computer Science', 'Software Engineering', 'Information Systems',
+  'Data Science', 'Artificial Intelligence', 'Cybersecurity',
+  'Electrical Engineering', 'Mechanical Engineering', 'Industrial Engineering',
+  'Business Administration', 'Economics', 'Accounting & Finance',
+  'Marketing', 'Management', 'Entrepreneurship',
+  'Psychology', 'Social Work', 'Sociology', 'Political Science',
+  'Communication', 'Journalism', 'Media Studies',
+  'Graphic Design', 'UX / UI Design', 'Architecture',
+  'Education', 'Special Education', 'Curriculum & Teaching',
+  'Public Health', 'Nursing', 'Medicine', 'Pharmacy',
+  'Law', 'Criminology', 'International Relations',
+  'Statistics', 'Applied Mathematics', 'Physics',
+  'Environmental Science', 'Life Sciences', 'Biology',
+]
+
+const UNIVERSITIES = [
+  'Hebrew University of Jerusalem',
+  'Tel Aviv University',
+  'Ben-Gurion University of the Negev',
+  'University of Haifa',
+  'Technion – Israel Institute of Technology',
+  'Bar-Ilan University',
+  'Weizmann Institute of Science',
+  'Reichman University (IDC Herzliya)',
+  'Open University of Israel',
+  'Sapir College',
+  'Hadassah Academic College',
+  'Bezalel Academy of Arts and Design',
+  'Shenkar – Engineering, Design, Art',
+  'HIT – Holon Institute of Technology',
+  'Ruppin Academic Center',
+  'Ono Academic College',
+  'Jerusalem College of Technology',
+  'Tel Hai Academic College',
+  'WIZO Haifa Academy',
+  'Netanya Academic College',
+]
 import { AvatarPicker } from '../components/Avatar'
 import HiveLogo from '../components/HiveLogo'
 import img2 from '../assets/img2.png'  // student w/ phone — success context
@@ -16,8 +56,8 @@ const STEPS = [
     title: 'What are you studying?',
     subtitle: 'Your field and university help NGOs understand your academic background.',
     fields: [
-      { name: 'field', label: 'Field of study', placeholder: 'e.g. Computer Science, Graphic Design, Social Work, Public Health…', type: 'input', required: true },
-      { name: 'university', label: 'University / Institution', placeholder: 'e.g. Tel Aviv University, Hebrew University, University of Haifa, Technion, BGU…', type: 'input' },
+      { name: 'field', label: 'Field of study', placeholder: 'e.g. Computer Science, Psychology, Graphic Design…', type: 'autocomplete', options: FIELDS_OF_STUDY, required: true },
+      { name: 'university', label: 'University / Institution', placeholder: 'e.g. Tel Aviv University, Technion…', type: 'autocomplete', options: UNIVERSITIES },
     ],
   },
   {
@@ -365,6 +405,14 @@ export default function StudentOnboarding() {
                     <LanguagePicker
                       value={data.languages || []}
                       onChange={val => update('languages', val)}
+                    />
+                  ) : field.type === 'autocomplete' ? (
+                    <AutocompleteInput
+                      value={data[field.name] || ''}
+                      onChange={val => update(field.name, val)}
+                      options={field.options || []}
+                      placeholder={field.placeholder}
+                      error={!!errors[field.name]}
                     />
                   ) : field.type === 'skills' ? (
                     <SkillPicker

@@ -3,6 +3,46 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, X, Check, CheckCircle2, Plus } from 'lucide-react'
 import SkillPicker from '../components/SkillPicker'
+import AutocompleteInput from '../components/AutocompleteInput'
+
+const FIELDS_OF_STUDY = [
+  'Computer Science', 'Software Engineering', 'Information Systems',
+  'Data Science', 'Artificial Intelligence', 'Cybersecurity',
+  'Electrical Engineering', 'Mechanical Engineering', 'Industrial Engineering',
+  'Business Administration', 'Economics', 'Accounting & Finance',
+  'Marketing', 'Management', 'Entrepreneurship',
+  'Psychology', 'Social Work', 'Sociology', 'Political Science',
+  'Communication', 'Journalism', 'Media Studies',
+  'Graphic Design', 'UX / UI Design', 'Architecture',
+  'Education', 'Special Education', 'Curriculum & Teaching',
+  'Public Health', 'Nursing', 'Medicine', 'Pharmacy',
+  'Law', 'Criminology', 'International Relations',
+  'Statistics', 'Applied Mathematics', 'Physics',
+  'Environmental Science', 'Life Sciences', 'Biology',
+]
+
+const UNIVERSITIES = [
+  'Hebrew University of Jerusalem',
+  'Tel Aviv University',
+  'Ben-Gurion University of the Negev',
+  'University of Haifa',
+  'Technion – Israel Institute of Technology',
+  'Bar-Ilan University',
+  'Weizmann Institute of Science',
+  'Reichman University (IDC Herzliya)',
+  'Open University of Israel',
+  'Sapir College',
+  'Hadassah Academic College',
+  'Bezalel Academy of Arts and Design',
+  'Shenkar – Engineering, Design, Art',
+  'HIT – Holon Institute of Technology',
+  'Ruppin Academic Center',
+  'Ono Academic College',
+  'Jerusalem College of Technology',
+  'Tel Hai Academic College',
+  'WIZO Haifa Academy',
+  'Netanya Academic College',
+]
 import { useApp } from '../context/AppContext'
 import { saveStudentProfile } from '../services/storage'
 import { updateUserRow } from '../services/auth'
@@ -332,10 +372,20 @@ export default function EditStudentProfile() {
           </Field>
           <div className="grid sm:grid-cols-2 gap-5">
             <Field label="University / College">
-              <TextInput value={form.university} onChange={e => set('university', e.target.value)} placeholder="e.g. Tel Aviv University" {...fo('university')}/>
+              <AutocompleteInput
+                value={form.university}
+                onChange={val => set('university', val)}
+                options={UNIVERSITIES}
+                placeholder="e.g. Tel Aviv University"
+              />
             </Field>
             <Field label="Field of study">
-              <TextInput value={form.field} onChange={e => set('field', e.target.value)} placeholder="e.g. Computer Science" {...fo('field')}/>
+              <AutocompleteInput
+                value={form.field}
+                onChange={val => set('field', val)}
+                options={FIELDS_OF_STUDY}
+                placeholder="e.g. Computer Science"
+              />
             </Field>
           </div>
           <Field label="Short bio" hint="A sentence or two about you — shown at the top of your profile.">
