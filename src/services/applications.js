@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { computeMatch } from './matching'
 
 const STATUS_LABEL = {
   submitted:    'Application sent',
@@ -114,26 +115,11 @@ function toSkillObjects(raw) {
   return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
 }
 
-function computeMatchScore(studentSkills, oppSkills) {
-  const studentNames = toSkillObjects(studentSkills).map(s => s.name.toLowerCase())
-  const oppNames = (oppSkills ?? []).map(s => (typeof s === 'string' ? s : s.name ?? '').toLowerCase())
-  if (!oppNames.length) return 68
-  const matched = studentNames.filter(s => oppNames.some(o => o.includes(s.split(' ')[0]) || s.includes(o.split(' ')[0])))
-  return Math.min(60 + matched.length * 9, 95)
-}
-
-function matchedSkillNames(studentSkills, oppSkills) {
-  const studentObjs = toSkillObjects(studentSkills)
-  const oppNames = (oppSkills ?? []).map(s => (typeof s === 'string' ? s : s.name ?? '').toLowerCase())
-  return studentObjs.filter(s => oppNames.some(o => o.includes(s.name.toLowerCase().split(' ')[0]) || s.name.toLowerCase().includes(o.split(' ')[0]))).map(s => s.name)
-}
-
 // NGO: rich applicant list — joins applications, users, student_profiles, opportunities
 export async function fetchNgoApplicants(ngoId) {
-  // Step 1: applications + opportunity data
   const { data: apps, error } = await supabase
     .from('applications')
-    .select('*, opportunities(title, category, skills, location)')
+    .select('*, opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field)')
     .eq('ngo_id', ngoId)
     .order('submitted_at', { ascending: false })
   if (error) throw new Error(error.message)
@@ -141,17 +127,12 @@ export async function fetchNgoApplicants(ngoId) {
 
   const studentIds = [...new Set(apps.map(a => a.student_id))]
 
-  // Step 2: user names
-  const { data: userData } = await supabase
-    .from('users')
-    .select('id, name, email')
-    .in('id', studentIds)
-
-  // Step 3: student profiles
-  const { data: profileData } = await supabase
-    .from('student_profiles')
-    .select('user_id, field, university, skills, languages, availability, bio, interests, links')
-    .in('user_id', studentIds)
+  const [{ data: userData }, { data: profileData }] = await Promise.all([
+    supabase.from('users').select('id, name, email').in('id', studentIds),
+    supabase.from('student_profiles')
+      .select('user_id, field, university, skills, languages, availability, bio, interests, links, experience, goals')
+      .in('user_id', studentIds),
+  ])
 
   const userMap    = Object.fromEntries((userData    ?? []).map(u => [u.id,      u]))
   const profileMap = Object.fromEntries((profileData ?? []).map(p => [p.user_id, p]))
@@ -159,42 +140,48 @@ export async function fetchNgoApplicants(ngoId) {
   return apps.map(app => {
     const user = userMap[app.student_id]    ?? {}
     const prof = profileMap[app.student_id] ?? {}
-    const oppSkills = app.opportunities?.skills ?? []
-    const score     = computeMatchScore(prof.skills, oppSkills)
-    const matched   = matchedSkillNames(prof.skills, oppSkills)
 
-    const matchReasons = []
-    if (matched.length > 0) {
-      matchReasons.push(`${matched.slice(0, 2).join(' & ')} align with the role requirements`)
+    // Build opportunity shape for the matching engine
+    const opp = {
+      skills:       app.opportunities?.skills        ?? [],
+      category:     app.opportunities?.category      ?? '',
+      title:        app.opportunities?.title         ?? '',
+      description:  app.opportunities?.description   ?? '',
+      missionImpact:app.opportunities?.mission_impact ?? '',
+      workMode:     app.opportunities?.work_mode     ?? '',
+      weeklyHours:  app.opportunities?.weekly_hours  ?? null,
+      languages:    app.opportunities?.languages     ?? [],
+      field:        app.opportunities?.field         ?? '',
+      location:     app.opportunities?.location      ?? '',
     }
-    matchReasons.push(`Applied to "${app.opportunities?.title || 'your opportunity'}"`)
 
-    const languages = (prof.languages ?? []).map(l =>
+    const matchResult = computeMatch(prof, opp)
+    const languages   = (prof.languages ?? []).map(l =>
       typeof l === 'string' ? l : `${l.lang}${l.level ? ` (${l.level})` : ''}`)
 
     return {
       id:               app.id,
       studentId:        app.student_id,
-      name:             user.name    ?? 'Applicant',
-      email:            user.email   ?? '',
-      field:            prof.field   ?? '',
+      name:             user.name       ?? 'Applicant',
+      email:            user.email      ?? '',
+      field:            prof.field      ?? '',
       uni:              prof.university ?? '',
       skills:           toSkillObjects(prof.skills),
       languages,
       availability:     prof.availability ?? '',
-      bio:              prof.bio     ?? '',
-      interests:        prof.interests ?? [],
-      links:            prof.links   ?? {},
-      opportunityTitle: app.opportunities?.title    ?? '',
+      bio:              prof.bio        ?? '',
+      interests:        prof.interests  ?? [],
+      links:            prof.links      ?? {},
+      opportunityTitle: app.opportunities?.title ?? '',
       opportunityId:    app.opportunity_id,
       status:           app.status,
       statusLabel:      STATUS_LABEL[app.status] ?? app.status,
       submittedAt:      app.submitted_at,
-      match:            score,
-      matchReasons,
-      // legacy fields the modal reads
-      year:             '',
+      match:            matchResult.score,
+      matchReasons:     matchResult.strengths.slice(0, 3),
+      breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
+      year:             '',
       projects:         [],
     }
   })

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { submitApplication } from '../services/applications'
+import { submitApplication, fetchStudentApplications } from '../services/applications'
+import { fetchActiveOpportunities } from '../services/opportunities'
+import { computeMatch } from '../services/matching'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
@@ -15,9 +17,47 @@ import GradientAvatar from '../components/GradientAvatar'
 import img3 from '../assets/img3.png'
 import img5 from '../assets/img5.png'
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Data helpers ─────────────────────────────────────────────────────────────
 
-const TOP_MATCHES = []
+const CARD_GRADIENTS = [
+  'from-purple-500 to-indigo-600',
+  'from-emerald-500 to-teal-600',
+  'from-pink-500 to-rose-600',
+  'from-amber-500 to-orange-600',
+  'from-cyan-500 to-blue-600',
+  'from-violet-500 to-purple-600',
+  'from-yellow-400 to-amber-500',
+  'from-teal-500 to-cyan-600',
+]
+
+function timeGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
+
+function oppToMatchCard(opp, matchResult) {
+  const hash = opp.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return {
+    id:            opp.id,
+    opportunityId: opp.id,
+    ngoId:         opp.ngoId,
+    name:          opp.orgName,
+    category:      opp.category  ?? '',
+    location:      opp.location  ?? '',
+    desc:          opp.description || opp.missionImpact || '',
+    match:         matchResult.score,
+    hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
+    workMode:      opp.workMode   ?? 'Hybrid',
+    skills:        (opp.skills ?? []).slice(0, 3).map(skillName).filter(Boolean),
+    bannerGrad:    CARD_GRADIENTS[hash % CARD_GRADIENTS.length],
+    avatars:       [opp.orgName, opp.category, opp.location].filter(Boolean),
+    mission:       opp.missionImpact || opp.description || '',
+  }
+}
 
 // AI-generated application message based on student profile + NGO mission
 function generateAppMessage(profile, ngo) {
@@ -361,25 +401,47 @@ export default function StudentDashboard() {
   const firstName = user?.name?.split(' ')[0] || 'there'
   const avatarSrc = profile?.avatar || user?.avatar || null
 
-  const [applyingTo, setApplyingTo]   = useState(null)
+  const [applyingTo, setApplyingTo]     = useState(null)
   const [chattingWith, setChattingWith] = useState(null)
-  const [appCount, setAppCount]        = useState(0)
+  const [topMatches, setTopMatches]     = useState([])
+  const [matchCount, setMatchCount]     = useState(0)
+  const [appCount, setAppCount]         = useState(0)
+  const [interviewCount, setInterviewCount] = useState(0)
+  const [loadingMatches, setLoadingMatches] = useState(true)
 
   useEffect(() => {
     if (!user?.id) return
-    import('../services/applications').then(({ fetchStudentApplications }) => {
-      fetchStudentApplications(user.id).then(apps => setAppCount(apps.length)).catch(() => {})
-    })
-  }, [user?.id])
+
+    // Fetch opportunities and score them against the student's profile
+    fetchActiveOpportunities()
+      .then(opps => {
+        const scored = opps
+          .map(opp => ({ opp, result: computeMatch(profile, opp) }))
+          .sort((a, b) => b.result.score - a.result.score)
+        const good = scored.filter(({ result }) => result.score >= 45)
+        setMatchCount(good.length)
+        setTopMatches(good.slice(0, 3).map(({ opp, result }) => oppToMatchCard(opp, result)))
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMatches(false))
+
+    // Fetch applications for count + interview tally
+    fetchStudentApplications(user.id)
+      .then(apps => {
+        setAppCount(apps.length)
+        setInterviewCount(apps.filter(a => a.status === 'interview').length)
+      })
+      .catch(() => {})
+  }, [user?.id, profile])
 
   function handleApplySuccess() {
     setAppCount(n => n + 1)
   }
 
   const STATS = [
-    { icon: '✦',  label: 'Matches',      value: '0',             accent: 'text-[#D99E00]'   },
-    { icon: '📄', label: 'Applications', value: String(appCount), accent: 'text-blue-600'    },
-    { icon: '💬', label: 'Interviews',   value: '0',             accent: 'text-emerald-600' },
+    { icon: '✦',  label: 'Matches',      value: String(matchCount),     accent: 'text-[#D99E00]'   },
+    { icon: '📄', label: 'Applications', value: String(appCount),        accent: 'text-blue-600'    },
+    { icon: '💬', label: 'Interviews',   value: String(interviewCount),  accent: 'text-emerald-600' },
   ]
 
   return (
@@ -392,7 +454,7 @@ export default function StudentDashboard() {
           className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-[#0D183D] mb-1 flex items-center gap-2">
-              Good morning, {firstName}! ☀️
+              {timeGreeting()}, {firstName}! ☀️
               <motion.span animate={{ rotate:[0,10,-10,0] }} transition={{ repeat:Infinity, duration:2.5, ease:'easeInOut' }}
                 className="text-xl select-none">🐝</motion.span>
             </h1>
@@ -440,47 +502,74 @@ export default function StudentDashboard() {
             </div>
 
             <div className="grid sm:grid-cols-3 gap-4">
-              {TOP_MATCHES.map((ngo, i) => (
-                <motion.div key={ngo.id}
-                  initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }}
-                  transition={{ delay:0.18 + i*0.1, duration:0.4 }}
-                  className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] overflow-hidden flex flex-col hover:shadow-soft hover:-translate-y-0.5 transition-all duration-200">
-
-                  <NGOBanner grad={ngo.bannerGrad} avatars={ngo.avatars} match={ngo.match}/>
-
-                  <div className="p-4 flex flex-col gap-2 flex-1">
-                    <div>
-                      <p className="font-extrabold text-[#0D183D] text-sm">{ngo.name}</p>
-                      <p className="text-[10px] text-navy-400">{ngo.category} · {ngo.location}</p>
-                    </div>
-                    <p className="text-[11px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">{ngo.desc}</p>
-
-                    <div className="flex items-center gap-2 text-[10px] text-[#4B6382] mt-0.5">
-                      <span className="flex items-center gap-1"><Clock size={9}/>{ngo.hours}</span>
-                      <span className="flex items-center gap-1"><MapPin size={9}/>{ngo.workMode}</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {ngo.skills.map(s => (
-                        <span key={s} className="bg-[#FFF7E6] text-navy-600 text-[9px] font-semibold px-2 py-0.5 rounded-full border border-[rgba(13,24,61,0.08)]">{s}</span>
-                      ))}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 mt-1">
-                      <button onClick={() => setApplyingTo(ngo)}
-                        className="flex-1 py-2 rounded-xl text-[11px] font-semibold text-white text-center transition-all hover:opacity-90"
-                        style={{ background:'#FFB703' }}>
-                        Apply now →
-                      </button>
-                      <button onClick={() => setChattingWith(ngo)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] hover:text-[#0D183D] transition-colors shrink-0">
-                        <MessageCircle size={13}/>
-                      </button>
+              {loadingMatches ? (
+                // Loading skeletons
+                [0,1,2].map(i => (
+                  <div key={i} className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] overflow-hidden animate-pulse">
+                    <div className="h-[100px] bg-[rgba(13,24,61,0.06)]"/>
+                    <div className="p-4 flex flex-col gap-2.5">
+                      <div className="h-3 w-3/4 rounded-full bg-[rgba(13,24,61,0.06)]"/>
+                      <div className="h-2.5 w-1/2 rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-8 w-full rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-7 w-full rounded-xl bg-[rgba(13,24,61,0.06)] mt-1"/>
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                ))
+              ) : topMatches.length === 0 ? (
+                <div className="sm:col-span-3 flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <span className="text-4xl">🔍</span>
+                  <p className="text-sm font-semibold text-[#0D183D]">No matches yet</p>
+                  <p className="text-[12px] text-[#4B6382] max-w-xs">
+                    Add skills and interests to your profile to get matched with opportunities.
+                  </p>
+                  <button onClick={() => navigate('/settings')}
+                    className="mt-1 text-[12px] font-semibold px-4 py-2 rounded-xl text-white"
+                    style={{ background:'#FFB703' }}>
+                    Complete your profile →
+                  </button>
+                </div>
+              ) : (
+                topMatches.map((ngo, i) => (
+                  <motion.div key={ngo.id}
+                    initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }}
+                    transition={{ delay:0.18 + i*0.1, duration:0.4 }}
+                    className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] overflow-hidden flex flex-col hover:shadow-soft hover:-translate-y-0.5 transition-all duration-200">
+
+                    <NGOBanner grad={ngo.bannerGrad} avatars={ngo.avatars} match={ngo.match}/>
+
+                    <div className="p-4 flex flex-col gap-2 flex-1">
+                      <div>
+                        <p className="font-extrabold text-[#0D183D] text-sm">{ngo.name}</p>
+                        <p className="text-[10px] text-navy-400">{ngo.category} · {ngo.location}</p>
+                      </div>
+                      <p className="text-[11px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">{ngo.desc}</p>
+
+                      <div className="flex items-center gap-2 text-[10px] text-[#4B6382] mt-0.5">
+                        <span className="flex items-center gap-1"><Clock size={9}/>{ngo.hours}</span>
+                        <span className="flex items-center gap-1"><MapPin size={9}/>{ngo.workMode}</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {ngo.skills.map(s => (
+                          <span key={s} className="bg-[#FFF7E6] text-navy-600 text-[9px] font-semibold px-2 py-0.5 rounded-full border border-[rgba(13,24,61,0.08)]">{s}</span>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={() => setApplyingTo(ngo)}
+                          className="flex-1 py-2 rounded-xl text-[11px] font-semibold text-white text-center transition-all hover:opacity-90"
+                          style={{ background:'#FFB703' }}>
+                          Apply now →
+                        </button>
+                        <button onClick={() => setChattingWith(ngo)}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] hover:text-[#0D183D] transition-colors shrink-0">
+                          <MessageCircle size={13}/>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
 
