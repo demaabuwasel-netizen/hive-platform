@@ -27,15 +27,18 @@ export async function fetchSavedOpportunities(userId) {
     .select(`
       id,
       opportunity_id,
-      created_at,
+      saved_at,
       opportunities (
         id, title, org_name, category, description, mission_impact,
         skills, location, work_mode, weekly_hours, status
       )
     `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  if (error) throw new Error(error.message)
+    .eq('student_id', userId)
+    .order('saved_at', { ascending: false })
+  if (error) {
+    console.error('[saved] fetchSavedOpportunities error:', error)
+    throw new Error(error.message)
+  }
   return (data ?? [])
     .filter(row => row.opportunities)
     .map(dbToSaved)
@@ -46,33 +49,42 @@ export async function fetchSavedIds(userId) {
   const { data, error } = await supabase
     .from('saved_opportunities')
     .select('opportunity_id')
-    .eq('user_id', userId)
-  if (error) return new Set()
+    .eq('student_id', userId)
+  if (error) {
+    console.error('[saved] fetchSavedIds error:', error)
+    return new Set()
+  }
   return new Set((data ?? []).map(r => r.opportunity_id))
 }
 
 export async function saveOpportunity(userId, opportunityId) {
   const { error } = await supabase
     .from('saved_opportunities')
-    .insert({ user_id: userId, opportunity_id: opportunityId })
+    .insert({ student_id: userId, opportunity_id: opportunityId })
   // 23505 = unique_violation: already saved — treat as success
-  if (error && error.code !== '23505') throw new Error(error.message)
+  if (error && error.code !== '23505') {
+    console.error('[saved] saveOpportunity error:', error)
+    throw new Error(error.message)
+  }
 }
 
 export async function unsaveOpportunity(userId, opportunityId) {
   const { error } = await supabase
     .from('saved_opportunities')
     .delete()
-    .eq('user_id', userId)
+    .eq('student_id', userId)
     .eq('opportunity_id', opportunityId)
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[saved] unsaveOpportunity error:', error)
+    throw new Error(error.message)
+  }
 }
 
 export async function isOpportunitySaved(userId, opportunityId) {
   const { data } = await supabase
     .from('saved_opportunities')
     .select('id')
-    .eq('user_id', userId)
+    .eq('student_id', userId)
     .eq('opportunity_id', opportunityId)
     .maybeSingle()
   return !!data
