@@ -11,4 +11,10 @@ if (!url || !key) {
   )
 }
 
-export const supabase = createClient(url ?? '', key ?? '')
+export const supabase = createClient(url ?? '', key ?? '', {
+  auth: {
+    persistSession:     true,   // store session in localStorage (default, made explicit)
+    autoRefreshToken:   true,   // refresh JWT before it expires (default, made explicit)
+    detectSessionInUrl: true,   // pick up OAuth #access_token from URL (default, made explicit)
+  },
+})

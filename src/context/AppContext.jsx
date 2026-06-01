@@ -10,7 +10,8 @@ export function AppProvider({ children }) {
   const [profile, setProfileState] = useState(null)
   const [loading, setLoading]      = useState(true)
 
-  // Load our extended user row + matching profile, given a Supabase auth user
+  // Load our extended user row + matching profile, given a Supabase auth user.
+  // Never throws — always resolves so the caller can reliably clear loading state.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null)
@@ -24,14 +25,32 @@ export function AppProvider({ children }) {
       provider: authUser.app_metadata?.provider,
     })
 
-    // Ensure a users-table row exists (handles first Google sign-in)
+    // Ensure a public.users row exists (handles first Google sign-in)
     await ensureUserRow(authUser)
 
     const userRow = await getUserRow(authUser.id)
     console.log('[hydrateUser] public.users row:', userRow)
-    if (!userRow) return
 
-    // Merge auth metadata + our users-table row into a single object
+    if (!userRow) {
+      // getUserRow failed (network error, RLS issue, etc.).
+      // Fall back to minimal auth-only state so the user is NOT logged out
+      // over a temporary DB hiccup. They'll land on role-selection (role=null).
+      console.warn('[hydrateUser] users row missing — using minimal auth state')
+      setUserState({
+        id:                 authUser.id,
+        email:              authUser.email,
+        name:               authUser.user_metadata?.full_name
+                              ?? authUser.user_metadata?.name
+                              ?? authUser.email?.split('@')[0]
+                              ?? 'User',
+        avatar:             authUser.user_metadata?.avatar_url ?? null,
+        role:               null,
+        onboardingComplete: false,
+        provider:           authUser.app_metadata?.provider ?? 'email',
+      })
+      return
+    }
+
     const merged = {
       id:                 authUser.id,
       email:              authUser.email,
@@ -41,10 +60,11 @@ export function AppProvider({ children }) {
       onboardingComplete: userRow.onboarding_complete,
       provider:           userRow.provider,
     }
-    console.log('[hydrateUser] merged user:', { role: merged.role, onboardingComplete: merged.onboardingComplete })
+    console.log('[hydrateUser] merged user:', {
+      role: merged.role, onboardingComplete: merged.onboardingComplete,
+    })
     setUserState(merged)
 
-    // Load role-specific profile
     if (userRow.role === 'student') {
       const p = await loadStudentProfile(authUser.id)
       setProfileState(p)
@@ -54,33 +74,56 @@ export function AppProvider({ children }) {
     }
   }, [])
 
-  // Bootstrap: get current session, then subscribe to auth changes
+  // Bootstrap: subscribe to auth state changes.
+  //
+  // WHY no getSession() call here:
+  //   onAuthStateChange fires INITIAL_SESSION on every page load (with the
+  //   existing session if one exists, or null if not). Calling getSession()
+  //   separately causes two parallel hydrateUser executions (double hydration
+  //   race). INITIAL_SESSION is the single reliable bootstrap event.
+  //
+  // WHY setLoading(false) only in INITIAL_SESSION:
+  //   INITIAL_SESSION is guaranteed to fire exactly once per page load,
+  //   making it the correct and only place to clear the loading gate.
   useEffect(() => {
-    // Hard 6-second bail-out so a hanging network call never blocks the UI
-    const bail = setTimeout(() => setLoading(false), 6000)
-
-    supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        if (session?.user) await hydrateUser(session.user)
-      })
-      .catch(console.error)
-      .finally(() => {
-        clearTimeout(bail)
-        setLoading(false)
-      })
+    // Safety bail — fires only if INITIAL_SESSION never arrives (should not happen)
+    const bail = setTimeout(() => {
+      console.warn('[AppContext] INITIAL_SESSION never fired — clearing loading')
+      setLoading(false)
+    }, 10000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
+
         if (event === 'SIGNED_OUT') {
           setUserState(null)
           setProfileState(null)
+          clearTimeout(bail)
+          setLoading(false)
           return
         }
-        if (session?.user) await hydrateUser(session.user)
+
+        if (event === 'INITIAL_SESSION') {
+          // Page load — bootstrap from stored session (or null if logged out)
+          if (session?.user) {
+            try { await hydrateUser(session.user) }
+            catch (err) { console.error('[AppContext] INITIAL_SESSION hydrateUser error:', err) }
+          }
+          clearTimeout(bail)
+          setLoading(false)   // always clear loading after INITIAL_SESSION
+          return
+        }
+
+        // SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED …
+        if (session?.user) {
+          try { await hydrateUser(session.user) }
+          catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
+        }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); clearTimeout(bail) }
   }, [hydrateUser])
 
   // Called from RoleSelection — sets role in DB and updates context
