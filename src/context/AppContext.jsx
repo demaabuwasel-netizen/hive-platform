@@ -104,14 +104,16 @@ export function AppProvider({ children }) {
           return
         }
 
-        if (event === 'INITIAL_SESSION') {
-          // Page load — bootstrap from stored session (or null if logged out)
+        if (event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') {
+          // INITIAL_SESSION: page load — bootstrap from stored session (or null).
+          // PASSWORD_RECOVERY: recovery link was processed; Supabase fires this
+          //   instead of INITIAL_SESSION, so we must clear loading here too.
           if (session?.user) {
             try { await hydrateUser(session.user) }
-            catch (err) { console.error('[AppContext] INITIAL_SESSION hydrateUser error:', err) }
+            catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
           }
           clearTimeout(bail)
-          setLoading(false)   // always clear loading after INITIAL_SESSION
+          setLoading(false)
           return
         }
 
