@@ -262,11 +262,13 @@ const variants = {
 export default function StudentOnboarding() {
   const { completeOnboarding, user } = useApp()
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
-  const [data, setData] = useState({})
+  const [step, setStep]         = useState(0)
+  const [data, setData]         = useState({})
   const [direction, setDirection] = useState(1)
-  const [errors, setErrors] = useState({})
-  const [done, setDone] = useState(false)
+  const [errors, setErrors]     = useState({})
+  const [done, setDone]         = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const current = STEPS[step]
 
@@ -298,20 +300,27 @@ export default function StudentOnboarding() {
     if (step < STEPS.length - 1) {
       setStep(s => s + 1)
     } else {
-      const skills    = Array.isArray(data.skills)    ? data.skills    : []
-      const courses   = Array.isArray(data.courses)   ? data.courses   : (data.courses?.split(',').map(s => s.trim()).filter(Boolean) || [])
-      const interests = Array.isArray(data.interests) ? data.interests : (data.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
-      const skillNames = skills.map(s => s.name).filter(Boolean)
-      const profile = {
-        ...data,
-        skills,
-        courses,
-        interests,
-        links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
-        summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const skills    = Array.isArray(data.skills)    ? data.skills    : []
+        const courses   = Array.isArray(data.courses)   ? data.courses   : (data.courses?.split(',').map(s => s.trim()).filter(Boolean) || [])
+        const interests = Array.isArray(data.interests) ? data.interests : (data.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
+        const skillNames = skills.map(s => s.name).filter(Boolean)
+        const profile = {
+          ...data,
+          skills,
+          courses,
+          interests,
+          links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
+          summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
+        }
+        await completeOnboarding(profile)
+        setDone(true)
+      } catch (err) {
+        setSubmitError(err.message || 'Something went wrong. Please try again.')
+        setSubmitting(false)
       }
-      await completeOnboarding(profile)
-      setDone(true)
     }
   }
 
@@ -473,16 +482,38 @@ export default function StudentOnboarding() {
           </motion.div>
         </AnimatePresence>
 
+        {submitError && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+            className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2"
+          >
+            {submitError}
+          </motion.p>
+        )}
+
         <div className="flex justify-between items-center">
           <button
             onClick={back}
-            disabled={step === 0}
+            disabled={step === 0 || submitting}
             className="btn-secondary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
-          <button onClick={next} className="btn-honey text-sm py-2.5 px-6">
-            {step === STEPS.length - 1 ? 'Create my profile →' : 'Continue →'}
+          <button
+            onClick={next}
+            disabled={submitting}
+            className="btn-honey text-sm py-2.5 px-6 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full"
+                />
+                Saving…
+              </span>
+            ) : step === STEPS.length - 1 ? 'Create my profile →' : 'Continue →'}
           </button>
         </div>
 
