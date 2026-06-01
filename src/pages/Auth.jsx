@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
-import { signUp, logIn, signInWithGoogle, updateUserRow, requestPasswordReset } from '../services/auth'
+import { signUp, logIn, signInWithGoogle, getUserRow, updateUserRow, requestPasswordReset } from '../services/auth'
 
 // ── Google brand icon ─────────────────────────────────────────────────────────
 
@@ -44,27 +44,34 @@ export default function Auth() {
   }
 
   // After email sign-up/in, apply prefilled role if provided, then navigate.
-  // With Supabase, AppContext's onAuthStateChange fires automatically; we
-  // only need to redirect. But we still apply the prefilled role here so
-  // the user lands on the correct onboarding page immediately.
   async function applyRoleAndRedirect(authUserId, isNewUser = false) {
+    // Apply prefilled role from landing-page CTA (?role=student / ?role=ngo)
     if (prefilledRole && (prefilledRole === 'student' || prefilledRole === 'ngo')) {
       await updateUserRow(authUserId, { role: prefilledRole })
     }
 
-    // Wait one tick so AppContext hydrateUser can run
-    setTimeout(() => {
-      // AppContext will have populated user by now; navigate based on what we know
-      if (isNewUser) {
-        const target = prefilledRole === 'ngo' ? '/onboarding/ngo'
-                     : prefilledRole === 'student' ? '/onboarding/student'
-                     : '/role-selection'
-        navigate(target, { replace: true })
-      } else {
-        // Existing user — let the guards in App.jsx handle the redirect
-        navigate('/', { replace: true })
-      }
-    }, 300)
+    // Read the authoritative user row to decide where to send the user.
+    // For new sign-ups, the role may have just been set above.
+    const userRow = await getUserRow(authUserId)
+
+    console.log('[auth] email SIGNED_IN', {
+      uid:      authUserId,
+      isNewUser,
+      role:     userRow?.role,
+      onboarding_complete: userRow?.onboarding_complete,
+    })
+
+    let dest
+    if (!userRow?.role) {
+      dest = '/role-selection'
+    } else if (!userRow?.onboarding_complete) {
+      dest = `/onboarding/${userRow.role}`
+    } else {
+      dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
+    }
+
+    console.log('[auth] redirect →', dest)
+    navigate(dest, { replace: true })
   }
 
   // ── Email submit ─────────────────────────────────────────────────────────────

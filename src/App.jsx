@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
+import { supabase } from './services/supabase'
+import { getUserRow } from './services/auth'
 import { motion } from 'framer-motion'
 import Landing from './pages/Landing'
 import ForStudents from './pages/ForStudents'
@@ -86,27 +88,57 @@ function ProtectedDashboard() {
   return <DashboardLayout />
 }
 
-// ─── OAuth callback handler ───────────────────────────────────────────────────
-// AppProvider sits outside BrowserRouter and cannot call useNavigate.
-// This component runs inside the router and handles the redirect after
-// Google (or any OAuth) redirects back to the app with #access_token in the URL.
+// ─── Auth redirect handler ────────────────────────────────────────────────────
+// Listens for Supabase SIGNED_IN events and redirects to the correct page.
+//
+// WHY NOT check window.location.hash:
+//   Supabase JS clears #access_token synchronously inside createClient()
+//   (via history.replaceState in _handleImplicitGrantFlow). By the time
+//   any React useEffect runs, the hash is already gone.
+//
+// WHY filter to non-email providers:
+//   Auth.jsx handles its own redirect after email/password sign-in.
+//   SIGNED_IN fires for all methods, so we only intercept OAuth here to
+//   avoid double-redirects.
 
 function OAuthCallback() {
-  const { user, loading } = useApp()
   const navigate = useNavigate()
 
   useEffect(() => {
-    const hash = window.location.hash
-    // Only handle OAuth bearer callbacks — not password-reset recovery links
-    if (!hash.includes('access_token') || hash.includes('type=recovery')) return
-    if (loading || !user) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event !== 'SIGNED_IN' || !session?.user) return
 
-    const dest = user.onboardingComplete
-      ? (user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo')
-      : '/role-selection'
+        const provider = session.user.app_metadata?.provider ?? 'email'
 
-    navigate(dest, { replace: true })
-  }, [user, loading, navigate])
+        // Email/password sign-in is handled by Auth.jsx — skip it here
+        if (provider === 'email') return
+
+        const uid   = session.user.id
+        const email = session.user.email
+
+        console.log('[auth] OAuth SIGNED_IN', { uid, email, provider })
+
+        const userRow = await getUserRow(uid)
+        console.log('[auth] public.users row:', userRow)
+
+        let dest
+        if (!userRow?.role) {
+          dest = '/role-selection'
+          console.log('[auth] redirect → /role-selection (no role set)')
+        } else if (!userRow?.onboarding_complete) {
+          dest = `/onboarding/${userRow.role}`
+          console.log('[auth] redirect →', dest, '(onboarding incomplete)')
+        } else {
+          dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
+          console.log('[auth] redirect →', dest, '(fully onboarded)')
+        }
+
+        navigate(dest, { replace: true })
+      }
+    )
+    return () => subscription.unsubscribe()
+  }, [navigate])
 
   return null
 }

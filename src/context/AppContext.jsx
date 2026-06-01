@@ -18,10 +18,17 @@ export function AppProvider({ children }) {
       return
     }
 
+    console.log('[hydrateUser] auth user:', {
+      id:       authUser.id,
+      email:    authUser.email,
+      provider: authUser.app_metadata?.provider,
+    })
+
     // Ensure a users-table row exists (handles first Google sign-in)
     await ensureUserRow(authUser)
 
     const userRow = await getUserRow(authUser.id)
+    console.log('[hydrateUser] public.users row:', userRow)
     if (!userRow) return
 
     // Merge auth metadata + our users-table row into a single object
@@ -34,6 +41,7 @@ export function AppProvider({ children }) {
       onboardingComplete: userRow.onboarding_complete,
       provider:           userRow.provider,
     }
+    console.log('[hydrateUser] merged user:', { role: merged.role, onboardingComplete: merged.onboardingComplete })
     setUserState(merged)
 
     // Load role-specific profile
