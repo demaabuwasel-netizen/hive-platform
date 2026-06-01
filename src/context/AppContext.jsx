@@ -82,13 +82,28 @@ export function AppProvider({ children }) {
     setUserState(prev => prev ? { ...prev, role } : prev)
   }
 
-  // Called at the end of onboarding — saves profile to DB, marks complete
+  // Called at the end of onboarding — saves profile to DB, marks complete.
+  // Uses a bare UPDATE (no .select().single()) to avoid a known hang where
+  // PostgREST holds the response open waiting for the row, causing the
+  // promise to never settle.
   async function completeOnboarding(profileData) {
     if (!user) return
+
+    console.log('[onboarding] step 1 — saving profile…')
     await saveProfile(user.id, profileData, user.role)
-    await updateUserRow(user.id, { onboarding_complete: true })
+    console.log('[onboarding] step 1 — done')
+
+    console.log('[onboarding] step 2 — marking onboarding_complete…')
+    const { error } = await supabase
+      .from('users')
+      .update({ onboarding_complete: true })
+      .eq('id', user.id)
+    if (error) throw new Error(error.message)
+    console.log('[onboarding] step 2 — done')
+
     setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
     setProfileState(profileData)
+    console.log('[onboarding] complete ✓')
   }
 
   // Called from Settings or edit profile pages — updates profile without

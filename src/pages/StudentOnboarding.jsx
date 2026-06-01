@@ -315,7 +315,10 @@ export default function StudentOnboarding() {
           links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
           summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
         }
-        await completeOnboarding(profile)
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), 15000)
+        )
+        await Promise.race([completeOnboarding(profile), timeout])
         setDone(true)
       } catch (err) {
         setSubmitError(err.message || 'Something went wrong. Please try again.')
