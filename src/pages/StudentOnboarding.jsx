@@ -260,7 +260,7 @@ const variants = {
 }
 
 export default function StudentOnboarding() {
-  const { completeOnboarding, user } = useApp()
+  const { completeOnboarding, markOnboardingDone, user } = useApp()
   const navigate = useNavigate()
   const [step, setStep]         = useState(0)
   const [data, setData]         = useState({})
@@ -312,13 +312,35 @@ export default function StudentOnboarding() {
           skills,
           courses,
           interests,
-          links: { linkedin: data.linkedin, github: data.github, portfolio: data.portfolio },
+          // optional link fields — keep as null if empty so DB stores NULL not ''
+          phone:     data.phone?.trim()     || null,
+          linkedin:  data.linkedin?.trim()  || null,
+          github:    data.github?.trim()    || null,
+          portfolio: data.portfolio?.trim() || null,
+          links: {
+            linkedin:  data.linkedin?.trim()  || null,
+            github:    data.github?.trim()    || null,
+            portfolio: data.portfolio?.trim() || null,
+          },
           summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
         }
+
+        // 30-second safety net — long enough for a Supabase cold start.
+        // completeOnboarding now throws with the real step-specific error message,
+        // so the catch block below will show it before this timeout fires in most cases.
+        let realError = null
         const timeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), 15000)
+          setTimeout(() => {
+            const msg = realError
+              ? `Timed out — last error: ${realError}`
+              : 'Request timed out — the server is taking too long. Check the browser console for details (look for [onboarding] logs).'
+            reject(new Error(msg))
+          }, 30000)
         )
-        await Promise.race([completeOnboarding(profile), timeout])
+        await Promise.race([
+          completeOnboarding(profile).catch(err => { realError = err.message; throw err }),
+          timeout,
+        ])
         setDone(true)
       } catch (err) {
         setSubmitError(err.message || 'Something went wrong. Please try again.')
@@ -374,7 +396,7 @@ export default function StudentOnboarding() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.35 }}
-              onClick={() => navigate('/dashboard/student')}
+              onClick={() => { markOnboardingDone(); navigate('/dashboard/student') }}
               className="btn-honey text-base px-8 py-3.5"
             >
               Go to my dashboard →

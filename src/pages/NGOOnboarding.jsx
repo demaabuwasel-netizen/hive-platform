@@ -74,7 +74,7 @@ function generateSummary(data) {
 }
 
 export default function NGOOnboarding() {
-  const { completeOnboarding } = useApp()
+  const { completeOnboarding, markOnboardingDone } = useApp()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [data, setData] = useState({})
@@ -178,7 +178,7 @@ export default function NGOOnboarding() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.35 }}
-              onClick={() => navigate('/dashboard/ngo')}
+              onClick={() => { markOnboardingDone(); navigate('/dashboard/ngo') }}
               className="btn-navy text-base px-8 py-3.5"
             >
               View my profile →

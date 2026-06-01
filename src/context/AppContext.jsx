@@ -83,27 +83,63 @@ export function AppProvider({ children }) {
   }
 
   // Called at the end of onboarding — saves profile to DB, marks complete.
-  // Uses a bare UPDATE (no .select().single()) to avoid a known hang where
-  // PostgREST holds the response open waiting for the row, causing the
-  // promise to never settle.
+  // Uses bare mutations (no .select() / .single()) to avoid the known PostgREST
+  // hang where the response is held open waiting for a row.
   async function completeOnboarding(profileData) {
-    if (!user) return
+    if (!user) throw new Error('Not authenticated — please refresh and try again.')
 
-    console.log('[onboarding] step 1 — saving profile…')
-    await saveProfile(user.id, profileData, user.role)
-    console.log('[onboarding] step 1 — done')
+    const t0 = Date.now()
+    const elapsed = () => `+${Date.now() - t0}ms`
 
-    console.log('[onboarding] step 2 — marking onboarding_complete…')
-    const { error } = await supabase
-      .from('users')
-      .update({ onboarding_complete: true })
-      .eq('id', user.id)
-    if (error) throw new Error(error.message)
-    console.log('[onboarding] step 2 — done')
+    // ── Step 1: upsert student_profiles (or ngo_profiles) ──────────────────
+    // saveProfile handles its own AbortController internally (12 s deadline).
+    console.log(`[onboarding ${elapsed()}] step 1 — saveProfile (role=${user.role}, userId=${user.id})`)
+    try {
+      await saveProfile(user.id, profileData, user.role)
+    } catch (err) {
+      console.error(`[onboarding ${elapsed()}] step 1 FAILED:`, err)
+      throw new Error(`Profile save failed: ${err.message}`)
+    }
+    console.log(`[onboarding ${elapsed()}] step 1 — done`)
 
-    setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
+    // ── Step 2: mark onboarding complete in users table ────────────────────
+    console.log(`[onboarding ${elapsed()}] step 2 — users.update onboarding_complete`)
+    const ctrl2 = new AbortController()
+    const abort2 = setTimeout(() => ctrl2.abort(), 12000)
+    let userErr
+    try {
+      ;({ error: userErr } = await supabase
+        .from('users')
+        .update({ onboarding_complete: true })
+        .eq('id', user.id)
+        .abortSignal(ctrl2.signal))
+    } catch (err) {
+      clearTimeout(abort2)
+      console.error(`[onboarding ${elapsed()}] step 2 FAILED (fetch):`, err)
+      throw new Error(err.name === 'AbortError'
+        ? 'Supabase did not respond within 12 s on step 2 — retry.'
+        : `User update failed: ${err.message}`)
+    }
+    clearTimeout(abort2)
+    if (userErr) {
+      console.error(`[onboarding ${elapsed()}] step 2 FAILED:`, userErr)
+      throw new Error(`User update failed: ${userErr.message}`)
+    }
+    console.log(`[onboarding ${elapsed()}] step 2 — done`)
+
     setProfileState(profileData)
-    console.log('[onboarding] complete ✓')
+    console.log(`[onboarding ${elapsed()}] complete ✓`)
+    // NOTE: onboardingComplete is NOT set here — StudentOnboarding shows its
+    // success screen first and calls markOnboardingDone() before navigating.
+    // Setting it here would fire OnboardingGuard immediately and eject the user
+    // before the success screen renders.
+  }
+
+  // Called by StudentOnboarding's success screen button, right before navigate.
+  // Updating onboardingComplete here (not inside completeOnboarding) lets the
+  // success screen render first without being ejected by OnboardingGuard.
+  function markOnboardingDone() {
+    setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
   }
 
   // Called from Settings or edit profile pages — updates profile without
@@ -133,6 +169,7 @@ export function AppProvider({ children }) {
       setProfile,
       updateRole,
       completeOnboarding,
+      markOnboardingDone,
       updateProfile,
       logout,
       loading,
