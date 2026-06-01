@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,10 +10,11 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
+import { fetchActiveOpportunities } from '../services/opportunities'
+import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
+import { computeMatch } from '../services/matching'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
-const NGOS = []
 
 const NGO_OPPORTUNITIES = []
 
@@ -177,16 +178,72 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
+
 export default function Opportunities() {
-  const { user } = useApp()
+  const { user, profile } = useApp()
   const navigate = useNavigate()
   const isNGO = user?.role === 'ngo'
-  const [q, setQ]         = useState('')
-  const [cat, setCat]     = useState('All')
-  const [saved, setSaved] = useState(new Set(NGOS.filter(n => n.saved).map(n => n.id)))
+
+  const [q, setQ]           = useState('')
+  const [cat, setCat]       = useState('All')
+  const [opps, setOpps]     = useState([])
+  const [savedIds, setSavedIds] = useState(new Set())
+  const [toggling, setToggling] = useState(null) // opportunityId being toggled
+  const [loading, setLoading]   = useState(true)
   const [applyingTo, setApplyingTo] = useState(null)
 
-  const filtered = NGOS.filter(n =>
+  useEffect(() => {
+    if (isNGO) { setLoading(false); return }
+    Promise.all([
+      fetchActiveOpportunities(),
+      user?.id ? fetchSavedIds(user.id) : Promise.resolve(new Set()),
+    ]).then(([raw, ids]) => {
+      const cards = raw.map(opp => ({
+        id:      opp.id,
+        ngoId:   opp.ngoId,
+        opportunityId: opp.id,
+        name:    opp.orgName,
+        cat:     opp.category  ?? '',
+        loc:     opp.location  ?? '',
+        hours:   opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
+        workMode: opp.workMode ?? '',
+        desc:    opp.description || opp.missionImpact || '',
+        skills:  (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
+        match:   profile ? computeMatch(profile, opp).score : null,
+        mission: opp.missionImpact || opp.description || '',
+      }))
+      setOpps(cards)
+      setSavedIds(ids)
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [isNGO, user?.id, profile])
+
+  async function toggleSave(opp) {
+    if (!user?.id || toggling) return
+    setToggling(opp.id)
+    const isSaved = savedIds.has(opp.id)
+    // Optimistic update
+    setSavedIds(prev => {
+      const next = new Set(prev)
+      isSaved ? next.delete(opp.id) : next.add(opp.id)
+      return next
+    })
+    try {
+      if (isSaved) await unsaveOpportunity(user.id, opp.id)
+      else         await saveOpportunity(user.id, opp.id)
+    } catch {
+      // Revert on error
+      setSavedIds(prev => {
+        const next = new Set(prev)
+        isSaved ? next.add(opp.id) : next.delete(opp.id)
+        return next
+      })
+    } finally {
+      setToggling(null)
+    }
+  }
+
+  const filtered = opps.filter(n =>
     (cat === 'All' || n.cat === cat) &&
     (n.name.toLowerCase().includes(q.toLowerCase()) || n.desc.toLowerCase().includes(q.toLowerCase()))
   )
@@ -270,56 +327,91 @@ export default function Opportunities() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((ngo, i) => (
-                <motion.div key={ngo.id}
-                  initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
-                  transition={{ delay:i*0.06, duration:0.3 }}
-                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex flex-col gap-3 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:-translate-y-0.5 transition-all duration-200">
-
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <GradientAvatar name={ngo.name} size={40} radius="0.65rem"/>
-                      <div>
-                        <p className="text-[13px] font-bold text-[#0D183D] leading-snug">{ngo.name}</p>
-                        <p className="text-[11px] text-[#4B6382]">{ngo.cat}</p>
+            {loading ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[0,1,2,3,4,5].map(i => (
+                  <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 animate-pulse">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-2/3 rounded-full bg-[rgba(13,24,61,0.06)]"/>
+                        <div className="h-2.5 w-1/2 rounded-full bg-[rgba(13,24,61,0.04)]"/>
                       </div>
                     </div>
-                    <button onClick={() => setSaved(s => { const n=new Set(s); n.has(ngo.id)?n.delete(ngo.id):n.add(ngo.id); return n })}
-                      className="p-1.5 rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <BookmarkIcon size={14} className={saved.has(ngo.id)?'fill-[#FFB703] text-[#FFB703]':'text-[#4B6382]'}/>
-                    </button>
+                    <div className="space-y-1.5 mb-3">
+                      <div className="h-2.5 w-full rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-2.5 w-4/5 rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                    </div>
+                    <div className="h-8 rounded-xl bg-[rgba(13,24,61,0.04)]"/>
                   </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-[14px] font-semibold text-[#0D183D] mb-1">No opportunities found</p>
+                <p className="text-[13px] text-[#4B6382]">Try a different category or search term</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((ngo, i) => (
+                  <motion.div key={ngo.id}
+                    initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
+                    transition={{ delay:i*0.05, duration:0.3 }}
+                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex flex-col gap-3 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:-translate-y-0.5 transition-all duration-200">
 
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">{ngo.match}% match</span>
-                    <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><MapPin size={10}/>{ngo.loc}</span>
-                    <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><Clock size={10}/>{ngo.hours}</span>
-                  </div>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <GradientAvatar name={ngo.name} size={40} radius="0.65rem"/>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-bold text-[#0D183D] leading-snug truncate">{ngo.name}</p>
+                          <p className="text-[11px] text-[#4B6382]">{ngo.cat}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleSave(ngo)}
+                        disabled={toggling === ngo.id}
+                        className="p-1.5 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40"
+                        aria-label={savedIds.has(ngo.id) ? 'Unsave' : 'Save'}>
+                        <BookmarkIcon size={14} className={
+                          savedIds.has(ngo.id) ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'
+                        }/>
+                      </button>
+                    </div>
 
-                  <p className="text-[12px] text-[#4B6382] leading-relaxed flex-1">{ngo.desc}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {ngo.match !== null && (
+                        <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                          {ngo.match}% match
+                        </span>
+                      )}
+                      {ngo.loc && <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><MapPin size={10}/>{ngo.loc}</span>}
+                      {ngo.hours && <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><Clock size={10}/>{ngo.hours}</span>}
+                    </div>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    {ngo.skills.map(s => (
-                      <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border border-[rgba(13,24,61,0.08)]"
-                        style={{ background:'#F8F9FB', color:'#4B6382' }}>{s}</span>
-                    ))}
-                  </div>
+                    <p className="text-[12px] text-[#4B6382] leading-relaxed flex-1 line-clamp-3">{ngo.desc}</p>
 
-                  <div className="flex gap-2 mt-1">
-                    <button onClick={() => setApplyingTo(ngo)}
-                      className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
-                      style={{ background:'#FFB703' }}>
-                      Apply now →
-                    </button>
-                    <button onClick={() => navigate('/matches')}
-                      className="px-3 py-2 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
-                      <ChevronRight size={14}/>
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ngo.skills.map(s => (
+                        <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border border-[rgba(13,24,61,0.08)]"
+                          style={{ background:'#F8F9FB', color:'#4B6382' }}>{s}</span>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => setApplyingTo(ngo)}
+                        className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
+                        style={{ background:'#FFB703' }}>
+                        Apply now →
+                      </button>
+                      <button onClick={() => navigate('/matches')}
+                        className="px-3 py-2 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
+                        <ChevronRight size={14}/>
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
