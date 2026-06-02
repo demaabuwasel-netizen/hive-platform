@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
+import BrandIllustration from '../components/BrandIllustration'
 import img3 from '../assets/img3.png'
 
 const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
@@ -57,11 +58,12 @@ export default function ForNGOs() {
           </motion.div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
-          className="rounded-3xl overflow-hidden border"
-          style={{ borderColor: 'rgba(13,24,61,0.08)', background: 'white' }}>
-          <img src={img3} alt="NGO team collaborating" className="w-full object-cover" draggable={false} />
-        </motion.div>
+        <BrandIllustration
+          src={img3}
+          alt="NGO team collaborating"
+          delay={0.18}
+          maxWidth={460}
+        />
       </section>
 
       {/* Benefits */}

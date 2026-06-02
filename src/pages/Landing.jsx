@@ -336,25 +336,45 @@ export default function Landing() {
               <motion.div key={card.tag}
                 initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
                 viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.45 }}
-                whileHover={{ y:-4, transition:{ duration:0.18 } }}
+                whileHover={{ y:-5, boxShadow:'0 12px 36px rgba(13,24,61,0.10)', transition:{ duration:0.2 } }}
                 className="rounded-3xl overflow-hidden flex flex-col bg-white border"
                 style={{ borderColor:'rgba(13,24,61,0.08)', boxShadow:'0 2px 16px rgba(13,24,61,0.05)' }}>
 
-                {/* Illustration area — multiply blend removes white bg, gradient bridges into card body */}
-                <div className="relative overflow-hidden"
-                  style={{ height: 210, background: card.imgBg }}>
-                  <img src={card.img} alt={card.tag}
-                    className="w-full h-full object-contain object-bottom"
+                {/* Illustration area — cream canvas, multiply blend, no hard box */}
+                <div className="relative overflow-hidden" style={{ height: 232, background: C.bg }}>
+
+                  {/* Ambient honey glow */}
+                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full"
+                      style={{ background:'radial-gradient(circle, rgba(255,183,3,0.14) 0%, transparent 70%)' }}/>
+                  </div>
+
+                  {/* Tiny hex accents — different positions per card */}
+                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                    <svg className="absolute" style={{ top:'10%', left:'8%', opacity:0.12 }} width="26" height="26" viewBox="0 0 24 24">
+                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.5" fill="rgba(255,183,3,0.2)"/>
+                    </svg>
+                    <svg className="absolute" style={{ bottom:'22%', right:`${8 + i*6}%`, opacity:0.09 }} width="34" height="34" viewBox="0 0 24 24">
+                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.2" fill="rgba(255,183,3,0.15)"/>
+                    </svg>
+                    <svg className="absolute" style={{ top:`${12 + i*4}%`, right:'12%', opacity:0.07 }} width="18" height="18" viewBox="0 0 24 24">
+                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.5" fill="rgba(255,183,3,0.2)"/>
+                    </svg>
+                  </div>
+
+                  <motion.img src={card.img} alt={card.tag}
+                    className="w-full h-full object-contain"
                     style={{
                       mixBlendMode: 'multiply',
-                      transform: 'scale(1.03)',
-                      maskImage: 'linear-gradient(to bottom, black 35%, rgba(0,0,0,0.75) 68%, transparent 100%)',
-                      WebkitMaskImage: 'linear-gradient(to bottom, black 35%, rgba(0,0,0,0.75) 68%, transparent 100%)',
+                      maskImage: 'radial-gradient(ellipse 82% 78% at 50% 56%, black 22%, rgba(0,0,0,0.8) 52%, rgba(0,0,0,0.3) 72%, transparent 90%)',
+                      WebkitMaskImage: 'radial-gradient(ellipse 82% 78% at 50% 56%, black 22%, rgba(0,0,0,0.8) 52%, rgba(0,0,0,0.3) 72%, transparent 90%)',
                     }}
+                    whileHover={{ scale: 1.04, transition:{ duration:0.3 } }}
                     draggable={false} />
-                  {/* White gradient bridge so illustration flows into card content */}
-                  <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none z-10"
-                    style={{ background: 'linear-gradient(to bottom, transparent, #ffffff)' }} />
+
+                  {/* Cream-to-white fade into card content */}
+                  <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none z-10"
+                    style={{ background:`linear-gradient(to bottom, transparent, ${C.white})` }} />
                 </div>
 
                 {/* Content */}

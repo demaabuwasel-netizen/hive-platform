@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
+import BrandIllustration from '../components/BrandIllustration'
 import img2 from '../assets/img2.png'
 
 const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
@@ -57,11 +58,12 @@ export default function ForStudents() {
           </motion.div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
-          className="rounded-3xl overflow-hidden border"
-          style={{ borderColor: 'rgba(13,24,61,0.08)', background: 'white' }}>
-          <img src={img2} alt="Student working on NGO project" className="w-full object-cover" draggable={false} />
-        </motion.div>
+        <BrandIllustration
+          src={img2}
+          alt="Student working on NGO project"
+          delay={0.18}
+          maxWidth={460}
+        />
       </section>
 
       {/* Benefits */}
