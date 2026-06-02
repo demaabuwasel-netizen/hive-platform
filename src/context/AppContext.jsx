@@ -11,7 +11,8 @@ export function AppProvider({ children }) {
   const [loading, setLoading]      = useState(true)
 
   // Load our extended user row + matching profile, given a Supabase auth user.
-  // Never throws — always resolves so the caller can reliably clear loading state.
+  // Hard 10-second AbortController deadline — can never hang forever.
+  // Never throws — always resolves via try/catch/finally.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null)
@@ -19,62 +20,75 @@ export function AppProvider({ children }) {
       return
     }
 
-    console.log('[hydrateUser] auth user:', {
-      id:       authUser.id,
-      email:    authUser.email,
-      provider: authUser.app_metadata?.provider,
-    })
+    console.log('[hydrateUser] start — uid:', authUser.id,
+      'provider:', authUser.app_metadata?.provider ?? 'email')
 
-    // Ensure a public.users row exists (handles first Google sign-in).
-    // Non-fatal: for returning users the row already exists; a network error
-    // here must not abort hydration or the user will appear logged out.
-    try { await ensureUserRow(authUser) }
-    catch (err) { console.warn('[hydrateUser] ensureUserRow failed (non-fatal):', err.message) }
+    // Single AbortController covers ALL DB calls below.
+    const ctrl  = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 10000)
 
-    const userRow = await getUserRow(authUser.id)
-    console.log('[hydrateUser] public.users row:', userRow)
-
-    if (!userRow) {
-      // getUserRow failed (network error, RLS issue, etc.).
-      // Fall back to minimal auth-only state so the user is NOT logged out
-      // over a temporary DB hiccup. They'll land on role-selection (role=null).
-      console.warn('[hydrateUser] users row missing — using minimal auth state')
-      setUserState({
-        id:                 authUser.id,
-        email:              authUser.email,
-        name:               authUser.user_metadata?.full_name
-                              ?? authUser.user_metadata?.name
-                              ?? authUser.email?.split('@')[0]
-                              ?? 'User',
-        avatar:             authUser.user_metadata?.avatar_url ?? null,
-        role:               null,
-        onboardingComplete: false,
-        provider:           authUser.app_metadata?.provider ?? 'email',
-      })
-      return
-    }
-
-    const merged = {
+    const minimal = {
       id:                 authUser.id,
       email:              authUser.email,
-      name:               userRow.name,
-      avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
-      role:               userRow.role,
-      onboardingComplete: userRow.onboarding_complete,
-      onboardingStep:     userRow.onboarding_step ?? 0,
-      provider:           userRow.provider,
+      name:               authUser.user_metadata?.full_name
+                            ?? authUser.user_metadata?.name
+                            ?? authUser.email?.split('@')[0]
+                            ?? 'User',
+      avatar:             authUser.user_metadata?.avatar_url ?? null,
+      role:               null,
+      onboardingComplete: false,
+      onboardingStep:     0,
+      provider:           authUser.app_metadata?.provider ?? 'email',
     }
-    console.log('[hydrateUser] merged user:', {
-      role: merged.role, onboardingComplete: merged.onboardingComplete,
-    })
-    setUserState(merged)
 
-    if (userRow.role === 'student') {
-      const p = await loadStudentProfile(authUser.id)
-      setProfileState(p)
-    } else if (userRow.role === 'ngo') {
-      const p = await loadNgoProfile(authUser.id)
-      setProfileState(p)
+    try {
+      // Step 1: ensure public.users row (creates one on first Google sign-in)
+      await ensureUserRow(authUser, { signal: ctrl.signal })
+
+      // Step 2: fetch the full users row
+      const userRow = await getUserRow(authUser.id, { signal: ctrl.signal })
+      console.log('[hydrateUser] public.users row:', userRow)
+
+      if (!userRow) {
+        console.warn('[hydrateUser] users row missing — minimal state, uid:', authUser.id)
+        setUserState(minimal)
+        return
+      }
+
+      const merged = {
+        id:                 authUser.id,
+        email:              authUser.email,
+        name:               userRow.name,
+        avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
+        role:               userRow.role,
+        onboardingComplete: userRow.onboarding_complete,
+        onboardingStep:     userRow.onboarding_step ?? 0,
+        provider:           userRow.provider,
+      }
+      console.log('[hydrateUser] merged user:', {
+        role: merged.role, onboardingComplete: merged.onboardingComplete,
+      })
+      setUserState(merged)
+
+      // Step 3: load role-specific profile
+      if (userRow.role === 'student') {
+        const p = await loadStudentProfile(authUser.id)
+        setProfileState(p)
+      } else if (userRow.role === 'ngo') {
+        const p = await loadNgoProfile(authUser.id)
+        setProfileState(p)
+      }
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.error('[hydrateUser] 10 s timeout — uid:', authUser.id, '— applying minimal state')
+      } else {
+        console.error('[hydrateUser] error — uid:', authUser.id, err.message)
+      }
+      // Minimal state keeps the user "logged in" at role-selection rather than /auth
+      setUserState(minimal)
+    } finally {
+      clearTimeout(timer)
     }
   }, [])
 
