@@ -79,74 +79,106 @@ export function AppProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    // Safety bail — only fires if neither INITIAL_SESSION nor getSession() resolve
-    const bail = setTimeout(() => {
-      console.warn('[AppContext] bootstrap timed out after 10 s — clearing loading')
-      setLoading(false)
-    }, 10000)
+    let disposed = false
 
-    // Guard against double hydration when both getSession() and INITIAL_SESSION
-    // deliver a session (they describe the same session; only one hydration needed)
-    let hydrated = false
-
-    async function bootstrap(session, source) {
-      if (hydrated) return
-      hydrated = true
-      clearTimeout(bail)
-
-      // Show localStorage auth key state for debugging session issues
-      if (typeof window !== 'undefined') {
-        const lsKeys = Object.keys(localStorage).filter(k => k?.startsWith('sb-') && k.endsWith('-auth-token'))
-        console.log(`[AppContext] ${source} — localStorage auth keys:`, lsKeys.length ? lsKeys : '(none)')
+    // ── Step 1: read localStorage synchronously ───────────────────────────────
+    // This is instant (no network). Tells us immediately whether there is a
+    // stored session so we never clear loading=false with user=null while a
+    // valid auth token is present.
+    let storedUser = null
+    try {
+      const lsKey = Object.keys(localStorage).find(
+        k => k?.startsWith('sb-') && k.endsWith('-auth-token')
+      )
+      if (lsKey) {
+        const val = JSON.parse(localStorage.getItem(lsKey) ?? 'null')
+        storedUser = val?.user ?? null
+        console.log('[AppContext] localStorage token found — uid:', storedUser?.id ?? 'none')
+      } else {
+        console.log('[AppContext] no localStorage session token')
       }
+    } catch (e) {
+      console.warn('[AppContext] localStorage read error:', e.message)
+    }
 
+    // ── Step 2: no stored session → clear loading immediately ─────────────────
+    if (!storedUser) {
+      setLoading(false)
+      // Still subscribe so SIGNED_IN works after the user logs in
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
+          if (event === 'SIGNED_OUT') {
+            setUserState(null); setProfileState(null)
+          } else if (session?.user) {
+            try { await hydrateUser(session.user) }
+            catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
+          }
+        }
+      )
+      return () => subscription.unsubscribe()
+    }
+
+    // ── Step 3: stored session found → call getSession() to validate/refresh ───
+    // If getSession() hangs (Supabase auth server slow), the bail kicks in after
+    // 12 s and falls back to the stored user — the user stays logged in.
+    const bail = setTimeout(async () => {
+      if (disposed) return
+      console.warn('[AppContext] getSession() timed out — restoring from localStorage fallback, uid:', storedUser.id)
+      try { await hydrateUser(storedUser) } catch (err) { console.error('[AppContext] fallback hydrate error:', err) }
+      if (!disposed) setLoading(false)
+    }, 12000)
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(bail)
+      if (disposed) return
       if (session?.user) {
-        console.log(`[AppContext] ${source} — session found, uid:`, session.user.id,
+        console.log('[AppContext] getSession() — valid session, uid:', session.user.id,
           'provider:', session.user.app_metadata?.provider ?? 'email')
         try { await hydrateUser(session.user) }
         catch (err) { console.error('[AppContext] hydrateUser error:', err) }
       } else {
-        console.log(`[AppContext] ${source} — no session, user is logged out`)
+        // Token was in localStorage but getSession() returned null:
+        // session is expired and the refresh failed → user must log in again
+        console.log('[AppContext] getSession() — session expired / refresh failed')
+        setUserState(null)
+        setProfileState(null)
       }
+      if (!disposed) setLoading(false)
+    }).catch(async err => {
+      clearTimeout(bail)
+      if (disposed) return
+      // Network error: don't log the user out — restore from stored data
+      console.error('[AppContext] getSession() network error — using localStorage fallback:', err.message)
+      try { await hydrateUser(storedUser) } catch {}
+      if (!disposed) setLoading(false)
+    })
 
-      setLoading(false)
-    }
-
-    // Path 1: explicit getSession() — runs immediately, covers cases where
-    // INITIAL_SESSION doesn't replay (edge cases in some browser environments)
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => bootstrap(session, 'getSession'))
-      .catch(err => {
-        console.error('[AppContext] getSession error:', err)
-        clearTimeout(bail)
-        setLoading(false)
-      })
-
+    // ── Step 4: subscribe for all subsequent auth events ──────────────────────
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
 
         if (event === 'SIGNED_OUT') {
-          hydrated = false   // allow re-hydration on next sign-in
           setUserState(null)
           setProfileState(null)
-          clearTimeout(bail)
           setLoading(false)
           return
         }
 
-        if (event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') {
-          // Path 2: INITIAL_SESSION fires slightly after getSession() resolves.
-          // bootstrap() deduplicates — if getSession() already ran, this is a no-op.
-          await bootstrap(session, event)
-          return
-        }
-
-        // SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED …
-        if (session?.user) {
+        // SIGNED_IN fires after email/password or OAuth login
+        // TOKEN_REFRESHED fires when autoRefreshToken renews the JWT
+        // PASSWORD_RECOVERY fires when a recovery link is opened
+        // USER_UPDATED fires after updateUser()
+        if (session?.user && (
+          event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' ||
+          event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED'
+        )) {
           try { await hydrateUser(session.user) }
           catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
         }
+        // INITIAL_SESSION is intentionally not handled here:
+        // getSession() (step 3) already covers the initial restore.
       }
     )
 
