@@ -11,7 +11,7 @@ export function AppProvider({ children }) {
   const [loading, setLoading]      = useState(true)
 
   // Load our extended user row + matching profile, given a Supabase auth user.
-  // Hard 10-second AbortController deadline — can never hang forever.
+  // 10-second AbortController covers EVERY Supabase call — none can hang forever.
   // Never throws — always resolves via try/catch/finally.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
@@ -23,9 +23,11 @@ export function AppProvider({ children }) {
     console.log('[hydrateUser] start — uid:', authUser.id,
       'provider:', authUser.app_metadata?.provider ?? 'email')
 
-    // Single AbortController covers ALL DB calls below.
     const ctrl  = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 10000)
+    const timer = setTimeout(() => {
+      console.error('[hydrateUser] 10 s AbortController firing — uid:', authUser.id)
+      ctrl.abort()
+    }, 10000)
 
     const minimal = {
       id:                 authUser.id,
@@ -41,17 +43,27 @@ export function AppProvider({ children }) {
       provider:           authUser.app_metadata?.provider ?? 'email',
     }
 
-    try {
-      // Step 1: ensure public.users row (creates one on first Google sign-in)
-      await ensureUserRow(authUser, { signal: ctrl.signal })
+    // Track whether we successfully set a real user state.
+    // If so, don't overwrite it with minimal on abort/error.
+    let userWasSet = false
 
-      // Step 2: fetch the full users row
+    try {
+      // ── 1. Ensure public.users row ──────────────────────────────────────────
+      console.log('[hydrateUser] step 1 — ensureUserRow')
+      await ensureUserRow(authUser, { signal: ctrl.signal })
+      console.log('[hydrateUser] step 1 — done')
+
+      // ── 2. Fetch full users row ─────────────────────────────────────────────
+      console.log('[hydrateUser] step 2 — getUserRow')
       const userRow = await getUserRow(authUser.id, { signal: ctrl.signal })
-      console.log('[hydrateUser] public.users row:', userRow)
+      console.log('[hydrateUser] step 2 — done, row:', userRow
+        ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
+        : 'null')
 
       if (!userRow) {
-        console.warn('[hydrateUser] users row missing — minimal state, uid:', authUser.id)
+        console.warn('[hydrateUser] users row missing — using minimal state')
         setUserState(minimal)
+        userWasSet = true
         return
       }
 
@@ -65,36 +77,52 @@ export function AppProvider({ children }) {
         onboardingStep:     userRow.onboarding_step ?? 0,
         provider:           userRow.provider,
       }
-      console.log('[hydrateUser] merged user:', {
-        role: merged.role, onboardingComplete: merged.onboardingComplete,
-      })
       setUserState(merged)
+      userWasSet = true
+      console.log('[hydrateUser] user state set — role:', merged.role,
+        'onboardingComplete:', merged.onboardingComplete)
 
-      // Step 3: load role-specific profile
+      // ── 3. Load role-specific profile (signal passed — can be aborted too) ──
       if (userRow.role === 'student') {
-        const p = await loadStudentProfile(authUser.id)
+        console.log('[hydrateUser] step 3 — loadStudentProfile')
+        const p = await loadStudentProfile(authUser.id, { signal: ctrl.signal })
         setProfileState(p)
+        console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
       } else if (userRow.role === 'ngo') {
-        const p = await loadNgoProfile(authUser.id)
+        console.log('[hydrateUser] step 3 — loadNgoProfile')
+        const p = await loadNgoProfile(authUser.id, { signal: ctrl.signal })
         setProfileState(p)
+        console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
+      } else {
+        console.log('[hydrateUser] step 3 — skipped (role is null)')
       }
 
     } catch (err) {
-      if (err.name === 'AbortError') {
-        console.error('[hydrateUser] 10 s timeout — uid:', authUser.id, '— applying minimal state')
-      } else {
-        console.error('[hydrateUser] error — uid:', authUser.id, err.message)
-      }
-      // Minimal state keeps the user "logged in" at role-selection rather than /auth
-      setUserState(minimal)
+      const isAbort = err.name === 'AbortError'
+      console.error('[hydrateUser]', isAbort ? 'ABORTED (10 s)' : 'ERROR',
+        '— uid:', authUser.id, isAbort ? '' : err.message)
+      // Only fall back to minimal if we never set a real user state.
+      // If the abort happened during profile load (step 3), the user is already
+      // in context — don't wipe that good state, just skip the profile.
+      if (!userWasSet) setUserState(minimal)
     } finally {
       clearTimeout(timer)
+      console.log('[hydrateUser] complete — uid:', authUser.id)
     }
   }, [])
 
   useEffect(() => {
-    let disposed        = false   // set true on cleanup — stops all async callbacks
-    let hydrateStarted  = false   // guard against double hydration (React StrictMode double-invoke)
+    let disposed        = false
+    let hydrateStarted  = false
+
+    // Absolute ceiling: no matter what, loading MUST clear within 15 s.
+    // This catches any code path where setLoading(false) is somehow missed.
+    const ceiling = setTimeout(() => {
+      if (!disposed) {
+        console.error('[AppContext] 15 s absolute ceiling hit — forcing setLoading(false)')
+        setLoading(false)
+      }
+    }, 15000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
@@ -115,6 +143,7 @@ export function AppProvider({ children }) {
 
     // ── Step 2: no stored session → clear loading immediately ─────────────────
     if (!storedUser) {
+      clearTimeout(ceiling)
       setLoading(false)
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
@@ -136,12 +165,12 @@ export function AppProvider({ children }) {
       hydrateStarted = true
       console.warn('[AppContext] getSession() timed out — localStorage fallback, uid:', storedUser.id)
       try { await hydrateUser(storedUser) } catch (err) { console.error('[AppContext] fallback hydrate error:', err) }
-      if (!disposed) setLoading(false)
+      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }, 12000)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(bail)
-      if (disposed || hydrateStarted) { if (!disposed) setLoading(false); return }
+      if (disposed || hydrateStarted) { if (!disposed) { clearTimeout(ceiling); setLoading(false) } return }
       hydrateStarted = true
       if (session?.user) {
         console.log('[AppContext] getSession() — valid, uid:', session.user.id,
@@ -152,14 +181,14 @@ export function AppProvider({ children }) {
         console.log('[AppContext] getSession() — session expired / refresh failed')
         setUserState(null); setProfileState(null)
       }
-      if (!disposed) setLoading(false)
+      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }).catch(async err => {
       clearTimeout(bail)
-      if (disposed || hydrateStarted) { if (!disposed) setLoading(false); return }
+      if (disposed || hydrateStarted) { if (!disposed) { clearTimeout(ceiling); setLoading(false) } return }
       hydrateStarted = true
       console.error('[AppContext] getSession() network error — localStorage fallback:', err.message)
       try { await hydrateUser(storedUser) } catch {}
-      if (!disposed) setLoading(false)
+      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     })
 
     // ── Step 4: subscribe for all subsequent auth events ──────────────────────
@@ -190,7 +219,7 @@ export function AppProvider({ children }) {
       }
     )
 
-    return () => { disposed = true; clearTimeout(bail); subscription.unsubscribe() }
+    return () => { disposed = true; clearTimeout(bail); clearTimeout(ceiling); subscription.unsubscribe() }
   }, [hydrateUser])
 
   // Called from RoleSelection — sets role in DB and updates context
