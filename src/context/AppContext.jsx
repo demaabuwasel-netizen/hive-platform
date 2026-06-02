@@ -106,14 +106,21 @@ export function AppProvider({ children }) {
         }
 
         if (event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') {
-          // INITIAL_SESSION: page load — bootstrap from stored session (or null).
-          // PASSWORD_RECOVERY: recovery link was processed; Supabase fires this
-          //   instead of INITIAL_SESSION, so we must clear loading here too.
+          // Cancel the safety bail immediately — INITIAL_SESSION has arrived,
+          // so the bail's "never fired" scenario can no longer happen.
+          // Cancelling here (before await) prevents the bail from racing with
+          // a slow hydrateUser and incorrectly setting loading=false early.
+          clearTimeout(bail)
+
           if (session?.user) {
+            console.log('[AppContext] session found — uid:', session.user.id,
+              'provider:', session.user.app_metadata?.provider ?? 'email')
             try { await hydrateUser(session.user) }
             catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
+          } else {
+            console.log('[AppContext] no session on', event, '— user is logged out')
           }
-          clearTimeout(bail)
+
           setLoading(false)
           return
         }
