@@ -93,12 +93,10 @@ export function AppProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    let disposed = false
+    let disposed        = false   // set true on cleanup — stops all async callbacks
+    let hydrateStarted  = false   // guard against double hydration (React StrictMode double-invoke)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
-    // This is instant (no network). Tells us immediately whether there is a
-    // stored session so we never clear loading=false with user=null while a
-    // valid auth token is present.
     let storedUser = null
     try {
       const lsKey = Object.keys(localStorage).find(
@@ -118,7 +116,6 @@ export function AppProvider({ children }) {
     // ── Step 2: no stored session → clear loading immediately ─────────────────
     if (!storedUser) {
       setLoading(false)
-      // Still subscribe so SIGNED_IN works after the user logs in
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
@@ -130,40 +127,37 @@ export function AppProvider({ children }) {
           }
         }
       )
-      return () => subscription.unsubscribe()
+      return () => { disposed = true; subscription.unsubscribe() }
     }
 
     // ── Step 3: stored session found → call getSession() to validate/refresh ───
-    // If getSession() hangs (Supabase auth server slow), the bail kicks in after
-    // 12 s and falls back to the stored user — the user stays logged in.
     const bail = setTimeout(async () => {
-      if (disposed) return
-      console.warn('[AppContext] getSession() timed out — restoring from localStorage fallback, uid:', storedUser.id)
+      if (disposed || hydrateStarted) return
+      hydrateStarted = true
+      console.warn('[AppContext] getSession() timed out — localStorage fallback, uid:', storedUser.id)
       try { await hydrateUser(storedUser) } catch (err) { console.error('[AppContext] fallback hydrate error:', err) }
       if (!disposed) setLoading(false)
     }, 12000)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(bail)
-      if (disposed) return
+      if (disposed || hydrateStarted) { if (!disposed) setLoading(false); return }
+      hydrateStarted = true
       if (session?.user) {
-        console.log('[AppContext] getSession() — valid session, uid:', session.user.id,
+        console.log('[AppContext] getSession() — valid, uid:', session.user.id,
           'provider:', session.user.app_metadata?.provider ?? 'email')
         try { await hydrateUser(session.user) }
         catch (err) { console.error('[AppContext] hydrateUser error:', err) }
       } else {
-        // Token was in localStorage but getSession() returned null:
-        // session is expired and the refresh failed → user must log in again
         console.log('[AppContext] getSession() — session expired / refresh failed')
-        setUserState(null)
-        setProfileState(null)
+        setUserState(null); setProfileState(null)
       }
       if (!disposed) setLoading(false)
     }).catch(async err => {
       clearTimeout(bail)
-      if (disposed) return
-      // Network error: don't log the user out — restore from stored data
-      console.error('[AppContext] getSession() network error — using localStorage fallback:', err.message)
+      if (disposed || hydrateStarted) { if (!disposed) setLoading(false); return }
+      hydrateStarted = true
+      console.error('[AppContext] getSession() network error — localStorage fallback:', err.message)
       try { await hydrateUser(storedUser) } catch {}
       if (!disposed) setLoading(false)
     })
@@ -196,7 +190,7 @@ export function AppProvider({ children }) {
       }
     )
 
-    return () => { subscription.unsubscribe(); clearTimeout(bail) }
+    return () => { disposed = true; clearTimeout(bail); subscription.unsubscribe() }
   }, [hydrateUser])
 
   // Called from RoleSelection — sets role in DB and updates context
