@@ -58,6 +58,7 @@ export function AppProvider({ children }) {
       avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
       role:               userRow.role,
       onboardingComplete: userRow.onboarding_complete,
+      onboardingStep:     userRow.onboarding_step ?? 0,
       provider:           userRow.provider,
     }
     console.log('[hydrateUser] merged user:', {

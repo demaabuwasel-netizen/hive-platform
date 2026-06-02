@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext'
+import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import ProgressBar from '../components/ProgressBar'
 import TagInput from '../components/TagInput'
 import SkillPicker from '../components/SkillPicker'
@@ -259,18 +260,106 @@ const variants = {
   exit: (dir) => ({ opacity: 0, x: dir > 0 ? -40 : 40 }),
 }
 
+const LS_KEY = (uid) => `hive_ob_student_${uid}`
+
+function hasDraftData(d) {
+  return Object.values(d).some(v => (Array.isArray(v) ? v.length > 0 : !!v))
+}
+
 export default function StudentOnboarding() {
-  const { completeOnboarding, markOnboardingDone, user } = useApp()
+  const { completeOnboarding, markOnboardingDone, user, profile } = useApp()
   const navigate = useNavigate()
-  const [step, setStep]         = useState(0)
-  const [data, setData]         = useState({})
-  const [direction, setDirection] = useState(1)
-  const [errors, setErrors]     = useState({})
-  const [done, setDone]         = useState(false)
+  const [step, setStep]             = useState(0)
+  const [data, setData]             = useState({})
+  const [direction, setDirection]   = useState(1)
+  const [errors, setErrors]         = useState({})
+  const [done, setDone]             = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [saveStatus, setSaveStatus] = useState('idle') // 'idle'|'saving'|'saved'|'error'
+  const [welcomeBack, setWelcomeBack] = useState(false)
+
+  // Only trigger debounced saves after the initial restore is complete
+  const restoredRef   = useRef(false)
+  const debounceTimer = useRef(null)
 
   const current = STEPS[step]
+
+  // ── Draft save helpers ───────────────────────────────────────────────────────
+
+  const doSave = useCallback(async (d, s) => {
+    if (!user?.id) return
+    setSaveStatus('saving')
+    const ok = await saveOnboardingDraft(user.id, 'student', d, s)
+    try { localStorage.setItem(LS_KEY(user.id), JSON.stringify({ data: d, step: s, ts: Date.now() })) } catch {}
+    if (ok) {
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(st => st === 'saved' ? 'idle' : st), 2500)
+    } else {
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus(st => st === 'error' ? 'idle' : st), 3000)
+    }
+  }, [user?.id])
+
+  // Debounced — triggered by data field changes (keystrokes)
+  const saveDraft = useCallback((d, s) => {
+    clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => doSave(d, s), 750)
+  }, [doSave])
+
+  // Immediate — triggered by Continue / navigation
+  const saveDraftNow = useCallback((d, s) => {
+    clearTimeout(debounceTimer.current)
+    return doSave(d, s)
+  }, [doSave])
+
+  // ── Restore draft on mount ───────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const dbStep = user.onboardingStep ?? 0
+    const dbData = studentProfileToData(profile)
+
+    // Check localStorage for a draft saved closer to an unload event
+    let localStep = dbStep
+    let localData = dbData
+    try {
+      const raw = localStorage.getItem(LS_KEY(user.id))
+      if (raw) {
+        const backup = JSON.parse(raw)
+        // Use localStorage only if it recorded a higher step (user progressed
+        // but the DB write didn't complete before the tab closed)
+        if (typeof backup.step === 'number' && backup.step > dbStep) {
+          localStep = backup.step
+          localData = { ...dbData, ...backup.data }
+        }
+      }
+    } catch {}
+
+    const hasAny = localStep > 0 || hasDraftData(localData)
+    if (hasAny) {
+      setData(localData)
+      setStep(Math.min(localStep, STEPS.length - 1))
+      setWelcomeBack(true)
+    }
+
+    // Allow debounced saves now that the initial restore is done
+    restoredRef.current = true
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounce on data change ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!restoredRef.current) return
+    if (!user?.id || !hasDraftData(data)) return
+    saveDraft(data, step)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+
+  useEffect(() => () => clearTimeout(debounceTimer.current), [])
+
+  // ── Form helpers ─────────────────────────────────────────────────────────────
 
   function update(name, value) {
     setData(d => ({ ...d, [name]: value }))
@@ -298,7 +387,9 @@ export default function StudentOnboarding() {
     if (!validate()) return
     setDirection(1)
     if (step < STEPS.length - 1) {
-      setStep(s => s + 1)
+      const nextStep = step + 1
+      await saveDraftNow(data, nextStep)   // save before advancing
+      setStep(nextStep)
     } else {
       setSubmitting(true)
       setSubmitError('')
@@ -312,7 +403,6 @@ export default function StudentOnboarding() {
           skills,
           courses,
           interests,
-          // optional link fields — keep as null if empty so DB stores NULL not ''
           phone:     data.phone?.trim()     || null,
           linkedin:  data.linkedin?.trim()  || null,
           github:    data.github?.trim()    || null,
@@ -325,9 +415,6 @@ export default function StudentOnboarding() {
           summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
         }
 
-        // 30-second safety net — long enough for a Supabase cold start.
-        // completeOnboarding now throws with the real step-specific error message,
-        // so the catch block below will show it before this timeout fires in most cases.
         let realError = null
         const timeout = new Promise((_, reject) =>
           setTimeout(() => {
@@ -341,6 +428,8 @@ export default function StudentOnboarding() {
           completeOnboarding(profile).catch(err => { realError = err.message; throw err }),
           timeout,
         ])
+        // Clear draft on successful completion
+        try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
         setDone(true)
       } catch (err) {
         setSubmitError(err.message || 'Something went wrong. Please try again.')
@@ -414,6 +503,23 @@ export default function StudentOnboarding() {
           <HiveLogo size={24} nameSize="text-base" className="mb-6" />
           <ProgressBar current={step + 1} total={STEPS.length} label="Setting up your profile" />
         </div>
+
+        {/* Welcome back banner */}
+        <AnimatePresence>
+          {welcomeBack && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
+              className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl mb-4 text-sm"
+              style={{ background: 'rgba(255,183,3,0.09)', border: '1px solid rgba(255,183,3,0.25)' }}>
+              <span className="text-[#0D183D] font-medium">
+                👋 Welcome back — your progress has been restored.
+              </span>
+              <button onClick={() => setWelcomeBack(false)}
+                className="text-[#4B6382] hover:text-[#0D183D] text-lg leading-none shrink-0">×</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
@@ -515,6 +621,29 @@ export default function StudentOnboarding() {
             {submitError}
           </motion.p>
         )}
+
+        {/* Save status indicator */}
+        <AnimatePresence>
+          {saveStatus !== 'idle' && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center justify-center gap-1.5 text-[11px] font-medium mb-2"
+              style={{
+                color: saveStatus === 'saved' ? '#059669'
+                     : saveStatus === 'error'  ? '#B45309'
+                     : '#6B7280',
+              }}>
+              {saveStatus === 'saving' && (
+                <><motion.span animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="inline-block w-3 h-3 border-[1.5px] border-gray-300 border-t-gray-500 rounded-full"/>
+                  Saving…</>
+              )}
+              {saveStatus === 'saved'  && <>✓ Saved</>}
+              {saveStatus === 'error'  && <>Could not save — progress is safe locally</>}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex justify-between items-center">
           <button

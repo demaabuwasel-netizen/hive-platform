@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext'
+import { saveOnboardingDraft, ngoProfileToData } from '../services/storage'
 import ProgressBar from '../components/ProgressBar'
 import { AvatarPicker } from '../components/Avatar'
 import HiveLogo from '../components/HiveLogo'
@@ -73,17 +74,98 @@ function generateSummary(data) {
   return `${name}${location} — ${data.description?.slice(0, 140) || 'a mission-driven organization'}${data.description?.length > 140 ? '…' : ''}${help}`
 }
 
+const LS_KEY_NGO = (uid) => `hive_ob_ngo_${uid}`
+
+function hasDraftData(d) {
+  return Object.values(d).some(v => (Array.isArray(v) ? v.length > 0 : !!v))
+}
+
 export default function NGOOnboarding() {
-  const { completeOnboarding, markOnboardingDone } = useApp()
+  const { completeOnboarding, markOnboardingDone, user, profile } = useApp()
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
-  const [data, setData] = useState({})
-  const [direction, setDirection] = useState(1)
+  const [step, setStep]             = useState(0)
+  const [data, setData]             = useState({})
+  const [direction, setDirection]   = useState(1)
   const [showAISummary, setShowAISummary] = useState(false)
-  const [errors, setErrors] = useState({})
-  const [done, setDone] = useState(false)
+  const [errors, setErrors]         = useState({})
+  const [done, setDone]             = useState(false)
+  const [saveStatus, setSaveStatus] = useState('idle')
+  const [welcomeBack, setWelcomeBack] = useState(false)
+
+  const restoredRef   = useRef(false)
+  const debounceTimer = useRef(null)
 
   const current = STEPS[step]
+
+  // ── Draft save helpers ───────────────────────────────────────────────────────
+
+  const doSave = useCallback(async (d, s) => {
+    if (!user?.id) return
+    setSaveStatus('saving')
+    const ok = await saveOnboardingDraft(user.id, 'ngo', d, s)
+    try { localStorage.setItem(LS_KEY_NGO(user.id), JSON.stringify({ data: d, step: s, ts: Date.now() })) } catch {}
+    if (ok) {
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(st => st === 'saved' ? 'idle' : st), 2500)
+    } else {
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus(st => st === 'error' ? 'idle' : st), 3000)
+    }
+  }, [user?.id])
+
+  const saveDraft = useCallback((d, s) => {
+    clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => doSave(d, s), 750)
+  }, [doSave])
+
+  const saveDraftNow = useCallback((d, s) => {
+    clearTimeout(debounceTimer.current)
+    return doSave(d, s)
+  }, [doSave])
+
+  // ── Restore draft on mount ───────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const dbStep = user.onboardingStep ?? 0
+    const dbData = ngoProfileToData(profile)
+
+    let localStep = dbStep
+    let localData = dbData
+    try {
+      const raw = localStorage.getItem(LS_KEY_NGO(user.id))
+      if (raw) {
+        const backup = JSON.parse(raw)
+        if (typeof backup.step === 'number' && backup.step > dbStep) {
+          localStep = backup.step
+          localData = { ...dbData, ...backup.data }
+        }
+      }
+    } catch {}
+
+    const hasAny = localStep > 0 || hasDraftData(localData)
+    if (hasAny) {
+      setData(localData)
+      setStep(Math.min(localStep, STEPS.length - 1))
+      setWelcomeBack(true)
+    }
+
+    restoredRef.current = true
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounce on data change ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!restoredRef.current) return
+    if (!user?.id || !hasDraftData(data)) return
+    saveDraft(data, step)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+
+  useEffect(() => () => clearTimeout(debounceTimer.current), [])
+
+  // ── Form helpers ─────────────────────────────────────────────────────────────
 
   function update(name, value) {
     setData(d => ({ ...d, [name]: value }))
@@ -114,15 +196,18 @@ export default function NGOOnboarding() {
     setShowAISummary(false)
     setDirection(1)
     if (step < STEPS.length - 1) {
-      setStep(s => s + 1)
+      const nextStep = step + 1
+      await saveDraftNow(data, nextStep)
+      setStep(nextStep)
     } else {
-      const profile = {
+      const profileData = {
         ...data,
         summary: generateSummary(data),
         links: { website: data.website, instagram: data.instagram, twitter: data.twitter },
         tags: [],
       }
-      await completeOnboarding(profile)
+      await completeOnboarding(profileData)
+      try { localStorage.removeItem(LS_KEY_NGO(user.id)) } catch {}
       setDone(true)
     }
   }
@@ -200,6 +285,23 @@ export default function NGOOnboarding() {
             label="Setting up your NGO profile"
           />
         </div>
+
+        {/* Welcome back banner */}
+        <AnimatePresence>
+          {welcomeBack && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
+              className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl mb-4 text-sm"
+              style={{ background: 'rgba(255,183,3,0.09)', border: '1px solid rgba(255,183,3,0.25)' }}>
+              <span className="text-[#0D183D] font-medium">
+                👋 Welcome back — your progress has been restored.
+              </span>
+              <button onClick={() => setWelcomeBack(false)}
+                className="text-[#4B6382] hover:text-[#0D183D] text-lg leading-none shrink-0">×</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           {showAISummary ? (
@@ -290,6 +392,29 @@ export default function NGOOnboarding() {
                   ))}
                 </div>
               )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Save status indicator */}
+        <AnimatePresence>
+          {saveStatus !== 'idle' && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center justify-center gap-1.5 text-[11px] font-medium mb-2"
+              style={{
+                color: saveStatus === 'saved' ? '#059669'
+                     : saveStatus === 'error'  ? '#B45309'
+                     : '#6B7280',
+              }}>
+              {saveStatus === 'saving' && (
+                <><motion.span animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="inline-block w-3 h-3 border-[1.5px] border-gray-300 border-t-gray-500 rounded-full"/>
+                  Saving…</>
+              )}
+              {saveStatus === 'saved'  && <>✓ Saved</>}
+              {saveStatus === 'error'  && <>Could not save — progress is safe locally</>}
             </motion.div>
           )}
         </AnimatePresence>
