@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
+import EmptyState from '../components/EmptyState'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,15 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          {filtered.length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <p className="text-2xl mb-2">💬</p>
+              <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No conversations yet</p>
+              <p className="text-[11px] text-[#4B6382] leading-relaxed">
+                Start a conversation with a matched NGO or student.
+              </p>
+            </div>
+          )}
           {filtered.map(c => (
             <button key={c.id} onClick={() => switchConv(c.id)}
               className={`w-full text-left px-4 py-3.5 flex items-start gap-3 transition-colors ${
@@ -250,8 +260,14 @@ export default function Messages() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-[#4B6382] text-sm">Select a conversation</p>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <EmptyState
+            emoji="💬"
+            title="No messages yet"
+            description="Start a conversation with a matched NGO or student."
+            actionLabel="View matches"
+            actionHref="/matches"
+          />
         </div>
       )}
     </div>

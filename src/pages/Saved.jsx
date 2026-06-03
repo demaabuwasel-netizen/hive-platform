@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Bookmark, MapPin, Trash2, AlertCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
+import EmptyState from '../components/EmptyState'
 import { fetchSavedOpportunities, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 
@@ -94,15 +95,15 @@ export default function Saved() {
         </div>
       )}
 
-      {/* Empty state */}
+      {/* Empty state — card-wrapped to match Applications page */}
       {!loading && !error && items.length === 0 && (
-        <div className="text-center py-20">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-[rgba(13,24,61,0.08)] flex items-center justify-center mx-auto mb-4">
-            <Bookmark size={22} className="text-[#4B6382]"/>
-          </div>
-          <p className="text-[14px] font-semibold text-[#0D183D] mb-1">No saved opportunities yet</p>
-          <p className="text-[13px] text-[#4B6382]">Browse opportunities and tap the bookmark icon to save them here</p>
-        </div>
+        <EmptyState
+          emoji="🔖"
+          title="No saved opportunities yet"
+          description="Browse opportunities and tap the bookmark icon to save them here."
+          actionLabel="Browse opportunities"
+          actionHref="/opportunities"
+        />
       )}
 
       {/* Cards */}

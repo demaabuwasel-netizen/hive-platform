@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
+import EmptyState from '../components/EmptyState'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,15 @@ function StudentView() {
       {/* Upcoming interviews */}
       <section className="mb-8">
         <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-3">Upcoming interviews</h2>
+        {STUDENT_UPCOMING.length === 0 && (
+          <EmptyState
+            emoji="📅"
+            title="No interviews scheduled"
+            description="When an NGO invites you to interview, it will appear here."
+            actionLabel="View matches"
+            actionHref="/matches"
+          />
+        )}
         <div className="flex flex-col gap-3">
           {STUDENT_UPCOMING.map((u, i) => {
             const TypeIcon = TYPE_ICON[u.type] || Video
@@ -214,6 +224,15 @@ function NGOView() {
         ))}
       </div>
 
+      {NGO_INTERVIEWS.length === 0 && (
+        <EmptyState
+          emoji="🗓️"
+          title="No interviews scheduled"
+          description="When you schedule interviews with applicants, they'll appear here."
+          actionLabel="View applicants"
+          actionHref="/applicants"
+        />
+      )}
       <div className="flex flex-col gap-4">
         {NGO_INTERVIEWS.map((iv, i) => {
           const st = STATUS_STYLE[statuses[iv.id]]
