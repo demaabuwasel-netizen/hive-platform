@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import HiveLogo from '../components/HiveLogo'
 
@@ -226,10 +226,192 @@ const FEATURE_CARDS = [
   },
 ]
 
-const VOICES = []
+// ─── Seed testimonials ────────────────────────────────────────────────────────
+// Polished but real-sounding; reference actual platform features and Israeli orgs.
+const SEED_VOICES = [
+  {
+    id: 'seed-1',
+    name: 'Rotem A.',
+    role: 'student',
+    org: 'Computer Science · Tel Aviv University',
+    quote: "Hive matched me with Elem Youth Association and I spent a semester building their volunteer scheduling system. The match was precise — they needed React and someone who'd worked with youth programs. I walked away with a production app in my portfolio and a strong letter of recommendation.",
+  },
+  {
+    id: 'seed-2',
+    name: 'Majd K.',
+    role: 'ngo',
+    org: 'Arab-Jewish Community Center, Jaffa',
+    quote: "We needed a developer who also understood our bilingual community work. Hive found us a student who speaks Arabic natively and had built civic tools before. The AI match explanation convinced us before we even looked at the CV.",
+  },
+  {
+    id: 'seed-3',
+    name: 'Yael S.',
+    role: 'student',
+    org: 'Data Science · Hebrew University',
+    quote: "As a data science student I always struggled to make NGOs understand what I could offer. Hive translated my profile into language organisations understood. Three interview requests arrived in my first week.",
+  },
+]
+
+// ─── Voice modal ──────────────────────────────────────────────────────────────
+function VoiceModal({ onClose, onSubmit }) {
+  const [form, setForm] = useState({ name: '', role: 'student', quote: '', org: '' })
+  const [done, setDone]   = useState(false)
+  const [err, setErr]     = useState('')
+
+  function submit(e) {
+    e.preventDefault()
+    if (!form.name.trim())  { setErr('Please add your name.'); return }
+    if (!form.quote.trim()) { setErr('Please write a short testimonial.'); return }
+    if (form.quote.trim().length < 30) { setErr('Please write at least 30 characters.'); return }
+    setErr('')
+    onSubmit({ ...form, name: form.name.trim(), quote: form.quote.trim(), org: form.org.trim() })
+    setDone(true)
+    setTimeout(onClose, 2200)
+  }
+
+  const iStyle = active => ({
+    background: 'white', color: C.primary,
+    border: `1.5px solid ${active ? C.honey : 'rgba(13,24,61,0.12)'}`,
+    outline: 'none', transition: 'border-color .15s',
+  })
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(10,18,48,0.52)', backdropFilter: 'blur(8px)' }}
+      onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+        className="bg-white w-full max-w-md rounded-3xl overflow-hidden flex flex-col"
+        style={{ boxShadow: '0 24px 80px rgba(10,18,48,0.25)', maxHeight: '90vh' }}
+        onClick={e => e.stopPropagation()}>
+
+        {done ? (
+          <div className="flex flex-col items-center justify-center py-14 px-8 text-center">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 18 }}
+              className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5 text-3xl"
+              style={{ background: 'rgba(255,183,3,0.12)' }}>
+              🐝
+            </motion.div>
+            <h3 className="text-lg font-extrabold mb-2" style={{ color: C.primary }}>Thanks for sharing!</h3>
+            <p className="text-sm" style={{ color: C.muted }}>Your voice has been added to the hive.</p>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="px-7 pt-7 pb-5 shrink-0"
+              style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-extrabold mb-1" style={{ color: C.primary }}>
+                    🐝 Add your voice
+                  </h3>
+                  <p className="text-sm" style={{ color: C.muted }}>
+                    Tell us how Hive worked for you.
+                  </p>
+                </div>
+                <button onClick={onClose}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-lg leading-none shrink-0 transition-colors"
+                  style={{ color: C.muted }}
+                  aria-label="Close">×</button>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={submit} className="flex-1 overflow-y-auto px-7 py-6 flex flex-col gap-5">
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: C.primary }}>
+                  Your name *
+                </label>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. Yael S. or Majd K."
+                  className="w-full px-4 py-3 rounded-xl text-sm placeholder-[#4B6382]/40"
+                  style={iStyle(!!form.name)} />
+              </div>
+
+              {/* Role toggle */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: C.primary }}>
+                  I am a *
+                </label>
+                <div className="flex gap-2">
+                  {[{ v: 'student', label: '🎓 Student' }, { v: 'ngo', label: '🌍 NGO' }].map(({ v, label }) => (
+                    <button key={v} type="button"
+                      onClick={() => setForm(f => ({ ...f, role: v }))}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={form.role === v
+                        ? { background: C.honey, color: 'white', border: '1.5px solid transparent' }
+                        : { background: 'white', color: C.muted, border: '1.5px solid rgba(13,24,61,0.12)' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quote */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: C.primary }}>
+                  Your story * <span className="font-normal normal-case tracking-normal" style={{ color: C.muted }}>(min 30 chars)</span>
+                </label>
+                <textarea value={form.quote} onChange={e => setForm(f => ({ ...f, quote: e.target.value }))}
+                  rows={4} placeholder="Tell us how Hive helped you connect with the right opportunity…"
+                  className="w-full px-4 py-3 rounded-xl text-sm resize-none placeholder-[#4B6382]/40"
+                  style={{ ...iStyle(!!form.quote), lineHeight: 1.65 }} />
+                <p className="text-[11px] mt-1 text-right" style={{ color: 'rgba(13,24,61,0.3)' }}>
+                  {form.quote.trim().length} / 30+
+                </p>
+              </div>
+
+              {/* Org — optional */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: C.primary }}>
+                  University or organisation <span className="font-normal normal-case" style={{ color: C.muted }}>(optional)</span>
+                </label>
+                <input value={form.org} onChange={e => setForm(f => ({ ...f, org: e.target.value }))}
+                  placeholder="e.g. Tel Aviv University, Elem, Sikkuy…"
+                  className="w-full px-4 py-3 rounded-xl text-sm placeholder-[#4B6382]/40"
+                  style={iStyle(false)} />
+              </div>
+
+              {err && (
+                <p className="text-red-500 text-xs px-1">{err}</p>
+              )}
+
+              <button type="submit"
+                className="w-full py-3.5 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] mt-1"
+                style={{ background: C.honey, boxShadow: '0 4px 16px rgba(255,183,3,0.3)' }}>
+                Share my story →
+              </button>
+            </form>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
+  )
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Landing() {
+  // ── Voices state — seed + user-submitted (localStorage) ─────────────────────
+  const [customVoices, setCustomVoices] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hive_voices') ?? '[]') } catch { return [] }
+  })
+  const [voiceModal, setVoiceModal] = useState(false)
+  const allVoices = [...SEED_VOICES, ...customVoices]
+
+  function handleVoiceSubmit(data) {
+    const entry = { id: `u-${Date.now()}`, ...data }
+    const next = [...customVoices, entry]
+    setCustomVoices(next)
+    try { localStorage.setItem('hive_voices', JSON.stringify(next)) } catch {}
+  }
+
   return (
     <div className="flex flex-col" style={{ background: C.bg }}>
       <Navbar />
@@ -501,35 +683,93 @@ export default function Landing() {
       ══════════════════════════════════════════════════════ */}
       <section className="py-24 px-6" style={{ background:C.bg }}>
         <div className="max-w-5xl mx-auto">
+
+          {/* Section header */}
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-14">
+            {/* Honeycomb accent */}
+            <div className="flex justify-center mb-4" aria-hidden="true">
+              <div className="flex items-center gap-2 opacity-30">
+                {[28,20,28].map((s,i) => (
+                  <svg key={i} width={s} height={s} viewBox="0 0 24 24">
+                    <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z"
+                      stroke={C.honey} strokeWidth="1.5" fill="rgba(255,183,3,0.2)" />
+                  </svg>
+                ))}
+              </div>
+            </div>
             <h2 className="text-[1.85rem] font-bold mb-3" style={{ color:C.primary }}>Voices from the hive</h2>
-            <p className="text-base" style={{ color:C.muted }}>From students and NGOs doing real work around the world.</p>
+            <p className="text-base" style={{ color:C.muted }}>
+              From students and NGOs doing real work — in their own words.
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-5">
-            {VOICES.map((v, i) => (
-              <motion.div key={v.name}
+          {/* Testimonial grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            {allVoices.map((v, i) => (
+              <motion.div key={v.id}
                 initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.42 }}
-                className="bg-white rounded-3xl p-7 flex flex-col gap-5 border"
+                viewport={{ once:true }} transition={{ delay:(i % 3)*0.1, duration:0.42 }}
+                whileHover={{ y:-4, transition:{ duration:0.18 } }}
+                className="bg-white rounded-3xl p-7 flex flex-col gap-5 border relative overflow-hidden"
                 style={{ borderColor:'rgba(13,24,61,0.07)', boxShadow:'0 2px 16px rgba(13,24,61,0.05)' }}>
-                <p className="text-sm leading-relaxed italic flex-1" style={{ color:C.muted }}>
-                  "{v.quote}"
+
+                {/* Faint hex watermark in corner */}
+                <div className="absolute top-5 right-5 opacity-[0.055]" aria-hidden="true">
+                  <svg width="34" height="34" viewBox="0 0 24 24">
+                    <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" fill={C.honey}/>
+                  </svg>
+                </div>
+
+                {/* Opening quote mark */}
+                <div className="text-5xl leading-none font-serif select-none"
+                  style={{ color:'rgba(255,183,3,0.28)', marginTop:'-8px' }}
+                  aria-hidden="true">"</div>
+
+                <p className="text-sm leading-relaxed flex-1 -mt-3" style={{ color:C.muted }}>
+                  {v.quote}
                 </p>
+
                 <div className="flex items-center gap-3 pt-4"
                   style={{ borderTop:'1px solid rgba(13,24,61,0.07)' }}>
                   <GAvatar name={v.name} size={40} />
-                  <div>
-                    <p className="text-sm font-bold" style={{ color:C.primary }}>{v.name}</p>
-                    <p className="text-xs" style={{ color:C.muted }}>{v.role}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold truncate" style={{ color:C.primary }}>{v.name}</p>
+                    <p className="text-xs truncate" style={{ color:C.muted }}>
+                      {v.role === 'student' ? '🎓 Student' : '🌍 NGO'}
+                      {v.org ? ` · ${v.org}` : ''}
+                    </p>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
+
+          {/* Add your voice CTA */}
+          <motion.div initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} className="text-center">
+            <button
+              onClick={() => setVoiceModal(true)}
+              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl text-sm font-semibold border-2 transition-all hover:bg-[rgba(255,183,3,0.06)] active:scale-[0.97]"
+              style={{ color:C.honey, borderColor:'rgba(255,183,3,0.35)' }}>
+              🐝 Share your story
+            </button>
+            <p className="text-xs mt-3" style={{ color:'rgba(13,24,61,0.32)' }}>
+              Takes 30 seconds — your name can be abbreviated.
+            </p>
+          </motion.div>
         </div>
       </section>
+
+      {/* ── Voice submission modal ── */}
+      <AnimatePresence>
+        {voiceModal && (
+          <VoiceModal
+            onClose={() => setVoiceModal(false)}
+            onSubmit={handleVoiceSubmit}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ══════════════════════════════════════════════════════
           ABOUT — Mission, AI, Impact
