@@ -303,6 +303,11 @@ export function AppProvider({ children }) {
     setProfileState(typeof next === 'function' ? next(profile) : next)
   }
 
+  // Shallow-merge updates into the in-memory user object (e.g. after a name change)
+  function patchUser(updates) {
+    setUserState(prev => prev ? { ...prev, ...updates } : prev)
+  }
+
   async function logout() {
     await authLogOut()
     setUserState(null)
@@ -314,6 +319,7 @@ export function AppProvider({ children }) {
       user,
       profile,
       setProfile,
+      patchUser,
       updateRole,
       completeOnboarding,
       markOnboardingDone,

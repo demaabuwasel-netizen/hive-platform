@@ -67,14 +67,12 @@ export async function getUserRow(userId, { signal } = {}) {
 }
 
 export async function updateUserRow(userId, updates) {
-  const { data, error } = await supabase
+  // Bare update — no .select()/.single() to avoid PostgREST hang
+  const { error } = await supabase
     .from('users')
     .update(updates)
     .eq('id', userId)
-    .select()
-    .single()
   if (error) throw new Error(error.message)
-  return data
 }
 
 // ── Password reset ────────────────────────────────────────────────────────────
