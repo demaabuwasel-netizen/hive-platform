@@ -1,0 +1,290 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "matches": "Matches",
+    "opportunities": "Opportunities",
+    "applications": "Applications",
+    "interviews": "Interviews",
+    "saved": "Saved",
+    "messages": "Messages",
+    "settings": "Settings",
+    "applicants": "Applicants",
+    "analytics": "Analytics",
+    "signOut": "Sign out"
+  },
+  "common": {
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved!",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "back": "← Back",
+    "continue": "Continue →",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "viewAll": "View all",
+    "seeMore": "See more",
+    "optional": "optional",
+    "required": "required",
+    "or": "or",
+    "and": "and",
+    "error": "Something went wrong. Please try again.",
+    "noData": "No data yet",
+    "returnToLogin": "Return to login"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "createAccount": "Create your account",
+    "signUp": "Sign up",
+    "logIn": "Log in",
+    "continueWithGoogle": "Continue with Google",
+    "orContinueWithEmail": "or continue with email",
+    "fullName": "Full name",
+    "emailAddress": "Email address",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "termsNote": "By creating an account you agree to our terms. We'll never share your data.",
+    "resetPassword": "Reset your password",
+    "resetDesc": "Enter your email and we'll send you a reset link.",
+    "sendResetLink": "Send reset link",
+    "checkEmail": "Check your email",
+    "resetSentTo": "We sent a password reset link to",
+    "backToLogin": "Back to login"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account, notifications, and preferences",
+    "accountSettings": "Account settings",
+    "sections": {
+      "profile": "Profile",
+      "profileDesc": "Name, photo & contact info",
+      "security": "Security",
+      "securityDesc": "Password & sign-in options",
+      "notifications": "Notifications",
+      "notificationsDesc": "Alerts, digests & reminders",
+      "privacy": "Privacy",
+      "privacyDesc": "Visibility & data sharing",
+      "language": "Language",
+      "languageDesc": "Language & region settings",
+      "appearance": "Appearance",
+      "appearanceDesc": "Theme & display preferences"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Update your personal information and contact details",
+      "editFullProfile": "Edit full profile",
+      "accountActive": "Account active",
+      "fullName": "Full name",
+      "emailAddress": "Email address",
+      "emailCannotChange": "Email cannot be changed here",
+      "university": "University / Institution",
+      "organizationName": "Organization name",
+      "phone": "Phone number",
+      "bio": "Bio",
+      "bioNgo": "About your organization",
+      "googleAccount": "Google Account",
+      "connected": "Connected",
+      "changesNote": "Changes are saved to your Hive account"
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "Manage your password and sign-in method",
+      "changePassword": "Change password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Update password",
+      "updating": "Updating…",
+      "updated": "Password updated!",
+      "googleSignIn": "Signed in with Google",
+      "googleSignInDesc": "Your account uses Google for sign-in. Password management is handled through your Google account settings."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Choose which notifications you receive from Hive",
+      "emailNote": "Email notifications are sent to {{email}}. You can unsubscribe at any time.",
+      "savePreferences": "Save preferences",
+      "options": {
+        "new_match": "New match found",
+        "new_matchDesc": "When Hive finds a new high-quality match for you",
+        "msg": "New message",
+        "msgDesc": "When you receive a message from an NGO or student",
+        "app_update": "Application status update",
+        "app_updateDesc": "When your application status changes",
+        "interview": "Interview reminder",
+        "interviewDesc": "24 hours before a scheduled interview",
+        "weekly": "Weekly digest",
+        "weeklyDesc": "A summary of your activity and new opportunities",
+        "marketing": "Tips & platform updates",
+        "marketingDesc": "Feature announcements and productivity tips"
+      }
+    },
+    "privacy": {
+      "title": "Privacy",
+      "subtitle": "Control who can see your profile and how your data is used",
+      "dangerZone": "Danger zone",
+      "downloadData": "Download my data",
+      "deleteAccount": "Delete account",
+      "deleteConfirm": "Are you sure? This cannot be undone.",
+      "options": {
+        "discoverable": "Profile visibility",
+        "discoverableDesc": "Allow NGOs to discover your profile in search results",
+        "show_score": "Show match scores",
+        "show_scoreDesc": "Display your compatibility % to matched organizations",
+        "activity": "Activity status",
+        "activityDesc": "Show when you were last active on Hive"
+      }
+    },
+    "language": {
+      "title": "Language & Region",
+      "subtitle": "Choose your preferred display language",
+      "moreLanguages": "More languages coming soon. Want to help translate Hive?",
+      "getInTouch": "Get in touch"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "subtitle": "Customize how Hive looks for you",
+      "colorTheme": "Color theme",
+      "light": "Light",
+      "lightDesc": "Clean white interface",
+      "dark": "Dark",
+      "darkDesc": "Easy on the eyes",
+      "system": "System",
+      "systemDesc": "Follow device setting",
+      "darkComingSoon": "Dark mode is coming soon. Your preference is saved and will apply automatically when it launches."
+    }
+  },
+  "dashboard": {
+    "goodMorning": "Good morning, {{name}}!",
+    "goodAfternoon": "Good afternoon, {{name}}!",
+    "goodEvening": "Good evening, {{name}}!",
+    "subtitle": "Discover opportunities, grow your skills, and make an impact.",
+    "topMatches": "Top Matches for You",
+    "yourImpact": "Your Impact",
+    "stats": {
+      "matches": "Matches",
+      "applications": "Applications",
+      "interviews": "Interviews"
+    },
+    "applyNow": "Apply now →",
+    "seeMatches": "See your matches →",
+    "partnerInstitutions": "Partner institutions"
+  },
+  "matches": {
+    "title": "{{count}} match found for you",
+    "title_other": "{{count}} matches found for you",
+    "subtitle": "Ranked by compatibility — skills, experience, language, and mission alignment.",
+    "empty": {
+      "title": "No matches yet",
+      "desc": "Add more skills, interests, and experience to your profile for stronger matches.",
+      "action": "Update profile"
+    },
+    "profiledTo": "Matched to your profile",
+    "whyMatched": "Why Hive matched you"
+  },
+  "opportunities": {
+    "browseTitle": "Browse Opportunities",
+    "browseSubtitle": "Discover NGOs looking for your skills",
+    "yourTitle": "Your Opportunities",
+    "yourSubtitle": "Manage your posted opportunities and track applicants",
+    "postOpportunity": "Post opportunity",
+    "searchPlaceholder": "Search NGOs by name or skill…",
+    "empty": {
+      "title": "No opportunities yet",
+      "desc": "Post your first opportunity to start finding skilled volunteers.",
+      "action": "Post an opportunity"
+    },
+    "applyNow": "Apply now →",
+    "applicants": "applicants",
+    "viewApplicants": "View applicants"
+  },
+  "applications": {
+    "title": "Applications",
+    "subtitle_one": "{{count}} application",
+    "subtitle_other": "{{count}} applications",
+    "empty": {
+      "title": "No applications yet",
+      "desc": "When you apply to opportunities, they'll appear here.",
+      "action": "Browse opportunities"
+    },
+    "status": {
+      "submitted": "Application sent",
+      "under_review": "Under review",
+      "shortlisted": "Shortlisted",
+      "interview": "Interview scheduled",
+      "accepted": "Accepted",
+      "rejected": "Not selected"
+    }
+  },
+  "saved": {
+    "title": "Saved",
+    "subtitle_one": "{{count}} saved opportunity",
+    "subtitle_other": "{{count}} saved opportunities",
+    "browseMore": "Browse more",
+    "empty": {
+      "title": "No saved opportunities yet",
+      "desc": "Browse opportunities and tap the bookmark icon to save them here.",
+      "action": "Browse opportunities"
+    }
+  },
+  "interviews": {
+    "title": "Interviews",
+    "empty": {
+      "title": "No interviews scheduled",
+      "desc": "When an NGO invites you to interview, it will appear here.",
+      "action": "View matches"
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "empty": {
+      "title": "No messages yet",
+      "desc": "Start a conversation with a matched NGO or student.",
+      "action": "View matches"
+    },
+    "typeMessage": "Type a message…",
+    "send": "Send"
+  },
+  "onboarding": {
+    "settingUp": "Setting up your profile",
+    "step": "Step {{current}} of {{total}}",
+    "editLater": "you can always edit your profile later",
+    "back": "← Back",
+    "continue": "Continue →",
+    "createProfile": "Create my profile →",
+    "profileCreated": "Profile created! 🎉",
+    "profileReady": "You're ready to be matched with NGOs that need exactly your skills and values.",
+    "goToDashboard": "Go to my dashboard →",
+    "welcomeBack": "Welcome back — your progress has been restored."
+  },
+  "roleSelection": {
+    "title": "Welcome to Hive!",
+    "subtitle": "Who are you joining as? We'll personalise your experience.",
+    "student": "I'm a Student",
+    "studentDesc": "I want to build real-world experience by contributing to meaningful projects.",
+    "ngo": "I represent an NGO",
+    "ngoDesc": "We need skilled student volunteers to help our organisation grow and deliver impact.",
+    "continueAsStudent": "Continue as Student →",
+    "continueAsNgo": "Continue as NGO →"
+  },
+  "landing": {
+    "heroHeadline": "Find meaningful opportunities. Make real impact.",
+    "heroSubtitle": "Hive is an AI-powered platform that connects ambitious students with NGOs to build meaningful experience and create real-world impact.",
+    "forStudents": "I'm a Student →",
+    "forNgos": "I'm an NGO →",
+    "voicesTitle": "Voices from the hive",
+    "voicesSubtitle": "From students and NGOs doing real work — in their own words.",
+    "shareStory": "Share your story",
+    "howItWorks": "How Hive works"
+  },
+  "empty": {
+    "noData": "Nothing here yet",
+    "checkBack": "Check back soon.",
+    "comingSoon": "Coming soon"
+  }
+}

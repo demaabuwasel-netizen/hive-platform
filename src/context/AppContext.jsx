@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { supabase } from '../services/supabase'
 import { ensureUserRow, getUserRow, updateUserRow, logOut as authLogOut } from '../services/auth'
 import { loadStudentProfile, loadNgoProfile, saveProfile } from '../services/storage'
+import i18n from '../i18n/index'
 
 const AppContext = createContext(null)
 
@@ -76,11 +77,31 @@ export function AppProvider({ children }) {
         onboardingComplete: userRow.onboarding_complete,
         onboardingStep:     userRow.onboarding_step ?? 0,
         provider:           userRow.provider,
+        preferredLanguage:  userRow.preferred_language ?? 'en',
+        preferredTheme:     userRow.preferred_theme    ?? 'system',
       }
       setUserState(merged)
       userWasSet = true
       console.log('[hydrateUser] user state set — role:', merged.role,
         'onboardingComplete:', merged.onboardingComplete)
+
+      // Restore stored language + theme from DB on login
+      const pLang  = userRow.preferred_language
+      const pTheme = userRow.preferred_theme
+      if (pLang && pLang !== i18n.language) {
+        i18n.changeLanguage(pLang)
+        localStorage.setItem('hive_lang', pLang)
+        document.documentElement.dir  = (pLang === 'ar' || pLang === 'he') ? 'rtl' : 'ltr'
+        document.documentElement.lang = pLang
+      }
+      if (pTheme) {
+        localStorage.setItem('hive_theme', pTheme)
+        const resolved = pTheme === 'system'
+          ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : pTheme
+        document.documentElement.setAttribute('data-theme', resolved)
+        document.documentElement.classList[resolved === 'dark' ? 'add' : 'remove']('dark')
+      }
 
       // ── 3. Load role-specific profile (signal passed — can be aborted too) ──
       if (userRow.role === 'student') {

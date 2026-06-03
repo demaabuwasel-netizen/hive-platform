@@ -1,0 +1,290 @@
+{
+  "nav": {
+    "dashboard": "لوحة القيادة",
+    "matches": "التطابقات",
+    "opportunities": "الفرص",
+    "applications": "الطلبات",
+    "interviews": "المقابلات",
+    "saved": "المحفوظات",
+    "messages": "الرسائل",
+    "settings": "الإعدادات",
+    "applicants": "المتقدمون",
+    "analytics": "التحليلات",
+    "signOut": "تسجيل الخروج"
+  },
+  "common": {
+    "save": "حفظ التغييرات",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم الحفظ!",
+    "cancel": "إلغاء",
+    "submit": "إرسال",
+    "back": "→ رجوع",
+    "continue": "متابعة →",
+    "loading": "جارٍ التحميل…",
+    "retry": "إعادة المحاولة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "close": "إغلاق",
+    "viewAll": "عرض الكل",
+    "seeMore": "المزيد",
+    "optional": "اختياري",
+    "required": "مطلوب",
+    "or": "أو",
+    "and": "و",
+    "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "noData": "لا توجد بيانات بعد",
+    "returnToLogin": "العودة لتسجيل الدخول"
+  },
+  "auth": {
+    "welcomeBack": "مرحباً بعودتك",
+    "createAccount": "إنشاء حساب",
+    "signUp": "التسجيل",
+    "logIn": "تسجيل الدخول",
+    "continueWithGoogle": "المتابعة مع Google",
+    "orContinueWithEmail": "أو المتابعة بالبريد الإلكتروني",
+    "fullName": "الاسم الكامل",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "termsNote": "بإنشاء حساب، فإنك توافق على شروطنا. لن نشارك بياناتك أبداً.",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "resetDesc": "أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.",
+    "sendResetLink": "إرسال رابط إعادة التعيين",
+    "checkEmail": "تحقق من بريدك الإلكتروني",
+    "resetSentTo": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى",
+    "backToLogin": "العودة لتسجيل الدخول"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "subtitle": "إدارة حسابك وإشعاراتك وتفضيلاتك",
+    "accountSettings": "إعدادات الحساب",
+    "sections": {
+      "profile": "الملف الشخصي",
+      "profileDesc": "الاسم والصورة ومعلومات الاتصال",
+      "security": "الأمان",
+      "securityDesc": "كلمة المرور وخيارات تسجيل الدخول",
+      "notifications": "الإشعارات",
+      "notificationsDesc": "التنبيهات والملخصات والتذكيرات",
+      "privacy": "الخصوصية",
+      "privacyDesc": "الظهور ومشاركة البيانات",
+      "language": "اللغة",
+      "languageDesc": "إعدادات اللغة والمنطقة",
+      "appearance": "المظهر",
+      "appearanceDesc": "السمة وتفضيلات العرض"
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "subtitle": "تحديث معلوماتك الشخصية وتفاصيل الاتصال",
+      "editFullProfile": "تعديل الملف الكامل",
+      "accountActive": "الحساب نشط",
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailCannotChange": "لا يمكن تغيير البريد الإلكتروني هنا",
+      "university": "الجامعة / المؤسسة",
+      "organizationName": "اسم المنظمة",
+      "phone": "رقم الهاتف",
+      "bio": "نبذة",
+      "bioNgo": "نبذة عن منظمتك",
+      "googleAccount": "حساب Google",
+      "connected": "متصل",
+      "changesNote": "يتم حفظ التغييرات في حساب Hive الخاص بك"
+    },
+    "security": {
+      "title": "الأمان",
+      "subtitle": "إدارة كلمة المرور وطريقة تسجيل الدخول",
+      "changePassword": "تغيير كلمة المرور",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور الجديدة",
+      "updatePassword": "تحديث كلمة المرور",
+      "updating": "جارٍ التحديث…",
+      "updated": "تم تحديث كلمة المرور!",
+      "googleSignIn": "تسجيل الدخول باستخدام Google",
+      "googleSignInDesc": "يستخدم حسابك Google لتسجيل الدخول. تتم إدارة كلمة المرور من خلال إعدادات حساب Google."
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "subtitle": "اختر الإشعارات التي تريد تلقيها من Hive",
+      "emailNote": "يتم إرسال إشعارات البريد الإلكتروني إلى {{email}}. يمكنك إلغاء الاشتراك في أي وقت.",
+      "savePreferences": "حفظ التفضيلات",
+      "options": {
+        "new_match": "تطابق جديد",
+        "new_matchDesc": "عندما يجد Hive تطابقاً جديداً عالي الجودة لك",
+        "msg": "رسالة جديدة",
+        "msgDesc": "عند استلام رسالة من منظمة أو طالب",
+        "app_update": "تحديث حالة الطلب",
+        "app_updateDesc": "عندما تتغير حالة طلبك",
+        "interview": "تذكير بالمقابلة",
+        "interviewDesc": "قبل 24 ساعة من مقابلة مجدولة",
+        "weekly": "ملخص أسبوعي",
+        "weeklyDesc": "ملخص لنشاطك والفرص الجديدة",
+        "marketing": "نصائح وتحديثات المنصة",
+        "marketingDesc": "إعلانات الميزات ونصائح الإنتاجية"
+      }
+    },
+    "privacy": {
+      "title": "الخصوصية",
+      "subtitle": "تحكم في من يمكنه رؤية ملفك الشخصي وكيفية استخدام بياناتك",
+      "dangerZone": "منطقة الخطر",
+      "downloadData": "تنزيل بياناتي",
+      "deleteAccount": "حذف الحساب",
+      "deleteConfirm": "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.",
+      "options": {
+        "discoverable": "ظهور الملف الشخصي",
+        "discoverableDesc": "السماح للمنظمات باكتشاف ملفك الشخصي في نتائج البحث",
+        "show_score": "عرض درجات التطابق",
+        "show_scoreDesc": "عرض نسبة التوافق لديك للمنظمات المتطابقة",
+        "activity": "حالة النشاط",
+        "activityDesc": "عرض آخر نشاط لك على Hive"
+      }
+    },
+    "language": {
+      "title": "اللغة والمنطقة",
+      "subtitle": "اختر لغة العرض المفضلة لديك",
+      "moreLanguages": "المزيد من اللغات قريباً. هل تريد المساعدة في ترجمة Hive؟",
+      "getInTouch": "تواصل معنا"
+    },
+    "appearance": {
+      "title": "المظهر",
+      "subtitle": "تخصيص مظهر Hive لك",
+      "colorTheme": "نظام الألوان",
+      "light": "فاتح",
+      "lightDesc": "واجهة بيضاء نظيفة",
+      "dark": "داكن",
+      "darkDesc": "مريح للعيون",
+      "system": "النظام",
+      "systemDesc": "اتبع إعداد الجهاز",
+      "darkComingSoon": "الوضع الداكن قادم قريباً. سيتم تطبيق تفضيلك تلقائياً."
+    }
+  },
+  "dashboard": {
+    "goodMorning": "صباح الخير، {{name}}!",
+    "goodAfternoon": "مساء الخير، {{name}}!",
+    "goodEvening": "مساء النور، {{name}}!",
+    "subtitle": "اكتشف الفرص وطور مهاراتك واصنع تأثيراً.",
+    "topMatches": "أفضل التطابقات لك",
+    "yourImpact": "تأثيرك",
+    "stats": {
+      "matches": "التطابقات",
+      "applications": "الطلبات",
+      "interviews": "المقابلات"
+    },
+    "applyNow": "قدّم الآن →",
+    "seeMatches": "اعرض تطابقاتك →",
+    "partnerInstitutions": "المؤسسات الشريكة"
+  },
+  "matches": {
+    "title": "وجدنا تطابقاً {{count}} لك",
+    "title_other": "وجدنا {{count}} تطابقات لك",
+    "subtitle": "مرتبة حسب التوافق — المهارات والخبرة واللغة ومواءمة المهمة.",
+    "empty": {
+      "title": "لا توجد تطابقات بعد",
+      "desc": "أضف المزيد من المهارات والاهتمامات والخبرات لملفك الشخصي للحصول على تطابقات أفضل.",
+      "action": "تحديث الملف"
+    },
+    "profiledTo": "مطابق لملفك الشخصي",
+    "whyMatched": "لماذا طابقك Hive"
+  },
+  "opportunities": {
+    "browseTitle": "تصفح الفرص",
+    "browseSubtitle": "اكتشف منظمات تحتاج مهاراتك",
+    "yourTitle": "فرصك",
+    "yourSubtitle": "إدارة الفرص المنشورة وتتبع المتقدمين",
+    "postOpportunity": "نشر فرصة",
+    "searchPlaceholder": "ابحث عن منظمات بالاسم أو المهارة…",
+    "empty": {
+      "title": "لا توجد فرص بعد",
+      "desc": "انشر أول فرصة للعثور على متطوعين مهرة.",
+      "action": "نشر فرصة"
+    },
+    "applyNow": "قدّم الآن →",
+    "applicants": "متقدمون",
+    "viewApplicants": "عرض المتقدمين"
+  },
+  "applications": {
+    "title": "الطلبات",
+    "subtitle_one": "طلب {{count}}",
+    "subtitle_other": "{{count}} طلبات",
+    "empty": {
+      "title": "لا توجد طلبات بعد",
+      "desc": "عند التقدم للفرص، ستظهر هنا.",
+      "action": "تصفح الفرص"
+    },
+    "status": {
+      "submitted": "تم إرسال الطلب",
+      "under_review": "قيد المراجعة",
+      "shortlisted": "في القائمة المختصرة",
+      "interview": "مقابلة مجدولة",
+      "accepted": "تم القبول",
+      "rejected": "لم يتم الاختيار"
+    }
+  },
+  "saved": {
+    "title": "المحفوظات",
+    "subtitle_one": "فرصة محفوظة {{count}}",
+    "subtitle_other": "{{count}} فرص محفوظة",
+    "browseMore": "تصفح المزيد",
+    "empty": {
+      "title": "لا توجد فرص محفوظة بعد",
+      "desc": "تصفح الفرص وانقر على أيقونة الإشارة المرجعية لحفظها هنا.",
+      "action": "تصفح الفرص"
+    }
+  },
+  "interviews": {
+    "title": "المقابلات",
+    "empty": {
+      "title": "لا توجد مقابلات مجدولة",
+      "desc": "عندما تدعوك منظمة لمقابلة، ستظهر هنا.",
+      "action": "عرض التطابقات"
+    }
+  },
+  "messages": {
+    "title": "الرسائل",
+    "empty": {
+      "title": "لا توجد رسائل بعد",
+      "desc": "ابدأ محادثة مع منظمة أو طالب متطابق.",
+      "action": "عرض التطابقات"
+    },
+    "typeMessage": "اكتب رسالة…",
+    "send": "إرسال"
+  },
+  "onboarding": {
+    "settingUp": "إعداد ملفك الشخصي",
+    "step": "الخطوة {{current}} من {{total}}",
+    "editLater": "يمكنك دائماً تعديل ملفك الشخصي لاحقاً",
+    "back": "→ رجوع",
+    "continue": "متابعة →",
+    "createProfile": "إنشاء ملفي →",
+    "profileCreated": "تم إنشاء الملف! 🎉",
+    "profileReady": "أنت مستعد للتطابق مع المنظمات التي تحتاج مهاراتك وقيمك.",
+    "goToDashboard": "انتقل للوحة القيادة →",
+    "welcomeBack": "مرحباً بعودتك — تم استعادة تقدمك."
+  },
+  "roleSelection": {
+    "title": "مرحباً بك في Hive!",
+    "subtitle": "كمن تنضم؟ سنخصص تجربتك.",
+    "student": "أنا طالب",
+    "studentDesc": "أريد بناء خبرة عملية من خلال المساهمة في مشاريع ذات معنى.",
+    "ngo": "أمثل منظمة غير ربحية",
+    "ngoDesc": "نحن بحاجة إلى متطوعين طلاب مهرة لمساعدة منظمتنا على النمو.",
+    "continueAsStudent": "المتابعة كطالب →",
+    "continueAsNgo": "المتابعة كمنظمة →"
+  },
+  "landing": {
+    "heroHeadline": "اعثر على فرص ذات معنى. اصنع تأثيراً حقيقياً.",
+    "heroSubtitle": "Hive منصة مدعومة بالذكاء الاصطناعي تربط الطلاب الطموحين بالمنظمات غير الربحية لبناء خبرة ذات مغزى وإحداث تأثير حقيقي.",
+    "forStudents": "أنا طالب →",
+    "forNgos": "أنا منظمة →",
+    "voicesTitle": "أصوات من الخلية",
+    "voicesSubtitle": "من طلاب ومنظمات يقومون بعمل حقيقي — بكلماتهم الخاصة.",
+    "shareStory": "شارك قصتك",
+    "howItWorks": "كيف يعمل Hive"
+  },
+  "empty": {
+    "noData": "لا يوجد شيء هنا بعد",
+    "checkBack": "تفقد مرة أخرى قريباً.",
+    "comingSoon": "قريباً"
+  }
+}

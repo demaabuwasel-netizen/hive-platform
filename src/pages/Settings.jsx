@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   User, Bell, Lock, Globe, Palette, Camera, Check, Pencil,
   ChevronRight, Sparkles, Shield, Eye, EyeOff, Moon, Sun,
   Smartphone, AlertCircle, LogOut, KeyRound, AlertTriangle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useTheme } from '../contexts/ThemeContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { updateUserRow, updatePassword } from '../services/auth'
+import { SUPPORTED_LANGS } from '../i18n/index'
 
 // ─── Section definitions ──────────────────────────────────────────────────────
 
@@ -538,31 +541,58 @@ function PrivacySection() {
 
 // ─── Language section ─────────────────────────────────────────────────────────
 
-function LanguageSection() {
-  const LANGS = ['English', 'Hebrew (עברית)', 'Arabic (العربية)', 'Russian (Русский)']
-  const [selected, setSelected] = useState('English')
+function LanguageSection({ user }) {
+  const { t } = useTranslation()
+  const { lang, setLang } = useTheme()
+  const [saving, setSaving] = useState(false)
+  const [saved,  setSaved]  = useState(false)
+
+  async function handleSelect(code) {
+    setLang(code)           // applies immediately (i18n + localStorage + direction)
+    if (!user?.id) return
+    setSaving(true)
+    try {
+      await updateUserRow(user.id, { preferred_language: code })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e) { console.warn('Could not save language preference:', e.message) }
+    finally { setSaving(false) }
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-[16px] font-extrabold text-[#0D183D]">Language & Region</h2>
-        <p className="text-[13px] text-[#4B6382] mt-0.5">Choose your preferred display language</p>
+        <h2 className="text-[16px] font-extrabold text-[#0D183D]">{t('settings.language.title')}</h2>
+        <p className="text-[13px] text-[#4B6382] mt-0.5">{t('settings.language.subtitle')}</p>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
-        {LANGS.map(l => (
-          <button key={l} onClick={() => setSelected(l)}
+
+      <div className="grid sm:grid-cols-3 gap-3">
+        {SUPPORTED_LANGS.map(l => (
+          <button key={l.code} onClick={() => handleSelect(l.code)}
             className="flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all"
-            style={selected === l
+            style={lang === l.code
               ? { borderColor: '#FFB703', background: 'rgba(255,183,3,0.05)' }
               : { borderColor: 'rgba(13,24,61,0.1)', background: '#FAFAFA' }}>
-            <span className={`text-[13px] font-semibold ${selected === l ? 'text-[#0D183D]' : 'text-[#4B6382]'}`}>{l}</span>
-            {selected === l && <Check size={13} style={{ color: '#FFB703' }}/>}
+            <div>
+              <p className={`text-[13px] font-semibold ${lang === l.code ? 'text-[#0D183D]' : 'text-[#4B6382]'}`}>{l.nativeLabel}</p>
+              <p className="text-[11px] text-[#4B6382]">{l.label}</p>
+            </div>
+            {lang === l.code && <Check size={13} style={{ color: '#FFB703' }}/>}
           </button>
         ))}
       </div>
+
+      {saved && (
+        <p className="text-[12px] text-emerald-600 flex items-center gap-1.5">
+          <Check size={12}/> {t('common.saved')}
+        </p>
+      )}
+
       <p className="text-[12px] text-[#4B6382]">
-        More languages coming soon. Want to help translate Hive?{' '}
-        <a href="mailto:hello@hive.app" className="text-[#FFB703] font-semibold hover:underline">Get in touch</a>
+        {t('settings.language.moreLanguages')}{' '}
+        <a href="mailto:hello@hive.app" className="text-[#FFB703] font-semibold hover:underline">
+          {t('settings.language.getInTouch')}
+        </a>
       </p>
     </div>
   )
@@ -570,42 +600,61 @@ function LanguageSection() {
 
 // ─── Appearance section ───────────────────────────────────────────────────────
 
-function AppearanceSection() {
-  const [theme, setTheme] = useState('light')
+function AppearanceSection({ user }) {
+  const { t } = useTranslation()
+  const { theme, setTheme } = useTheme()
+  const [saving, setSaving] = useState(false)
+  const [saved,  setSaved]  = useState(false)
+
   const THEMES = [
-    { id: 'light', icon: Sun,       label: 'Light',  desc: 'Clean white interface'   },
-    { id: 'dark',  icon: Moon,      label: 'Dark',   desc: 'Easy on the eyes'        },
-    { id: 'auto',  icon: Smartphone,label: 'System', desc: 'Follow device setting'   },
+    { id: 'light',  icon: Sun,        label: t('settings.appearance.light'),  desc: t('settings.appearance.lightDesc')  },
+    { id: 'dark',   icon: Moon,       label: t('settings.appearance.dark'),   desc: t('settings.appearance.darkDesc')   },
+    { id: 'system', icon: Smartphone, label: t('settings.appearance.system'), desc: t('settings.appearance.systemDesc') },
   ]
+
+  async function handleSelect(id) {
+    setTheme(id)             // applies immediately via ThemeContext
+    if (!user?.id) return
+    setSaving(true)
+    try {
+      await updateUserRow(user.id, { preferred_theme: id })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e) { console.warn('Could not save theme preference:', e.message) }
+    finally { setSaving(false) }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-[16px] font-extrabold text-[#0D183D]">Appearance</h2>
-        <p className="text-[13px] text-[#4B6382] mt-0.5">Customize how Hive looks for you</p>
+        <h2 className="text-[16px] font-extrabold text-[#0D183D]">{t('settings.appearance.title')}</h2>
+        <p className="text-[13px] text-[#4B6382] mt-0.5">{t('settings.appearance.subtitle')}</p>
       </div>
       <div>
-        <p className="text-[12px] font-semibold text-[#0D183D] mb-3">Color theme</p>
+        <p className="text-[12px] font-semibold text-[#0D183D] mb-3">{t('settings.appearance.colorTheme')}</p>
         <div className="grid sm:grid-cols-3 gap-3">
-          {THEMES.map(t => (
-            <button key={t.id} onClick={() => setTheme(t.id)}
+          {THEMES.map(th => (
+            <button key={th.id} onClick={() => handleSelect(th.id)}
               className="flex flex-col items-start gap-2 p-4 rounded-2xl border transition-all"
-              style={theme === t.id
+              style={theme === th.id
                 ? { borderColor: '#FFB703', background: 'rgba(255,183,3,0.05)', boxShadow: '0 0 0 3px rgba(255,183,3,0.12)' }
                 : { borderColor: 'rgba(13,24,61,0.1)', background: '#FAFAFA' }}>
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${theme === t.id ? 'bg-[#FFB703]' : 'bg-[rgba(13,24,61,0.06)]'}`}>
-                <t.icon size={16} className={theme === t.id ? 'text-white' : 'text-[#4B6382]'}/>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${theme === th.id ? 'bg-[#FFB703]' : 'bg-[rgba(13,24,61,0.06)]'}`}>
+                <th.icon size={16} className={theme === th.id ? 'text-white' : 'text-[#4B6382]'}/>
               </div>
               <div>
-                <p className={`text-[13px] font-bold ${theme === t.id ? 'text-[#0D183D]' : 'text-[#4B6382]'}`}>{t.label}</p>
-                <p className="text-[11px] text-[#4B6382]">{t.desc}</p>
+                <p className={`text-[13px] font-bold ${theme === th.id ? 'text-[#0D183D]' : 'text-[#4B6382]'}`}>{th.label}</p>
+                <p className="text-[11px] text-[#4B6382]">{th.desc}</p>
               </div>
             </button>
           ))}
         </div>
       </div>
-      <div className="rounded-xl px-4 py-3.5" style={{ background: 'rgba(13,24,61,0.03)', border: '1px solid rgba(13,24,61,0.07)' }}>
-        <p className="text-[12px] text-[#4B6382]">Dark mode is coming soon. Your preference is saved and will apply automatically when it launches.</p>
-      </div>
+      {saved && (
+        <p className="text-[12px] text-emerald-600 flex items-center gap-1.5">
+          <Check size={12}/> {t('common.saved')}
+        </p>
+      )}
     </div>
   )
 }
@@ -627,8 +676,8 @@ export default function Settings() {
     security:      <SecuritySection user={user}/>,
     notifications: <NotificationsSection user={user}/>,
     privacy:       <PrivacySection/>,
-    language:      <LanguageSection/>,
-    appearance:    <AppearanceSection/>,
+    language:      <LanguageSection user={user}/>,
+    appearance:    <AppearanceSection user={user}/>,
   }
 
   return (

@@ -3,6 +3,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Hive design tokens — light (default) ──────────────────────────────────── */
+:root {
+  --hive-bg-page:    #FAF6EF;
+  --hive-bg-card:    #FFFFFF;
+  --hive-bg-surface: #F8F9FB;
+  --hive-bg-input:   #F8F9FB;
+  --hive-bg-hover:   rgba(13,24,61,0.04);
+
+  --hive-text-primary: #0D183D;
+  --hive-text-muted:   #4B6382;
+  --hive-text-faint:   rgba(13,24,61,0.3);
+
+  --hive-border:        rgba(13,24,61,0.08);
+  --hive-border-strong: rgba(13,24,61,0.14);
+
+  --hive-honey:    #FFB703;
+  --hive-navy:     #0D183D;
+  --hive-navy-mid: #1a2e5a;
+
+  --hive-shadow-card:   0 2px 12px rgba(13,24,61,0.06);
+  --hive-shadow-lifted: 0 8px 32px rgba(13,24,61,0.10);
+
+  /* Sidebar */
+  --sidebar-bg:       #FFFFFF;
+  --sidebar-border:   rgba(13,24,61,0.08);
+  --sidebar-active-bg:#0D183D;
+  --sidebar-active-text:#FFFFFF;
+  --sidebar-text:     #4B6382;
+}
+
+/* ── Dark mode overrides ───────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --hive-bg-page:    #0F172A;
+  --hive-bg-card:    #1E293B;
+  --hive-bg-surface: #0F172A;
+  --hive-bg-input:   #1E293B;
+  --hive-bg-hover:   rgba(255,255,255,0.06);
+
+  --hive-text-primary: #F1F5F9;
+  --hive-text-muted:   #94A3B8;
+  --hive-text-faint:   rgba(255,255,255,0.3);
+
+  --hive-border:        rgba(255,255,255,0.08);
+  --hive-border-strong: rgba(255,255,255,0.14);
+
+  --hive-honey:    #FFB703;
+  --hive-navy:     #1E293B;
+  --hive-navy-mid: #334155;
+
+  --hive-shadow-card:   0 2px 12px rgba(0,0,0,0.3);
+  --hive-shadow-lifted: 0 8px 32px rgba(0,0,0,0.4);
+
+  /* Sidebar */
+  --sidebar-bg:        #1E293B;
+  --sidebar-border:    rgba(255,255,255,0.07);
+  --sidebar-active-bg: #FFB703;
+  --sidebar-active-text:#0F172A;
+  --sidebar-text:      #94A3B8;
+}
+
+/* ── RTL adjustments ───────────────────────────────────────────────────────── */
+[dir="rtl"] .rtl-flip { transform: scaleX(-1); }
+
+/* ── Body adapts to theme ──────────────────────────────────────────────────── */
+body {
+  background-color: var(--hive-bg-page);
+  color: var(--hive-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 * { box-sizing: border-box; }
 
 body {

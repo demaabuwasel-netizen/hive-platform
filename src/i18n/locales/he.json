@@ -1,0 +1,290 @@
+{
+  "nav": {
+    "dashboard": "לוח בקרה",
+    "matches": "התאמות",
+    "opportunities": "הזדמנויות",
+    "applications": "בקשות",
+    "interviews": "ראיונות",
+    "saved": "שמורים",
+    "messages": "הודעות",
+    "settings": "הגדרות",
+    "applicants": "מועמדים",
+    "analytics": "אנליטיקה",
+    "signOut": "התנתק"
+  },
+  "common": {
+    "save": "שמור שינויים",
+    "saving": "שומר…",
+    "saved": "נשמר!",
+    "cancel": "ביטול",
+    "submit": "שלח",
+    "back": "→ חזרה",
+    "continue": "המשך →",
+    "loading": "טוען…",
+    "retry": "נסה שוב",
+    "edit": "ערוך",
+    "delete": "מחק",
+    "confirm": "אשר",
+    "close": "סגור",
+    "viewAll": "הצג הכל",
+    "seeMore": "ראה עוד",
+    "optional": "אופציונלי",
+    "required": "חובה",
+    "or": "או",
+    "and": "ו",
+    "error": "משהו השתבש. אנא נסה שוב.",
+    "noData": "אין נתונים עדיין",
+    "returnToLogin": "חזור להתחברות"
+  },
+  "auth": {
+    "welcomeBack": "ברוך שובך",
+    "createAccount": "יצירת חשבון",
+    "signUp": "הרשמה",
+    "logIn": "התחברות",
+    "continueWithGoogle": "המשך עם Google",
+    "orContinueWithEmail": "או המשך עם אימייל",
+    "fullName": "שם מלא",
+    "emailAddress": "כתובת אימייל",
+    "password": "סיסמה",
+    "forgotPassword": "שכחת סיסמה?",
+    "dontHaveAccount": "אין לך חשבון?",
+    "alreadyHaveAccount": "כבר יש לך חשבון?",
+    "termsNote": "יצירת חשבון מהווה הסכמה לתנאים שלנו. לא נשתף את הנתונים שלך.",
+    "resetPassword": "איפוס סיסמה",
+    "resetDesc": "הזן את האימייל שלך ונשלח לך קישור לאיפוס.",
+    "sendResetLink": "שלח קישור לאיפוס",
+    "checkEmail": "בדוק את האימייל שלך",
+    "resetSentTo": "שלחנו קישור לאיפוס סיסמה אל",
+    "backToLogin": "חזרה להתחברות"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "subtitle": "נהל את החשבון, ההתראות וההעדפות שלך",
+    "accountSettings": "הגדרות חשבון",
+    "sections": {
+      "profile": "פרופיל",
+      "profileDesc": "שם, תמונה ופרטי קשר",
+      "security": "אבטחה",
+      "securityDesc": "סיסמה ואפשרויות כניסה",
+      "notifications": "התראות",
+      "notificationsDesc": "התראות, סיכומים ותזכורות",
+      "privacy": "פרטיות",
+      "privacyDesc": "נראות ושיתוף נתונים",
+      "language": "שפה",
+      "languageDesc": "הגדרות שפה ואזור",
+      "appearance": "מראה",
+      "appearanceDesc": "ערכת נושא והעדפות תצוגה"
+    },
+    "profile": {
+      "title": "פרופיל",
+      "subtitle": "עדכן את הפרטים האישיים ופרטי הקשר שלך",
+      "editFullProfile": "ערוך פרופיל מלא",
+      "accountActive": "חשבון פעיל",
+      "fullName": "שם מלא",
+      "emailAddress": "כתובת אימייל",
+      "emailCannotChange": "לא ניתן לשנות כתובת אימייל כאן",
+      "university": "אוניברסיטה / מוסד",
+      "organizationName": "שם הארגון",
+      "phone": "מספר טלפון",
+      "bio": "אודות",
+      "bioNgo": "אודות הארגון שלך",
+      "googleAccount": "חשבון Google",
+      "connected": "מחובר",
+      "changesNote": "השינויים נשמרים בחשבון Hive שלך"
+    },
+    "security": {
+      "title": "אבטחה",
+      "subtitle": "נהל את הסיסמה ושיטת הכניסה שלך",
+      "changePassword": "שנה סיסמה",
+      "newPassword": "סיסמה חדשה",
+      "confirmPassword": "אשר סיסמה חדשה",
+      "updatePassword": "עדכן סיסמה",
+      "updating": "מעדכן…",
+      "updated": "הסיסמה עודכנה!",
+      "googleSignIn": "מחובר עם Google",
+      "googleSignInDesc": "החשבון שלך משתמש ב-Google לכניסה. ניהול הסיסמה מתבצע דרך הגדרות חשבון Google."
+    },
+    "notifications": {
+      "title": "התראות",
+      "subtitle": "בחר אילו התראות תקבל מ-Hive",
+      "emailNote": "התראות אימייל נשלחות אל {{email}}. ניתן לבטל את המנוי בכל עת.",
+      "savePreferences": "שמור העדפות",
+      "options": {
+        "new_match": "נמצאה התאמה חדשה",
+        "new_matchDesc": "כאשר Hive מוצא התאמה חדשה ואיכותית עבורך",
+        "msg": "הודעה חדשה",
+        "msgDesc": "כאשר מתקבלת הודעה מארגון NGO או סטודנט",
+        "app_update": "עדכון סטטוס בקשה",
+        "app_updateDesc": "כאשר סטטוס הבקשה שלך משתנה",
+        "interview": "תזכורת לראיון",
+        "interviewDesc": "24 שעות לפני ראיון מתוזמן",
+        "weekly": "סיכום שבועי",
+        "weeklyDesc": "סיכום של הפעילות שלך והזדמנויות חדשות",
+        "marketing": "טיפים ועדכוני פלטפורמה",
+        "marketingDesc": "הכרזות על תכונות וטיפים לפרודוקטיביות"
+      }
+    },
+    "privacy": {
+      "title": "פרטיות",
+      "subtitle": "שלוט במי יכול לראות את הפרופיל שלך ואיך הנתונים שלך משמשים",
+      "dangerZone": "אזור מסוכן",
+      "downloadData": "הורד את הנתונים שלי",
+      "deleteAccount": "מחק חשבון",
+      "deleteConfirm": "האם אתה בטוח? פעולה זו לא ניתנת לביטול.",
+      "options": {
+        "discoverable": "נראות פרופיל",
+        "discoverableDesc": "אפשר לארגוני NGO לגלות את הפרופיל שלך בתוצאות חיפוש",
+        "show_score": "הצג ציוני התאמה",
+        "show_scoreDesc": "הצג את אחוז התאימות שלך לארגונים מותאמים",
+        "activity": "סטטוס פעילות",
+        "activityDesc": "הצג מתי היית פעיל לאחרונה ב-Hive"
+      }
+    },
+    "language": {
+      "title": "שפה ואזור",
+      "subtitle": "בחר את שפת התצוגה המועדפת עליך",
+      "moreLanguages": "שפות נוספות בקרוב. רוצה לעזור בתרגום Hive?",
+      "getInTouch": "צור קשר"
+    },
+    "appearance": {
+      "title": "מראה",
+      "subtitle": "התאם אישית את מראה Hive עבורך",
+      "colorTheme": "ערכת צבעים",
+      "light": "בהיר",
+      "lightDesc": "ממשק לבן נקי",
+      "dark": "כהה",
+      "darkDesc": "נוח לעיניים",
+      "system": "מערכת",
+      "systemDesc": "עקוב אחר הגדרות המכשיר",
+      "darkComingSoon": "מצב כהה בקרוב. ההעדפה שלך נשמרת ותוחל אוטומטית."
+    }
+  },
+  "dashboard": {
+    "goodMorning": "בוקר טוב, {{name}}!",
+    "goodAfternoon": "צהריים טובים, {{name}}!",
+    "goodEvening": "ערב טוב, {{name}}!",
+    "subtitle": "גלה הזדמנויות, פתח את הכישורים שלך וצור השפעה.",
+    "topMatches": "ההתאמות המובילות עבורך",
+    "yourImpact": "ההשפעה שלך",
+    "stats": {
+      "matches": "התאמות",
+      "applications": "בקשות",
+      "interviews": "ראיונות"
+    },
+    "applyNow": "הגש מועמדות →",
+    "seeMatches": "ראה את ההתאמות שלך →",
+    "partnerInstitutions": "מוסדות שותפים"
+  },
+  "matches": {
+    "title": "נמצאה התאמה {{count}} עבורך",
+    "title_other": "נמצאו {{count}} התאמות עבורך",
+    "subtitle": "מדורגות לפי תאימות — כישורים, ניסיון, שפה ויישור משימה.",
+    "empty": {
+      "title": "אין התאמות עדיין",
+      "desc": "הוסף כישורים, תחומי עניין וניסיון לפרופיל שלך לקבלת התאמות טובות יותר.",
+      "action": "עדכן פרופיל"
+    },
+    "profiledTo": "מותאם לפרופיל שלך",
+    "whyMatched": "מדוע Hive התאים אותך"
+  },
+  "opportunities": {
+    "browseTitle": "עיין בהזדמנויות",
+    "browseSubtitle": "גלה ארגוני NGO המחפשים את הכישורים שלך",
+    "yourTitle": "ההזדמנויות שלך",
+    "yourSubtitle": "נהל את ההזדמנויות שפרסמת ועקוב אחר מועמדים",
+    "postOpportunity": "פרסם הזדמנות",
+    "searchPlaceholder": "חפש ארגוני NGO לפי שם או כישור…",
+    "empty": {
+      "title": "אין הזדמנויות עדיין",
+      "desc": "פרסם את ההזדמנות הראשונה שלך כדי להתחיל למצוא מתנדבים מיומנים.",
+      "action": "פרסם הזדמנות"
+    },
+    "applyNow": "הגש מועמדות →",
+    "applicants": "מועמדים",
+    "viewApplicants": "צפה במועמדים"
+  },
+  "applications": {
+    "title": "בקשות",
+    "subtitle_one": "בקשה {{count}}",
+    "subtitle_other": "{{count}} בקשות",
+    "empty": {
+      "title": "אין בקשות עדיין",
+      "desc": "כאשר תגיש מועמדות להזדמנויות, הן יופיעו כאן.",
+      "action": "עיין בהזדמנויות"
+    },
+    "status": {
+      "submitted": "בקשה נשלחה",
+      "under_review": "בבדיקה",
+      "shortlisted": "ברשימה הקצרה",
+      "interview": "ראיון מתוזמן",
+      "accepted": "התקבל",
+      "rejected": "לא נבחר"
+    }
+  },
+  "saved": {
+    "title": "שמורים",
+    "subtitle_one": "הזדמנות שמורה {{count}}",
+    "subtitle_other": "{{count}} הזדמנויות שמורות",
+    "browseMore": "עיין עוד",
+    "empty": {
+      "title": "אין הזדמנויות שמורות עדיין",
+      "desc": "עיין בהזדמנויות והקש על סמל הסימניה כדי לשמור אותן כאן.",
+      "action": "עיין בהזדמנויות"
+    }
+  },
+  "interviews": {
+    "title": "ראיונות",
+    "empty": {
+      "title": "אין ראיונות מתוזמנים",
+      "desc": "כאשר ארגון NGO יזמין אותך לראיון, זה יופיע כאן.",
+      "action": "צפה בהתאמות"
+    }
+  },
+  "messages": {
+    "title": "הודעות",
+    "empty": {
+      "title": "אין הודעות עדיין",
+      "desc": "התחל שיחה עם ארגון NGO מותאם או סטודנט.",
+      "action": "צפה בהתאמות"
+    },
+    "typeMessage": "הקלד הודעה…",
+    "send": "שלח"
+  },
+  "onboarding": {
+    "settingUp": "הגדרת הפרופיל שלך",
+    "step": "שלב {{current}} מתוך {{total}}",
+    "editLater": "תמיד תוכל לערוך את הפרופיל שלך מאוחר יותר",
+    "back": "→ חזרה",
+    "continue": "המשך →",
+    "createProfile": "צור פרופיל →",
+    "profileCreated": "הפרופיל נוצר! 🎉",
+    "profileReady": "אתה מוכן להיות מותאם לארגוני NGO שצריכים בדיוק את הכישורים והערכים שלך.",
+    "goToDashboard": "עבור ללוח הבקרה שלי →",
+    "welcomeBack": "ברוך שובך — ההתקדמות שלך שוחזרה."
+  },
+  "roleSelection": {
+    "title": "ברוך הבא ל-Hive!",
+    "subtitle": "כמי אתה מצטרף? נתאים אישית את החוויה שלך.",
+    "student": "אני סטודנט",
+    "studentDesc": "אני רוצה לצבור ניסיון מהחיים האמיתיים על ידי תרומה לפרויקטים משמעותיים.",
+    "ngo": "אני מייצג ארגון NGO",
+    "ngoDesc": "אנחנו זקוקים למתנדבים סטודנטים מיומנים שיעזרו לארגון שלנו לצמוח.",
+    "continueAsStudent": "המשך כסטודנט →",
+    "continueAsNgo": "המשך כארגון NGO →"
+  },
+  "landing": {
+    "heroHeadline": "מצא הזדמנויות משמעותיות. צור השפעה אמיתית.",
+    "heroSubtitle": "Hive היא פלטפורמה מבוססת AI המחברת בין סטודנטים שאפתנים לארגוני NGO לצורך בניית ניסיון משמעותי ויצירת השפעה אמיתית.",
+    "forStudents": "אני סטודנט →",
+    "forNgos": "אני ארגון NGO →",
+    "voicesTitle": "קולות מהכוורת",
+    "voicesSubtitle": "מסטודנטים וארגוני NGO שעושים עבודה אמיתית — במילים שלהם.",
+    "shareStory": "שתף את הסיפור שלך",
+    "howItWorks": "איך Hive עובד"
+  },
+  "empty": {
+    "noData": "אין כאן כלום עדיין",
+    "checkBack": "חזור בקרוב.",
+    "comingSoon": "בקרוב"
+  }
+}
