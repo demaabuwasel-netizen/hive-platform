@@ -648,7 +648,7 @@ export default function StudentProfile() {
                     <button onClick={handleAddSkill}
                       className="w-full px-3 py-2.5 rounded-lg text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)]"
                       style={{ background: 'rgba(13,24,61,0.02)' }}>
-                      <Plus size={12} className="inline mr-1"/>Add the skill
+                      Add the skill
                     </button>
                   </div>
 
@@ -837,7 +837,7 @@ export default function StudentProfile() {
                         setEditingExperience(true)
                       }} className="w-full mt-2 py-2 rounded-lg text-[12px] font-semibold border border-dashed border-[#FFB703]"
                         style={{ color: '#FFB703' }}>
-                        <Plus size={12} className="inline mr-1"/>Add Experience
+                        Add Experience
                       </button>
                     </div>
                   ) : (
@@ -943,7 +943,7 @@ export default function StudentProfile() {
                     </div>
                     <button onClick={handleAddLanguage}
                       className="w-full px-3 py-2 rounded-lg text-[11px] font-semibold text-[#10B981] border border-[#10B98120] hover:bg-[#10B98110]">
-                      <Plus size={12} className="inline mr-1"/>Add Language
+                      Add Language
                     </button>
                   </div>
                   <div className="flex gap-2 pt-2">
