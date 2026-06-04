@@ -156,7 +156,6 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               willChange: 'transform',
               transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
-              animation: 'sway-top-left 24s ease-in-out infinite',
               position: 'absolute',
               top: 0,
               left: 0,
