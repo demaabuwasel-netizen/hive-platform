@@ -154,8 +154,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
-              transition: 'transform 0.2s ease-out',
+              transform: 'translate(0px, 0px)',
               position: 'absolute',
               top: 0,
               left: 0,
