@@ -1260,7 +1260,7 @@ export default function StudentProfile() {
                 </div>
               ) : !globalEditMode ? (
                 <div className="space-y-3">
-                  {availabilityDraft.availability && (
+                  {availabilityDraft.availability && availabilityDraft.availability !== 'Immediately' && (
                     <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#DBEAFE]">
                       <p className="text-[10px] font-semibold text-[#1E40AF] mb-1.5">Availability</p>
                       <div className="flex items-center gap-2">
