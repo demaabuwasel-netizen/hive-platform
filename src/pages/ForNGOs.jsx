@@ -110,11 +110,14 @@ export default function ForNGOs() {
           <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.55)' }}>
             Register your NGO and post your first opportunity — it takes less than 10 minutes.
           </p>
-          <Link to="/auth?mode=signup"
-            className="inline-block px-8 py-3.5 rounded-2xl text-[15px] font-bold transition-all hover:opacity-90"
-            style={{ background: C.honey, color: 'white', boxShadow: '0 4px 20px rgba(255,183,3,0.3)' }}>
-            Register your NGO →
-          </Link>
+          <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}>
+            <Link to="/auth?mode=signup"
+              className="inline-block px-8 py-3.5 rounded-2xl text-[15px] font-bold transition-all hover:opacity-90"
+              style={{ background: C.honey, color: 'white', boxShadow: '0 4px 20px rgba(255,183,3,0.3)' }}>
+              Register your NGO →
+            </Link>
+          </motion.div>
         </motion.div>
       </section>
 

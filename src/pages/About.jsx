@@ -119,7 +119,9 @@ export default function About() {
             Whether you're a student looking to make an impact, or an NGO looking for your next collaborator —
             we'd love to have you.
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <motion.div className="flex flex-wrap justify-center gap-3"
+            initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}>
             <Link to="/auth?mode=signup"
               className="px-8 py-3.5 rounded-2xl text-[15px] font-bold text-white transition-all hover:opacity-90"
               style={{ background: C.honey, boxShadow: '0 4px 20px rgba(255,183,3,0.35)' }}>
@@ -130,7 +132,7 @@ export default function About() {
               style={{ color: C.primary, borderColor: 'rgba(13,24,61,0.15)' }}>
               See how it works
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
