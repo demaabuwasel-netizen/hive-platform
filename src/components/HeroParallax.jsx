@@ -136,8 +136,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               left: 0,
-              marginLeft: '-120px',
-              marginTop: '-120px',
+              marginLeft: '-200px',
+              marginTop: '-200px',
             }}
           >
             <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
@@ -164,8 +164,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               right: 0,
-              marginRight: '-120px',
-              marginTop: '-120px',
+              marginRight: '-200px',
+              marginTop: '-200px',
             }}
           >
             <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
