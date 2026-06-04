@@ -124,12 +124,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <img
             src={background}
             alt="Hive world background"
-            className="w-full h-full"
-            style={{
-              objectFit: 'contain',
-              objectPosition: 'center center',
-              backgroundColor: '#f9f7f3'
-            }}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center top' }}
             draggable={false}
           />
         )}
