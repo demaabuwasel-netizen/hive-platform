@@ -206,7 +206,6 @@ function AppRoutes() {
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
       {/* ── Profile ── */}
-      <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
       <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
       <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
       <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
@@ -227,6 +226,7 @@ function AppRoutes() {
         <Route path="/applications"      element={<Applications />} />
         <Route path="/saved"             element={<Saved />} />
         <Route path="/matches"           element={<MatchResults />} />
+        <Route path="/profile/student"   element={<StudentProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

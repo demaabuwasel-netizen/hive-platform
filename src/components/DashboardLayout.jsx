@@ -13,23 +13,31 @@ import { AvatarDisplay } from './Avatar'
 
 const STUDENT_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard/student'             },
+  { icon: Users,           label: 'Profile',      to: '/profile/student'                },
   { icon: Zap,             label: 'Matches',      to: '/matches'                        },
   { icon: Briefcase,       label: 'Opportunities',to: '/opportunities'                  },
   { icon: FileText,        label: 'Applications', to: '/applications'                   },
   { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'                     },
   { icon: Bookmark,        label: 'Saved',        to: '/saved'                          },
-  { icon: MessageCircle,   label: 'Messages',     to: '/messages',   badge: '3'         },
+  { icon: MessageCircle,   label: 'Messages',     to: '/messages'                       },
+]
+
+const STUDENT_SETTINGS = [
   { icon: Settings,        label: 'Settings',     to: '/settings'                       },
 ]
 
 const NGO_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',     to: '/dashboard/ngo'                },
+  { icon: Users,           label: 'Profile',       to: '/profile/ngo'                   },
   { icon: Briefcase,       label: 'Opportunities', to: '/opportunities'                 },
   { icon: Users,           label: 'Applicants',    to: '/applicants'                    },
   { icon: Zap,             label: 'Matches',       to: '/matches'                       },
   { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'                    },
   { icon: BarChart2,       label: 'Analytics',     to: '/analytics'                     },
-  { icon: MessageCircle,   label: 'Messages',      to: '/messages',    badge: '2'       },
+  { icon: MessageCircle,   label: 'Messages',      to: '/messages'                      },
+]
+
+const NGO_SETTINGS = [
   { icon: Settings,        label: 'Settings',      to: '/settings'                      },
 ]
 
@@ -51,6 +59,7 @@ export default function DashboardLayout() {
   const { pathname } = useLocation()
 
   const navItems    = user?.role === 'ngo' ? NGO_NAV : STUDENT_NAV
+  const settingsItems = user?.role === 'ngo' ? NGO_SETTINGS : STUDENT_SETTINGS
   const displayName = profile?.name || user?.name || 'User'
   const avatarSrc   = profile?.avatar || user?.avatar || null
   const roleLabel   = user?.role === 'ngo' ? 'NGO Account' : t('nav.dashboard').replace('לוח בקרה','Student').replace('لوحة القيادة','Student') || 'Student'
@@ -64,6 +73,7 @@ export default function DashboardLayout() {
     'Interviews':    'nav.interviews',
     'Saved':         'nav.saved',
     'Messages':      'nav.messages',
+    'Profile':       'nav.profile',
     'Settings':      'nav.settings',
     'Applicants':    'nav.applicants',
     'Analytics':     'nav.analytics',
@@ -114,6 +124,27 @@ export default function DashboardLayout() {
                     {item.badge}
                   </span>
                 )}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Settings section at bottom */}
+        <nav className="p-2.5 shrink-0 border-t" style={{ borderColor: 'var(--sidebar-border)' }}>
+          {settingsItems.map(item => {
+            const active = isActive(item.to, pathname)
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="flex items-center gap-2.5 px-3 py-[8px] rounded-xl text-[13px] font-medium transition-colors duration-100"
+                style={active
+                  ? { background: 'var(--sidebar-active-bg)', color: 'var(--sidebar-active-text)' }
+                  : { color: 'var(--sidebar-text)' }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--hive-bg-hover)' }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
+                <item.icon size={14} strokeWidth={active ? 2.5 : 1.8} />
+                <span className="flex-1 leading-none">{t(NAV_KEYS[item.label] || item.label, item.label)}</span>
               </Link>
             )
           })}

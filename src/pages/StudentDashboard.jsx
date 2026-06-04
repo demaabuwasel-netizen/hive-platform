@@ -461,13 +461,14 @@ export default function StudentDashboard() {
             <p className="text-[#4B6382] text-sm">Discover opportunities, grow your skills, and make an impact.</p>
           </div>
           <motion.div initial={{ opacity:0, x:12 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.25 }}
-            className="hidden md:flex items-center gap-3 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card px-4 py-2.5 shrink-0">
+            className="hidden md:flex items-center gap-3 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card px-4 py-2.5 shrink-0 cursor-pointer hover:shadow-[0_4px_20px_rgba(13,24,61,0.09)] transition-all"
+            onClick={() => navigate('/profile/student')}>
             <AvatarDisplay src={avatarSrc} name={user?.name||''} size="sm" className="rounded-xl"/>
             <div>
               <p className="text-sm font-bold text-[#0D183D] leading-tight">{user?.name||'Student'}</p>
               <p className="text-[10px] text-navy-400">Student · Hive</p>
             </div>
-            <button className="text-navy-400 hover:text-navy-600 ml-1 transition-colors"><Bell size={14}/></button>
+            <button onClick={e => e.stopPropagation()} className="text-navy-400 hover:text-navy-600 ml-1 transition-colors"><Bell size={14}/></button>
           </motion.div>
         </motion.div>
 

@@ -2,11 +2,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import HiveLogo from '../components/HiveLogo'
+import cardsBackground from '../assets/cards_background.png'
 
 function HexBg() {
   return (
     <div className="absolute inset-0 pointer-events-none"
-      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z' fill='%23F59E0B' fill-opacity='0.06'/%3E%3C/svg%3E")` }}
+      style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat', opacity: 0.1 }}
       aria-hidden="true" />
   )
 }

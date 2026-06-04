@@ -30,7 +30,15 @@ export default function Navbar({ minimal = false }) {
 
   return (
     <nav className="w-full sticky top-0 z-50"
-      style={{ background: 'rgba(255,247,230,0.88)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
+      style={{
+        background: 'rgba(255,255,255,0.15)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: 'none',
+        boxShadow: 'inset 0 -60px 80px -30px rgba(0,0,0,0.04)',
+        WebkitBackdropFilter: 'blur(12px)',
+        maskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 100%)',
+      }}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
 
         {/* Logo */}
@@ -132,7 +140,7 @@ export default function Navbar({ minimal = false }) {
       {/* Mobile drawer */}
       {!minimal && mobileOpen && (
         <div className="sm:hidden px-6 py-4 flex flex-col gap-1"
-          style={{ borderTop: '1px solid rgba(13,24,61,0.07)', background: '#FFF7E6' }}>
+          style={{ borderTop: '1px solid rgba(13,24,61,0.1)', background: 'rgba(255,247,230,0.95)', backdropFilter: 'blur(12px)' }}>
           {!loggedIn && NAV_LINKS.map(link => (
             <Link key={link.label} to={link.to}
               onClick={() => setMobileOpen(false)}
