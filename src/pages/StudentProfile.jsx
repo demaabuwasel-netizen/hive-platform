@@ -962,19 +962,18 @@ export default function StudentProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {languagesDraft.length > 0 ? (
                     languagesDraft.map((lang, i) => {
                       const langName = typeof lang === 'string' ? lang : lang?.lang
                       const langLevel = typeof lang === 'object' ? lang?.level : null
                       return (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-lg text-[12px] font-semibold text-[#0D183D]"
-                            style={{ background: 'rgba(13,24,61,0.05)' }}>
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#F8F9FB]">
+                          <span className="text-[12px] font-semibold text-[#0D183D]">
                             {langName}
                           </span>
                           {langLevel && (
-                            <span className="px-2 py-1 rounded-lg text-[11px] font-bold text-[#10B981]"
+                            <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#10B981]"
                               style={{ background: '#10B98120' }}>
                               {langLevel}
                             </span>
