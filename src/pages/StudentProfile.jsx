@@ -395,10 +395,6 @@ export default function StudentProfile() {
                           {languages.map(l => typeof l === 'string' ? l : l.lang).join(', ')}
                         </span>
                       )}
-                      <span className="flex items-center gap-1 text-[#4B6382]">
-                        <Calendar size={13}/>
-                        Joined Hive in Jan 2024
-                      </span>
                     </div>
                   </div>
                 )}
