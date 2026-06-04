@@ -493,9 +493,12 @@ export default function StudentProfile() {
               {editingAbout ? (
                 <div className="space-y-3">
                   <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
+                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
                     placeholder="Write a bio to help NGOs understand who you are..."
-                    rows={4}/>
+                    rows={4}
+                    style={{ background: '#F8F9FB' }}
+                    onFocus={e => e.target.style.borderColor = '#FFB703'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
                   <div className="flex gap-2">
                     <button onClick={handleSaveAbout}
                       className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
