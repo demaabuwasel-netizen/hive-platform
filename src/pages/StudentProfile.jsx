@@ -709,7 +709,16 @@ export default function StudentProfile() {
                       })()}
                     </div>
                   ) : (
-                    <p className="text-[12px] text-[#4B6382]">No skills added yet. Click Edit to add some!</p>
+                    <div className="py-8 text-center">
+                      <Code size={32} className="mx-auto mb-3 text-[#6366F1]" style={{ opacity: 0.5 }}/>
+                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No skills added yet</p>
+                      <p className="text-[12px] text-[#4B6382] mb-4">Share your skills and expertise</p>
+                      <button onClick={() => setEditingSkills(true)} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
+                        style={{ background: '#6366F1', color: 'white' }}>
+                        <Plus size={14}/>
+                        Add Skills
+                      </button>
+                    </div>
                   )}
                 </>
               )}
