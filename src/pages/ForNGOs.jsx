@@ -66,7 +66,7 @@ export default function ForNGOs() {
       }}/>
 
       {/* Benefits */}
-      <section className="max-w-6xl mx-auto px-6 py-10">
+      <section className="max-w-6xl mx-auto px-6 py-16">
         <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           transition={{ duration: 0.45 }}
           className="text-[1.9rem] font-extrabold text-center mb-12" style={{ color: C.primary }}>

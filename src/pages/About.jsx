@@ -59,7 +59,7 @@ export default function About() {
       }}/>
 
       {/* Mission */}
-      <section className="max-w-4xl mx-auto px-6 py-8">
+      <section className="max-w-4xl mx-auto px-6 py-14">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="rounded-3xl p-10"
