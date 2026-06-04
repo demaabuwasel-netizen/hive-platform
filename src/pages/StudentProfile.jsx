@@ -150,6 +150,7 @@ export default function StudentProfile() {
     startDate: profile?.startDate || '',
     startMonth: profile?.startMonth || '',
     startYear: profile?.startYear || '',
+    startImmediately: profile?.startImmediately || false,
     preferredRoles: profile?.preferredRoles || '',
   })
 
@@ -197,6 +198,7 @@ export default function StudentProfile() {
       startDate: startDateFull,
       startMonth: availabilityDraft.startMonth,
       startYear: availabilityDraft.startYear,
+      startImmediately: availabilityDraft.startImmediately,
       preferredRoles: availabilityDraft.preferredRoles
     })
     setEditingAvailability(false)
@@ -1150,7 +1152,7 @@ export default function StudentProfile() {
                 {!globalEditMode && !editingAvailability && (
                   <button onClick={() => setEditingAvailability(true)}
                     className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {(availabilityDraft.availability || availabilityDraft.workMode || availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.preferredRoles) ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                    {(availabilityDraft.availability || availabilityDraft.workMode || availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.startImmediately || availabilityDraft.preferredRoles) ? 'Edit' : 'Add'} <Edit3 size={12}/>
                   </button>
                 )}
               </div>
@@ -1184,9 +1186,9 @@ export default function StudentProfile() {
                   </div>
                   <div>
                     <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Start Date</label>
-                    <button onClick={() => setAvailabilityDraft({...availabilityDraft, availability: 'Immediately', startMonth: '', startYear: ''})}
+                    <button onClick={() => setAvailabilityDraft({...availabilityDraft, startImmediately: !availabilityDraft.startImmediately, startMonth: '', startYear: ''})}
                       className="w-full mb-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold border-2"
-                      style={{ borderColor: availabilityDraft.availability === 'Immediately' ? '#10B981' : '#0D183D', background: availabilityDraft.availability === 'Immediately' ? '#10B98120' : 'white', color: availabilityDraft.availability === 'Immediately' ? '#065F46' : '#0D183D' }}>
+                      style={{ borderColor: availabilityDraft.startImmediately ? '#10B981' : '#0D183D', background: availabilityDraft.startImmediately ? '#10B98120' : 'white', color: availabilityDraft.startImmediately ? '#065F46' : '#0D183D' }}>
                       <Zap size={12} className="inline mr-1"/>Start Immediately
                     </button>
                     <div className="grid grid-cols-2 gap-2">
@@ -1247,6 +1249,7 @@ export default function StudentProfile() {
                           startDate: profile?.startDate || '',
                           startMonth: profile?.startMonth || '',
                           startYear: profile?.startYear || '',
+                          startImmediately: profile?.startImmediately || false,
                           preferredRoles: profile?.preferredRoles || '',
                         })
                         setEditingAvailability(false)
@@ -1259,7 +1262,7 @@ export default function StudentProfile() {
                 </div>
               ) : !globalEditMode ? (
                 <div className="space-y-3">
-                  {availabilityDraft.availability && availabilityDraft.availability !== 'Immediately' && (
+                  {availabilityDraft.availability && (
                     <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#DBEAFE]">
                       <p className="text-[10px] font-semibold text-[#1E40AF] mb-1.5">Availability</p>
                       <div className="flex items-center gap-2">
@@ -1268,7 +1271,7 @@ export default function StudentProfile() {
                       </div>
                     </div>
                   )}
-                  {availabilityDraft.availability === 'Immediately' && (
+                  {availabilityDraft.startImmediately && (
                     <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#10B98120]">
                       <p className="text-[10px] font-semibold text-[#065F46] mb-1.5">Start Date</p>
                       <div className="flex items-center gap-2">
@@ -1277,7 +1280,7 @@ export default function StudentProfile() {
                       </div>
                     </div>
                   )}
-                  {availabilityDraft.availability !== 'Immediately' && (availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.startDate) && (
+                  {!availabilityDraft.startImmediately && (availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.startDate) && (
                     <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#FEF3C7]">
                       <p className="text-[10px] font-semibold text-[#92400E] mb-1.5">Start Date</p>
                       <div className="flex items-center gap-2">
@@ -1304,7 +1307,7 @@ export default function StudentProfile() {
                       </div>
                     </div>
                   )}
-                  {!availabilityDraft.availability && !availabilityDraft.workMode && !availabilityDraft.startDate && !availabilityDraft.startMonth && !availabilityDraft.startYear && !availabilityDraft.preferredRoles && (
+                  {!availabilityDraft.availability && !availabilityDraft.workMode && !availabilityDraft.startDate && !availabilityDraft.startMonth && !availabilityDraft.startYear && !availabilityDraft.startImmediately && !availabilityDraft.preferredRoles && (
                     <div className="text-center py-6">
                       <Clock size={32} className="mx-auto mb-3 text-[#6B7280]" style={{ opacity: 0.5 }}/>
                       <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No preferences set</p>
