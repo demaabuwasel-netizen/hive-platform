@@ -38,35 +38,19 @@ export default function ForStudents() {
           alt="Student working on NGO project"
           className="w-full h-full object-cover"
         />
-      </section>
-
-      {/* Hero Text - Below Image */}
-      <section className="max-w-4xl mx-auto px-6 pt-16 pb-16 text-center">
-        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.h1 variants={fadeUp}
-            className="text-[3rem] font-extrabold leading-[1.08] tracking-tight mb-5"
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}>
+          <h1 className="text-[3.5rem] font-extrabold leading-[1.1] text-center max-w-3xl px-6"
             style={{ color: C.primary }}>
             Build your career<br />while making a<br />
             <span style={{ color: C.honey }}>real difference.</span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-[1.05rem] leading-relaxed mb-8 max-w-2xl mx-auto" style={{ color: C.muted }}>
-            Hive connects you with NGOs that need exactly your skills — not generic volunteers,
-            but people who can genuinely move their mission forward.
-          </motion.p>
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-3 justify-center">
-            <Link to="/auth?mode=signup"
-              className="px-7 py-3.5 rounded-2xl text-[15px] font-bold text-white transition-all hover:opacity-90"
-              style={{ background: C.honey, boxShadow: '0 4px 20px rgba(255,183,3,0.35)' }}>
-              Get started free →
-            </Link>
-            <Link to="/how-it-works"
-              className="px-7 py-3.5 rounded-2xl text-[15px] font-semibold border transition-all hover:bg-[rgba(13,24,61,0.04)]"
-              style={{ color: C.primary, borderColor: 'rgba(13,24,61,0.15)' }}>
-              How it works
-            </Link>
-          </motion.div>
+          </h1>
         </motion.div>
       </section>
+
 
       {/* Benefits */}
       <section className="max-w-6xl mx-auto px-6 py-16">

@@ -32,6 +32,17 @@ export default function About() {
           alt="About Hive"
           className="w-full h-full object-cover"
         />
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}>
+          <h1 className="text-[3.5rem] font-extrabold leading-[1.1] text-center max-w-3xl px-6"
+            style={{ color: C.primary }}>
+            We believe talent and<br />mission belong<br />
+            <span style={{ color: C.honey }}>together.</span>
+          </h1>
+        </motion.div>
       </section>
 
       {/* Mission */}
