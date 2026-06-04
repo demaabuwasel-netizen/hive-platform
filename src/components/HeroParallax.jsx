@@ -164,8 +164,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               right: 0,
-              marginRight: '-40px',
-              marginTop: '-40px',
+              marginRight: '-120px',
+              marginTop: '-120px',
             }}
           >
             <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
