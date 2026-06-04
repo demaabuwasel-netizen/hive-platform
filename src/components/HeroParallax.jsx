@@ -2,18 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 
 export default function HeroParallax({ bgImage, leafImages = {} }) {
   const containerRef = useRef(null)
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
-  const [isTracking, setIsTracking] = useState(false)
-  const animationFrameRef = useRef(null)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
   const {
+    background = bgImage || null,
     topLeft = leafImages.topLeft || null,
     topRight = leafImages.topRight || null,
     bottomLeft = leafImages.bottomLeft || null,
     bottomRight = leafImages.bottomRight || null,
   } = leafImages
 
-  // Smooth parallax tracking
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -22,19 +20,11 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
       const rect = container.getBoundingClientRect()
       const x = (e.clientX - rect.left) / rect.width
       const y = (e.clientY - rect.top) / rect.height
-
-      // Clamp to 0-1 range
-      setMousePos({
-        x: Math.max(0, Math.min(1, x)),
-        y: Math.max(0, Math.min(1, y)),
-      })
-      setIsTracking(true)
+      setMousePos({ x: x * 2 - 1, y: y * 2 - 1 })
     }
 
     const handleMouseLeave = () => {
-      setIsTracking(false)
-      // Smooth return to center
-      setMousePos({ x: 0.5, y: 0.5 })
+      setMousePos({ x: 0, y: 0 })
     }
 
     container.addEventListener('mousemove', handleMouseMove)
@@ -46,167 +36,236 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
     }
   }, [])
 
-  // Calculate parallax offsets based on depth
-  const getParallaxOffset = (depthAmount) => {
-    const centerX = 0.5
-    const centerY = 0.5
-    const deltaX = (mousePos.x - centerX) * 2 // -1 to 1
-    const deltaY = (mousePos.y - centerY) * 2 // -1 to 1
+  const bgX = mousePos.x * 3
+  const bgY = mousePos.y * 3
+  const sceneX = mousePos.x * 6
+  const sceneY = mousePos.y * 6
+  const rotation = mousePos.x * 2
 
-    return {
-      x: deltaX * depthAmount,
-      y: deltaY * depthAmount,
+  // Calculate repulsion for each leaf based on distance from cursor
+  const getLeafRepulsion = (leafX, leafY) => {
+    const distance = Math.sqrt(mousePos.x * mousePos.x + mousePos.y * mousePos.y)
+    const repulsionDistance = 0.6
+    if (distance < repulsionDistance) {
+      const repulsion = (1 - distance / repulsionDistance) * 100
+      const angle = Math.atan2(mousePos.y, mousePos.x)
+      return {
+        x: -Math.cos(angle) * repulsion * (leafX > 0 ? 1 : -1) * 2,
+        y: -Math.sin(angle) * repulsion * (leafY > 0 ? 1 : -1) * 2,
+      }
     }
+    return { x: 0, y: 0 }
   }
 
-  // Depth layers with easing
-  const backgroundOffset = getParallaxOffset(5)    // Subtle background movement
-  const topLeftOffset = getParallaxOffset(18)      // Leaves move more
-  const topRightOffset = getParallaxOffset(18)
-  const bottomLeftOffset = getParallaxOffset(18)
-  const bottomRightOffset = getParallaxOffset(18)
+  const topLeftRepulsion = getLeafRepulsion(-1, -1)
+  const topRightRepulsion = getLeafRepulsion(1, -1)
+  const bottomLeftRepulsion = getLeafRepulsion(-1, 1)
+  const bottomRightRepulsion = getLeafRepulsion(1, 1)
 
-  // Premium easing function
-  const easeOut = (t) => 1 - Math.pow(1 - t, 3)
+  // Add smooth circular animations - leaves move outward only
+  const windStyle = `
+    @keyframes sway-top-left {
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(-12px, -10px) rotateZ(-0.5deg); }
+      25% { transform: translate(-22px, -18px) rotateZ(-1deg); }
+      37.5% { transform: translate(-30px, -30px) rotateZ(-1.5deg); }
+      50% { transform: translate(-33px, -38px) rotateZ(-1.5deg); }
+      62.5% { transform: translate(-30px, -30px) rotateZ(-1deg); }
+      75% { transform: translate(-18px, -18px) rotateZ(-0.5deg); }
+      87.5% { transform: translate(-8px, -8px) rotateZ(0deg); }
+    }
+    @keyframes sway-top-right {
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(12px, -10px) rotateZ(0.5deg); }
+      25% { transform: translate(22px, -18px) rotateZ(1deg); }
+      37.5% { transform: translate(30px, -30px) rotateZ(1.5deg); }
+      50% { transform: translate(33px, -38px) rotateZ(1.5deg); }
+      62.5% { transform: translate(30px, -30px) rotateZ(1deg); }
+      75% { transform: translate(18px, -18px) rotateZ(0.5deg); }
+      87.5% { transform: translate(8px, -8px) rotateZ(0deg); }
+    }
+    @keyframes sway-bottom-left {
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(-12px, 10px) rotateZ(0.5deg); }
+      25% { transform: translate(-22px, 18px) rotateZ(1deg); }
+      37.5% { transform: translate(-30px, 30px) rotateZ(1.5deg); }
+      50% { transform: translate(-33px, 38px) rotateZ(1.5deg); }
+      62.5% { transform: translate(-30px, 30px) rotateZ(1deg); }
+      75% { transform: translate(-18px, 18px) rotateZ(0.5deg); }
+      87.5% { transform: translate(-8px, 8px) rotateZ(0deg); }
+    }
+    @keyframes sway-bottom-right {
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(12px, 10px) rotateZ(-0.5deg); }
+      25% { transform: translate(22px, 18px) rotateZ(-1deg); }
+      37.5% { transform: translate(30px, 30px) rotateZ(-1.5deg); }
+      50% { transform: translate(33px, 38px) rotateZ(-1.5deg); }
+      62.5% { transform: translate(30px, 30px) rotateZ(-1deg); }
+      75% { transform: translate(18px, 18px) rotateZ(-0.5deg); }
+      87.5% { transform: translate(8px, 8px) rotateZ(0deg); }
+    }
+  `
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-screen overflow-hidden bg-gray-50"
-      style={{ marginTop: '-64px', paddingTop: '64px' }}
+      className="relative w-full overflow-hidden"
+      style={{ minHeight: '100vh', marginTop: '-64px', paddingTop: '64px' }}
     >
-      {/* Main Hero Background - Full screen, no crop */}
+      <style>{windStyle}</style>
+      {/* Background layer */}
       <div
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
-          transform: `translate(${backgroundOffset.x}px, ${backgroundOffset.y}px)`,
-          transition: isTracking ? 'none' : 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           willChange: 'transform',
         }}
       >
-        {bgImage && (
+        {background && (
           <img
-            src={bgImage}
-            alt="Hive Hero Background"
+            src={background}
+            alt="Hive world background"
             className="w-full h-full object-cover"
-            style={{
-              objectPosition: 'center',
-              userSelect: 'none',
-              WebkitUserDrag: 'none',
-            }}
+            style={{ objectPosition: 'center top' }}
             draggable={false}
           />
         )}
       </div>
 
-      {/* Top Left Leaf */}
+      {/* Fade out overlay at bottom of background */}
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: '350px',
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.3) 40%, white 100%)',
+        }}
+      />
+
+      {/* Leaf layers with parallax effect */}
+      {/* Top Left */}
       {topLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            top: 0,
-            left: 0,
-            width: '30%',
-            maxWidth: '400px',
-            aspectRatio: '1',
-            transform: `translate(${topLeftOffset.x}px, ${topLeftOffset.y}px)`,
-            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'transform',
-            zIndex: 10,
+            width: '100%',
+            height: '100%',
           }}
         >
-          <img
-            src={topLeft}
-            alt=""
-            className="w-full h-full object-contain"
+          <div
             style={{
-              filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))',
+              willChange: 'transform',
+              transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-top-left 24s ease-in-out infinite',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              marginLeft: '-120px',
+              marginTop: '-120px',
             }}
-            draggable={false}
-          />
+          >
+            <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
+          </div>
         </div>
       )}
 
-      {/* Top Right Leaf */}
+      {/* Top Right */}
       {topRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            top: 0,
-            right: 0,
-            width: '30%',
-            maxWidth: '420px',
-            aspectRatio: '1',
-            transform: `translate(${topRightOffset.x}px, ${topRightOffset.y}px)`,
-            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'transform',
-            zIndex: 10,
+            width: '100%',
+            height: '100%',
           }}
         >
-          <img
-            src={topRight}
-            alt=""
-            className="w-full h-full object-contain"
-            draggable={false}
-          />
+          <div
+            style={{
+              willChange: 'transform',
+              transform: `translate(${topRightRepulsion.x}px, ${topRightRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-top-right 26s ease-in-out infinite',
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              marginRight: '-40px',
+              marginTop: '-40px',
+            }}
+          >
+            <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
+          </div>
         </div>
       )}
 
-      {/* Bottom Left Leaf */}
+      {/* Bottom Left */}
       {bottomLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: 0,
-            left: 0,
-            width: '28%',
-            maxWidth: '380px',
-            aspectRatio: '1',
-            transform: `translate(${bottomLeftOffset.x}px, ${bottomLeftOffset.y}px)`,
-            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'transform',
-            zIndex: 10,
+            width: '100%',
+            height: '100%',
           }}
         >
-          <img
-            src={bottomLeft}
-            alt=""
-            className="w-full h-full object-contain"
-            draggable={false}
-          />
+          <div
+            style={{
+              willChange: 'transform',
+              transform: `translate(${bottomLeftRepulsion.x}px, ${bottomLeftRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-bottom-left 25s ease-in-out infinite',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              marginLeft: '-40px',
+              marginBottom: '-40px',
+            }}
+          >
+            <img src={bottomLeft} alt="" className="w-auto h-auto" draggable={false} />
+          </div>
         </div>
       )}
 
-      {/* Bottom Right Leaf */}
+      {/* Bottom Right */}
       {bottomRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: 0,
-            right: 0,
-            width: '32%',
-            maxWidth: '420px',
-            aspectRatio: '1',
-            transform: `translate(${bottomRightOffset.x}px, ${bottomRightOffset.y}px)`,
-            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'transform',
-            zIndex: 10,
+            width: '100%',
+            height: '100%',
           }}
         >
-          <img
-            src={bottomRight}
-            alt=""
-            className="w-full h-full object-contain"
-            draggable={false}
-          />
+          <div
+            style={{
+              willChange: 'transform',
+              transform: `translate(${bottomRightRepulsion.x}px, ${bottomRightRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-bottom-right 23s ease-in-out infinite',
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              marginRight: '-40px',
+              marginBottom: '-40px',
+            }}
+          >
+            <img src={bottomRight} alt="" className="w-auto h-auto" draggable={false} />
+          </div>
         </div>
       )}
 
-      {/* Center content area - Reserved for logo, headline, buttons */}
+      {/* Center content area (reserved for logo, headline, buttons) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div className="text-center max-w-2xl px-6">
+          {/* Placeholder for future content */}
+        </div>
+      </div>
+
+      {/* Smooth fade gradient at bottom */}
       <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
         style={{
-          // Intentionally empty - future content will go here
+          height: '300px',
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(250,246,239,0.15) 30%, rgba(250,246,239,0.5) 65%, rgba(250,246,239,1) 100%)',
         }}
       />
     </div>
