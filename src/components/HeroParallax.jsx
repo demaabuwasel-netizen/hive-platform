@@ -141,114 +141,208 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
       />
 
       {/* Leaf layers with parallax effect */}
-      {/* Top Left */}
+      {/* Top Left - Leaf with seamless masking */}
       {topLeft && (
         <div
-          className="absolute top-0 left-0 pointer-events-none overflow-hidden"
+          className="absolute pointer-events-none"
           style={{
+            top: '-200px',
+            left: '-200px',
+            width: '500px',
+            height: '500px',
+            overflow: 'hidden',
             willChange: 'transform',
-            width: '100%',
-            height: '100%',
           }}
         >
+          {/* Soft mask overlay to fade edges */}
           <div
             style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at 30% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Animated leaf content */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
               willChange: 'transform',
               transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-top-left 24s ease-in-out infinite',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              marginLeft: '-120px',
-              marginTop: '-120px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
+            <img
+              src={topLeft}
+              alt=""
+              className="w-96 h-96"
+              style={{
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))',
+              }}
+              draggable={false}
+            />
           </div>
         </div>
       )}
 
-      {/* Top Right */}
+      {/* Top Right - Leaf with seamless masking */}
       {topRight && (
         <div
-          className="absolute top-0 right-0 pointer-events-none overflow-hidden"
+          className="absolute pointer-events-none"
           style={{
+            top: '-200px',
+            right: '-200px',
+            width: '500px',
+            height: '500px',
+            overflow: 'hidden',
             willChange: 'transform',
-            width: '100%',
-            height: '100%',
           }}
         >
+          {/* Soft mask overlay to fade edges */}
           <div
             style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at 70% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Animated leaf content */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
               willChange: 'transform',
               transform: `translate(${topRightRepulsion.x}px, ${topRightRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-top-right 26s ease-in-out infinite',
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              marginRight: '-40px',
-              marginTop: '-40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
+            <img
+              src={topRight}
+              alt=""
+              className="w-96 h-96"
+              style={{
+                objectFit: 'contain',
+                filter: 'saturate(1.3) brightness(1.1)',
+              }}
+              draggable={false}
+            />
           </div>
         </div>
       )}
 
-      {/* Bottom Left */}
+      {/* Bottom Left - Leaf with seamless masking */}
       {bottomLeft && (
         <div
-          className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
+          className="absolute pointer-events-none"
           style={{
+            bottom: '-200px',
+            left: '-200px',
+            width: '500px',
+            height: '500px',
+            overflow: 'hidden',
             willChange: 'transform',
-            width: '100%',
-            height: '100%',
           }}
         >
+          {/* Soft mask overlay to fade edges */}
           <div
             style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at 30% 70%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Animated leaf content */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
               willChange: 'transform',
               transform: `translate(${bottomLeftRepulsion.x}px, ${bottomLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-bottom-left 25s ease-in-out infinite',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              marginLeft: '-40px',
-              marginBottom: '-40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <img src={bottomLeft} alt="" className="w-auto h-auto" draggable={false} />
+            <img
+              src={bottomLeft}
+              alt=""
+              className="w-96 h-96"
+              style={{
+                objectFit: 'contain',
+              }}
+              draggable={false}
+            />
           </div>
         </div>
       )}
 
-      {/* Bottom Right */}
+      {/* Bottom Right - Leaf with seamless masking */}
       {bottomRight && (
         <div
-          className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
+          className="absolute pointer-events-none"
           style={{
+            bottom: '-200px',
+            right: '-200px',
+            width: '500px',
+            height: '500px',
+            overflow: 'hidden',
             willChange: 'transform',
-            width: '100%',
-            height: '100%',
           }}
         >
+          {/* Soft mask overlay to fade edges */}
           <div
             style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at 70% 70%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Animated leaf content */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
               willChange: 'transform',
               transform: `translate(${bottomRightRepulsion.x}px, ${bottomRightRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-bottom-right 23s ease-in-out infinite',
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              marginRight: '-40px',
-              marginBottom: '-40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <img src={bottomRight} alt="" className="w-auto h-auto" draggable={false} />
+            <img
+              src={bottomRight}
+              alt=""
+              className="w-96 h-96"
+              style={{
+                objectFit: 'contain',
+              }}
+              draggable={false}
+            />
           </div>
         </div>
       )}
