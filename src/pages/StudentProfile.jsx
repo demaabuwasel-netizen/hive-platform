@@ -482,10 +482,10 @@ export default function StudentProfile() {
                   </span>
                   About
                 </h2>
-                {globalEditMode && !editingAbout && (
+                {!editingAbout && (
                   <button onClick={() => setEditingAbout(true)}
-                    className="p-2 hover:bg-[#F8F9FB] rounded-lg text-[#6366F1]">
-                    <Edit3 size={16}/>
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {profile?.bio ? 'Edit' : 'Add'} <Edit3 size={12}/>
                   </button>
                 )}
               </div>
@@ -493,7 +493,7 @@ export default function StudentProfile() {
               {editingAbout ? (
                 <div className="space-y-3">
                   <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[#FFB703] outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
                     placeholder="Write a bio to help NGOs understand who you are..."
                     rows={4}/>
                   <div className="flex gap-2">
