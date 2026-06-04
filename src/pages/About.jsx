@@ -47,6 +47,11 @@ export default function About() {
         </motion.div>
       </section>
 
+      {/* Gradient transition */}
+      <div className="h-16" style={{
+        background: 'linear-gradient(to bottom, rgba(13,24,61,0) 0%, #FAF6EF 100%)'
+      }}/>
+
       {/* Mission */}
       <section className="max-w-4xl mx-auto px-6 py-14">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}

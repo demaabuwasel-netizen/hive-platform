@@ -54,6 +54,11 @@ export default function ForStudents() {
       </section>
 
 
+      {/* Gradient transition */}
+      <div className="h-16" style={{
+        background: 'linear-gradient(to bottom, rgba(13,24,61,0) 0%, #FAF6EF 100%)'
+      }}/>
+
       {/* Benefits */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
