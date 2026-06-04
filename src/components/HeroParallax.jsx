@@ -2,17 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 
 export default function HeroParallax({ bgImage, leafImages = {} }) {
   const containerRef = useRef(null)
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
+  const [isTracking, setIsTracking] = useState(false)
+  const animationFrameRef = useRef(null)
 
   const {
-    background = bgImage || null,
     topLeft = leafImages.topLeft || null,
     topRight = leafImages.topRight || null,
     bottomLeft = leafImages.bottomLeft || null,
     bottomRight = leafImages.bottomRight || null,
-    bottomBorder = leafImages.bottomBorder || null,
   } = leafImages
 
+  // Smooth parallax tracking
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -21,11 +22,19 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
       const rect = container.getBoundingClientRect()
       const x = (e.clientX - rect.left) / rect.width
       const y = (e.clientY - rect.top) / rect.height
-      setMousePos({ x: x * 2 - 1, y: y * 2 - 1 })
+
+      // Clamp to 0-1 range
+      setMousePos({
+        x: Math.max(0, Math.min(1, x)),
+        y: Math.max(0, Math.min(1, y)),
+      })
+      setIsTracking(true)
     }
 
     const handleMouseLeave = () => {
-      setMousePos({ x: 0, y: 0 })
+      setIsTracking(false)
+      // Smooth return to center
+      setMousePos({ x: 0.5, y: 0.5 })
     }
 
     container.addEventListener('mousemove', handleMouseMove)
@@ -37,178 +46,167 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
     }
   }, [])
 
-  // Subtle cursor response for bottom leaves only
-  const bottomLeftResponse = {
-    x: mousePos.x * 15,
-    y: mousePos.y * 15,
+  // Calculate parallax offsets based on depth
+  const getParallaxOffset = (depthAmount) => {
+    const centerX = 0.5
+    const centerY = 0.5
+    const deltaX = (mousePos.x - centerX) * 2 // -1 to 1
+    const deltaY = (mousePos.y - centerY) * 2 // -1 to 1
+
+    return {
+      x: deltaX * depthAmount,
+      y: deltaY * depthAmount,
+    }
   }
 
-  const bottomRightResponse = {
-    x: mousePos.x * 15,
-    y: mousePos.y * 15,
-  }
+  // Depth layers with easing
+  const backgroundOffset = getParallaxOffset(5)    // Subtle background movement
+  const topLeftOffset = getParallaxOffset(18)      // Leaves move more
+  const topRightOffset = getParallaxOffset(18)
+  const bottomLeftOffset = getParallaxOffset(18)
+  const bottomRightOffset = getParallaxOffset(18)
 
-  // Premium animation styles
-  const windStyle = `
-    @keyframes float-top-left {
-      0%, 100% { transform: translate(0, 0) rotateZ(-2deg); }
-      25% { transform: translate(-8px, -6px) rotateZ(-1.5deg); }
-      50% { transform: translate(-3px, -10px) rotateZ(-2.5deg); }
-      75% { transform: translate(-10px, -4px) rotateZ(-1.8deg); }
-    }
-
-    @keyframes float-top-right {
-      0%, 100% { transform: translate(0, 0) rotateZ(1.5deg); }
-      25% { transform: translate(6px, -7px) rotateZ(2deg); }
-      50% { transform: translate(2px, -9px) rotateZ(1deg); }
-      75% { transform: translate(8px, -3px) rotateZ(2.2deg); }
-    }
-
-    @keyframes sway-bottom-border {
-      0%, 100% { transform: translateX(0) translateY(0); }
-      33% { transform: translateX(-4px) translateY(-2px); }
-      66% { transform: translateX(2px) translateY(1px); }
-    }
-
-    @keyframes gentle-drift {
-      0%, 100% { opacity: 1; transform: translate(0, 0); }
-      50% { opacity: 1; transform: translate(2px, -2px); }
-    }
-  `
+  // Premium easing function
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3)
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden"
-      style={{ minHeight: '100vh', marginTop: '-64px', paddingTop: '64px' }}
+      className="relative w-full h-screen overflow-hidden bg-gray-50"
+      style={{ marginTop: '-64px', paddingTop: '64px' }}
     >
-      <style>{windStyle}</style>
-
-      {/* Main background image */}
-      <div className="absolute inset-0 w-full h-full">
-        {background && (
+      {/* Main Hero Background - Full screen, no crop */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          transform: `translate(${backgroundOffset.x}px, ${backgroundOffset.y}px)`,
+          transition: isTracking ? 'none' : 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          willChange: 'transform',
+        }}
+      >
+        {bgImage && (
           <img
-            src={background}
-            alt="Hero background"
+            src={bgImage}
+            alt="Hive Hero Background"
             className="w-full h-full object-cover"
-            style={{ objectPosition: 'center top' }}
+            style={{
+              objectPosition: 'center',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
+            }}
             draggable={false}
           />
         )}
       </div>
 
-      {/* Top Left Leaf - Subtle wind animation */}
+      {/* Top Left Leaf */}
       {topLeft && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: '20px',
-            left: '0px',
-            width: '320px',
-            height: '320px',
-            animation: 'float-top-left 28s ease-in-out infinite',
-            WebkitMaskImage: 'radial-gradient(circle 140px at center, black 30%, rgba(0,0,0,0.8) 60%, transparent 100%)',
-            maskImage: 'radial-gradient(circle 140px at center, black 30%, rgba(0,0,0,0.8) 60%, transparent 100%)',
+            top: 0,
+            left: 0,
+            width: '30%',
+            maxWidth: '400px',
+            aspectRatio: '1',
+            transform: `translate(${topLeftOffset.x}px, ${topLeftOffset.y}px)`,
+            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+            zIndex: 10,
           }}
         >
-          <img src={topLeft} alt="" className="w-full h-full object-contain" draggable={false} style={{ pointerEvents: 'none' }} />
+          <img
+            src={topLeft}
+            alt=""
+            className="w-full h-full object-contain"
+            style={{
+              filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))',
+            }}
+            draggable={false}
+          />
         </div>
       )}
 
-      {/* Top Right Leaf - Subtle wind animation */}
+      {/* Top Right Leaf */}
       {topRight && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: '40px',
-            right: '0px',
-            width: '340px',
-            height: '340px',
-            animation: 'float-top-right 32s ease-in-out infinite',
-            WebkitMaskImage: 'radial-gradient(circle 160px at center, black 35%, rgba(0,0,0,0.75) 65%, transparent 100%)',
-            maskImage: 'radial-gradient(circle 160px at center, black 35%, rgba(0,0,0,0.75) 65%, transparent 100%)',
+            top: 0,
+            right: 0,
+            width: '30%',
+            maxWidth: '420px',
+            aspectRatio: '1',
+            transform: `translate(${topRightOffset.x}px, ${topRightOffset.y}px)`,
+            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+            zIndex: 10,
           }}
         >
-          <img src={topRight} alt="" className="w-full h-full object-contain" draggable={false} style={{ pointerEvents: 'none' }} />
+          <img
+            src={topRight}
+            alt=""
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
         </div>
       )}
 
-      {/* Bottom Left Leaf - Cursor reactive with wind animation */}
+      {/* Bottom Left Leaf */}
       {bottomLeft && (
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: '120px',
-            left: '0px',
-            width: '300px',
-            height: '300px',
-            transform: `translate(${bottomLeftResponse.x * 0.3}px, ${bottomLeftResponse.y * 0.3}px)`,
-            transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            WebkitMaskImage: 'radial-gradient(circle 130px at center, black 40%, rgba(0,0,0,0.8) 65%, transparent 100%)',
-            maskImage: 'radial-gradient(circle 130px at center, black 40%, rgba(0,0,0,0.8) 65%, transparent 100%)',
+            bottom: 0,
+            left: 0,
+            width: '28%',
+            maxWidth: '380px',
+            aspectRatio: '1',
+            transform: `translate(${bottomLeftOffset.x}px, ${bottomLeftOffset.y}px)`,
+            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+            zIndex: 10,
           }}
         >
-          <img src={bottomLeft} alt="" className="w-full h-full object-contain" draggable={false} style={{ pointerEvents: 'none' }} />
+          <img
+            src={bottomLeft}
+            alt=""
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
         </div>
       )}
 
-      {/* Bottom Right Leaf - Cursor reactive with wind animation */}
+      {/* Bottom Right Leaf */}
       {bottomRight && (
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: '100px',
-            right: '0px',
-            width: '320px',
-            height: '320px',
-            transform: `translate(${bottomRightResponse.x * 0.3}px, ${bottomRightResponse.y * 0.3}px)`,
-            transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            WebkitMaskImage: 'radial-gradient(circle 140px at center, black 38%, rgba(0,0,0,0.8) 63%, transparent 100%)',
-            maskImage: 'radial-gradient(circle 140px at center, black 38%, rgba(0,0,0,0.8) 63%, transparent 100%)',
-          }}
-        >
-          <img src={bottomRight} alt="" className="w-full h-full object-contain" draggable={false} style={{ pointerEvents: 'none' }} />
-        </div>
-      )}
-
-      {/* Bottom Border Leaf Strip - Soft wind animation */}
-      {bottomBorder && (
-        <div
-          className="absolute left-0 right-0 pointer-events-none overflow-hidden"
-          style={{
-            bottom: '120px',
-            height: '240px',
-            animation: 'sway-bottom-border 18s ease-in-out infinite',
-          }}
-        >
-          <div style={{
-            position: 'absolute',
-            bottom: '-1px',
-            left: 0,
+            bottom: 0,
             right: 0,
-            width: '100%',
-            height: '100%',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.8) 60%, black 100%)',
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.8) 60%, black 100%)',
-          }}>
-            <img src={bottomBorder} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none' }} />
-          </div>
+            width: '32%',
+            maxWidth: '420px',
+            aspectRatio: '1',
+            transform: `translate(${bottomRightOffset.x}px, ${bottomRightOffset.y}px)`,
+            transition: isTracking ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+            zIndex: 10,
+          }}
+        >
+          <img
+            src={bottomRight}
+            alt=""
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
         </div>
       )}
 
-      {/* Center content area */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-        <div className="text-center max-w-2xl px-6">
-          {/* Hero content goes here */}
-        </div>
-      </div>
-
-      {/* Soft gradient fade at bottom to next section */}
+      {/* Center content area - Reserved for logo, headline, buttons */}
       <div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
         style={{
-          height: '250px',
-          background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 15%, rgba(255,255,255,0.2) 35%, rgba(255,255,255,0.5) 65%, rgba(255,255,255,0.85) 85%, white 100%)',
+          // Intentionally empty - future content will go here
         }}
       />
     </div>
