@@ -79,18 +79,25 @@ function HeroRight() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28, duration: 0.8, ease: 'easeOut' }}>
-        <img
-          src={img1}
-          alt="Student connecting with NGOs through Hive"
-          className="w-full object-contain"
-          style={{
-            maxWidth: 480,
-            mixBlendMode: 'multiply',
+        <div className="relative w-full flex justify-center">
+          <img
+            src={img1}
+            alt="Student connecting with NGOs through Hive"
+            className="w-full object-contain"
+            style={{
+              maxWidth: 480,
+              mixBlendMode: 'multiply',
+              maskImage: 'radial-gradient(ellipse 88% 86% at 50% 52%, black 25%, rgba(0,0,0,0.9) 48%, rgba(0,0,0,0.5) 68%, transparent 88%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 88% 86% at 50% 52%, black 25%, rgba(0,0,0,0.9) 48%, rgba(0,0,0,0.5) 68%, transparent 88%)',
+            }}
+            draggable={false}
+          />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(250,246,239,0.8) 100%)',
             maskImage: 'radial-gradient(ellipse 88% 86% at 50% 52%, black 25%, rgba(0,0,0,0.9) 48%, rgba(0,0,0,0.5) 68%, transparent 88%)',
             WebkitMaskImage: 'radial-gradient(ellipse 88% 86% at 50% 52%, black 25%, rgba(0,0,0,0.9) 48%, rgba(0,0,0,0.5) 68%, transparent 88%)',
-          }}
-          draggable={false}
-        />
+          }}/>
+        </div>
       </motion.div>
 
       {/* Layer 3 — match card: slightly inside illustration area, overlapping it */}
