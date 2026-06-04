@@ -265,7 +265,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         className="absolute bottom-0 left-0 right-0 pointer-events-none"
         style={{
           height: '300px',
-          background: 'linear-gradient(to bottom, transparent 0%, transparent 50%, rgba(250,246,239,0.08) 75%, rgba(250,246,239,0.3) 100%)',
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(250,246,239,0.15) 30%, rgba(250,246,239,0.5) 65%, rgba(250,246,239,1) 100%)',
         }}
       />
     </div>
