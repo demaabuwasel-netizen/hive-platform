@@ -1085,77 +1085,45 @@ export default function StudentProfile() {
                   </span>
                   Links & Social
                 </h3>
-                {!globalEditMode && !editingLinks && (
-                  <button onClick={() => setEditingLinks(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {(linksDraft.github || linksDraft.linkedin || linksDraft.portfolio) ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
               </div>
 
-              {globalEditMode || editingLinks ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">GitHub</label>
-                    <input type="text" value={linksDraft.github} onChange={e => setLinksDraft({...linksDraft, github: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="https://github.com/username"/>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">LinkedIn</label>
-                    <input type="text" value={linksDraft.linkedin} onChange={e => setLinksDraft({...linksDraft, linkedin: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="https://linkedin.com/in/username"/>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Portfolio / Website</label>
-                    <input type="text" value={linksDraft.portfolio} onChange={e => setLinksDraft({...linksDraft, portfolio: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="https://yourportfolio.com"/>
-                  </div>
-                  {!globalEditMode && (
-                    <div className="flex gap-2 pt-2">
-                      <button onClick={handleSaveLinks}
-                        className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                        style={{ background: '#0D183D', color: 'white' }}>
-                        <Check size={12} className="inline mr-1"/>Save
-                      </button>
-                      <button onClick={() => {
-                        setLinksDraft({ github: profile?.links?.github || '', linkedin: profile?.links?.linkedin || '', portfolio: profile?.links?.portfolio || '' })
-                        setEditingLinks(false)
-                      }}
-                        className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                        Cancel
-                      </button>
-                    </div>
-                  )}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">GitHub</label>
+                  <input type="text" value={linksDraft.github} onChange={e => setLinksDraft({...linksDraft, github: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
+                    placeholder="https://github.com/username"/>
                 </div>
-              ) : !globalEditMode ? (
-                linksDraft.github || linksDraft.linkedin || linksDraft.portfolio ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">GitHub</label>
-                      <input type="text" value={linksDraft.github} readOnly
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] bg-[#F8F9FB] text-[#0D183D]"
-                        placeholder="https://github.com/username"/>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">LinkedIn</label>
-                      <input type="text" value={linksDraft.linkedin} readOnly
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] bg-[#F8F9FB] text-[#0D183D]"
-                        placeholder="https://linkedin.com/in/username"/>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Portfolio / Website</label>
-                      <input type="text" value={linksDraft.portfolio} readOnly
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] bg-[#F8F9FB] text-[#0D183D]"
-                        placeholder="https://yourportfolio.com"/>
-                    </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">LinkedIn</label>
+                  <input type="text" value={linksDraft.linkedin} onChange={e => setLinksDraft({...linksDraft, linkedin: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
+                    placeholder="https://linkedin.com/in/username"/>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Portfolio / Website</label>
+                  <input type="text" value={linksDraft.portfolio} onChange={e => setLinksDraft({...linksDraft, portfolio: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
+                    placeholder="https://yourportfolio.com"/>
+                </div>
+                {(linksDraft.github !== (profile?.links?.github || '') ||
+                  linksDraft.linkedin !== (profile?.links?.linkedin || '') ||
+                  linksDraft.portfolio !== (profile?.links?.portfolio || '')) && (
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={handleSaveLinks}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setLinksDraft({ github: profile?.links?.github || '', linkedin: profile?.links?.linkedin || '', portfolio: profile?.links?.portfolio || '' })
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
                   </div>
-                ) : (
-                  <p className="text-[12px] text-[#4B6382]">No links added yet</p>
-                )
-              ) : null}
+                )}
+              </div>
             </motion.div>
 
             {/* AVAILABILITY */}
