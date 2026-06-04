@@ -183,30 +183,42 @@ export default function StudentProfile() {
   }
 
   const handleSaveLinks = async () => {
-    await updateProfile({ ...profile, links: linksDraft })
-    setEditingLinks(false)
+    try {
+      await updateProfile({ ...profile, links: linksDraft })
+      setEditingLinks(false)
+    } catch (err) {
+      console.error('Error saving links:', err)
+    }
   }
 
   const handleSaveAvailability = async () => {
-    const startDateFull = availabilityDraft.startMonth && availabilityDraft.startYear
-      ? `${availabilityDraft.startMonth} ${availabilityDraft.startYear}`
-      : availabilityDraft.startDate
-    await updateProfile({
-      ...profile,
-      availability: availabilityDraft.availability,
-      workMode: availabilityDraft.workMode,
-      startDate: startDateFull,
-      startMonth: availabilityDraft.startMonth,
-      startYear: availabilityDraft.startYear,
-      startImmediately: availabilityDraft.startImmediately,
-      preferredRoles: availabilityDraft.preferredRoles
-    })
-    setEditingAvailability(false)
+    try {
+      const startDateFull = availabilityDraft.startMonth && availabilityDraft.startYear
+        ? `${availabilityDraft.startMonth} ${availabilityDraft.startYear}`
+        : availabilityDraft.startDate
+      await updateProfile({
+        ...profile,
+        availability: availabilityDraft.availability,
+        workMode: availabilityDraft.workMode,
+        startDate: startDateFull,
+        startMonth: availabilityDraft.startMonth,
+        startYear: availabilityDraft.startYear,
+        startImmediately: availabilityDraft.startImmediately,
+        preferredRoles: availabilityDraft.preferredRoles
+      })
+      setEditingAvailability(false)
+    } catch (err) {
+      console.error('Error saving availability:', err)
+    }
   }
 
   const handleSaveLanguages = async () => {
-    await updateProfile({ ...profile, languages: languagesDraft })
-    setEditingLanguages(false)
+    try {
+      await updateProfile({ ...profile, languages: languagesDraft })
+      setEditingLanguages(false)
+    } catch (err) {
+      console.error('Error saving languages:', err)
+    }
   }
 
   const handleAddLanguage = () => {
@@ -222,8 +234,12 @@ export default function StudentProfile() {
   }
 
   const handleSaveCauses = async () => {
-    await updateProfile({ ...profile, interests: causesDraft })
-    setEditingCauses(false)
+    try {
+      await updateProfile({ ...profile, interests: causesDraft })
+      setEditingCauses(false)
+    } catch (err) {
+      console.error('Error saving causes:', err)
+    }
   }
 
   const handleAddCause = (cause) => {
@@ -245,8 +261,12 @@ export default function StudentProfile() {
   const [editingExpIndex, setEditingExpIndex] = useState(null)
 
   const handleSaveAbout = async () => {
-    await updateProfile({ ...profile, bio: aboutDraft.trim() })
-    setEditingAbout(false)
+    try {
+      await updateProfile({ ...profile, bio: aboutDraft.trim() })
+      setEditingAbout(false)
+    } catch (err) {
+      console.error('Error saving about:', err)
+    }
   }
 
   const handleAddSkill = async () => {
