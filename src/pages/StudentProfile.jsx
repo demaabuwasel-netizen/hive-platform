@@ -523,16 +523,6 @@ export default function StudentProfile() {
                         {profile.country}
                       </span>
                     )}
-                    {languages.length > 0 && (
-                      <span className="flex items-center gap-1.5 text-[#4B6382]">
-                        <Globe size={13}/>
-                        {languages.map(l => typeof l === 'string' ? l : l.lang).join(', ')}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1.5 text-[#4B6382]">
-                      <Calendar size={13}/>
-                      Joined Jan 2024
-                    </span>
                   </div>
                 </>
               )}
