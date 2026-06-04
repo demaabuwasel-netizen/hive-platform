@@ -193,9 +193,11 @@ export default function StudentProfile() {
 
   const handleSaveAvailability = async () => {
     try {
+      console.log('Saving availability...', availabilityDraft)
       const startDateFull = availabilityDraft.startMonth && availabilityDraft.startYear
         ? `${availabilityDraft.startMonth} ${availabilityDraft.startYear}`
         : availabilityDraft.startDate
+      console.log('Calling updateProfile with:', { ...profile, availability: availabilityDraft.availability, workMode: availabilityDraft.workMode })
       await updateProfile({
         ...profile,
         availability: availabilityDraft.availability,
@@ -206,9 +208,11 @@ export default function StudentProfile() {
         startImmediately: availabilityDraft.startImmediately,
         preferredRoles: availabilityDraft.preferredRoles
       })
+      console.log('Save successful!')
       setEditingAvailability(false)
     } catch (err) {
-      console.error('Error saving availability:', err)
+      console.error('Error saving availability:', err.message, err)
+      alert('Error saving: ' + err.message)
     }
   }
 
