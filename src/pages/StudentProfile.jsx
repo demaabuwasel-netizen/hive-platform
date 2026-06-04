@@ -1163,7 +1163,6 @@ export default function StudentProfile() {
                       className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all appearance-none cursor-pointer"
                       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
                       <option value="">Select availability</option>
-                      <option>Immediately</option>
                       <option>1-2 weeks</option>
                       <option>1 month</option>
                       <option>2-3 months</option>
