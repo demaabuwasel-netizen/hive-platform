@@ -184,10 +184,13 @@ export default function StudentProfile() {
 
   const handleSaveLinks = async () => {
     try {
+      console.log('Saving links...', linksDraft)
       await updateProfile({ ...profile, links: linksDraft })
+      console.log('Links saved successfully')
       setEditingLinks(false)
     } catch (err) {
-      console.error('Error saving links:', err)
+      console.error('Error saving links:', err.message, err)
+      alert('Error saving links: ' + err.message)
     }
   }
 
