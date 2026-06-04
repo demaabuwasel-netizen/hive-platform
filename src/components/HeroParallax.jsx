@@ -65,20 +65,44 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
   // Add smooth circular animations - leaves move outward only
   const windStyle = `
     @keyframes sway-top-left {
-      0%, 100% { transform: translateX(0px) translateY(0px); }
-      50% { transform: translateX(-4px) translateY(-3px); }
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(-12px, -10px) rotateZ(-0.5deg); }
+      25% { transform: translate(-22px, -18px) rotateZ(-1deg); }
+      37.5% { transform: translate(-30px, -30px) rotateZ(-1.5deg); }
+      50% { transform: translate(-33px, -38px) rotateZ(-1.5deg); }
+      62.5% { transform: translate(-30px, -30px) rotateZ(-1deg); }
+      75% { transform: translate(-18px, -18px) rotateZ(-0.5deg); }
+      87.5% { transform: translate(-8px, -8px) rotateZ(0deg); }
     }
     @keyframes sway-top-right {
-      0%, 100% { transform: translateX(0px) translateY(0px); }
-      50% { transform: translateX(4px) translateY(-3px); }
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(12px, -10px) rotateZ(0.5deg); }
+      25% { transform: translate(22px, -18px) rotateZ(1deg); }
+      37.5% { transform: translate(30px, -30px) rotateZ(1.5deg); }
+      50% { transform: translate(33px, -38px) rotateZ(1.5deg); }
+      62.5% { transform: translate(30px, -30px) rotateZ(1deg); }
+      75% { transform: translate(18px, -18px) rotateZ(0.5deg); }
+      87.5% { transform: translate(8px, -8px) rotateZ(0deg); }
     }
     @keyframes sway-bottom-left {
-      0%, 100% { transform: translateX(0px) translateY(0px); }
-      50% { transform: translateX(-4px) translateY(3px); }
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(-12px, 10px) rotateZ(0.5deg); }
+      25% { transform: translate(-22px, 18px) rotateZ(1deg); }
+      37.5% { transform: translate(-30px, 30px) rotateZ(1.5deg); }
+      50% { transform: translate(-33px, 38px) rotateZ(1.5deg); }
+      62.5% { transform: translate(-30px, 30px) rotateZ(1deg); }
+      75% { transform: translate(-18px, 18px) rotateZ(0.5deg); }
+      87.5% { transform: translate(-8px, 8px) rotateZ(0deg); }
     }
     @keyframes sway-bottom-right {
-      0%, 100% { transform: translateX(0px) translateY(0px); }
-      50% { transform: translateX(4px) translateY(3px); }
+      0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
+      12.5% { transform: translate(12px, 10px) rotateZ(-0.5deg); }
+      25% { transform: translate(22px, 18px) rotateZ(-1deg); }
+      37.5% { transform: translate(30px, 30px) rotateZ(-1.5deg); }
+      50% { transform: translate(33px, 38px) rotateZ(-1.5deg); }
+      62.5% { transform: translate(30px, 30px) rotateZ(-1deg); }
+      75% { transform: translate(18px, 18px) rotateZ(-0.5deg); }
+      87.5% { transform: translate(8px, 8px) rotateZ(0deg); }
     }
   `
 
@@ -132,12 +156,12 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               willChange: 'transform',
               transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
-              animation: 'sway-top-left 8s ease-in-out infinite',
+              animation: 'sway-top-left 24s ease-in-out infinite',
               position: 'absolute',
               top: 0,
               left: 0,
-              marginLeft: '-200px',
-              marginTop: '-200px',
+              marginLeft: '-120px',
+              marginTop: '-120px',
             }}
           >
             <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
@@ -160,12 +184,12 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               willChange: 'transform',
               transform: `translate(${topRightRepulsion.x}px, ${topRightRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
-              animation: 'sway-top-right 8s ease-in-out infinite',
+              animation: 'sway-top-right 26s ease-in-out infinite',
               position: 'absolute',
               top: 0,
               right: 0,
-              marginRight: '-200px',
-              marginTop: '-200px',
+              marginRight: '-40px',
+              marginTop: '-40px',
             }}
           >
             <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
@@ -173,7 +197,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         </div>
       )}
 
-      {/* Bottom Left - Cursor responsive, moves outward */}
+      {/* Bottom Left */}
       {bottomLeft && (
         <div
           className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
@@ -186,8 +210,9 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${bottomLeftRepulsion.x * 0.5}px, ${bottomLeftRepulsion.y * 0.5}px)`,
-              transition: 'transform 0.8s ease-out',
+              transform: `translate(${bottomLeftRepulsion.x}px, ${bottomLeftRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-bottom-left 25s ease-in-out infinite',
               position: 'absolute',
               bottom: 0,
               left: 0,
@@ -200,7 +225,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         </div>
       )}
 
-      {/* Bottom Right - Cursor responsive, moves outward */}
+      {/* Bottom Right */}
       {bottomRight && (
         <div
           className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
@@ -213,8 +238,9 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${bottomRightRepulsion.x * 0.5}px, ${bottomRightRepulsion.y * 0.5}px)`,
-              transition: 'transform 0.8s ease-out',
+              transform: `translate(${bottomRightRepulsion.x}px, ${bottomRightRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-bottom-right 23s ease-in-out infinite',
               position: 'absolute',
               bottom: 0,
               right: 0,
