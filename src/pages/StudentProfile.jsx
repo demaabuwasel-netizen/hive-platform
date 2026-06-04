@@ -903,10 +903,37 @@ export default function StudentProfile() {
                   <div className="pt-2 border-t border-[rgba(13,24,61,0.1)]">
                     <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Add Language</label>
                     <div className="flex gap-2 mb-2">
-                      <input type="text" value={newLanguage} onChange={e => setNewLanguage(e.target.value)} placeholder="Language name"
-                        className="flex-1 px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"/>
+                      <select value={newLanguage} onChange={e => setNewLanguage(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
+                        <option value="">Select language</option>
+                        <option>English</option>
+                        <option>Arabic</option>
+                        <option>Hebrew</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                        <option>German</option>
+                        <option>Italian</option>
+                        <option>Portuguese</option>
+                        <option>Russian</option>
+                        <option>Chinese (Mandarin)</option>
+                        <option>Chinese (Cantonese)</option>
+                        <option>Japanese</option>
+                        <option>Korean</option>
+                        <option>Hindi</option>
+                        <option>Urdu</option>
+                        <option>Turkish</option>
+                        <option>Dutch</option>
+                        <option>Swedish</option>
+                        <option>Norwegian</option>
+                        <option>Danish</option>
+                        <option>Polish</option>
+                        <option>Vietnamese</option>
+                        <option>Thai</option>
+                      </select>
                       <select value={newLanguageLevel} onChange={e => setNewLanguageLevel(e.target.value)}
-                        className="px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]">
+                        className="px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
                         <option value="Beginner">Beginner</option>
                         <option value="Intermediate">Intermediate</option>
                         <option value="Fluent">Fluent</option>
