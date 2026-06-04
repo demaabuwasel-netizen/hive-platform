@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import BrandIllustration from '../components/BrandIllustration'
-import img3 from '../assets/img3.png'
+import ngoLandingPage from '../assets/ngo_landing_page.png'
 
 const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
 
@@ -59,7 +59,7 @@ export default function ForNGOs() {
         </motion.div>
 
         <BrandIllustration
-          src={img3}
+          src={ngoLandingPage}
           alt="NGO team collaborating"
           delay={0.18}
           maxWidth={460}

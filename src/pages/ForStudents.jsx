@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import BrandIllustration from '../components/BrandIllustration'
-import img2 from '../assets/img2.png'
+import studentLandingPage from '../assets/student_landing_page.png'
 
 const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
 
@@ -59,7 +59,7 @@ export default function ForStudents() {
         </motion.div>
 
         <BrandIllustration
-          src={img2}
+          src={studentLandingPage}
           alt="Student working on NGO project"
           delay={0.18}
           maxWidth={460}

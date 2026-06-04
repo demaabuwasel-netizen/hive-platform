@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import HiveLogo from '../components/HiveLogo'
+import BrandIllustration from '../components/BrandIllustration'
+import aboutLandingPage from '../assets/about_landing_page.png'
 
 const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
 
@@ -36,6 +38,16 @@ export default function About() {
             and NGOs that need skilled, motivated collaborators — but struggle to find them.
           </motion.p>
         </motion.div>
+      </section>
+
+      {/* Hero Image */}
+      <section className="max-w-4xl mx-auto px-6 pb-10 flex justify-center">
+        <BrandIllustration
+          src={aboutLandingPage}
+          alt="About Hive"
+          delay={0.18}
+          maxWidth={500}
+        />
       </section>
 
       {/* Mission */}
