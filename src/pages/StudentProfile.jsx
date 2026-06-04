@@ -1061,12 +1061,24 @@ export default function StudentProfile() {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {causesDraft.length > 0 ? (
-                    causesDraft.map((interest, i) => (
-                      <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                        style={{ background: '#FFB70320', color: '#D99E00' }}>
-                        {interest}
-                      </span>
-                    ))
+                    causesDraft.map((interest, i) => {
+                      const causeColors = {
+                        'Education': { bg: '#EEF2FF', color: '#3730A3' },
+                        'Youth Empowerment': { bg: '#FEE2E2', color: '#B91C1C' },
+                        'Women Empowerment': { bg: '#FCE7F3', color: '#9D174D' },
+                        'Environment': { bg: '#DCFCE7', color: '#15803D' },
+                        'Mental Health': { bg: '#FFE4E6', color: '#BE185D' },
+                        'Digital Inclusion': { bg: '#E0E7FF', color: '#4F46E5' },
+                        'Animal Welfare': { bg: '#FEF3C7', color: '#92400E' },
+                      }
+                      const colors = causeColors[interest] || { bg: '#F3F4F6', color: '#4B5563' }
+                      return (
+                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                          style={{ background: colors.bg, color: colors.color }}>
+                          {interest}
+                        </span>
+                      )
+                    })
                   ) : (
                     <p className="text-[12px] text-[#4B6382]">No causes added</p>
                   )}
