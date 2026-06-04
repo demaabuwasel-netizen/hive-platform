@@ -22,10 +22,12 @@ const VALUES = [
 
 export default function About() {
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: C.bg }}>
-      <Navbar />
+    <div className="flex flex-col min-h-screen">
+      {/* Hero - Full Screen with Navbar Overlay */}
+      <section className="fixed top-0 left-0 right-0 z-40">
+        <Navbar />
+      </section>
 
-      {/* Hero - Full Screen */}
       <section className="relative w-screen h-screen overflow-hidden flex items-center justify-center" style={{ background: C.bg }}>
         <img
           src={aboutLandingPage}
