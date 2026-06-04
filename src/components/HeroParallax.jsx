@@ -66,13 +66,13 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
   const windStyle = `
     @keyframes sway-top-left {
       0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
-      12.5% { transform: translate(-12px, -10px) rotateZ(-0.5deg); }
-      25% { transform: translate(-22px, -18px) rotateZ(-1deg); }
-      37.5% { transform: translate(-30px, -30px) rotateZ(-1.5deg); }
-      50% { transform: translate(-33px, -38px) rotateZ(-1.5deg); }
-      62.5% { transform: translate(-30px, -30px) rotateZ(-1deg); }
-      75% { transform: translate(-18px, -18px) rotateZ(-0.5deg); }
-      87.5% { transform: translate(-8px, -8px) rotateZ(0deg); }
+      12.5% { transform: translate(0px, -10px) rotateZ(-0.5deg); }
+      25% { transform: translate(0px, -18px) rotateZ(-1deg); }
+      37.5% { transform: translate(0px, -30px) rotateZ(-1.5deg); }
+      50% { transform: translate(0px, -38px) rotateZ(-1.5deg); }
+      62.5% { transform: translate(0px, -30px) rotateZ(-1deg); }
+      75% { transform: translate(0px, -18px) rotateZ(-0.5deg); }
+      87.5% { transform: translate(0px, -8px) rotateZ(0deg); }
     }
     @keyframes sway-top-right {
       0%, 100% { transform: translate(0px, 0px) rotateZ(0deg); }
