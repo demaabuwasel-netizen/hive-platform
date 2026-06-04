@@ -419,8 +419,8 @@ export default function Landing() {
 
       {/* Gradient fade transition between hero and content */}
       <div style={{
-        height: '200px',
-        background: 'linear-gradient(to bottom, transparent 0%, rgba(250,246,239,0.2) 30%, rgba(250,246,239,0.5) 60%, #FAF6EF 100%)',
+        height: '500px',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0.85) 80%, white 100%)',
         pointerEvents: 'none'
       }}/>
 
@@ -431,7 +431,7 @@ export default function Landing() {
       {/* invisible anchor so both For Students and For NGOs nav links land here */}
       <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
 
-      <section id="for-students" className="py-20 px-6 bg-white">
+      <section id="for-students" className="py-12 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-14">

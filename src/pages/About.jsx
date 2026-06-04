@@ -52,8 +52,10 @@ export default function About() {
       </section>
 
       {/* Gradient transition */}
-      <div className="h-16" style={{
-        background: 'linear-gradient(to bottom, rgba(13,24,61,0) 0%, #FAF6EF 100%)'
+      <div style={{
+        height: '500px',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0.85) 80%, white 100%)',
+        pointerEvents: 'none'
       }}/>
 
       {/* Mission */}
