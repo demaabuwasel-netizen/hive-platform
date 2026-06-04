@@ -36,6 +36,12 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
     }
   }, [])
 
+  const bgX = mousePos.x * 3
+  const bgY = mousePos.y * 3
+  const sceneX = mousePos.x * 6
+  const sceneY = mousePos.y * 6
+  const rotation = mousePos.x * 2
+
   // Calculate repulsion for each leaf based on distance from cursor
   const getLeafRepulsion = (leafX, leafY) => {
     const distance = Math.sqrt(mousePos.x * mousePos.x + mousePos.y * mousePos.y)
@@ -56,11 +62,23 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
   const bottomLeftRepulsion = getLeafRepulsion(-1, 1)
   const bottomRightRepulsion = getLeafRepulsion(1, 1)
 
-  // Soft wind animation - very subtle movement
+  // Add smooth circular animations - leaves move outward only
   const windStyle = `
-    @keyframes softWind {
-      0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-      50% { transform: translate(3px, 2px) rotate(0.5deg); }
+    @keyframes sway-top-left {
+      0%, 100% { transform: translateX(0px) translateY(0px); }
+      50% { transform: translateX(-4px) translateY(-3px); }
+    }
+    @keyframes sway-top-right {
+      0%, 100% { transform: translateX(0px) translateY(0px); }
+      50% { transform: translateX(4px) translateY(-3px); }
+    }
+    @keyframes sway-bottom-left {
+      0%, 100% { transform: translateX(0px) translateY(0px); }
+      50% { transform: translateX(-4px) translateY(3px); }
+    }
+    @keyframes sway-bottom-right {
+      0%, 100% { transform: translateX(0px) translateY(0px); }
+      50% { transform: translateX(4px) translateY(3px); }
     }
   `
 
@@ -98,101 +116,71 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         }}
       />
 
-      {/* Top Left Leaf - Properly masked */}
+      {/* Leaf layers with parallax effect */}
+      {/* Top Left */}
       {topLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            top: '-100px',
-            left: '-150px',
-            width: '450px',
-            height: '450px',
-            overflow: 'hidden',
-            WebkitMaskImage: 'radial-gradient(circle at top left, black 0%, black 50%, transparent 85%)',
-            maskImage: 'radial-gradient(circle at top left, black 0%, black 50%, transparent 85%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${topLeftRepulsion.x * 0.3}px, ${topLeftRepulsion.y * 0.3}px)`,
-              transition: 'transform 0.3s ease-out',
-              animation: 'softWind 8s ease-in-out infinite',
+              transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-top-left 8s ease-in-out infinite',
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
+              marginLeft: '-200px',
+              marginTop: '-200px',
             }}
           >
-            <img
-              src={topLeft}
-              alt=""
-              style={{
-                width: '120%',
-                height: 'auto',
-                display: 'block',
-              }}
-              draggable={false}
-            />
+            <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Top Right Leaf - Properly masked */}
+      {/* Top Right */}
       {topRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            top: '-100px',
-            right: '-150px',
-            width: '450px',
-            height: '450px',
-            overflow: 'hidden',
-            WebkitMaskImage: 'radial-gradient(circle at top right, black 0%, black 50%, transparent 85%)',
-            maskImage: 'radial-gradient(circle at top right, black 0%, black 50%, transparent 85%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${topRightRepulsion.x * 0.3}px, ${topRightRepulsion.y * 0.3}px)`,
-              transition: 'transform 0.3s ease-out',
-              animation: 'softWind 8s ease-in-out infinite',
+              transform: `translate(${topRightRepulsion.x}px, ${topRightRepulsion.y}px)`,
+              transition: 'transform 0.2s ease-out',
+              animation: 'sway-top-right 8s ease-in-out infinite',
               position: 'absolute',
               top: 0,
               right: 0,
-              width: '100%',
-              height: '100%',
+              marginRight: '-200px',
+              marginTop: '-200px',
             }}
           >
-            <img
-              src={topRight}
-              alt=""
-              style={{
-                width: '120%',
-                height: 'auto',
-                display: 'block',
-                filter: 'saturate(1.3) brightness(1.1)',
-              }}
-              draggable={false}
-            />
+            <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
           </div>
         </div>
       )}
 
-      {/* Bottom Left Leaf - Properly masked */}
+      {/* Bottom Left - Cursor responsive, moves outward */}
       {bottomLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: '-100px',
-            left: '-150px',
-            width: '450px',
-            height: '450px',
-            overflow: 'hidden',
-            WebkitMaskImage: 'radial-gradient(circle at bottom left, black 0%, black 50%, transparent 85%)',
-            maskImage: 'radial-gradient(circle at bottom left, black 0%, black 50%, transparent 85%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -203,36 +191,23 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               bottom: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
+              marginLeft: '-40px',
+              marginBottom: '-40px',
             }}
           >
-            <img
-              src={bottomLeft}
-              alt=""
-              style={{
-                width: '120%',
-                height: 'auto',
-                display: 'block',
-              }}
-              draggable={false}
-            />
+            <img src={bottomLeft} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Bottom Right Leaf - Properly masked */}
+      {/* Bottom Right - Cursor responsive, moves outward */}
       {bottomRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: '-100px',
-            right: '-150px',
-            width: '450px',
-            height: '450px',
-            overflow: 'hidden',
-            WebkitMaskImage: 'radial-gradient(circle at bottom right, black 0%, black 50%, transparent 85%)',
-            maskImage: 'radial-gradient(circle at bottom right, black 0%, black 50%, transparent 85%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -243,20 +218,11 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: '100%',
-              height: '100%',
+              marginRight: '-40px',
+              marginBottom: '-40px',
             }}
           >
-            <img
-              src={bottomRight}
-              alt=""
-              style={{
-                width: '120%',
-                height: 'auto',
-                display: 'block',
-              }}
-              draggable={false}
-            />
+            <img src={bottomRight} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
