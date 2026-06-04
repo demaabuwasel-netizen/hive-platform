@@ -54,7 +54,7 @@ export default function About() {
       {/* Gradient transition */}
       <div style={{
         height: '120px',
-        background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0.85) 80%, white 100%)',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 15%, rgba(255,255,255,0.2) 35%, rgba(255,255,255,0.5) 65%, rgba(255,255,255,0.85) 85%, white 100%)',
         pointerEvents: 'none'
       }}/>
 
