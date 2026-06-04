@@ -173,7 +173,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         </div>
       )}
 
-      {/* Bottom Left - Cursor responsive */}
+      {/* Bottom Left - Cursor responsive, moves outward */}
       {bottomLeft && (
         <div
           className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
@@ -186,8 +186,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${bottomLeftRepulsion.x}px, ${bottomLeftRepulsion.y}px)`,
-              transition: 'transform 0.2s ease-out',
+              transform: `translate(${bottomLeftRepulsion.x * 0.5}px, ${bottomLeftRepulsion.y * 0.5}px)`,
+              transition: 'transform 0.8s ease-out',
               position: 'absolute',
               bottom: 0,
               left: 0,
@@ -200,7 +200,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         </div>
       )}
 
-      {/* Bottom Right - Cursor responsive */}
+      {/* Bottom Right - Cursor responsive, moves outward */}
       {bottomRight && (
         <div
           className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
@@ -213,8 +213,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
           <div
             style={{
               willChange: 'transform',
-              transform: `translate(${bottomRightRepulsion.x}px, ${bottomRightRepulsion.y}px)`,
-              transition: 'transform 0.2s ease-out',
+              transform: `translate(${bottomRightRepulsion.x * 0.5}px, ${bottomRightRepulsion.y * 0.5}px)`,
+              transition: 'transform 0.8s ease-out',
               position: 'absolute',
               bottom: 0,
               right: 0,
