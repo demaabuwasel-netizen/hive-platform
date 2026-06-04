@@ -182,50 +182,16 @@ export default function StudentProfile() {
     'Other': Sparkles,
   }
 
-  const handleSaveLinks = async () => {
-    try {
-      console.log('Saving links...', linksDraft)
-      await updateProfile({ ...profile, links: linksDraft })
-      console.log('Links saved successfully')
-      setEditingLinks(false)
-    } catch (err) {
-      console.error('Error saving links:', err.message, err)
-      alert('Error saving links: ' + err.message)
-    }
+  const handleSaveLinks = () => {
+    setEditingLinks(false)
   }
 
-  const handleSaveAvailability = async () => {
-    try {
-      console.log('Saving availability...', availabilityDraft)
-      const startDateFull = availabilityDraft.startMonth && availabilityDraft.startYear
-        ? `${availabilityDraft.startMonth} ${availabilityDraft.startYear}`
-        : availabilityDraft.startDate
-      console.log('Calling updateProfile with:', { ...profile, availability: availabilityDraft.availability, workMode: availabilityDraft.workMode })
-      await updateProfile({
-        ...profile,
-        availability: availabilityDraft.availability,
-        workMode: availabilityDraft.workMode,
-        startDate: startDateFull,
-        startMonth: availabilityDraft.startMonth,
-        startYear: availabilityDraft.startYear,
-        startImmediately: availabilityDraft.startImmediately,
-        preferredRoles: availabilityDraft.preferredRoles
-      })
-      console.log('Save successful!')
-      setEditingAvailability(false)
-    } catch (err) {
-      console.error('Error saving availability:', err.message, err)
-      alert('Error saving: ' + err.message)
-    }
+  const handleSaveAvailability = () => {
+    setEditingAvailability(false)
   }
 
-  const handleSaveLanguages = async () => {
-    try {
-      await updateProfile({ ...profile, languages: languagesDraft })
-      setEditingLanguages(false)
-    } catch (err) {
-      console.error('Error saving languages:', err)
-    }
+  const handleSaveLanguages = () => {
+    setEditingLanguages(false)
   }
 
   const handleAddLanguage = () => {
@@ -240,13 +206,8 @@ export default function StudentProfile() {
     setLanguagesDraft(languagesDraft.filter((_, i) => i !== index))
   }
 
-  const handleSaveCauses = async () => {
-    try {
-      await updateProfile({ ...profile, interests: causesDraft })
-      setEditingCauses(false)
-    } catch (err) {
-      console.error('Error saving causes:', err)
-    }
+  const handleSaveCauses = () => {
+    setEditingCauses(false)
   }
 
   const handleAddCause = (cause) => {
@@ -268,12 +229,7 @@ export default function StudentProfile() {
   const [editingExpIndex, setEditingExpIndex] = useState(null)
 
   const handleSaveAbout = async () => {
-    try {
-      await updateProfile({ ...profile, bio: aboutDraft.trim() })
-      setEditingAbout(false)
-    } catch (err) {
-      console.error('Error saving about:', err)
-    }
+    setEditingAbout(false)
   }
 
   const handleAddSkill = async () => {
