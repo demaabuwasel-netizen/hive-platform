@@ -417,6 +417,13 @@ export default function Landing() {
       ══════════════════════════════════════════════════════ */}
       <HeroParallaxWithImages />
 
+      {/* Gradient fade transition between hero and content */}
+      <div style={{
+        height: '200px',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(250,246,239,0.2) 30%, rgba(250,246,239,0.5) 60%, #FAF6EF 100%)',
+        pointerEvents: 'none'
+      }}/>
+
       {/* ══════════════════════════════════════════════════════
           FEATURE CARDS — For Students | For NGOs | For Impact
           img2 / img3 / img4 — equal height, clean composition
