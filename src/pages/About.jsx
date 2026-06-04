@@ -26,12 +26,11 @@ export default function About() {
       <Navbar />
 
       {/* Hero - Full Screen */}
-      <section className="relative w-full flex items-center justify-center" style={{ minHeight: '100vh', background: C.bg }}>
-        <BrandIllustration
+      <section className="relative w-screen h-screen overflow-hidden flex items-center justify-center" style={{ background: C.bg }}>
+        <img
           src={aboutLandingPage}
           alt="About Hive"
-          delay={0.18}
-          maxWidth={600}
+          className="w-full h-full object-cover"
         />
       </section>
 
