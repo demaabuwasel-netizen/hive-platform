@@ -140,209 +140,134 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         }}
       />
 
-      {/* Leaf layers with parallax effect */}
-      {/* Top Left - Leaf with seamless masking */}
+      {/* Top Left - with boundary masking */}
       {topLeft && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: '-200px',
-            left: '-200px',
-            width: '500px',
-            height: '500px',
+            top: '-100px',
+            left: '-100px',
+            width: '350px',
+            height: '350px',
             overflow: 'hidden',
-            willChange: 'transform',
+            borderRadius: '50%',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
           }}
         >
-          {/* Soft mask overlay to fade edges */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at 30% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Animated leaf content */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
               willChange: 'transform',
               transform: `translate(${topLeftRepulsion.x}px, ${topLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-top-left 24s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
             }}
           >
-            <img
-              src={topLeft}
-              alt=""
-              className="w-96 h-96"
-              style={{
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))',
-              }}
-              draggable={false}
-            />
+            <img src={topLeft} alt="" className="w-full h-full object-contain" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Top Right - Leaf with seamless masking */}
+      {/* Top Right - with boundary masking */}
       {topRight && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: '-200px',
-            right: '-200px',
-            width: '500px',
-            height: '500px',
+            top: '-100px',
+            right: '-100px',
+            width: '350px',
+            height: '350px',
             overflow: 'hidden',
-            willChange: 'transform',
+            borderRadius: '50%',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
           }}
         >
-          {/* Soft mask overlay to fade edges */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at 70% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Animated leaf content */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
               willChange: 'transform',
               transform: `translate(${topRightRepulsion.x}px, ${topRightRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-top-right 26s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '100%',
+              height: '100%',
             }}
           >
-            <img
-              src={topRight}
-              alt=""
-              className="w-96 h-96"
-              style={{
-                objectFit: 'contain',
-                filter: 'saturate(1.3) brightness(1.1)',
-              }}
-              draggable={false}
-            />
+            <img src={topRight} alt="" className="w-full h-full object-contain" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
           </div>
         </div>
       )}
 
-      {/* Bottom Left - Leaf with seamless masking */}
+      {/* Bottom Left - with boundary masking */}
       {bottomLeft && (
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: '-200px',
-            left: '-200px',
-            width: '500px',
-            height: '500px',
+            bottom: '-100px',
+            left: '-100px',
+            width: '350px',
+            height: '350px',
             overflow: 'hidden',
-            willChange: 'transform',
+            borderRadius: '50%',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
           }}
         >
-          {/* Soft mask overlay to fade edges */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at 30% 70%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Animated leaf content */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
               willChange: 'transform',
               transform: `translate(${bottomLeftRepulsion.x}px, ${bottomLeftRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-bottom-left 25s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
             }}
           >
-            <img
-              src={bottomLeft}
-              alt=""
-              className="w-96 h-96"
-              style={{
-                objectFit: 'contain',
-              }}
-              draggable={false}
-            />
+            <img src={bottomLeft} alt="" className="w-full h-full object-contain" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Bottom Right - Leaf with seamless masking */}
+      {/* Bottom Right - with boundary masking */}
       {bottomRight && (
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: '-200px',
-            right: '-200px',
-            width: '500px',
-            height: '500px',
+            bottom: '-100px',
+            right: '-100px',
+            width: '350px',
+            height: '350px',
             overflow: 'hidden',
-            willChange: 'transform',
+            borderRadius: '50%',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
           }}
         >
-          {/* Soft mask overlay to fade edges */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at 70% 70%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Animated leaf content */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
               willChange: 'transform',
               transform: `translate(${bottomRightRepulsion.x}px, ${bottomRightRepulsion.y}px)`,
               transition: 'transform 0.2s ease-out',
               animation: 'sway-bottom-right 23s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '100%',
+              height: '100%',
             }}
           >
-            <img
-              src={bottomRight}
-              alt=""
-              className="w-96 h-96"
-              style={{
-                objectFit: 'contain',
-              }}
-              draggable={false}
-            />
+            <img src={bottomRight} alt="" className="w-full h-full object-contain" draggable={false} />
           </div>
         </div>
       )}
