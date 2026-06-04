@@ -614,12 +614,12 @@ export default function StudentProfile() {
                     </div>
                   )}
 
-                  <div className="p-4 rounded-xl border border-[#FFB703] bg-white space-y-3">
+                  <div className="p-4 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white space-y-3">
                     <div>
                       <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Select a skill to add</label>
                       <select value={newSkillId} onChange={e => setNewSkillId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[#FFB703] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFB703' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
+                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
                         <option value="">Choose a skill...</option>
                         {Object.entries(SKILLS_LIST).map(([category, skills]) => (
                           <optgroup key={category} label={category}>
@@ -636,8 +636,8 @@ export default function StudentProfile() {
                     <div>
                       <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Your expertise level</label>
                       <select value={newSkillLevel} onChange={e => setNewSkillLevel(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[#FFB703] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFB703' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
+                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
                         <option>Beginner</option>
                         <option>Intermediate</option>
                         <option>Advanced</option>
@@ -646,8 +646,8 @@ export default function StudentProfile() {
                     </div>
 
                     <button onClick={handleAddSkill}
-                      className="w-full px-3 py-2.5 rounded-lg text-[12px] font-semibold border border-[#FFB703]"
-                      style={{ color: '#FFB703', background: 'rgba(255,183,3,0.08)' }}>
+                      className="w-full px-3 py-2.5 rounded-lg text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)]"
+                      style={{ background: 'rgba(13,24,61,0.02)' }}>
                       <Plus size={12} className="inline mr-1"/>Add the skill
                     </button>
                   </div>
