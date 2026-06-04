@@ -34,6 +34,10 @@ export default function About() {
           alt="About Hive"
           className="w-full h-full object-cover"
         />
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, #FAF6EF 100%)',
+          pointerEvents: 'none'
+        }}/>
         <motion.div
           className="absolute inset-0 flex items-center justify-center"
           initial={{ opacity: 0 }}
