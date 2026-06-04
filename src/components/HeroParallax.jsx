@@ -140,19 +140,15 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         }}
       />
 
-      {/* Top Left - with boundary masking */}
+      {/* Leaf layers with parallax effect */}
+      {/* Top Left */}
       {topLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            top: '-100px',
-            left: '-100px',
-            width: '350px',
-            height: '350px',
-            overflow: 'hidden',
-            borderRadius: '50%',
-            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
-            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -164,28 +160,23 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
+              marginLeft: '-120px',
+              marginTop: '-120px',
             }}
           >
-            <img src={topLeft} alt="" className="w-full h-full object-contain" draggable={false} />
+            <img src={topLeft} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Top Right - with boundary masking */}
+      {/* Top Right */}
       {topRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute top-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            top: '-100px',
-            right: '-100px',
-            width: '350px',
-            height: '350px',
-            overflow: 'hidden',
-            borderRadius: '50%',
-            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
-            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -197,28 +188,23 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               right: 0,
-              width: '100%',
-              height: '100%',
+              marginRight: '-40px',
+              marginTop: '-40px',
             }}
           >
-            <img src={topRight} alt="" className="w-full h-full object-contain" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
+            <img src={topRight} alt="" className="w-auto h-auto" draggable={false} style={{ filter: 'saturate(1.3) brightness(1.1)' }} />
           </div>
         </div>
       )}
 
-      {/* Bottom Left - with boundary masking */}
+      {/* Bottom Left */}
       {bottomLeft && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 left-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: '-100px',
-            left: '-100px',
-            width: '350px',
-            height: '350px',
-            overflow: 'hidden',
-            borderRadius: '50%',
-            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
-            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -230,28 +216,23 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               bottom: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
+              marginLeft: '-40px',
+              marginBottom: '-40px',
             }}
           >
-            <img src={bottomLeft} alt="" className="w-full h-full object-contain" draggable={false} />
+            <img src={bottomLeft} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
 
-      {/* Bottom Right - with boundary masking */}
+      {/* Bottom Right */}
       {bottomRight && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute bottom-0 right-0 pointer-events-none overflow-hidden"
           style={{
-            bottom: '-100px',
-            right: '-100px',
-            width: '350px',
-            height: '350px',
-            overflow: 'hidden',
-            borderRadius: '50%',
-            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
-            maskImage: 'radial-gradient(circle at center, black 0%, black 60%, transparent 100%)',
+            willChange: 'transform',
+            width: '100%',
+            height: '100%',
           }}
         >
           <div
@@ -263,11 +244,11 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: '100%',
-              height: '100%',
+              marginRight: '-40px',
+              marginBottom: '-40px',
             }}
           >
-            <img src={bottomRight} alt="" className="w-full h-full object-contain" draggable={false} />
+            <img src={bottomRight} alt="" className="w-auto h-auto" draggable={false} />
           </div>
         </div>
       )}
