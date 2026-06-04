@@ -1063,15 +1063,15 @@ export default function StudentProfile() {
                   {causesDraft.length > 0 ? (
                     causesDraft.map((interest, i) => {
                       const causeColors = {
-                        'Education': { bg: '#EEF2FF', color: '#3730A3' },
-                        'Youth Empowerment': { bg: '#FEE2E2', color: '#B91C1C' },
-                        'Women Empowerment': { bg: '#FCE7F3', color: '#9D174D' },
-                        'Environment': { bg: '#DCFCE7', color: '#15803D' },
-                        'Mental Health': { bg: '#FFE4E6', color: '#BE185D' },
-                        'Digital Inclusion': { bg: '#E0E7FF', color: '#4F46E5' },
-                        'Animal Welfare': { bg: '#FEF3C7', color: '#92400E' },
+                        'Education': { bg: '#F0F4FF', color: '#6366F1' },
+                        'Youth Empowerment': { bg: '#FFE8E8', color: '#DC2626' },
+                        'Women Empowerment': { bg: '#FFF0F7', color: '#DB2777' },
+                        'Environment': { bg: '#E8F9F1', color: '#10B981' },
+                        'Mental Health': { bg: '#FFE8F1', color: '#EC4899' },
+                        'Digital Inclusion': { bg: '#F0F4FF', color: '#7C3AED' },
+                        'Animal Welfare': { bg: '#FFFAEB', color: '#D97706' },
                       }
-                      const colors = causeColors[interest] || { bg: '#F3F4F6', color: '#4B5563' }
+                      const colors = causeColors[interest] || { bg: '#F8F9FB', color: '#6B7280' }
                       return (
                         <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
                           style={{ background: colors.bg, color: colors.color }}>
