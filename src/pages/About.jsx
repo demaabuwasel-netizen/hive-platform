@@ -25,28 +25,13 @@ export default function About() {
     <div className="flex flex-col min-h-screen" style={{ background: C.bg }}>
       <Navbar />
 
-      {/* Hero */}
-      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10 text-center">
-        <motion.div variants={stagger} initial="hidden" animate="show">
-          <motion.h1 variants={fadeUp}
-            className="text-[3rem] font-extrabold leading-[1.08] tracking-tight mb-5"
-            style={{ color: C.primary }}>
-            We believe talent and<br />mission belong together.
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-[1.05rem] leading-relaxed max-w-2xl mx-auto" style={{ color: C.muted }}>
-            Hive was built to close the gap between ambitious students who want to make an impact
-            and NGOs that need skilled, motivated collaborators — but struggle to find them.
-          </motion.p>
-        </motion.div>
-      </section>
-
-      {/* Hero Image */}
-      <section className="max-w-4xl mx-auto px-6 pb-10 flex justify-center">
+      {/* Hero - Full Screen */}
+      <section className="relative w-full flex items-center justify-center" style={{ minHeight: '100vh', background: C.bg }}>
         <BrandIllustration
           src={aboutLandingPage}
           alt="About Hive"
           delay={0.18}
-          maxWidth={500}
+          maxWidth={600}
         />
       </section>
 

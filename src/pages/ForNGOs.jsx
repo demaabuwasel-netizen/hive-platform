@@ -31,20 +31,30 @@ export default function ForNGOs() {
     <div className="flex flex-col min-h-screen" style={{ background: C.bg }}>
       <Navbar />
 
-      {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 grid lg:grid-cols-2 gap-12 items-center">
-        <motion.div variants={stagger} initial="hidden" animate="show">
+      {/* Hero - Full Screen */}
+      <section className="relative w-full flex items-center justify-center" style={{ minHeight: '100vh', background: C.bg }}>
+        <BrandIllustration
+          src={ngoLandingPage}
+          alt="NGO team collaborating"
+          delay={0.18}
+          maxWidth={600}
+        />
+      </section>
+
+      {/* Hero Text - Below Image */}
+      <section className="max-w-4xl mx-auto px-6 pt-16 pb-16 text-center">
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}>
           <motion.h1 variants={fadeUp}
             className="text-[3rem] font-extrabold leading-[1.08] tracking-tight mb-5"
             style={{ color: C.primary }}>
             Find the talent<br />your mission<br />
             <span style={{ color: C.honey }}>actually needs.</span>
           </motion.h1>
-          <motion.p variants={fadeUp} className="text-[1.05rem] leading-relaxed mb-8" style={{ color: C.muted }}>
+          <motion.p variants={fadeUp} className="text-[1.05rem] leading-relaxed mb-8 max-w-2xl mx-auto" style={{ color: C.muted }}>
             Hive connects your organisation with skilled, motivated students who understand
             your mission — not just generic volunteers, but people who can genuinely contribute.
           </motion.p>
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-3 justify-center">
             <Link to="/auth?mode=signup"
               className="px-7 py-3.5 rounded-2xl text-[15px] font-bold text-white transition-all hover:opacity-90"
               style={{ background: C.honey, boxShadow: '0 4px 20px rgba(255,183,3,0.35)' }}>
@@ -57,13 +67,6 @@ export default function ForNGOs() {
             </Link>
           </motion.div>
         </motion.div>
-
-        <BrandIllustration
-          src={ngoLandingPage}
-          alt="NGO team collaborating"
-          delay={0.18}
-          maxWidth={460}
-        />
       </section>
 
       {/* Benefits */}
