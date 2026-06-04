@@ -160,7 +160,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
               position: 'absolute',
               top: 0,
               left: 0,
-              marginLeft: '-120px',
+              marginLeft: '-200px',
               marginTop: '-120px',
             }}
           >
