@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'rea
 import { useEffect, useState } from 'react'
 import { supabase } from './services/supabase'
 import { getUserRow } from './services/auth'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Landing from './pages/Landing'
 import ForStudents from './pages/ForStudents'
 import ForNGOs from './pages/ForNGOs'
@@ -38,53 +38,74 @@ import ScrollToTop from './components/ScrollToTop'
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
 function LoadingScreen() {
-  const [showRecovery, setShowRecovery] = useState(false)
+  // loadingTimedOut is set by AppContext's 8-second ceiling — shows recovery
+  // immediately without waiting for a local timer (which can reset on remounts).
+  const { loadingTimedOut } = useApp()
+  const [localTimeout, setLocalTimeout] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setShowRecovery(true), 8000)
+    // Fallback: also show recovery after 5 s of local mounting.
+    // This catches cases where loadingTimedOut isn't available yet.
+    const t = setTimeout(() => setLocalTimeout(true), 5000)
     return () => clearTimeout(t)
   }, [])
+
+  const showRecovery = loadingTimedOut || localTimeout
+
+  function clearSessionAndLogin() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach(k => localStorage.removeItem(k))
+    } catch {}
+    window.location.href = '/auth'
+  }
 
   return (
     <div className="min-h-screen bg-cream-100 flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.35 }} className="flex flex-col items-center gap-4 text-center">
-        <motion.div animate={{ scale: [1, 1.06, 1] }}
-          transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}>
+        transition={{ duration: 0.35 }}
+        className="flex flex-col items-center gap-4 text-center">
+
+        <motion.div
+          animate={showRecovery ? { scale: 1 } : { scale: [1, 1.06, 1] }}
+          transition={showRecovery
+            ? { duration: 0 }
+            : { repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}>
           <HiveLogo size={44} showName={false} />
         </motion.div>
-        <p className="text-navy-400 text-sm font-medium">Loading…</p>
 
-        {showRecovery && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 flex flex-col items-center gap-3">
-            <p className="text-navy-500 text-sm">Taking longer than expected.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: '#FFB703' }}>
-                Retry
-              </button>
-              <button
-                onClick={() => {
-                  // Clear auth state and return to login
-                  try {
-                    Object.keys(localStorage)
-                      .filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-                      .forEach(k => localStorage.removeItem(k))
-                  } catch {}
-                  window.location.href = '/auth'
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-navy-600 border border-[rgba(13,24,61,0.15)] hover:bg-[rgba(13,24,61,0.04)] transition-colors">
-                Return to login
-              </button>
-            </div>
-          </motion.div>
+        {!showRecovery && (
+          <p className="text-navy-400 text-sm font-medium">Loading…</p>
         )}
+
+        <AnimatePresence>
+          {showRecovery && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
+              className="flex flex-col items-center gap-3 mt-2">
+              <p className="text-navy-600 text-sm font-semibold">Taking longer than expected</p>
+              <p className="text-navy-400 text-xs max-w-[240px] leading-relaxed">
+                This could be a slow connection or a temporary Supabase issue.
+              </p>
+              <div className="flex gap-3 mt-1">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: '#FFB703' }}>
+                  Retry
+                </button>
+                <button
+                  onClick={clearSessionAndLogin}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-navy-600 border border-[rgba(13,24,61,0.15)] hover:bg-[rgba(13,24,61,0.04)] transition-colors">
+                  Return to login
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   )

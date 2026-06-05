@@ -6,29 +6,41 @@ import i18n from '../i18n/index'
 
 const AppContext = createContext(null)
 
-export function AppProvider({ children }) {
-  const [user, setUserState]       = useState(null)
-  const [profile, setProfileState] = useState(null)
-  const [loading, setLoading]      = useState(true)
+// ── Promise.race timeout helper ────────────────────────────────────────────────
+// Every async call in hydrateUser goes through this. It uses JS-level timers,
+// NOT AbortSignal — because PostgREST-js v2 can swallow AbortError and leave
+// the Promise pending even after signal.abort() fires (known issue).
+function withStep(promise, label, ms = 4000) {
+  let tid
+  return Promise.race([
+    Promise.resolve(promise).then(r => { clearTimeout(tid); return r }),
+    new Promise((_, reject) => {
+      tid = setTimeout(
+        () => reject(new Error(`[step:${label}] timed out after ${ms}ms`)),
+        ms
+      )
+    }),
+  ])
+}
 
-  // Load our extended user row + matching profile, given a Supabase auth user.
-  // 10-second AbortController covers EVERY Supabase call — none can hang forever.
-  // Never throws — always resolves via try/catch/finally.
+export function AppProvider({ children }) {
+  const [user, setUserState]             = useState(null)
+  const [profile, setProfileState]       = useState(null)
+  const [loading, setLoading]            = useState(true)
+  // Set to true when the 8-second ceiling fires — triggers recovery UI immediately
+  const [loadingTimedOut, setTimedOut]   = useState(false)
+
+  // ── hydrateUser ─────────────────────────────────────────────────────────────
+  // Every await uses withStep (Promise.race) so each step resolves within 4 s
+  // regardless of whether Supabase / PostgREST is slow or swallowing AbortError.
+  // Never throws — always resolves via try/catch.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
-      setUserState(null)
-      setProfileState(null)
-      return
+      setUserState(null); setProfileState(null); return
     }
 
     console.log('[hydrateUser] start — uid:', authUser.id,
       'provider:', authUser.app_metadata?.provider ?? 'email')
-
-    const ctrl  = new AbortController()
-    const timer = setTimeout(() => {
-      console.error('[hydrateUser] 10 s AbortController firing — uid:', authUser.id)
-      ctrl.abort()
-    }, 10000)
 
     const minimal = {
       id:                 authUser.id,
@@ -44,28 +56,24 @@ export function AppProvider({ children }) {
       provider:           authUser.app_metadata?.provider ?? 'email',
     }
 
-    // Track whether we successfully set a real user state.
-    // If so, don't overwrite it with minimal on abort/error.
     let userWasSet = false
 
     try {
-      // ── 1. Ensure public.users row ──────────────────────────────────────────
+      // ── 1. ensureUserRow (4 s cap) ─────────────────────────────────────────
       console.log('[hydrateUser] step 1 — ensureUserRow')
-      await ensureUserRow(authUser, { signal: ctrl.signal })
+      await withStep(ensureUserRow(authUser), 'ensureUserRow')
       console.log('[hydrateUser] step 1 — done')
 
-      // ── 2. Fetch full users row ─────────────────────────────────────────────
+      // ── 2. getUserRow (4 s cap) ────────────────────────────────────────────
       console.log('[hydrateUser] step 2 — getUserRow')
-      const userRow = await getUserRow(authUser.id, { signal: ctrl.signal })
-      console.log('[hydrateUser] step 2 — done, row:', userRow
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow')
+      console.log('[hydrateUser] step 2 — done:', userRow
         ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
-        : 'null')
+        : 'null (will use minimal state)')
 
       if (!userRow) {
-        console.warn('[hydrateUser] users row missing — using minimal state')
-        setUserState(minimal)
-        userWasSet = true
-        return
+        console.warn('[hydrateUser] users row missing — minimal state')
+        setUserState(minimal); userWasSet = true; return
       }
 
       const merged = {
@@ -80,12 +88,11 @@ export function AppProvider({ children }) {
         preferredLanguage:  userRow.preferred_language ?? 'en',
         preferredTheme:     userRow.preferred_theme    ?? 'system',
       }
-      setUserState(merged)
-      userWasSet = true
-      console.log('[hydrateUser] user state set — role:', merged.role,
+      setUserState(merged); userWasSet = true
+      console.log('[hydrateUser] user set — role:', merged.role,
         'onboardingComplete:', merged.onboardingComplete)
 
-      // Restore stored language + theme from DB on login
+      // Apply stored language / theme preferences
       const pLang  = userRow.preferred_language
       const pTheme = userRow.preferred_theme
       if (pLang && pLang !== i18n.language) {
@@ -103,47 +110,60 @@ export function AppProvider({ children }) {
         document.documentElement.classList[resolved === 'dark' ? 'add' : 'remove']('dark')
       }
 
-      // ── 3. Load role-specific profile (signal passed — can be aborted too) ──
+      // ── 3. Profile load (4 s cap, non-critical) ────────────────────────────
+      // .catch(() => null) so a profile timeout never blocks loading state
       if (userRow.role === 'student') {
         console.log('[hydrateUser] step 3 — loadStudentProfile')
-        const p = await loadStudentProfile(authUser.id, { signal: ctrl.signal })
+        const p = await withStep(loadStudentProfile(authUser.id), 'loadStudentProfile').catch(e => {
+          console.warn('[hydrateUser] step 3 profile timeout/error:', e.message)
+          return null
+        })
         setProfileState(p)
         console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
       } else if (userRow.role === 'ngo') {
         console.log('[hydrateUser] step 3 — loadNgoProfile')
-        const p = await loadNgoProfile(authUser.id, { signal: ctrl.signal })
+        const p = await withStep(loadNgoProfile(authUser.id), 'loadNgoProfile').catch(e => {
+          console.warn('[hydrateUser] step 3 profile timeout/error:', e.message)
+          return null
+        })
         setProfileState(p)
         console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
       } else {
-        console.log('[hydrateUser] step 3 — skipped (role is null)')
+        console.log('[hydrateUser] step 3 — skipped (role null)')
       }
 
     } catch (err) {
-      const isAbort = err.name === 'AbortError'
-      console.error('[hydrateUser]', isAbort ? 'ABORTED (10 s)' : 'ERROR',
-        '— uid:', authUser.id, isAbort ? '' : err.message)
-      // Only fall back to minimal if we never set a real user state.
-      // If the abort happened during profile load (step 3), the user is already
-      // in context — don't wipe that good state, just skip the profile.
-      if (!userWasSet) setUserState(minimal)
-    } finally {
-      clearTimeout(timer)
-      console.log('[hydrateUser] complete — uid:', authUser.id)
+      console.error('[hydrateUser] failed at step:', err.message)
+      if (!userWasSet) {
+        console.warn('[hydrateUser] applying minimal fallback state')
+        setUserState(minimal)
+      }
+      // If we had set user already (step 3 timed out), keep the good state
     }
+
+    console.log('[hydrateUser] complete — uid:', authUser.id)
   }, [])
 
+  // ── Bootstrap ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    let disposed        = false
-    let hydrateStarted  = false
+    let disposed       = false
+    let hydrateStarted = false
 
-    // Absolute ceiling: no matter what, loading MUST clear within 15 s.
-    // This catches any code path where setLoading(false) is somehow missed.
+    // finish() — call exactly once per bootstrap to clear the loading gate
+    function finish() {
+      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
+    }
+
+    // ── Absolute ceiling: 8 s ────────────────────────────────────────────────
+    // If loading is still true after 8 s, force it off and set loadingTimedOut
+    // so the recovery screen appears immediately in LoadingScreen.
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 15 s absolute ceiling hit — forcing setLoading(false)')
+        console.error('[AppContext] 8 s ceiling fired — forcing loading=false')
         setLoading(false)
+        setTimedOut(true)   // tells LoadingScreen to show recovery UI immediately
       }
-    }, 15000)
+    }, 8000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
@@ -152,11 +172,12 @@ export function AppProvider({ children }) {
         k => k?.startsWith('sb-') && k.endsWith('-auth-token')
       )
       if (lsKey) {
-        const val = JSON.parse(localStorage.getItem(lsKey) ?? 'null')
+        const val  = JSON.parse(localStorage.getItem(lsKey) ?? 'null')
         storedUser = val?.user ?? null
-        console.log('[AppContext] localStorage token found — uid:', storedUser?.id ?? 'none')
+        console.log('[AppContext] localStorage token — uid:', storedUser?.id ?? 'none',
+          'provider:', storedUser?.app_metadata?.provider ?? '?')
       } else {
-        console.log('[AppContext] no localStorage session token')
+        console.log('[AppContext] no localStorage token')
       }
     } catch (e) {
       console.warn('[AppContext] localStorage read error:', e.message)
@@ -164,8 +185,8 @@ export function AppProvider({ children }) {
 
     // ── Step 2: no stored session → clear loading immediately ─────────────────
     if (!storedUser) {
-      clearTimeout(ceiling)
-      setLoading(false)
+      finish()
+      // Still subscribe for future SIGNED_IN (user logs in from auth page)
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
@@ -180,54 +201,50 @@ export function AppProvider({ children }) {
       return () => { disposed = true; subscription.unsubscribe() }
     }
 
-    // ── Step 3: stored session found → call getSession() to validate/refresh ───
+    // ── Step 3: stored session found — validate with getSession() ─────────────
+    // bail fires if getSession() takes > 5 s, using storedUser as fallback
     const bail = setTimeout(async () => {
       if (disposed || hydrateStarted) return
       hydrateStarted = true
-      console.warn('[AppContext] getSession() timed out — localStorage fallback, uid:', storedUser.id)
-      try { await hydrateUser(storedUser) } catch (err) { console.error('[AppContext] fallback hydrate error:', err) }
-      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
-    }, 12000)
+      console.warn('[AppContext] getSession bail (5 s) — using storedUser fallback, uid:', storedUser.id)
+      try { await hydrateUser(storedUser) } catch (e) { console.error('[AppContext] fallback error:', e.message) }
+      finish()
+    }, 5000)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(bail)
-      if (disposed || hydrateStarted) { if (!disposed) { clearTimeout(ceiling); setLoading(false) } return }
+      if (disposed || hydrateStarted) { finish(); return }
       hydrateStarted = true
       if (session?.user) {
-        console.log('[AppContext] getSession() — valid, uid:', session.user.id,
+        console.log('[AppContext] getSession valid — uid:', session.user.id,
           'provider:', session.user.app_metadata?.provider ?? 'email')
         try { await hydrateUser(session.user) }
-        catch (err) { console.error('[AppContext] hydrateUser error:', err) }
+        catch (e) { console.error('[AppContext] hydrateUser error:', e.message) }
       } else {
-        console.log('[AppContext] getSession() — session expired / refresh failed')
+        console.log('[AppContext] getSession returned null — session expired')
         setUserState(null); setProfileState(null)
       }
-      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
+      finish()
     }).catch(async err => {
       clearTimeout(bail)
-      if (disposed || hydrateStarted) { if (!disposed) { clearTimeout(ceiling); setLoading(false) } return }
+      if (disposed || hydrateStarted) { finish(); return }
       hydrateStarted = true
-      console.error('[AppContext] getSession() network error — localStorage fallback:', err.message)
-      try { await hydrateUser(storedUser) } catch {}
-      if (!disposed) { clearTimeout(ceiling); setLoading(false) }
+      console.error('[AppContext] getSession network error:', err.message, '— using storedUser')
+      try { await hydrateUser(storedUser) } catch (e) { console.error('[AppContext] fallback error:', e.message) }
+      finish()
     })
 
-    // ── Step 4: subscribe for all subsequent auth events ──────────────────────
+    // ── Step 4: subscribe for subsequent auth events ──────────────────────────
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
 
         if (event === 'SIGNED_OUT') {
-          setUserState(null)
-          setProfileState(null)
-          setLoading(false)
+          setUserState(null); setProfileState(null); setLoading(false)
           return
         }
 
-        // SIGNED_IN fires after email/password or OAuth login
-        // TOKEN_REFRESHED fires when autoRefreshToken renews the JWT
-        // PASSWORD_RECOVERY fires when a recovery link is opened
-        // USER_UPDATED fires after updateUser()
+        // SIGNED_IN, TOKEN_REFRESHED, PASSWORD_RECOVERY, USER_UPDATED
         if (session?.user && (
           event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' ||
           event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED'
@@ -235,32 +252,27 @@ export function AppProvider({ children }) {
           try { await hydrateUser(session.user) }
           catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
         }
-        // INITIAL_SESSION is intentionally not handled here:
-        // getSession() (step 3) already covers the initial restore.
+        // INITIAL_SESSION is covered by getSession() above
       }
     )
 
     return () => { disposed = true; clearTimeout(bail); clearTimeout(ceiling); subscription.unsubscribe() }
   }, [hydrateUser])
 
-  // Called from RoleSelection — sets role in DB and updates context
+  // ── Exposed actions ──────────────────────────────────────────────────────────
+
   async function updateRole(role) {
     if (!user) return
     await updateUserRow(user.id, { role })
     setUserState(prev => prev ? { ...prev, role } : prev)
   }
 
-  // Called at the end of onboarding — saves profile to DB, marks complete.
-  // Uses bare mutations (no .select() / .single()) to avoid the known PostgREST
-  // hang where the response is held open waiting for a row.
   async function completeOnboarding(profileData) {
     if (!user) throw new Error('Not authenticated — please refresh and try again.')
 
     const t0 = Date.now()
     const elapsed = () => `+${Date.now() - t0}ms`
 
-    // ── Step 1: upsert student_profiles (or ngo_profiles) ──────────────────
-    // saveProfile handles its own AbortController internally (12 s deadline).
     console.log(`[onboarding ${elapsed()}] step 1 — saveProfile (role=${user.role}, userId=${user.id})`)
     try {
       await saveProfile(user.id, profileData, user.role)
@@ -270,9 +282,8 @@ export function AppProvider({ children }) {
     }
     console.log(`[onboarding ${elapsed()}] step 1 — done`)
 
-    // ── Step 2: mark onboarding complete in users table ────────────────────
     console.log(`[onboarding ${elapsed()}] step 2 — users.update onboarding_complete`)
-    const ctrl2 = new AbortController()
+    const ctrl2  = new AbortController()
     const abort2 = setTimeout(() => ctrl2.abort(), 12000)
     let userErr
     try {
@@ -283,70 +294,46 @@ export function AppProvider({ children }) {
         .abortSignal(ctrl2.signal))
     } catch (err) {
       clearTimeout(abort2)
-      console.error(`[onboarding ${elapsed()}] step 2 FAILED (fetch):`, err)
       throw new Error(err.name === 'AbortError'
         ? 'Supabase did not respond within 12 s on step 2 — retry.'
         : `User update failed: ${err.message}`)
     }
     clearTimeout(abort2)
-    if (userErr) {
-      console.error(`[onboarding ${elapsed()}] step 2 FAILED:`, userErr)
-      throw new Error(`User update failed: ${userErr.message}`)
-    }
+    if (userErr) throw new Error(`User update failed: ${userErr.message}`)
     console.log(`[onboarding ${elapsed()}] step 2 — done`)
 
     setProfileState(profileData)
     console.log(`[onboarding ${elapsed()}] complete ✓`)
-    // NOTE: onboardingComplete is NOT set here — StudentOnboarding shows its
-    // success screen first and calls markOnboardingDone() before navigating.
-    // Setting it here would fire OnboardingGuard immediately and eject the user
-    // before the success screen renders.
   }
 
-  // Called by StudentOnboarding's success screen button, right before navigate.
-  // Updating onboardingComplete here (not inside completeOnboarding) lets the
-  // success screen render first without being ejected by OnboardingGuard.
   function markOnboardingDone() {
     setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
   }
 
-  // Called from Settings or edit profile pages — updates profile without
-  // touching the onboarding flag or the user row
   async function updateProfile(profileData) {
     if (!user) return
     await saveProfile(user.id, profileData, user.role)
     setProfileState(profileData)
   }
 
-  // Plain setter — used when a profile update has already been persisted
-  // by the caller (e.g. EditStudentProfile calls the service directly)
   function setProfile(next) {
     setProfileState(typeof next === 'function' ? next(profile) : next)
   }
 
-  // Shallow-merge updates into the in-memory user object (e.g. after a name change)
   function patchUser(updates) {
     setUserState(prev => prev ? { ...prev, ...updates } : prev)
   }
 
   async function logout() {
     await authLogOut()
-    setUserState(null)
-    setProfileState(null)
+    setUserState(null); setProfileState(null)
   }
 
   return (
     <AppContext.Provider value={{
-      user,
-      profile,
-      setProfile,
-      patchUser,
-      updateRole,
-      completeOnboarding,
-      markOnboardingDone,
-      updateProfile,
-      logout,
-      loading,
+      user, profile, loading, loadingTimedOut,
+      setProfile, patchUser,
+      updateRole, completeOnboarding, markOnboardingDone, updateProfile, logout,
     }}>
       {children}
     </AppContext.Provider>
