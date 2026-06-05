@@ -136,6 +136,57 @@ export default function NGOProfile() {
               )}
             </motion.div>
 
+            {/* MISSION STATEMENT */}
+            {profile?.mission && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#F97316' }}>
+                    <Target size={14} style={{ color: '#EA580C' }}/>
+                  </span>
+                  Mission Statement
+                </h2>
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {profile.mission}
+                </p>
+              </motion.div>
+            )}
+
+            {/* COMMUNITIES SERVED */}
+            {profile?.communities && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#8B5CF6' }}>
+                    <Heart size={14} style={{ color: '#7C3AED' }}/>
+                  </span>
+                  Communities Served
+                </h2>
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {profile.communities}
+                </p>
+              </motion.div>
+            )}
+
+            {/* ORGANIZATION SIZE */}
+            {profile?.orgSize && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#06B6D420' }}>
+                    <Building2 size={14} style={{ color: '#0891B2' }}/>
+                  </span>
+                  Organization Size
+                </h2>
+                <p className="text-[13px] font-semibold text-[#0D183D]">
+                  {profile.orgSize}
+                </p>
+              </motion.div>
+            )}
+
             {/* FOCUS AREAS (TAGS) */}
             {profile?.tags && profile.tags.length > 0 && (
               <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
