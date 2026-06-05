@@ -1,264 +1,42 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { Shield, Target, TrendingUp } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
-import ProgressBar from '../components/ProgressBar'
-import TagInput from '../components/TagInput'
-import SkillPicker from '../components/SkillPicker'
-import AutocompleteInput from '../components/AutocompleteInput'
-import TopicPicker from '../components/TopicPicker'
-
-const CAUSES = [
-  'Education', 'Youth Empowerment', 'Arab-Jewish Coexistence',
-  'Mental Health', 'Environment', 'Climate Action',
-  'Community Building', 'Women Empowerment', 'Accessibility',
-  'Public Health', 'Food Security', 'Refugee Support',
-  'Elderly Support', 'Digital Literacy', 'Social Equality',
-  'Human Rights', 'Animal Welfare', 'Arts and Culture',
-  'Technology for Good', 'Economic Opportunity',
-  'Civic Engagement', 'Minority Rights', 'Housing',
-  'Child Welfare', 'Violence Prevention', 'Immigration',
-]
-
-const FIELDS_OF_STUDY = [
-  'Computer Science', 'Software Engineering', 'Information Systems',
-  'Data Science', 'Artificial Intelligence', 'Cybersecurity',
-  'Electrical Engineering', 'Mechanical Engineering', 'Industrial Engineering',
-  'Business Administration', 'Economics', 'Accounting & Finance',
-  'Marketing', 'Management', 'Entrepreneurship',
-  'Psychology', 'Social Work', 'Sociology', 'Political Science',
-  'Communication', 'Journalism', 'Media Studies',
-  'Graphic Design', 'UX / UI Design', 'Architecture',
-  'Education', 'Special Education', 'Curriculum & Teaching',
-  'Public Health', 'Nursing', 'Medicine', 'Pharmacy',
-  'Law', 'Criminology', 'International Relations',
-  'Statistics', 'Applied Mathematics', 'Physics',
-  'Environmental Science', 'Life Sciences', 'Biology',
-]
-
-const UNIVERSITIES = [
-  'Hebrew University of Jerusalem',
-  'Tel Aviv University',
-  'Ben-Gurion University of the Negev',
-  'University of Haifa',
-  'Technion – Israel Institute of Technology',
-  'Bar-Ilan University',
-  'Weizmann Institute of Science',
-  'Reichman University (IDC Herzliya)',
-  'Open University of Israel',
-  'Sapir College',
-  'Hadassah Academic College',
-  'Bezalel Academy of Arts and Design',
-  'Shenkar – Engineering, Design, Art',
-  'HIT – Holon Institute of Technology',
-  'Ruppin Academic Center',
-  'Ono Academic College',
-  'Jerusalem College of Technology',
-  'Tel Hai Academic College',
-  'WIZO Haifa Academy',
-  'Netanya Academic College',
-]
-import { AvatarPicker } from '../components/Avatar'
-import HiveLogo from '../components/HiveLogo'
-import img2 from '../assets/img2.png'  // student w/ phone — success context
+import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
+import Stepper from '../components/Onboarding/Stepper'
+import FormCard from '../components/Onboarding/FormCard'
+import SidePanel from '../components/Onboarding/SidePanel'
+import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
+import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
 const STEPS = [
-  {
-    id: 'field',
-    emoji: '📚',
-    title: 'What are you studying?',
-    subtitle: 'Your field and university help NGOs understand your academic background.',
-    fields: [
-      { name: 'field', label: 'Field of study', placeholder: 'e.g. Computer Science, Psychology, Graphic Design…', type: 'autocomplete', options: FIELDS_OF_STUDY, required: true },
-      { name: 'university', label: 'University / Institution', placeholder: 'e.g. Tel Aviv University, Technion…', type: 'autocomplete', options: UNIVERSITIES },
-    ],
-  },
-  {
-    id: 'skills',
-    emoji: '🛠️',
-    title: 'What are your skills and interests?',
-    subtitle: 'Type each one and press Enter or comma. "Figma", "Python", "grant writing" tells more than "tech stuff".',
-    fields: [
-      { name: 'skills', label: 'Skills', type: 'skills' },
-      { name: 'courses', label: 'Relevant courses', placeholder: 'e.g. Data Ethics, UX Design, Nonprofit Communications…', type: 'tags' },
-      { name: 'interests', label: 'Topics or causes you care about', type: 'topics', options: CAUSES },
-    ],
-  },
-  {
-    id: 'experience',
-    emoji: '💼',
-    title: 'Tell us about your experience',
-    subtitle: 'This can include class projects, personal work, part-time jobs, or volunteer work. Be honest — NGOs appreciate authenticity.',
-    fields: [
-      { name: 'experience', label: 'Previous experience or projects', placeholder: "e.g. Redesigned a community center website in Haifa. Ran social media for a student org at the University of Haifa. Helped a women's NGO in Beer-Sheva with data collection…", type: 'textarea', rows: 4 },
-    ],
-  },
-  {
-    id: 'goals',
-    emoji: '🎯',
-    title: 'What are your goals?',
-    subtitle: 'What kind of work are you hoping to do? What impact do you want to have?',
-    fields: [
-      { name: 'goals', label: 'Career goals and motivations', placeholder: 'e.g. "I want to help Arab and Jewish NGOs improve their digital presence and reach more people…" or "I want to use data to support health organizations serving underrepresented communities…"', type: 'textarea', rows: 3 },
-    ],
-  },
-  {
-    id: 'languages',
-    emoji: '🌐',
-    title: 'What languages do you speak?',
-    subtitle: 'NGOs in Israel often need bilingual or multilingual volunteers. Add as many as you like — this is optional.',
-    fields: [
-      { name: 'languages', type: 'languages' },
-    ],
-  },
-  {
-    id: 'links',
-    emoji: '🔗',
-    title: 'Any links to share? (optional)',
-    subtitle: 'A GitHub, LinkedIn, or portfolio helps NGOs verify your work. All fields below are optional.',
-    fields: [
-      { name: 'phone', label: 'Phone number', placeholder: 'e.g. +972 50 123 4567', type: 'tel' },
-      { name: 'linkedin', label: 'LinkedIn URL', placeholder: 'https://linkedin.com/in/yourname', type: 'input' },
-      { name: 'github', label: 'GitHub URL', placeholder: 'https://github.com/yourhandle', type: 'input' },
-      { name: 'portfolio', label: 'Portfolio or website', placeholder: 'https://yoursite.com', type: 'input' },
-    ],
-  },
+  { id: 'profile', title: 'Profile', number: 1 },
+  { id: 'skills', title: 'Skills', number: 2 },
+  { id: 'causes', title: 'Causes', number: 3 },
+  { id: 'availability', title: 'Availability', number: 4 },
+  { id: 'complete', title: 'Complete', number: 5 },
 ]
 
-function validatePhone(phone) {
-  if (!phone || !phone.trim()) return null
-  const digits = phone.replace(/[\s\-().+]/g, '')
-  if (!/^\d{7,15}$/.test(digits)) return 'Please enter a valid phone number (digits, spaces, +, - allowed)'
-  return null
-}
+const SKILL_CATEGORIES = [
+  'Programming', 'Data & AI', 'Design', 'Marketing', 'Research',
+  'Writing', 'Languages', 'Community Work', 'Project Management',
+  'Graphic Design', 'Video Production', 'Social Media', 'Other'
+]
 
-// ─── Language picker ──────────────────────────────────────────────────────────
-const LANGUAGE_OPTIONS = ['Hebrew', 'Arabic', 'English', 'Russian', 'French', 'Spanish', 'German', 'Other']
-const PROFICIENCY_LEVELS = ['Native', 'Fluent', 'Intermediate', 'Basic']
-const LEVEL_COLORS = { Native: '#0D183D', Fluent: '#059669', Intermediate: '#D99E00', Basic: '#6366F1' }
+const CAUSES = [
+  'Youth Empowerment', 'Women Empowerment', 'Education', 'Environment',
+  'Health', 'Mental Health', 'Refugees', 'Community Development',
+  'Technology for Good', 'Human Rights', 'Accessibility', 'Animals', 'Other'
+]
 
-function LanguagePicker({ value = [], onChange }) {
-  const [pending, setPending] = useState(null)
-  const added = value.map(l => l.lang)
-
-  function handleLangClick(lang) {
-    if (added.includes(lang)) {
-      onChange(value.filter(l => l.lang !== lang))
-      if (pending === lang) setPending(null)
-    } else {
-      setPending(lang)
-    }
-  }
-
-  function confirmLevel(level) {
-    onChange([...value, { lang: pending, level }])
-    setPending(null)
-  }
-
-  return (
-    <div>
-      {/* Language chips */}
-      <p className="text-[12px] font-semibold text-[#4B6382] mb-2.5">Select languages you speak:</p>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {LANGUAGE_OPTIONS.map(lang => {
-          const isAdded = added.includes(lang)
-          const isPending = pending === lang
-          return (
-            <button key={lang} type="button"
-              onClick={() => handleLangClick(lang)}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-150 active:scale-[0.97] ${
-                isAdded
-                  ? 'text-white'
-                  : isPending
-                  ? 'text-white'
-                  : 'bg-white text-[#4B6382] hover:border-[#FFB703] hover:text-[#0D183D]'
-              }`}
-              style={
-                isAdded ? { background: '#0D183D', border: '1.5px solid #0D183D' } :
-                isPending ? { background: '#FFB703', border: '1.5px solid #FFB703' } :
-                { border: '1.5px solid rgba(13,24,61,0.13)' }
-              }>
-              {lang}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Proficiency selector for pending language */}
-      <AnimatePresence>
-        {pending && (
-          <motion.div
-            key={pending}
-            initial={{ opacity: 0, y: -6, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -6, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="mb-4 overflow-hidden">
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,183,3,0.06)', border: '1.5px solid rgba(255,183,3,0.22)' }}>
-              <p className="text-[12px] font-bold text-[#0D183D] mb-3">
-                Your proficiency in <strong>{pending}</strong>:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {PROFICIENCY_LEVELS.map(level => (
-                  <button key={level} type="button"
-                    onClick={() => confirmLevel(level)}
-                    className="px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-all duration-150 hover:scale-[1.03] active:scale-95"
-                    style={{ background: 'white', borderColor: 'rgba(13,24,61,0.12)', color: '#0D183D' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = LEVEL_COLORS[level]; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = LEVEL_COLORS[level] }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#0D183D'; e.currentTarget.style.borderColor = 'rgba(13,24,61,0.12)' }}>
-                    {level}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Selected languages display */}
-      {value.length > 0 && (
-        <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">
-            Your languages
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {value.map(({ lang, level }) => (
-              <motion.span
-                key={lang}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-                className="inline-flex items-center gap-2 pl-3.5 pr-2 py-1.5 rounded-full text-[12px] font-semibold text-white"
-                style={{ background: LEVEL_COLORS[level] || '#0D183D' }}>
-                <span>{lang}</span>
-                <span className="opacity-50">·</span>
-                <span className="opacity-80 text-[11px]">{level}</span>
-                <button type="button"
-                  onClick={() => onChange(value.filter(l => l.lang !== lang))}
-                  className="w-5 h-5 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-white/20 transition-all ml-0.5"
-                  aria-label={`Remove ${lang}`}>
-                  ×
-                </button>
-              </motion.span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {value.length === 0 && !pending && (
-        <p className="text-[12px] text-[#4B6382]/60 italic">No languages added yet — you can skip this step.</p>
-      )}
-    </div>
-  )
-}
-
-const variants = {
-  enter: (dir) => ({ opacity: 0, x: dir > 0 ? 40 : -40 }),
-  center: { opacity: 1, x: 0 },
-  exit: (dir) => ({ opacity: 0, x: dir > 0 ? -40 : 40 }),
-}
+const AVAILABILITY_OPTIONS = [
+  { value: '5', label: '5 hours/week' },
+  { value: '10', label: '10 hours/week' },
+  { value: '20', label: '20 hours/week' },
+  { value: 'flexible', label: 'Flexible' },
+]
 
 const LS_KEY = (uid) => `hive_ob_student_${uid}`
 
@@ -269,23 +47,17 @@ function hasDraftData(d) {
 export default function StudentOnboarding() {
   const { completeOnboarding, markOnboardingDone, user, profile } = useApp()
   const navigate = useNavigate()
-  const [step, setStep]             = useState(0)
-  const [data, setData]             = useState({})
-  const [direction, setDirection]   = useState(1)
-  const [errors, setErrors]         = useState({})
-  const [done, setDone]             = useState(false)
+  const [step, setStep] = useState(0)
+  const [data, setData] = useState({})
+  const [errors, setErrors] = useState({})
+  const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [saveStatus, setSaveStatus] = useState('idle') // 'idle'|'saving'|'saved'|'error'
+  const [saveStatus, setSaveStatus] = useState('idle')
   const [welcomeBack, setWelcomeBack] = useState(false)
 
-  // Only trigger debounced saves after the initial restore is complete
-  const restoredRef   = useRef(false)
+  const restoredRef = useRef(false)
   const debounceTimer = useRef(null)
-
-  const current = STEPS[step]
-
-  // ── Draft save helpers ───────────────────────────────────────────────────────
 
   const doSave = useCallback(async (d, s) => {
     if (!user?.id) return
@@ -301,54 +73,40 @@ export default function StudentOnboarding() {
     }
   }, [user?.id])
 
-  // Debounced — triggered by data field changes (keystrokes)
   const saveDraft = useCallback((d, s) => {
     clearTimeout(debounceTimer.current)
     debounceTimer.current = setTimeout(() => doSave(d, s), 750)
   }, [doSave])
 
-  // Immediate — triggered by Continue / navigation
   const saveDraftNow = useCallback((d, s) => {
     clearTimeout(debounceTimer.current)
     return doSave(d, s)
   }, [doSave])
 
-  // ── Restore draft on mount ───────────────────────────────────────────────────
-
   useEffect(() => {
     if (!user?.id) return
-
     const dbStep = user.onboardingStep ?? 0
     const dbData = studentProfileToData(profile)
-
-    // Check localStorage for a draft saved closer to an unload event
     let localStep = dbStep
     let localData = dbData
     try {
       const raw = localStorage.getItem(LS_KEY(user.id))
       if (raw) {
         const backup = JSON.parse(raw)
-        // Use localStorage only if it recorded a higher step (user progressed
-        // but the DB write didn't complete before the tab closed)
         if (typeof backup.step === 'number' && backup.step > dbStep) {
           localStep = backup.step
           localData = { ...dbData, ...backup.data }
         }
       }
     } catch {}
-
     const hasAny = localStep > 0 || hasDraftData(localData)
     if (hasAny) {
       setData(localData)
       setStep(Math.min(localStep, STEPS.length - 1))
       setWelcomeBack(true)
     }
-
-    // Allow debounced saves now that the initial restore is done
     restoredRef.current = true
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Debounce on data change ──────────────────────────────────────────────────
 
   useEffect(() => {
     if (!restoredRef.current) return
@@ -359,8 +117,6 @@ export default function StudentOnboarding() {
 
   useEffect(() => () => clearTimeout(debounceTimer.current), [])
 
-  // ── Form helpers ─────────────────────────────────────────────────────────────
-
   function update(name, value) {
     setData(d => ({ ...d, [name]: value }))
     if (errors[name]) setErrors(e => ({ ...e, [name]: null }))
@@ -368,67 +124,45 @@ export default function StudentOnboarding() {
 
   function validate() {
     const newErrors = {}
-    current.fields.forEach(field => {
-      if (field.required) {
-        const val = data[field.name]
-        const empty = !val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && !val.trim())
-        if (empty) newErrors[field.name] = 'This field is required.'
-      }
-      if (field.type === 'tel') {
-        const phoneErr = validatePhone(data[field.name])
-        if (phoneErr) newErrors[field.name] = phoneErr
-      }
-    })
+    if (step === 0) {
+      if (!data.name?.trim()) newErrors.name = 'Please enter your full name.'
+      if (!data.country?.trim()) newErrors.country = 'Please select a country.'
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   async function next() {
     if (!validate()) return
-    setDirection(1)
     if (step < STEPS.length - 1) {
       const nextStep = step + 1
-      await saveDraftNow(data, nextStep)   // save before advancing
+      await saveDraftNow(data, nextStep)
       setStep(nextStep)
     } else {
       setSubmitting(true)
       setSubmitError('')
       try {
-        const skills    = Array.isArray(data.skills)    ? data.skills    : []
-        const courses   = Array.isArray(data.courses)   ? data.courses   : (data.courses?.split(',').map(s => s.trim()).filter(Boolean) || [])
-        const interests = Array.isArray(data.interests) ? data.interests : (data.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
-        const skillNames = skills.map(s => s.name).filter(Boolean)
         const profile = {
-          ...data,
-          skills,
-          courses,
-          interests,
-          phone:     data.phone?.trim()     || null,
-          linkedin:  data.linkedin?.trim()  || null,
-          github:    data.github?.trim()    || null,
+          name: data.name?.trim() || null,
+          field: data.field?.trim() || null,
+          university: data.university?.trim() || null,
+          skills: data.skills || [],
+          interests: data.causes || [],
+          languages: data.languages || [],
+          availability: data.availability || null,
+          phone: data.phone?.trim() || null,
+          linkedin: data.linkedin?.trim() || null,
+          github: data.github?.trim() || null,
           portfolio: data.portfolio?.trim() || null,
+          bio: data.bio?.trim() || null,
+          goals: data.goals?.trim() || null,
           links: {
-            linkedin:  data.linkedin?.trim()  || null,
-            github:    data.github?.trim()    || null,
+            linkedin: data.linkedin?.trim() || null,
+            github: data.github?.trim() || null,
             portfolio: data.portfolio?.trim() || null,
           },
-          summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skillNames.join(', ') || 'various areas'}. ${data.goals || ''}`.trim(),
         }
-
-        let realError = null
-        const timeout = new Promise((_, reject) =>
-          setTimeout(() => {
-            const msg = realError
-              ? `Timed out — last error: ${realError}`
-              : 'Request timed out — the server is taking too long. Check the browser console for details (look for [onboarding] logs).'
-            reject(new Error(msg))
-          }, 30000)
-        )
-        await Promise.race([
-          completeOnboarding(profile).catch(err => { realError = err.message; throw err }),
-          timeout,
-        ])
-        // Clear draft on successful completion
+        await completeOnboarding(profile)
         try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
         setDone(true)
       } catch (err) {
@@ -439,242 +173,475 @@ export default function StudentOnboarding() {
   }
 
   function back() {
-    if (step > 0) {
-      setDirection(-1)
-      setStep(s => s - 1)
-      setErrors({})
-    }
+    if (step > 0) setStep(s => s - 1)
   }
 
+  // Success screen
   if (done) {
     return (
-      <div className="min-h-screen bg-[#FFF7E6] flex items-center justify-center px-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="w-full max-w-md"
-        >
-          <div className="card text-center py-8 px-8">
-            <motion.img
-              src={img2}
-              alt="You're ready to make an impact"
-              initial={{ opacity: 0, scale: 0.9 }}
+      <OnboardingLayout showLogo>
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45 }}
+            className="bg-white rounded-2xl p-8 border border-[#E6E8EF] text-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="w-48 mx-auto mb-4 object-contain"
-              draggable={false}
-            />
-            <motion.h2
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
-              className="text-2xl font-bold text-[#0D183D] mb-2"
+              transition={{ delay: 0.2 }}
+              className="w-16 h-16 bg-[#FFB400]/10 rounded-full flex items-center justify-center mx-auto mb-6"
             >
-              Profile created! 🎉
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-              className="text-[#4B6382] text-sm mb-8 max-w-xs mx-auto leading-relaxed"
-            >
-              You're ready to be matched with NGOs that need exactly your skills and values.
-            </motion.p>
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.35 }}
-              onClick={() => { markOnboardingDone(); navigate('/dashboard/student') }}
-              className="btn-honey text-base px-8 py-3.5"
-            >
-              Go to my dashboard →
-            </motion.button>
-          </div>
-        </motion.div>
-      </div>
+              <span className="text-3xl">✓</span>
+            </motion.div>
+            <h2 className="text-2xl font-bold text-[#0B163F] mb-2">
+              Profile created!
+            </h2>
+            <p className="text-[#4E6385] mb-8 max-w-md mx-auto">
+              You're ready to be matched with amazing opportunities that align with your skills and values.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <PrimaryButton onClick={() => { markOnboardingDone(); navigate('/dashboard/student') }}>
+                Explore opportunities
+              </PrimaryButton>
+              <SecondaryButton onClick={() => { markOnboardingDone(); navigate('/dashboard/student') }}>
+                Go to dashboard
+              </SecondaryButton>
+            </div>
+          </motion.div>
+        </div>
+      </OnboardingLayout>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-[#FFF7E6] flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-lg">
-        <div className="mb-8">
-          <HiveLogo size={24} nameSize="text-base" className="mb-6" />
-          <ProgressBar current={step + 1} total={STEPS.length} label="Setting up your profile" />
-        </div>
+  // Step 0: Profile
+  if (step === 0) {
+    return (
+      <OnboardingLayout showLogo>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <Stepper steps={STEPS} currentStep={step} />
 
-        {/* Welcome back banner */}
-        <AnimatePresence>
           {welcomeBack && (
             <motion.div
-              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
-              className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl mb-4 text-sm"
-              style={{ background: 'rgba(255,183,3,0.09)', border: '1px solid rgba(255,183,3,0.25)' }}>
-              <span className="text-[#0D183D] font-medium">
-                👋 Welcome back — your progress has been restored.
-              </span>
-              <button onClick={() => setWelcomeBack(false)}
-                className="text-[#4B6382] hover:text-[#0D183D] text-lg leading-none shrink-0">×</button>
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 p-4 rounded-xl bg-[#FFB400]/10 border border-[#FFB400]/30 text-sm text-[#0B163F]"
+            >
+              👋 Welcome back — your progress has been saved.
             </motion.div>
           )}
-        </AnimatePresence>
 
-        <AnimatePresence mode="wait" custom={direction} initial={false}>
-          <motion.div
-            key={step}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="card mb-6"
-          >
-            <div className="text-4xl mb-4">{current.emoji}</div>
-            <h2 className="text-xl font-bold text-[#0D183D] mb-1">{current.title}</h2>
-            <p className="text-[#4B6382] text-sm mb-6 leading-relaxed">{current.subtitle}</p>
-
-            {/* Photo upload — only on first step, above the form fields */}
-            {step === 0 && (
-              <div className="mb-6 pb-6" style={{ borderBottom: '1px solid rgba(13,24,61,0.08)' }}>
-                <AvatarPicker
-                  value={data.avatar || ''}
-                  onChange={val => update('avatar', val)}
-                  name={user?.name || ''}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <FormCard
+                title="Let's start with your profile"
+                subtitle="This helps organizations understand who you are and what you're passionate about."
+              >
+                <TextInput
+                  label="Full name"
+                  placeholder="Your first and last name"
+                  value={data.name || ''}
+                  onChange={(val) => update('name', val)}
+                  required
+                  error={errors.name}
                 />
-              </div>
-            )}
 
-            <div className="flex flex-col gap-4">
-              {current.fields.map(field => (
-                <div key={field.name}>
-                  <label className="block text-sm font-medium text-navy-700 mb-1.5">
-                    {field.label}
-                    {field.required && <span className="text-honey-500 ml-1">*</span>}
-                  </label>
-                  {field.type === 'languages' ? (
-                    <LanguagePicker
-                      value={data.languages || []}
-                      onChange={val => update('languages', val)}
-                    />
-                  ) : field.type === 'autocomplete' ? (
-                    <AutocompleteInput
-                      value={data[field.name] || ''}
-                      onChange={val => update(field.name, val)}
-                      options={field.options || []}
-                      placeholder={field.placeholder}
-                      error={!!errors[field.name]}
-                    />
-                  ) : field.type === 'skills' ? (
-                    <SkillPicker
-                      value={data.skills || []}
-                      onChange={val => update('skills', val)}
-                    />
-                  ) : field.type === 'topics' ? (
-                    <TopicPicker
-                      value={data[field.name] || []}
-                      onChange={val => update(field.name, val)}
-                      options={field.options || []}
-                    />
-                  ) : field.type === 'tags' ? (
-                    <TagInput
-                      value={data[field.name] || []}
-                      onChange={val => update(field.name, val)}
-                      placeholder={field.placeholder}
-                      color={field.color}
-                    />
-                  ) : field.type === 'textarea' ? (
-                    <textarea
-                      rows={field.rows || 3}
-                      value={data[field.name] || ''}
-                      onChange={e => update(field.name, e.target.value)}
-                      placeholder={field.placeholder}
-                      className="textarea-field"
-                    />
-                  ) : (
-                    <input
-                      type={field.type === 'tel' ? 'tel' : 'text'}
-                      inputMode={field.type === 'tel' ? 'tel' : undefined}
-                      autoComplete={field.type === 'tel' ? 'tel' : undefined}
-                      value={data[field.name] || ''}
-                      onChange={e => update(field.name, e.target.value)}
-                      placeholder={field.placeholder}
-                      className={`input-field ${errors[field.name] ? 'ring-2 ring-red-300 border-red-300' : ''}`}
-                    />
+                <SelectInput
+                  label="Country"
+                  placeholder="Select your country"
+                  value={data.country || ''}
+                  onChange={(val) => update('country', val)}
+                  required
+                  error={errors.country}
+                  options={['Israel', 'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Other']}
+                />
+
+                <TextInput
+                  label="City"
+                  placeholder="Your city (optional)"
+                  value={data.city || ''}
+                  onChange={(val) => update('city', val)}
+                />
+
+                <TextInput
+                  label="University or school"
+                  placeholder="Where do you study?"
+                  value={data.university || ''}
+                  onChange={(val) => update('university', val)}
+                />
+
+                <TextInput
+                  label="Field of study"
+                  placeholder="Your major or field"
+                  value={data.field || ''}
+                  onChange={(val) => update('field', val)}
+                />
+
+                <SelectInput
+                  label="Year of study"
+                  placeholder="Select your year"
+                  value={data.graduationYear || ''}
+                  onChange={(val) => update('graduationYear', val)}
+                  options={['1st year', '2nd year', '3rd year', '4th year', '5th year', 'Graduate']}
+                />
+
+                <TextArea
+                  label="Short bio"
+                  placeholder="Tell us a bit about yourself. What drives you?"
+                  value={data.bio || ''}
+                  onChange={(val) => update('bio', val)}
+                  rows={3}
+                />
+
+                <div className="pt-6 border-t border-[#E6E8EF] flex items-center gap-2 text-xs text-[#4E6385]">
+                  <Shield size={16} />
+                  Your information is secure and used only to improve your experience.
+                </div>
+
+                <div className="flex gap-3 pt-6">
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                  <SecondaryButton onClick={() => saveDraftNow(data, step)}>
+                    Save draft
+                  </SecondaryButton>
+                </div>
+
+                {saveStatus !== 'idle' && (
+                  <motion.p
+                    className="text-xs mt-2"
+                    style={{
+                      color: saveStatus === 'saved' ? '#059669' : saveStatus === 'error' ? '#FF4D4F' : '#6B7280',
+                    }}
+                  >
+                    {saveStatus === 'saving' && 'Saving…'}
+                    {saveStatus === 'saved' && '✓ Saved'}
+                    {saveStatus === 'error' && 'Could not save — progress is safe locally'}
+                  </motion.p>
+                )}
+              </FormCard>
+            </div>
+
+            <SidePanel
+              title="Start here"
+              subtitle="A complete profile helps us match you with the right opportunities."
+              trustPoints={[
+                { icon: '🎯', title: 'Better matches', description: 'Find opportunities that fit your goals.' },
+                { icon: '💪', title: 'Show your potential', description: 'Organizations see your strengths.' },
+                { icon: '🚀', title: 'Get discovered', description: 'Build opportunities together.' },
+              ]}
+            />
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 1: Skills
+  if (step === 1) {
+    return (
+      <OnboardingLayout showLogo>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <Stepper steps={STEPS} currentStep={step} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <FormCard
+                title="What are your skills?"
+                subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
+              >
+                <ChipSelector
+                  label="Select skill categories"
+                  options={SKILL_CATEGORIES}
+                  value={data.skills || []}
+                  onChange={(val) => update('skills', val)}
+                  multi={true}
+                />
+
+                <TextArea
+                  label="Other skills or interests"
+                  placeholder="Add any custom skills not listed above. (e.g., 'Video editing', 'Grant writing', 'Budget management')"
+                  value={data.otherSkills || ''}
+                  onChange={(val) => update('otherSkills', val)}
+                  rows={3}
+                />
+
+                <TextArea
+                  label="Tell us about your experience"
+                  placeholder="Share any relevant projects, work, or volunteer experience. Be specific about what you've accomplished."
+                  value={data.goals || ''}
+                  onChange={(val) => update('goals', val)}
+                  rows={3}
+                  helper="This helps organizations understand what you can contribute."
+                />
+
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                </div>
+              </FormCard>
+            </div>
+
+            <SidePanel
+              title="Show what you can do"
+              subtitle="Your skills are what organizations are looking for."
+              trustPoints={[
+                { icon: '⭐', title: 'Specificity matters', description: 'Detailed skills attract better matches.' },
+                { icon: '📚', title: 'Be honest', description: 'Organizations appreciate authentic profiles.' },
+                { icon: '🎯', title: 'Grow together', description: 'Learn new skills through real projects.' },
+              ]}
+            />
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 2: Causes
+  if (step === 2) {
+    return (
+      <OnboardingLayout showLogo>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <Stepper steps={STEPS} currentStep={step} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <FormCard
+                title="What causes matter to you?"
+                subtitle="Select the causes and issues you're passionate about helping."
+              >
+                <ChipSelector
+                  label="Select causes you care about"
+                  options={CAUSES}
+                  value={data.causes || []}
+                  onChange={(val) => update('causes', val)}
+                  multi={true}
+                />
+
+                <TextArea
+                  label="Why these causes matter to you"
+                  placeholder="Share your motivation. What impact do you want to create?"
+                  value={data.motivation || ''}
+                  onChange={(val) => update('motivation', val)}
+                  rows={3}
+                />
+
+                <FormField label="Work preference">
+                  <div className="space-y-3">
+                    {['Remote', 'In-person', 'Hybrid'].map(opt => (
+                      <label key={opt} className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="workMode"
+                          value={opt}
+                          checked={data.workMode === opt}
+                          onChange={(e) => update('workMode', e.target.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="font-medium text-[#0B163F]">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                </FormField>
+
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                </div>
+              </FormCard>
+            </div>
+
+            <SidePanel
+              title="Make the impact you want"
+              subtitle="Aligned values create better collaborations."
+              trustPoints={[
+                { icon: '💚', title: 'Purpose-driven', description: 'Work on causes you believe in.' },
+                { icon: '🤝', title: 'Find allies', description: 'Connect with like-minded people.' },
+                { icon: '📈', title: 'Real change', description: 'Contribute to meaningful projects.' },
+              ]}
+            />
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 3: Availability
+  if (step === 3) {
+    return (
+      <OnboardingLayout showLogo>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <Stepper steps={STEPS} currentStep={step} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <FormCard
+                title="When can you contribute?"
+                subtitle="Help organizations understand your availability and preferences."
+              >
+                <SelectInput
+                  label="Hours per week"
+                  placeholder="How much time can you dedicate?"
+                  value={data.availability || ''}
+                  onChange={(val) => update('availability', val)}
+                  options={AVAILABILITY_OPTIONS}
+                />
+
+                <SelectInput
+                  label="Preferred project length"
+                  placeholder="How long are you willing to commit?"
+                  value={data.projectLength || ''}
+                  onChange={(val) => update('projectLength', val)}
+                  options={[
+                    { value: 'short', label: 'Short-term (1-2 weeks)' },
+                    { value: 'medium', label: 'Medium-term (1-3 months)' },
+                    { value: 'long', label: 'Long-term (3+ months)' },
+                    { value: 'flexible', label: 'Flexible' },
+                  ]}
+                />
+
+                <FormField label="When can you start?">
+                  <input
+                    type="date"
+                    value={data.startDate || ''}
+                    onChange={(e) => update('startDate', e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] transition-all"
+                  />
+                </FormField>
+
+                <TextArea
+                  label="Types of projects you're interested in"
+                  placeholder="What kind of work excites you? (e.g., website redesign, social media strategy, data analysis, research, event planning)"
+                  value={data.projectInterests || ''}
+                  onChange={(val) => update('projectInterests', val)}
+                  rows={3}
+                />
+
+                <TextInput
+                  label="LinkedIn (optional)"
+                  placeholder="https://linkedin.com/in/yourname"
+                  value={data.linkedin || ''}
+                  onChange={(val) => update('linkedin', val)}
+                />
+
+                <TextInput
+                  label="GitHub (optional)"
+                  placeholder="https://github.com/yourprofile"
+                  value={data.github || ''}
+                  onChange={(val) => update('github', val)}
+                />
+
+                <TextInput
+                  label="Portfolio (optional)"
+                  placeholder="https://yourportfolio.com"
+                  value={data.portfolio || ''}
+                  onChange={(val) => update('portfolio', val)}
+                />
+
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                </div>
+              </FormCard>
+            </div>
+
+            <SidePanel
+              title="Set your expectations"
+              subtitle="Clear availability helps both you and organizations."
+              trustPoints={[
+                { icon: '⏰', title: 'Right fit', description: 'Match projects to your schedule.' },
+                { icon: '📋', title: 'Clear expectations', description: 'Everyone knows what to expect.' },
+                { icon: '✨', title: 'Sustainable impact', description: 'Work at a pace that suits you.' },
+              ]}
+            />
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 4: Complete
+  if (step === 4) {
+    return (
+      <OnboardingLayout showLogo>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <Stepper steps={STEPS} currentStep={step} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <FormCard
+                title="You're all set!"
+                subtitle="Review your profile and get started finding opportunities."
+              >
+                <div className="space-y-4">
+                  <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                    <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-1">Profile</p>
+                    <p className="text-base font-semibold text-[#0B163F]">{data.name || 'Your profile'}</p>
+                    {data.field && <p className="text-sm text-[#4E6385]">{data.field} at {data.university || 'your university'}</p>}
+                  </div>
+
+                  {data.skills?.length > 0 && (
+                    <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.skills.map(s => (
+                          <span key={s} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  {errors[field.name] && (
-                    <p className="text-red-500 text-xs mt-1.5">{errors[field.name]}</p>
+
+                  {data.causes?.length > 0 && (
+                    <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Causes You Care About</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.causes.map(c => (
+                          <span key={c} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
+
+                <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
+                  <p className="text-sm text-[#4E6385] mb-4">
+                    <strong>What happens next?</strong> We'll match you with opportunities that align with your skills, availability, and values. You can browse opportunities, apply to projects, and start making an impact.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <PrimaryButton
+                    onClick={next}
+                    loading={submitting}
+                  >
+                    Create profile
+                  </PrimaryButton>
+                </div>
+
+                {submitError && (
+                  <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-lg border border-[#FFCCC7]">
+                    {submitError}
+                  </motion.p>
+                )}
+              </FormCard>
             </div>
-          </motion.div>
-        </AnimatePresence>
 
-        {submitError && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-            className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2"
-          >
-            {submitError}
-          </motion.p>
-        )}
-
-        {/* Save status indicator */}
-        <AnimatePresence>
-          {saveStatus !== 'idle' && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-1.5 text-[11px] font-medium mb-2"
-              style={{
-                color: saveStatus === 'saved' ? '#059669'
-                     : saveStatus === 'error'  ? '#B45309'
-                     : '#6B7280',
-              }}>
-              {saveStatus === 'saving' && (
-                <><motion.span animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-                  className="inline-block w-3 h-3 border-[1.5px] border-gray-300 border-t-gray-500 rounded-full"/>
-                  Saving…</>
-              )}
-              {saveStatus === 'saved'  && <>✓ Saved</>}
-              {saveStatus === 'error'  && <>Could not save — progress is safe locally</>}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="flex justify-between items-center">
-          <button
-            onClick={back}
-            disabled={step === 0 || submitting}
-            className="btn-secondary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            ← Back
-          </button>
-          <button
-            onClick={next}
-            disabled={submitting}
-            className="btn-honey text-sm py-2.5 px-6 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <span className="flex items-center gap-2">
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-                  className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full"
-                />
-                Saving…
-              </span>
-            ) : step === STEPS.length - 1 ? 'Create my profile →' : 'Continue →'}
-          </button>
-        </div>
-
-        <p className="text-center text-xs text-navy-400 mt-4">
-          Step {step + 1} of {STEPS.length} — you can always edit your profile later
-        </p>
-      </div>
-    </div>
-  )
+            <SidePanel
+              title="Ready to make a difference"
+              subtitle="Your profile is ready. Find opportunities now."
+              trustPoints={[
+                { icon: '🔍', title: 'Discover projects', description: 'Browse opportunities that match you.' },
+                { icon: '📝', title: 'Apply now', description: 'Find the right fit for your goals.' },
+                { icon: '🚀', title: 'Start contributing', description: 'Make real impact from day one.' },
+              ]}
+            />
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
 }
