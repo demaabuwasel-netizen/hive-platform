@@ -316,9 +316,6 @@ export default function StudentOnboarding() {
 
                 <div className="flex gap-3 pt-6">
                   <PrimaryButton onClick={next}>Continue</PrimaryButton>
-                  <SecondaryButton onClick={() => saveDraftNow(data, step)}>
-                    Save draft
-                  </SecondaryButton>
                 </div>
 
                 {saveStatus !== 'idle' && (

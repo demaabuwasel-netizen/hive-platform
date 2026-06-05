@@ -297,9 +297,6 @@ export default function NGOOnboarding() {
                   >
                     Continue
                   </PrimaryButton>
-                  <SecondaryButton onClick={() => saveDraftNow(data, step)}>
-                    Save draft
-                  </SecondaryButton>
                 </div>
 
                 {saveStatus !== 'idle' && (
