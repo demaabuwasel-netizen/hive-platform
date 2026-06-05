@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, Target, Zap, CheckCircle2, Rocket, Shield } from 'lucide-react'
+import { Building2, Target, Zap, CheckCircle2, Rocket, Shield, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, ngoProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
@@ -53,8 +53,61 @@ export default function NGOOnboarding() {
   const [saveStatus, setSaveStatus] = useState('idle')
   const [welcomeBack, setWelcomeBack] = useState(false)
 
+  const [newPreferredSkill, setNewPreferredSkill] = useState('')
+  const [newProjectType, setNewProjectType] = useState('')
+
   const restoredRef = useRef(false)
   const debounceTimer = useRef(null)
+
+  const PREFERRED_SKILLS = [
+    'Web Development',
+    'Data Analysis',
+    'Social Media Management',
+    'Grant Writing',
+    'Graphic Design',
+    'Content Writing',
+    'Project Management',
+    'Marketing',
+    'Video Production',
+    'Research',
+  ]
+
+  const PROJECT_TYPES = [
+    'Website Development',
+    'Social Media Campaign',
+    'Data Analysis',
+    'Research Project',
+    'Event Planning',
+    'Content Creation',
+    'Grant Writing',
+    'Graphic Design',
+    'Marketing Strategy',
+    'Other',
+  ]
+
+  const handleAddPreferredSkill = (skill) => {
+    const currentSkills = Array.isArray(data.preferredSkills) ? data.preferredSkills : []
+    if (!currentSkills.includes(skill)) {
+      update('preferredSkills', [...currentSkills, skill])
+    }
+  }
+
+  const handleRemovePreferredSkill = (skill) => {
+    const currentSkills = Array.isArray(data.preferredSkills) ? data.preferredSkills : []
+    update('preferredSkills', currentSkills.filter(s => s !== skill))
+  }
+
+  const handleAddProjectType = (type) => {
+    const currentTypes = Array.isArray(data.projectTypes) ? data.projectTypes : []
+    if (!currentTypes.includes(type)) {
+      update('projectTypes', [...currentTypes, type])
+    }
+  }
+
+  const handleRemoveProjectType = (type) => {
+    const currentTypes = Array.isArray(data.projectTypes) ? data.projectTypes : []
+    update('projectTypes', currentTypes.filter(t => t !== type))
+  }
 
   const doSave = useCallback(async (d, s) => {
     if (!user?.id) return
@@ -150,6 +203,8 @@ export default function NGOOnboarding() {
           helpNeeded: data.helpNeeded?.trim() || null,
           imageUrl: data.imageUrl?.trim() || null,
           tags: data.causes || [],
+          preferred_skills: Array.isArray(data.preferredSkills) ? data.preferredSkills : [],
+          project_types: Array.isArray(data.projectTypes) ? data.projectTypes : [],
           website: data.website?.trim() || null,
           instagram: data.instagram?.trim() || null,
           twitter: data.twitter?.trim() || null,
@@ -416,21 +471,145 @@ export default function NGOOnboarding() {
                   multi={true}
                 />
 
-                <TextArea
-                  label="Preferred student skills"
-                  placeholder="What specific skills do you value in volunteers? (e.g., web development, social media, data analysis, grant writing)"
-                  value={data.skills || ''}
-                  onChange={(val) => update('skills', val)}
-                  rows={3}
-                />
+                {/* Preferred Student Skills */}
+                <div>
+                  <label className="text-xs font-semibold text-[#0B163F] block mb-2">Preferred student skills (select one or more)</label>
+                  {/* Display selected skills */}
+                  {Array.isArray(data.preferredSkills) && data.preferredSkills.length > 0 && (
+                    <div className="mb-3 p-3 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
+                      <div className="flex flex-wrap gap-2">
+                        {data.preferredSkills.map((skill, idx) => (
+                          <div key={idx} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
+                            <p className="text-xs font-semibold text-[#0B163F]">{skill}</p>
+                            <button onClick={() => handleRemovePreferredSkill(skill)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Dropdown + custom input */}
+                  <div className="space-y-2">
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          if (e.target.value === 'other') {
+                            setNewPreferredSkill('')
+                          } else {
+                            handleAddPreferredSkill(e.target.value)
+                          }
+                          e.target.value = ''
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                      <option value="">Select a skill...</option>
+                      {PREFERRED_SKILLS.map(skill => (
+                        <option key={skill} value={skill}>{skill}</option>
+                      ))}
+                      <option value="other">Other (type custom)</option>
+                    </select>
+                    {/* Custom input for "Other" */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type custom skill..."
+                        value={newPreferredSkill}
+                        onChange={(e) => setNewPreferredSkill(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && newPreferredSkill.trim()) {
+                            handleAddPreferredSkill(newPreferredSkill.trim())
+                            setNewPreferredSkill('')
+                          }
+                        }}
+                        className="flex-1 px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] placeholder-[#9CA3AF]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPreferredSkill.trim()) {
+                            handleAddPreferredSkill(newPreferredSkill.trim())
+                            setNewPreferredSkill('')
+                          }
+                        }}
+                        className="px-4 py-2.5 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs hover:shadow-sm transition-all"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                <TextArea
-                  label="Project categories you offer"
-                  placeholder="What types of projects do you typically have? (e.g., social media management, website development, research, event planning)"
-                  value={data.projectTypes || ''}
-                  onChange={(val) => update('projectTypes', val)}
-                  rows={3}
-                />
+                {/* Project Categories */}
+                <div>
+                  <label className="text-xs font-semibold text-[#0B163F] block mb-2">Project categories you offer (select one or more)</label>
+                  {/* Display selected project types */}
+                  {Array.isArray(data.projectTypes) && data.projectTypes.length > 0 && (
+                    <div className="mb-3 p-3 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
+                      <div className="flex flex-wrap gap-2">
+                        {data.projectTypes.map((type, idx) => (
+                          <div key={idx} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
+                            <p className="text-xs font-semibold text-[#0B163F]">{type}</p>
+                            <button onClick={() => handleRemoveProjectType(type)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Dropdown + custom input */}
+                  <div className="space-y-2">
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          if (e.target.value === 'other') {
+                            setNewProjectType('')
+                          } else {
+                            handleAddProjectType(e.target.value)
+                          }
+                          e.target.value = ''
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                      <option value="">Select a project type...</option>
+                      {PROJECT_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                      <option value="other">Other (type custom)</option>
+                    </select>
+                    {/* Custom input for "Other" */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type custom project type..."
+                        value={newProjectType}
+                        onChange={(e) => setNewProjectType(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && newProjectType.trim()) {
+                            handleAddProjectType(newProjectType.trim())
+                            setNewProjectType('')
+                          }
+                        }}
+                        className="flex-1 px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] placeholder-[#9CA3AF]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newProjectType.trim()) {
+                            handleAddProjectType(newProjectType.trim())
+                            setNewProjectType('')
+                          }
+                        }}
+                        className="px-4 py-2.5 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs hover:shadow-sm transition-all"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex gap-3 pt-6">
                   <SecondaryButton onClick={back}>Back</SecondaryButton>
