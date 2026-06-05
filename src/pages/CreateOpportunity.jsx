@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { createOpportunity, updateOpportunity, fetchOpportunity } from '../services/opportunities'
+import { createOpportunity, updateOpportunity, fetchOpportunity, saveDraftOpportunity } from '../services/opportunities'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, X, Check, CheckCircle2,
@@ -124,9 +124,9 @@ export default function CreateOpportunity() {
   const [published, setPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [draftSaving, setDraftSaving] = useState(false)
-  const [draftSaved, setDraftSaved]   = useState(false)  // brief "Saved ✓" flash
-  const [draftError, setDraftError]   = useState(false)  // brief error flash
-  const [lastSavedAt, setLastSavedAt] = useState(null)   // Date of last successful save
+  const [draftSaved, setDraftSaved]   = useState(false)   // brief "Saved ✓" flash
+  const [draftError, setDraftError]   = useState(null)    // null or the real error string
+  const [lastSavedAt, setLastSavedAt] = useState(null)    // Date of last successful save
   const [focusedField, setFocused] = useState(null)
   const [errors, setErrors]       = useState({})
   const [loadingEdit, setLoadingEdit] = useState(!!editId)
@@ -242,23 +242,17 @@ export default function CreateOpportunity() {
 
   async function saveDraft() {
     if (!user?.id || draftSaving) return
-    setDraftSaving(true); setDraftSaved(false); setDraftError(false)
+    setDraftSaving(true); setDraftSaved(false); setDraftError(null)
     try {
-      const targetId = draftIdRef.current
-      let result
-      if (targetId) {
-        result = await updateOpportunity(targetId, user.id, form, 'draft')
-      } else {
-        result = await createOpportunity(user.id, form, 'draft')
-        draftIdRef.current = result.id
-      }
+      const savedId = await saveDraftOpportunity(user.id, form, draftIdRef.current)
+      draftIdRef.current = savedId
       setLastSavedAt(new Date())
       setDraftSaved(true)
       setTimeout(() => setDraftSaved(false), 3000)
     } catch (err) {
-      console.error('Save draft error:', err)
-      setDraftError(true)
-      setTimeout(() => setDraftError(false), 4000)
+      console.error('[saveDraft]', err.message)
+      setDraftError(err.message)
+      setTimeout(() => setDraftError(null), 8000)
     } finally {
       setDraftSaving(false)
     }
@@ -749,12 +743,16 @@ export default function CreateOpportunity() {
               )}
             </div>
 
-            {/* Autosave status line */}
-            {lastSavedAt && (
+            {/* Status line — autosave time or real error message */}
+            {draftError ? (
+              <p className="text-center text-[11px] mt-2 leading-snug" style={{ color: '#EF4444' }}>
+                {draftError}
+              </p>
+            ) : lastSavedAt ? (
               <p className="text-center text-[11px] mt-2" style={{ color: '#9BAAC0' }}>
                 Autosaved · {lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
-            )}
+            ) : null}
           </div>
 
         </div>
