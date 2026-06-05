@@ -46,7 +46,7 @@ function hasDraftData(d) {
 }
 
 export default function StudentOnboarding() {
-  const { completeOnboarding, markOnboardingDone, user, profile } = useApp()
+  const { completeOnboarding, markOnboardingDone, user, profile, logout } = useApp()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [data, setData] = useState({})
@@ -177,12 +177,14 @@ export default function StudentOnboarding() {
     if (step > 0) setStep(s => s - 1)
   }
 
-  function handleExitOnboarding() {
+  async function handleExitOnboarding() {
     // Clear localStorage
     try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
     // Clear data
     setData({})
     setStep(0)
+    // Log out and reset auth
+    await logout()
   }
 
   // Success screen
