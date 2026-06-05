@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket } from 'lucide-react'
+import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
@@ -143,19 +143,61 @@ export default function StudentOnboarding() {
       setSubmitting(true)
       setSubmitError('')
       try {
+        // Parse start date for profile compatibility
+        let startImmediately = false
+        let startMonth = ''
+        let startYear = ''
+        let startDate = ''
+
+        if (data.startDate === 'immediate') {
+          startImmediately = true
+        } else if (data.startDate) {
+          startDate = data.startDate
+          // Parse date string (YYYY-MM-DD) to month/year
+          const [year, month] = data.startDate.split('-')
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+          if (month && year) {
+            const monthIndex = parseInt(month) - 1
+            if (monthIndex >= 0 && monthIndex < 12) {
+              startMonth = monthNames[monthIndex]
+              startYear = year
+            }
+          }
+        }
+
         const profile = {
           name: data.name?.trim() || null,
           field: data.field?.trim() || null,
           university: data.university?.trim() || null,
+          country: data.country?.trim() || null,
+          city: data.city?.trim() || null,
+          graduation_year: data.graduationYear || null,
+          bio: data.bio?.trim() || null,
           skills: data.skills || [],
           interests: data.causes || [],
           languages: data.languages || [],
+          work_mode: data.workMode || null,
+          work_preference: data.workMode || null,
+          motivation: data.motivation?.trim() || null,
           availability: data.availability || null,
+          project_length: data.projectLength || null,
+          project_interests: data.projectInterests?.trim() || null,
+          start_date: startDate || null,
+          start_immediately: startImmediately,
+          start_month: startMonth || null,
+          start_year: startYear || null,
+          // Camel case versions for profile object
+          workMode: data.workMode || null,
+          projectLength: data.projectLength || null,
+          projectInterests: data.projectInterests?.trim() || null,
+          startDate: startDate || null,
+          startImmediately: startImmediately,
+          startMonth: startMonth || null,
+          startYear: startYear || null,
           phone: data.phone?.trim() || null,
           linkedin: data.linkedin?.trim() || null,
           github: data.github?.trim() || null,
           portfolio: data.portfolio?.trim() || null,
-          bio: data.bio?.trim() || null,
           goals: data.goals?.trim() || null,
           links: {
             linkedin: data.linkedin?.trim() || null,
@@ -482,12 +524,38 @@ export default function StudentOnboarding() {
                 />
 
                 <FormField label="When can you start?">
-                  <input
-                    type="date"
-                    value={data.startDate || ''}
-                    onChange={(e) => update('startDate', e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
-                  />
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white hover:bg-[#FAF6EA] transition-all group" onClick={() => update('startDate', 'immediate')}>
+                      <input
+                        type="radio"
+                        name="startDate"
+                        value="immediate"
+                        checked={data.startDate === 'immediate'}
+                        onChange={(e) => update('startDate', e.target.value)}
+                        className="w-4 h-4 accent-[#0B163F]"
+                      />
+                      <span className="font-semibold text-[#0B163F]">Immediately</span>
+                    </label>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="startDateType"
+                        value="specific"
+                        checked={data.startDate !== 'immediate' && !!data.startDate}
+                        onChange={() => {}}
+                        className="w-4 h-4 accent-[#0B163F] mt-1"
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold text-[#0B163F] mb-2">Specific date</p>
+                        <input
+                          type="date"
+                          value={data.startDate === 'immediate' ? '' : (data.startDate || '')}
+                          onChange={(e) => update('startDate', e.target.value)}
+                          className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+                        />
+                      </div>
+                    </label>
+                  </div>
                 </FormField>
 
                 <TextArea
