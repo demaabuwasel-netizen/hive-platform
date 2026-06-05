@@ -168,10 +168,18 @@ export default function NGOOnboarding() {
     if (step > 0) setStep(s => s - 1)
   }
 
+  function handleExitOnboarding() {
+    // Clear localStorage
+    try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
+    // Clear data
+    setData({})
+    setStep(0)
+  }
+
   // Success screen
   if (done) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <div className="flex justify-center items-center min-h-[60vh]">
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
@@ -210,7 +218,7 @@ export default function NGOOnboarding() {
   // Step 0: Organization
   if (step === 0) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -322,7 +330,7 @@ export default function NGOOnboarding() {
   // Step 1: Mission
   if (step === 1) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -380,7 +388,7 @@ export default function NGOOnboarding() {
   // Step 2: Focus Areas
   if (step === 2) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -430,7 +438,7 @@ export default function NGOOnboarding() {
   // Step 3: Verification
   if (step === 3) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -499,7 +507,7 @@ export default function NGOOnboarding() {
   // Step 4: Complete
   if (step === 4) {
     return (
-      <OnboardingLayout showNavigation>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
