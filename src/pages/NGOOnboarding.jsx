@@ -9,7 +9,7 @@ import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
-import { TextInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
+import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import PhoneInput from '../components/Onboarding/PhoneInput'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
