@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import HiveLogo from '../components/HiveLogo'
 import cardsBackground from '../assets/cards_background.png'
+import { AlertCircle, X } from 'lucide-react'
 
 function HexBg() {
   return (
@@ -20,6 +21,7 @@ export default function RoleSelection() {
   const { user, updateRole } = useApp()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [showConfirmExit, setShowConfirmExit] = useState(false)
 
   async function select(role) {
     setLoading(true)
@@ -31,6 +33,17 @@ export default function RoleSelection() {
     }
   }
 
+  function handleConfirmExit() {
+    // Clear any draft data from localStorage
+    try {
+      const studentDraftKey = `onboarding_draft_student_${user?.id}`
+      const ngoDraftKey = `onboarding_draft_ngo_${user?.id}`
+      localStorage.removeItem(studentDraftKey)
+      localStorage.removeItem(ngoDraftKey)
+    } catch {}
+    navigate('/', { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-[#FFF7E6] flex flex-col relative overflow-hidden">
       <HexBg />
@@ -38,9 +51,9 @@ export default function RoleSelection() {
 
       {/* Top bar */}
       <div className="p-6 relative">
-        <Link to="/" aria-label="Back to home">
+        <button onClick={() => setShowConfirmExit(true)} aria-label="Back to home" className="hover:opacity-80 transition-opacity">
           <HiveLogo size={28} nameSize="text-lg" />
-        </Link>
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 relative">
@@ -156,6 +169,50 @@ export default function RoleSelection() {
           </p>
         </motion.div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmExit && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowConfirmExit(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#FFECEB' }}>
+                <AlertCircle size={20} style={{ color: '#FF4D4F' }} />
+              </div>
+              <h3 className="text-lg font-extrabold text-[#0D183D]">Leave onboarding?</h3>
+            </div>
+
+            <p className="text-[13px] text-[#4B6382] mb-6">
+              Are you sure you want to go back? Any unsaved progress will be cleared.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmExit(false)}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold text-[12px] border-2 border-[#0D183D] text-[#0D183D] hover:bg-[#F8F9FB] transition-colors"
+              >
+                No, continue
+              </button>
+              <button
+                onClick={handleConfirmExit}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold text-[12px] text-white transition-colors"
+                style={{ background: '#FF4D4F' }}
+              >
+                Yes, leave
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   )
 }
