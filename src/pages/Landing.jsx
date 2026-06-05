@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import HiveLogo from '../components/HiveLogo'
 import HeroParallaxWithImages from '../components/HeroParallaxWithImages'
+import { useApp } from '../context/AppContext'
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
 import img1 from '../assets/img1.png'   // hero: student with connection network
@@ -394,12 +395,25 @@ function VoiceModal({ onClose, onSubmit }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Landing() {
+  const { user } = useApp()
+  const navigate = useNavigate()
+
   // ── Voices state — seed + user-submitted (localStorage) ─────────────────────
   const [customVoices, setCustomVoices] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hive_voices') ?? '[]') } catch { return [] }
   })
   const [voiceModal, setVoiceModal] = useState(false)
   const allVoices = [...SEED_VOICES, ...customVoices]
+
+  const handleGetStarted = () => {
+    if (user && user.role) {
+      // If authenticated with a role, go to dashboard
+      navigate(user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo')
+    } else {
+      // Otherwise go to student signup
+      navigate('/auth?mode=signup&role=student')
+    }
+  }
 
   function handleVoiceSubmit(data) {
     const entry = { id: `u-${Date.now()}`, ...data }
@@ -808,11 +822,11 @@ export default function Landing() {
             Join a growing community of students turning their skills into real-world experience.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/auth?mode=signup&role=student"
+            <button onClick={handleGetStarted}
               className="inline-flex items-center justify-center px-8 py-3.5 rounded-2xl text-base font-semibold text-white transition-opacity hover:opacity-90"
               style={{ background:C.honey }}>
-              Get started free →
-            </Link>
+              {user && user.role ? 'Go to dashboard' : 'Get started free'} →
+            </button>
             <Link to="/matches"
               className="inline-flex items-center justify-center px-8 py-3.5 rounded-2xl text-base font-semibold border transition-all hover:bg-white/5"
               style={{ color:'white', borderColor:'rgba(255,255,255,0.18)' }}>
