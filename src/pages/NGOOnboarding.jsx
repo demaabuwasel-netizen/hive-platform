@@ -130,7 +130,10 @@ export default function NGOOnboarding() {
   }
 
   async function next() {
-    if (!validate()) return
+    if (!validate()) {
+      console.log('Validation failed. Errors:', errors)
+      return
+    }
     if (step < STEPS.length - 1) {
       const nextStep = step + 1
       await saveDraftNow(data, nextStep)
@@ -228,6 +231,15 @@ export default function NGOOnboarding() {
                 subtitle="This helps Hive understand your work and match you with the right opportunities."
                 icon={Building2}
               >
+                {Object.keys(errors).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl bg-[#FFF1F0] border border-[#FFCCC7] text-xs text-[#FF4D4F] font-medium"
+                  >
+                    Please fill in all required fields
+                  </motion.div>
+                )}
                 <TextInput
                   label="Organization name"
                   placeholder="Enter your organization name"

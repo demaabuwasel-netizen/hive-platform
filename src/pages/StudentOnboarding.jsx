@@ -240,6 +240,15 @@ export default function StudentOnboarding() {
                 subtitle="This helps organizations understand who you are and what you're passionate about."
                 icon={User}
               >
+                {Object.keys(errors).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl bg-[#FFF1F0] border border-[#FFCCC7] text-xs text-[#FF4D4F] font-medium"
+                  >
+                    Please fill in all required fields
+                  </motion.div>
+                )}
                 <TextInput
                   label="Full name"
                   placeholder="Your first and last name"
