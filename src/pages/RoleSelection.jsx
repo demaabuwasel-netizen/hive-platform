@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
@@ -18,10 +19,16 @@ const NGO_PERKS     = ['Describe your mission in plain language', 'Get matched w
 export default function RoleSelection() {
   const { user, updateRole } = useApp()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
 
   async function select(role) {
-    await updateRole(role)
-    navigate(role === 'student' ? '/onboarding/student' : '/onboarding/ngo')
+    setLoading(true)
+    try {
+      await updateRole(role)
+      navigate(role === 'student' ? '/onboarding/student' : '/onboarding/ngo')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,10 +73,13 @@ export default function RoleSelection() {
 
             {/* Student card */}
             <motion.button
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={!loading ? { y: -4, transition: { duration: 0.2 } } : {}}
+              whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={() => select('student')}
-              className="card text-left group border-2 border-transparent hover:border-honey-300 hover:shadow-glow-honey transition-all duration-200 cursor-pointer relative overflow-hidden"
+              disabled={loading}
+              className={`card text-left group border-2 border-transparent hover:border-honey-300 hover:shadow-glow-honey transition-all duration-200 relative overflow-hidden ${
+                loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               {/* Hex watermark */}
               <div className="absolute -top-4 -right-4 opacity-[0.07]" aria-hidden="true">
@@ -96,16 +106,19 @@ export default function RoleSelection() {
                 ))}
               </ul>
               <span className="btn-honey text-sm py-2.5 px-5 inline-block">
-                Continue as Student →
+                {loading ? 'Loading...' : 'Continue as Student →'}
               </span>
             </motion.button>
 
             {/* NGO card */}
             <motion.button
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={!loading ? { y: -4, transition: { duration: 0.2 } } : {}}
+              whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={() => select('ngo')}
-              className="card text-left group border-2 border-transparent hover:border-navy-300 transition-all duration-200 cursor-pointer relative overflow-hidden"
+              disabled={loading}
+              className={`card text-left group border-2 border-transparent hover:border-navy-300 transition-all duration-200 relative overflow-hidden ${
+                loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               {/* Hex watermark */}
               <div className="absolute -top-4 -right-4 opacity-[0.06]" aria-hidden="true">
@@ -132,7 +145,7 @@ export default function RoleSelection() {
                 ))}
               </ul>
               <span className="btn-navy text-sm py-2.5 px-5 inline-block">
-                Continue as NGO →
+                {loading ? 'Loading...' : 'Continue as NGO →'}
               </span>
             </motion.button>
           </div>
