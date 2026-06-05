@@ -26,6 +26,14 @@ export default function RoleSelection() {
   async function select(role) {
     setLoading(true)
     try {
+      // Clear any old drafts before selecting a new role
+      try {
+        const studentDraftKey = `onboarding_draft_student_${user?.id}`
+        const ngoDraftKey = `onboarding_draft_ngo_${user?.id}`
+        localStorage.removeItem(studentDraftKey)
+        localStorage.removeItem(ngoDraftKey)
+      } catch {}
+
       await updateRole(role)
       navigate(role === 'student' ? '/onboarding/student' : '/onboarding/ngo')
     } finally {

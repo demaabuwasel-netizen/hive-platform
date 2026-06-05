@@ -246,8 +246,9 @@ export function AppProvider({ children }) {
   // Called from RoleSelection — sets role in DB and updates context
   async function updateRole(role) {
     if (!user) return
-    await updateUserRow(user.id, { role })
-    setUserState(prev => prev ? { ...prev, role } : prev)
+    // Reset onboarding step to 0 when selecting a new role to ensure fresh start
+    await updateUserRow(user.id, { role, onboarding_step: 0 })
+    setUserState(prev => prev ? { ...prev, role, onboardingStep: 0 } : prev)
   }
 
   // Called at the end of onboarding — saves profile to DB, marks complete.
