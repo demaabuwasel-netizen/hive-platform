@@ -1,20 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Building2, MapPin, Mail, Phone, Globe, Edit3, Heart, Zap, Target } from 'lucide-react'
+import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import cardsBackground from '../assets/cards_background.png'
 
 export default function NGOProfile() {
   const { user, profile } = useApp()
-  const navigate = useNavigate()
-
-  const [editingAbout, setEditingAbout] = useState(false)
-  const [aboutDraft, setAboutDraft] = useState(profile?.description || '')
-
-  const handleSaveAbout = async () => {
-    setEditingAbout(false)
-  }
 
   const displayName = profile?.name || user?.name || 'Organization'
 
@@ -68,15 +59,6 @@ export default function NGOProfile() {
               </div>
             </div>
 
-            {/* RIGHT - Action Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/profile/ngo/edit')}
-              className="px-6 py-3 rounded-xl font-semibold text-sm"
-              style={{ background: '#0D183D', color: 'white' }}>
-              <Edit3 size={16} className="inline mr-2"/>Edit Profile
-            </motion.button>
           </div>
         </motion.div>
 
@@ -92,48 +74,15 @@ export default function NGOProfile() {
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
               className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
-                    <Building2 size={14} style={{ color: '#6366F1' }}/>
-                  </span>
-                  About
-                </h2>
-                {!editingAbout && (
-                  <button onClick={() => setEditingAbout(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    Edit <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingAbout ? (
-                <div className="space-y-3">
-                  <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                    placeholder="Write about your organization..."
-                    rows={4}
-                    style={{ background: '#F8F9FB' }}
-                    onFocus={e => e.target.style.borderColor = '#FFB703'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                  <div className="flex gap-2">
-                    <button onClick={handleSaveAbout}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                    <button onClick={() => {
-                      setAboutDraft(profile?.description || '')
-                      setEditingAbout(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                  {profile?.description || 'Add a description to help students understand your organization.'}
-                </p>
-              )}
+              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-3">
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
+                  <Building2 size={14} style={{ color: '#6366F1' }}/>
+                </span>
+                About
+              </h2>
+              <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                {profile?.description || 'No description yet'}
+              </p>
             </motion.div>
 
             {/* MISSION STATEMENT */}
