@@ -14,7 +14,6 @@ import RoleSelection from './pages/RoleSelection'
 import StudentOnboarding from './pages/StudentOnboarding'
 import NGOOnboarding from './pages/NGOOnboarding'
 import StudentProfile from './pages/StudentProfile'
-import NGOProfile from './pages/NGOProfile'
 import StudentDashboard from './pages/StudentDashboard'
 import NGODashboard from './pages/NGODashboard'
 import MatchResults from './pages/MatchResults'
@@ -207,7 +206,6 @@ function AppRoutes() {
 
       {/* ── Profile ── */}
       <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
-      <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
       <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
 
       {/* ── Create opportunity (full-page, no sidebar) ── */}
