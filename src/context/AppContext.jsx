@@ -27,13 +27,12 @@ export function AppProvider({ children }) {
   const [user, setUserState]             = useState(null)
   const [profile, setProfileState]       = useState(null)
   const [loading, setLoading]            = useState(true)
-  // Set to true when the 8-second ceiling fires — triggers recovery UI immediately
+  // Set to true when the 9-second ceiling fires — triggers recovery UI in LoadingScreen
   const [loadingTimedOut, setTimedOut]   = useState(false)
 
   // ── hydrateUser ─────────────────────────────────────────────────────────────
-  // Every await uses withStep (Promise.race) so each step resolves within 4 s
-  // regardless of whether Supabase / PostgREST is slow or swallowing AbortError.
-  // Never throws — always resolves via try/catch.
+  // Steps 1+2 use withStep with 2 s caps. Step 3 (profile) is fire-and-forget.
+  // Worst-case blocking time: 2+2 = 4 s. Never throws — always resolves via try/catch.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null); setProfileState(null); return
@@ -59,14 +58,14 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── 1. ensureUserRow (4 s cap) ─────────────────────────────────────────
+      // ── 1. ensureUserRow (2 s cap) ─────────────────────────────────────────
       console.log('[hydrateUser] step 1 — ensureUserRow')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 2000)
       console.log('[hydrateUser] step 1 — done')
 
-      // ── 2. getUserRow (4 s cap) ────────────────────────────────────────────
+      // ── 2. getUserRow (2 s cap) ────────────────────────────────────────────
       console.log('[hydrateUser] step 2 — getUserRow')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 2000)
       console.log('[hydrateUser] step 2 — done:', userRow
         ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
         : 'null (will use minimal state)')
@@ -110,24 +109,19 @@ export function AppProvider({ children }) {
         document.documentElement.classList[resolved === 'dark' ? 'add' : 'remove']('dark')
       }
 
-      // ── 3. Profile load (4 s cap, non-critical) ────────────────────────────
-      // .catch(() => null) so a profile timeout never blocks loading state
+      // ── 3. Profile load — fire-and-forget (never blocks finish/loading) ────
+      // Loading clears after step 2. Profile arrives asynchronously and triggers
+      // a re-render on whichever page the user is viewing. Pages handle null profile.
       if (userRow.role === 'student') {
-        console.log('[hydrateUser] step 3 — loadStudentProfile')
-        const p = await withStep(loadStudentProfile(authUser.id), 'loadStudentProfile').catch(e => {
-          console.warn('[hydrateUser] step 3 profile timeout/error:', e.message)
-          return null
-        })
-        setProfileState(p)
-        console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
+        console.log('[hydrateUser] step 3 — loadStudentProfile (background)')
+        withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
+          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
+          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
       } else if (userRow.role === 'ngo') {
-        console.log('[hydrateUser] step 3 — loadNgoProfile')
-        const p = await withStep(loadNgoProfile(authUser.id), 'loadNgoProfile').catch(e => {
-          console.warn('[hydrateUser] step 3 profile timeout/error:', e.message)
-          return null
-        })
-        setProfileState(p)
-        console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
+        console.log('[hydrateUser] step 3 — loadNgoProfile (background)')
+        withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
+          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
+          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
       } else {
         console.log('[hydrateUser] step 3 — skipped (role null)')
       }
@@ -154,16 +148,16 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 8 s ────────────────────────────────────────────────
-    // If loading is still true after 8 s, force it off and set loadingTimedOut
-    // so the recovery screen appears immediately in LoadingScreen.
+    // ── Absolute ceiling: 9 s ────────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(2 s) + getUserRow(2 s) = 7 s.
+    // The ceiling at 9 s gives a 2 s buffer and should NEVER fire in practice.
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 8 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 9 s ceiling fired — forcing loading=false')
         setLoading(false)
-        setTimedOut(true)   // tells LoadingScreen to show recovery UI immediately
+        setTimedOut(true)
       }
-    }, 8000)
+    }, 9000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
@@ -202,14 +196,15 @@ export function AppProvider({ children }) {
     }
 
     // ── Step 3: stored session found — validate with getSession() ─────────────
-    // bail fires if getSession() takes > 5 s, using storedUser as fallback
+    // bail fires if getSession() takes > 3 s, using storedUser as fallback.
+    // 3 s chosen so bail + steps (2 s each) = 7 s stays under the 9 s ceiling.
     const bail = setTimeout(async () => {
       if (disposed || hydrateStarted) return
       hydrateStarted = true
-      console.warn('[AppContext] getSession bail (5 s) — using storedUser fallback, uid:', storedUser.id)
+      console.warn('[AppContext] getSession bail (3 s) — using storedUser fallback, uid:', storedUser.id)
       try { await hydrateUser(storedUser) } catch (e) { console.error('[AppContext] fallback error:', e.message) }
       finish()
-    }, 5000)
+    }, 3000)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(bail)
