@@ -699,34 +699,124 @@ export default function NGOOnboarding() {
                 subtitle="Review your profile and get started."
                 icon={Rocket}
               >
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                    <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-1">Organization</p>
-                    <p className="text-base font-semibold text-[#0B163F]">{data.name || 'Your organization'}</p>
+                <div className="space-y-3">
+                  {/* Organization */}
+                  <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                    <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Organization</p>
+                    <p className="text-[13px] font-semibold text-[#0B163F]">{data.name || 'Your organization'}</p>
                   </div>
+
+                  {/* Location & Phone */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {data.city && (
+                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Location</p>
+                        <p className="text-[13px] font-semibold text-[#0B163F]">{data.city}</p>
+                      </div>
+                    )}
+                    {data.phone && (
+                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Phone</p>
+                        <p className="text-[13px] font-semibold text-[#0B163F]">{data.phone}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mission */}
                   {data.mission && (
-                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-1">Mission</p>
-                      <p className="text-sm text-[#0B163F] line-clamp-2">{data.mission}</p>
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Mission Statement</p>
+                      <p className="text-[13px] text-[#0B163F]">{data.mission}</p>
                     </div>
                   )}
+
+                  {/* Communities */}
+                  {data.communities && (
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Communities Served</p>
+                      <p className="text-[13px] text-[#0B163F]">{data.communities}</p>
+                    </div>
+                  )}
+
+                  {/* Organization Size */}
+                  {data.orgSize && (
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Organization Size</p>
+                      <p className="text-[13px] font-semibold text-[#0B163F]">{data.orgSize}</p>
+                    </div>
+                  )}
+
+                  {/* Help Needed */}
+                  {data.helpNeeded && (
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">What We Need Help With</p>
+                      <p className="text-[13px] text-[#0B163F]">{data.helpNeeded}</p>
+                    </div>
+                  )}
+
+                  {/* Focus Areas */}
                   {data.causes?.length > 0 && (
-                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Focus Areas</p>
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Focus Areas</p>
                       <div className="flex flex-wrap gap-2">
-                        {data.causes.slice(0, 3).map(c => (
-                          <span key={c} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
+                        {data.causes.map(c => (
+                          <span key={c} className="px-3 py-1.5 bg-[#EC489320] rounded-full text-[11px] font-semibold text-[#EC4899]">
                             {c}
                           </span>
                         ))}
-                        {data.causes.length > 3 && (
-                          <span className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#4E6385] border border-[#E6E8EF]">
-                            +{data.causes.length - 3} more
-                          </span>
-                        )}
                       </div>
                     </div>
                   )}
+
+                  {/* Preferred Skills */}
+                  {Array.isArray(data.preferredSkills) && data.preferredSkills.length > 0 && (
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Preferred Student Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.preferredSkills.map((skill, i) => (
+                          <span key={i} className="px-3 py-1.5 bg-[#3B82F620] rounded-full text-[11px] font-semibold text-[#3B82F6]">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Project Types */}
+                  {Array.isArray(data.projectTypes) && data.projectTypes.length > 0 && (
+                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Project Categories</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.projectTypes.map((type, i) => (
+                          <span key={i} className="px-3 py-1.5 bg-[#10B98120] rounded-full text-[11px] font-semibold text-[#10B981]">
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Links */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {data.website && (
+                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Website</p>
+                        <p className="text-[11px] text-[#3B82F6] truncate">{data.website}</p>
+                      </div>
+                    )}
+                    {data.instagram && (
+                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Instagram</p>
+                        <p className="text-[11px] text-[#3B82F6] truncate">{data.instagram}</p>
+                      </div>
+                    )}
+                    {data.twitter && (
+                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Twitter</p>
+                        <p className="text-[11px] text-[#3B82F6] truncate">{data.twitter}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
