@@ -304,7 +304,7 @@ export default function MatchResults() {
       <div className="max-w-2xl mx-auto px-8 py-10">
         <EmptyState emoji="🔍" title="No matches yet"
           description="Complete your profile so our AI can find NGOs that match your skills and values."
-          actionLabel="Complete my profile" actionHref="/role-selection" />
+          actionLabel="Complete my profile" actionHref="/" />
       </div>
     )
   }

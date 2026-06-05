@@ -99,15 +99,21 @@ function GuestOnly({ children }) {
       console.log('[GuestOnly] User has completed onboarding — redirecting to dashboard')
       return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
     }
-    // If authenticated but NO role set, send to role selection
+    // SAFETY: If user has role but onboarding complete, don't send to role selection
+    // (This shouldn't happen but if it does, go to home not role-selection)
+    if (user.role && user.onboardingComplete) {
+      console.log('[GuestOnly] SAFETY: Completed user in guest guard — redirecting to home')
+      return <Navigate to="/" replace />
+    }
+    // If authenticated with role but onboarding not complete, send to onboarding
+    if (user.role && !user.onboardingComplete) {
+      console.log('[GuestOnly] User onboarding incomplete — redirecting to onboarding')
+      return <Navigate to={`/onboarding/${user.role}`} replace />
+    }
+    // If authenticated but NO role set, send to role selection (only valid for new users)
     if (!user.role) {
       console.log('[GuestOnly] User has no role — redirecting to role selection')
       return <Navigate to="/role-selection" replace />
-    }
-    // If authenticated with role but onboarding not complete, send to onboarding
-    if (!user.onboardingComplete) {
-      console.log('[GuestOnly] User onboarding incomplete — redirecting to onboarding')
-      return <Navigate to={`/onboarding/${user.role}`} replace />
     }
   }
   return children
@@ -134,11 +140,12 @@ function RoleSelectionGuard({ children }) {
   const { user, loading } = useApp()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/auth" replace />
-  // If user already has a role and started/completed onboarding, go to onboarding/dashboard
+  // CRITICAL SAFETY: If user has completed onboarding, NEVER let them access role-selection
+  // Send to home instead to prevent any chance of re-selecting a role
   if (user.role) {
     if (user.onboardingComplete) {
-      console.log('[RoleSelectionGuard] User already completed onboarding — redirecting to dashboard')
-      return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
+      console.log('[RoleSelectionGuard] SAFETY: Completed user tried to access role-selection — redirecting to home')
+      return <Navigate to="/" replace />
     } else {
       console.log('[RoleSelectionGuard] User already has role — redirecting to onboarding')
       return <Navigate to={`/onboarding/${user.role}`} replace />
@@ -191,15 +198,23 @@ function OAuthCallback() {
         console.log('[auth] public.users row:', userRow)
 
         let dest
-        if (!userRow?.role) {
+        // CRITICAL SAFETY: Never send completed users back to role-selection
+        // If they have a role AND completed onboarding, they should go to dashboard, period
+        if (userRow?.onboarding_complete && userRow?.role) {
+          dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
+          console.log('[auth] redirect →', dest, '(fully onboarded - safe routing)')
+        } else if (!userRow?.role) {
+          // No role at all - go to role selection (only valid for new users)
           dest = '/role-selection'
           console.log('[auth] redirect → /role-selection (no role set)')
         } else if (!userRow?.onboarding_complete) {
+          // Has role but not done onboarding
           dest = `/onboarding/${userRow.role}`
           console.log('[auth] redirect →', dest, '(onboarding incomplete)')
         } else {
+          // Fallback: go to dashboard if anything is weird
           dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
-          console.log('[auth] redirect →', dest, '(fully onboarded)')
+          console.log('[auth] redirect →', dest, '(safety fallback)')
         }
 
         navigate(dest, { replace: true })
