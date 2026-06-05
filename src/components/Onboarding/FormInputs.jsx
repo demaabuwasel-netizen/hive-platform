@@ -4,20 +4,20 @@ export function FormField({ label, required = false, error = null, children, hel
   return (
     <div>
       {label && (
-        <label className="block text-sm font-semibold text-[#0B163F] mb-2.5">
+        <label className="block text-xs font-semibold text-[#0B163F] mb-2">
           {label}
           {required && <span className="text-[#FFB400] ml-1">*</span>}
         </label>
       )}
       {children}
       {helper && !error && (
-        <p className="text-xs text-[#4E6385] mt-2 leading-relaxed">{helper}</p>
+        <p className="text-[10px] text-[#4E6385] mt-1.5 leading-relaxed">{helper}</p>
       )}
       {error && (
         <motion.p
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-[#FF4D4F] mt-2 font-medium"
+          className="text-[10px] text-[#FF4D4F] mt-1.5 font-medium"
         >
           {error}
         </motion.p>
@@ -40,7 +40,7 @@ export function TextInput({ label, placeholder, value, onChange, required = fals
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
@@ -65,7 +65,7 @@ export function SelectInput({ label, placeholder, options = [], value, onChange,
         <select
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] focus:outline-none appearance-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] focus:outline-none appearance-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
@@ -106,7 +106,7 @@ export function TextArea({ label, placeholder, value, onChange, required = false
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none resize-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none resize-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
@@ -142,7 +142,7 @@ export function ChipSelector({ label, options = [], value = [], onChange, requir
               }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all ${
                 isSelected
                   ? 'bg-[#0B163F] text-white shadow-md'
                   : 'bg-white border-2 border-[#E6E8EF] text-[#0B163F] hover:border-[#FFB400] hover:shadow-sm'

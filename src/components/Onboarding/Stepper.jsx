@@ -8,16 +8,16 @@ export default function Stepper({ steps, currentStep }) {
       transition={{ duration: 0.4 }}
       className="mb-12 flex justify-center"
     >
-      <div className="inline-flex items-center gap-2 px-8 py-6 rounded-2xl bg-white border border-[#E6E8EF] shadow-sm">
-        <div className="flex items-center gap-6">
+      <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-[#E6E8EF] shadow-sm">
+        <div className="flex items-center gap-4">
           {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center gap-6">
+            <div key={step.id} className="flex items-center gap-4">
               {/* Step indicator */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5">
                 <motion.button
                   type="button"
                   disabled
-                  className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all"
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs transition-all"
                   animate={{
                     background: index <= currentStep ? '#0B163F' : '#F5F7FB',
                     color: index <= currentStep ? '#FFFFFF' : '#9CA3AF',
@@ -31,12 +31,12 @@ export default function Stepper({ steps, currentStep }) {
                   }}
                 >
                   {index < currentStep ? (
-                    <span className="text-base">✓</span>
+                    <span className="text-sm">✓</span>
                   ) : (
                     <span className="font-semibold">{index + 1}</span>
                   )}
                 </motion.button>
-                <span className="text-[11px] font-semibold text-[#4E6385] whitespace-nowrap">
+                <span className="text-[9px] font-semibold text-[#4E6385] whitespace-nowrap">
                   {step.title}
                 </span>
               </div>

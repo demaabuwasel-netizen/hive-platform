@@ -220,7 +220,7 @@ export default function NGOOnboarding() {
           )}
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="Tell us about your organization"
                 subtitle="This helps Hive understand your work and match you with the right opportunities."
@@ -312,7 +312,7 @@ export default function NGOOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="Tell us about your mission"
                 subtitle="Help us understand the impact you're creating and the communities you serve."
@@ -370,7 +370,7 @@ export default function NGOOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="What are your focus areas?"
                 subtitle="Select the causes and areas your organization impacts."
@@ -420,7 +420,7 @@ export default function NGOOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="Build trust"
                 subtitle="Help students and funders learn more about your organization. All fields are optional."
@@ -489,7 +489,7 @@ export default function NGOOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="You're all set!"
                 subtitle="Review your profile and get started."

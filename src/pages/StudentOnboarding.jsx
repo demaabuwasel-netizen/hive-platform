@@ -232,7 +232,7 @@ export default function StudentOnboarding() {
           )}
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="Let's start with your profile"
                 subtitle="This helps organizations understand who you are and what you're passionate about."
@@ -334,7 +334,7 @@ export default function StudentOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="What are your skills?"
                 subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
@@ -385,7 +385,7 @@ export default function StudentOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="What causes matter to you?"
                 subtitle="Select the causes and issues you're passionate about helping."
@@ -445,7 +445,7 @@ export default function StudentOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="When can you contribute?"
                 subtitle="Help organizations understand your availability and preferences."
@@ -530,7 +530,7 @@ export default function StudentOnboarding() {
           <Stepper steps={STEPS} currentStep={step} />
 
           <div className="flex justify-center">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-5xl">
               <FormCard
                 title="You're all set!"
                 subtitle="Review your profile and get started finding opportunities."
