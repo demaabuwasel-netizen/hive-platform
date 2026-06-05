@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Sparkles, Heart, Calendar, CheckCircle2, Eye, Target, TrendingUp, Shield, Rocket } from 'lucide-react'
+import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
-import SidePanel from '../components/Onboarding/SidePanel'
 import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
@@ -232,8 +231,8 @@ export default function StudentOnboarding() {
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="Let's start with your profile"
                 subtitle="This helps organizations understand who you are and what you're passionate about."
@@ -321,16 +320,6 @@ export default function StudentOnboarding() {
                 )}
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Start here"
-              subtitle="A complete profile helps us match you with the right opportunities."
-              trustPoints={[
-                { icon: Target, title: 'Better matches', description: 'Find opportunities that fit your goals.' },
-                { icon: TrendingUp, title: 'Show your potential', description: 'Organizations see your strengths.' },
-                { icon: Rocket, title: 'Get discovered', description: 'Build opportunities together.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -344,8 +333,8 @@ export default function StudentOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="What are your skills?"
                 subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
@@ -382,16 +371,6 @@ export default function StudentOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Show what you can do"
-              subtitle="Your skills are what organizations are looking for."
-              trustPoints={[
-                { icon: Sparkles, title: 'Specificity matters', description: 'Detailed skills attract better matches.' },
-                { icon: TrendingUp, title: 'Be honest', description: 'Organizations appreciate authentic profiles.' },
-                { icon: Target, title: 'Grow together', description: 'Learn new skills through real projects.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -405,8 +384,8 @@ export default function StudentOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="What causes matter to you?"
                 subtitle="Select the causes and issues you're passionate about helping."
@@ -452,16 +431,6 @@ export default function StudentOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Make the impact you want"
-              subtitle="Aligned values create better collaborations."
-              trustPoints={[
-                { icon: Heart, title: 'Purpose-driven', description: 'Work on causes you believe in.' },
-                { icon: Sparkles, title: 'Find allies', description: 'Connect with like-minded people.' },
-                { icon: TrendingUp, title: 'Real change', description: 'Contribute to meaningful projects.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -475,8 +444,8 @@ export default function StudentOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="When can you contribute?"
                 subtitle="Help organizations understand your availability and preferences."
@@ -547,16 +516,6 @@ export default function StudentOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Set your expectations"
-              subtitle="Clear availability helps both you and organizations."
-              trustPoints={[
-                { icon: Calendar, title: 'Right fit', description: 'Match projects to your schedule.' },
-                { icon: Target, title: 'Clear expectations', description: 'Everyone knows what to expect.' },
-                { icon: Sparkles, title: 'Sustainable impact', description: 'Work at a pace that suits you.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -570,8 +529,8 @@ export default function StudentOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="You're all set!"
                 subtitle="Review your profile and get started finding opportunities."
@@ -644,16 +603,6 @@ export default function StudentOnboarding() {
                 )}
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Ready to make a difference"
-              subtitle="Your profile is ready. Find opportunities now."
-              trustPoints={[
-                { icon: Eye, title: 'Discover projects', description: 'Browse opportunities that match you.' },
-                { icon: Target, title: 'Apply now', description: 'Find the right fit for your goals.' },
-                { icon: Rocket, title: 'Start contributing', description: 'Make real impact from day one.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>

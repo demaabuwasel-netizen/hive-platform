@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, Target, Zap, CheckCircle2, Rocket, Eye, TrendingUp, BarChart3, Shield } from 'lucide-react'
+import { Building2, Target, Zap, CheckCircle2, Rocket, Shield } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, ngoProfileToData } from '../services/storage'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
-import SidePanel from '../components/Onboarding/SidePanel'
 import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import PhoneInput from '../components/Onboarding/PhoneInput'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
@@ -220,8 +219,8 @@ export default function NGOOnboarding() {
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="Tell us about your organization"
                 subtitle="This helps Hive understand your work and match you with the right opportunities."
@@ -299,16 +298,6 @@ export default function NGOOnboarding() {
                 )}
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Why this matters"
-              subtitle="A complete profile helps us match you with the right people and opportunities."
-              trustPoints={[
-                { icon: Eye, title: 'Better visibility', description: 'Get discovered by partners, volunteers, and supporters.' },
-                { icon: Zap, title: 'Better matches', description: 'Connect with students whose skills fit your mission.' },
-                { icon: TrendingUp, title: 'Easier tracking', description: 'Build a profile that helps show your impact.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -322,8 +311,8 @@ export default function NGOOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="Tell us about your mission"
                 subtitle="Help us understand the impact you're creating and the communities you serve."
@@ -367,15 +356,6 @@ export default function NGOOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Pro tip"
-              subtitle="Be specific and authentic about what you need."
-              trustPoints={[
-                { icon: Zap, title: 'Specificity helps', description: 'Detailed project descriptions attract better fits.' },
-                { icon: TrendingUp, title: 'Build relationships', description: 'Share your story to inspire volunteers.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -389,8 +369,8 @@ export default function NGOOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="What are your focus areas?"
                 subtitle="Select the causes and areas your organization impacts."
@@ -426,15 +406,6 @@ export default function NGOOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Set yourself up for success"
-              subtitle="Clear focus areas help students find the right fit."
-              trustPoints={[
-                { icon: Target, title: 'Better matches', description: 'Students will find projects that align with their values.' },
-                { icon: Rocket, title: 'Quick impact', description: 'Clear goals help volunteers contribute faster.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -448,8 +419,8 @@ export default function NGOOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="Build trust"
                 subtitle="Help students and funders learn more about your organization. All fields are optional."
@@ -504,16 +475,6 @@ export default function NGOOnboarding() {
                 </div>
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Trust matters"
-              subtitle="Transparent organizations attract better collaborations."
-              trustPoints={[
-                { icon: Shield, title: 'Security', description: 'Your data is protected and verified.' },
-                { icon: CheckCircle2, title: 'Credibility', description: 'Verified organizations get better matches.' },
-                { icon: TrendingUp, title: 'Connection', description: 'Easy for students to reach out.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
@@ -527,8 +488,8 @@ export default function NGOOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
               <FormCard
                 title="You're all set!"
                 subtitle="Review your profile and get started."
@@ -587,16 +548,6 @@ export default function NGOOnboarding() {
                 )}
               </FormCard>
             </div>
-
-            <SidePanel
-              title="Ready to make impact"
-              subtitle="Your profile is complete. Start building."
-              trustPoints={[
-                { icon: Rocket, title: 'Launch projects', description: 'Post your first opportunity now.' },
-                { icon: Zap, title: 'Find talent', description: 'Connect with passionate students.' },
-                { icon: TrendingUp, title: 'Grow together', description: 'Build long-term partnerships.' },
-              ]}
-            />
           </div>
         </motion.div>
       </OnboardingLayout>
