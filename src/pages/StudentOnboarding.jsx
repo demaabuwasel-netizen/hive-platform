@@ -304,12 +304,34 @@ export default function StudentOnboarding() {
   }
 
   async function handleExitOnboarding() {
-    // Clear localStorage
+    // Cancel any pending saves immediately
+    clearTimeout(debounceTimer.current)
+
+    // Clear save status so no "saved" message shows
+    setSaveStatus('idle')
+
+    // Clear localStorage completely
     try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
-    // Clear data
+
+    // Clear database draft by saving empty data
+    if (user?.id) {
+      try {
+        await saveOnboardingDraft(user.id, 'student', {}, 0)
+      } catch {}
+    }
+
+    // Clear all local state
     setData({})
     setStep(0)
-    // Log out and reset auth
+    setErrors({})
+    setDone(false)
+    setSubmitting(false)
+    setSubmitError('')
+    setWelcomeBack(false)
+    setNewSkillId('')
+    setNewSkillLevel('Intermediate')
+
+    // Log out and navigate away
     await logout()
   }
 
