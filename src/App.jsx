@@ -129,6 +129,25 @@ function OnboardingGuard({ children }) {
   return children
 }
 
+// Guard for role selection — prevent access if already onboarding/completed
+function RoleSelectionGuard({ children }) {
+  const { user, loading } = useApp()
+  if (loading) return <LoadingScreen />
+  if (!user) return <Navigate to="/auth" replace />
+  // If user already has a role and started/completed onboarding, go to onboarding/dashboard
+  if (user.role) {
+    if (user.onboardingComplete) {
+      console.log('[RoleSelectionGuard] User already completed onboarding — redirecting to dashboard')
+      return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
+    } else {
+      console.log('[RoleSelectionGuard] User already has role — redirecting to onboarding')
+      return <Navigate to={`/onboarding/${user.role}`} replace />
+    }
+  }
+  // No role yet — allow role selection
+  return children
+}
+
 // Wraps the persistent DashboardLayout with auth guard
 function ProtectedDashboard() {
   const { user, loading } = useApp()
@@ -213,7 +232,7 @@ function AppRoutes() {
       <Route path="/match/:id" element={<MatchExplanation />} />
 
       {/* ── Onboarding ── */}
-      <Route path="/role-selection"     element={<RequireAuth><RoleSelection /></RequireAuth>} />
+      <Route path="/role-selection"     element={<RoleSelectionGuard><RoleSelection /></RoleSelectionGuard>} />
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
