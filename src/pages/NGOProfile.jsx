@@ -20,19 +20,45 @@ export default function NGOProfile() {
   const [editingCommunities, setEditingCommunities] = useState(false)
   const [communitiesDraft, setCommunitiesDraft] = useState(profile?.communities || '')
 
-  const handleSaveAbout = async () => {
-    await updateProfile({ ...profile, description: aboutDraft })
+  const [editingOrgSize, setEditingOrgSize] = useState(false)
+  const [orgSizeDraft, setOrgSizeDraft] = useState(profile?.orgSize || '')
+
+  const [editingHelpNeeded, setEditingHelpNeeded] = useState(false)
+  const [helpNeededDraft, setHelpNeededDraft] = useState(profile?.helpNeeded || '')
+
+  const handleSaveAbout = () => {
+    if (aboutDraft.trim()) {
+      updateProfile({ ...profile, description: aboutDraft })
+    }
     setEditingAbout(false)
   }
 
-  const handleSaveMission = async () => {
-    await updateProfile({ ...profile, mission: missionDraft })
+  const handleSaveMission = () => {
+    if (missionDraft.trim()) {
+      updateProfile({ ...profile, mission: missionDraft })
+    }
     setEditingMission(false)
   }
 
-  const handleSaveCommunities = async () => {
-    await updateProfile({ ...profile, communities: communitiesDraft })
+  const handleSaveCommunities = () => {
+    if (communitiesDraft.trim()) {
+      updateProfile({ ...profile, communities: communitiesDraft })
+    }
     setEditingCommunities(false)
+  }
+
+  const handleSaveOrgSize = () => {
+    if (orgSizeDraft.trim()) {
+      updateProfile({ ...profile, orgSize: orgSizeDraft })
+    }
+    setEditingOrgSize(false)
+  }
+
+  const handleSaveHelpNeeded = () => {
+    if (helpNeededDraft.trim()) {
+      updateProfile({ ...profile, helpNeeded: helpNeededDraft })
+    }
+    setEditingHelpNeeded(false)
   }
 
   const handlePhotoUpload = (e) => {
@@ -275,15 +301,50 @@ export default function NGOProfile() {
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
               className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-3">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#06B6D420' }}>
-                  <Building2 size={14} style={{ color: '#0891B2' }}/>
-                </span>
-                Organization Size
-              </h2>
-              <p className="text-[13px] font-semibold text-[#0D183D]">
-                {profile.orgSize}
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#06B6D420' }}>
+                    <Building2 size={14} style={{ color: '#0891B2' }}/>
+                  </span>
+                  Organization Size
+                </h2>
+                {!editingOrgSize && (
+                  <button onClick={() => setEditingOrgSize(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    Edit <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingOrgSize ? (
+                <div className="space-y-3">
+                  <select value={orgSizeDraft} onChange={e => setOrgSizeDraft(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                    <option value="">Select size...</option>
+                    <option>1-5</option>
+                    <option>6-25</option>
+                    <option>26-100</option>
+                    <option>100+</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveOrgSize}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>Save</button>
+                    <button onClick={() => {
+                      setOrgSizeDraft(profile?.orgSize || '')
+                      setEditingOrgSize(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] font-semibold text-[#0D183D]">
+                  {profile.orgSize}
+                </p>
+              )}
             </motion.div>
           )}
 
@@ -358,10 +419,43 @@ export default function NGOProfile() {
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
               className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] mb-3">What We Need Help With</h2>
-              <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                {profile.helpNeeded}
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D]">What We Need Help With</h2>
+                {!editingHelpNeeded && (
+                  <button onClick={() => setEditingHelpNeeded(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    Edit <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingHelpNeeded ? (
+                <div className="space-y-3">
+                  <textarea value={helpNeededDraft} onChange={e => setHelpNeededDraft(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
+                    placeholder="What help do you need..."
+                    rows={3}
+                    style={{ background: '#F8F9FB' }}
+                    onFocus={e => e.target.style.borderColor = '#FFB703'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveHelpNeeded}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>Save</button>
+                    <button onClick={() => {
+                      setHelpNeededDraft(profile?.helpNeeded || '')
+                      setEditingHelpNeeded(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {profile.helpNeeded}
+                </p>
+              )}
             </motion.div>
           )}
 
