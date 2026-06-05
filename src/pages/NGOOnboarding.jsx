@@ -299,16 +299,6 @@ export default function NGOOnboarding() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
-          {welcomeBack && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8 p-4 rounded-2xl bg-[#FFB400]/10 border border-[#FFB400]/20 text-sm text-[#0B163F] font-medium"
-            >
-              Welcome back — your progress has been saved.
-            </motion.div>
-          )}
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
