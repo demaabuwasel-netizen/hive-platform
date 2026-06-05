@@ -1,8 +1,10 @@
+import { motion } from 'framer-motion'
+
 export function FormField({ label, required = false, error = null, children, helper = null }) {
   return (
     <div>
       {label && (
-        <label className="block text-sm font-semibold text-[#0B163F] mb-2">
+        <label className="block text-sm font-semibold text-[#0B163F] mb-2.5">
           {label}
           {required && <span className="text-[#FFB400] ml-1">*</span>}
         </label>
@@ -12,67 +14,107 @@ export function FormField({ label, required = false, error = null, children, hel
         <p className="text-xs text-[#4E6385] mt-2 leading-relaxed">{helper}</p>
       )}
       {error && (
-        <p className="text-xs text-[#FF4D4F] mt-2">{error}</p>
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-[#FF4D4F] mt-2 font-medium"
+        >
+          {error}
+        </motion.p>
       )}
     </div>
   )
 }
 
-export function TextInput({ label, placeholder, value, onChange, required = false, error = null, helper = null, type = 'text' }) {
+export function TextInput({ label, placeholder, value, onChange, required = false, error = null, helper = null, type = 'text', icon: Icon = null }) {
   return (
     <FormField label={label} required={required} error={error} helper={helper}>
-      <input
-        type={type}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full px-4 py-3 rounded-lg border-2 transition-all font-medium text-[#0B163F] placeholder-[#4E6385]/40 focus:outline-none ${
-          error
-            ? 'border-[#FF4D4F] bg-[#FFF1F0]'
-            : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm'
-        }`}
-      />
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#9CA3AF]">
+            <Icon size={18} strokeWidth={1.5} />
+          </div>
+        )}
+        <input
+          type={type}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
+            Icon ? 'pl-11' : ''
+          } ${
+            error
+              ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F] focus:shadow-sm'
+              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+          }`}
+        />
+      </div>
     </FormField>
   )
 }
 
-export function SelectInput({ label, placeholder, options = [], value, onChange, required = false, error = null, helper = null }) {
+export function SelectInput({ label, placeholder, options = [], value, onChange, required = false, error = null, helper = null, icon: Icon = null }) {
   return (
     <FormField label={label} required={required} error={error} helper={helper}>
-      <select
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-4 py-3 rounded-lg border-2 transition-all font-medium text-[#0B163F] focus:outline-none ${
-          error
-            ? 'border-[#FF4D4F] bg-[#FFF1F0]'
-            : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm'
-        }`}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt.value || opt} value={opt.value || opt}>
-            {opt.label || opt}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#9CA3AF] z-10">
+            <Icon size={18} strokeWidth={1.5} />
+          </div>
+        )}
+        <select
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] focus:outline-none appearance-none ${
+            Icon ? 'pl-11' : ''
+          } ${
+            error
+              ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
+              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+          }`}
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 1rem center',
+            backgroundSize: '1.5em 1.5em',
+            paddingRight: '2.5rem',
+          }}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((opt) => (
+            <option key={opt.value || opt} value={opt.value || opt}>
+              {opt.label || opt}
+            </option>
+          ))}
+        </select>
+      </div>
     </FormField>
   )
 }
 
-export function TextArea({ label, placeholder, value, onChange, required = false, error = null, helper = null, rows = 4 }) {
+export function TextArea({ label, placeholder, value, onChange, required = false, error = null, helper = null, rows = 4, icon: Icon = null }) {
   return (
     <FormField label={label} required={required} error={error} helper={helper}>
-      <textarea
-        rows={rows}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full px-4 py-3 rounded-lg border-2 transition-all font-medium text-[#0B163F] placeholder-[#4E6385]/40 focus:outline-none resize-none ${
-          error
-            ? 'border-[#FF4D4F] bg-[#FFF1F0]'
-            : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm'
-        }`}
-      />
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-4 top-4 pointer-events-none text-[#9CA3AF]">
+            <Icon size={18} strokeWidth={1.5} />
+          </div>
+        )}
+        <textarea
+          rows={rows}
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`w-full px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none resize-none ${
+            Icon ? 'pl-11' : ''
+          } ${
+            error
+              ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
+              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+          }`}
+        />
+      </div>
     </FormField>
   )
 }
@@ -84,7 +126,7 @@ export function ChipSelector({ label, options = [], value = [], onChange, requir
         {options.map((opt) => {
           const isSelected = Array.isArray(value) ? value.includes(opt.value || opt) : value === (opt.value || opt)
           return (
-            <button
+            <motion.button
               key={opt.value || opt}
               type="button"
               onClick={() => {
@@ -98,17 +140,27 @@ export function ChipSelector({ label, options = [], value = [], onChange, requir
                   onChange(isSelected ? null : opt.value || opt)
                 }
               }}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 ${
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
                 isSelected
                   ? 'bg-[#0B163F] text-white shadow-md'
-                  : 'bg-white border-2 border-[#E6E8EF] text-[#0B163F] hover:border-[#FFB400]'
+                  : 'bg-white border-2 border-[#E6E8EF] text-[#0B163F] hover:border-[#FFB400] hover:shadow-sm'
               }`}
             >
               {opt.label || opt}
-            </button>
+            </motion.button>
           )
         })}
       </div>
     </FormField>
+  )
+}
+
+export function CharacterCounter({ current = 0, max = 500 }) {
+  return (
+    <p className="text-xs text-[#9CA3AF]">
+      {current} / {max}
+    </p>
   )
 }

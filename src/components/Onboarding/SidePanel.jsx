@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
 
-export default function SidePanel({ title, subtitle, trustPoints = [], illustration = null }) {
+export default function SidePanel({ title, subtitle, trustPoints = [] }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="bg-[#FAF6EA] rounded-2xl p-8 border border-[#E6E8EF] h-fit sticky top-8"
+      className="bg-white rounded-3xl p-8 border border-[#E6E8EF] shadow-sm h-fit sticky top-24"
     >
       <h3 className="text-lg font-bold text-[#0B163F] mb-2">
         {title}
@@ -18,20 +18,24 @@ export default function SidePanel({ title, subtitle, trustPoints = [], illustrat
       )}
 
       {/* Trust points */}
-      <div className="space-y-5 mb-8">
+      <div className="space-y-6">
         {trustPoints.map((point, idx) => (
           <motion.div
             key={point.title}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 + idx * 0.1 }}
-            className="flex gap-3"
+            transition={{ delay: 0.2 + idx * 0.08 }}
+            className="flex gap-4"
           >
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border border-[#E6E8EF] flex items-center justify-center text-lg">
-              {point.icon}
+            <div className="flex-shrink-0 w-12 h-12 rounded-[14px] bg-[#FFB400]/10 border border-[#FFB400]/20 flex items-center justify-center">
+              {point.icon && (
+                <div className="text-[#FFB400]">
+                  <point.icon size={22} strokeWidth={1.5} />
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-[#0B163F] mb-0.5">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-[#0B163F] mb-1">
                 {point.title}
               </p>
               <p className="text-xs text-[#4E6385] leading-relaxed">
@@ -41,13 +45,6 @@ export default function SidePanel({ title, subtitle, trustPoints = [], illustrat
           </motion.div>
         ))}
       </div>
-
-      {/* Illustration placeholder */}
-      {illustration && (
-        <div className="mt-8 pt-8 border-t border-[#E6E8EF]">
-          {illustration}
-        </div>
-      )}
     </motion.div>
   )
 }

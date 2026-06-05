@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FormField } from './FormInputs'
+import { Phone } from 'lucide-react'
 
 const COUNTRY_CODES = [
   { country: 'Israel', code: '+972', format: 'XX XXXX XXX' },
@@ -43,7 +44,7 @@ export default function PhoneInput({ label, value = '', onChange, required = fal
         <select
           value={countryCode}
           onChange={(e) => setCountryCode(e.target.value)}
-          className="px-3 py-3 rounded-lg border-2 border-[#E6E8EF] bg-white font-semibold text-[#0B163F] focus:outline-none focus:border-[#0B163F] transition-all min-w-[100px]"
+          className="px-3 py-3.5 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-semibold text-[#0B163F] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all min-w-[110px]"
         >
           {COUNTRY_CODES.map((c) => (
             <option key={c.code + c.country} value={c.code}>
@@ -58,7 +59,11 @@ export default function PhoneInput({ label, value = '', onChange, required = fal
           value={value}
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder="XX XXXX XXX"
-          className="flex-1 px-4 py-3 rounded-lg border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] placeholder-[#4E6385]/40 focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+          className={`flex-1 px-4 py-3.5 rounded-[16px] border-2 transition-all font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
+            error
+              ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
+              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+          }`}
         />
       </div>
       {!error && (

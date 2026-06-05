@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shield, Target, TrendingUp } from 'lucide-react'
+import { User, Sparkles, Heart, Calendar, CheckCircle2, Eye, Target, TrendingUp, Shield, Rocket } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
@@ -179,29 +179,29 @@ export default function StudentOnboarding() {
   // Success screen
   if (done) {
     return (
-      <OnboardingLayout showLogo>
-        <div className="max-w-2xl mx-auto">
+      <OnboardingLayout showNavigation>
+        <div className="flex justify-center items-center min-h-[60vh]">
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45 }}
-            className="bg-white rounded-2xl p-8 border border-[#E6E8EF] text-center"
+            className="w-full max-w-md bg-white rounded-3xl p-8 border border-[#E6E8EF] text-center shadow-sm"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-[#FFB400]/10 rounded-full flex items-center justify-center mx-auto mb-6"
+              className="w-16 h-16 bg-[#FFB400]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-[#FFB400]/20"
             >
-              <span className="text-3xl">✓</span>
+              <CheckCircle2 size={32} className="text-[#FFB400]" strokeWidth={1.5} />
             </motion.div>
             <h2 className="text-2xl font-bold text-[#0B163F] mb-2">
               Profile created!
             </h2>
-            <p className="text-[#4E6385] mb-8 max-w-md mx-auto">
+            <p className="text-[#4E6385] text-sm mb-8">
               You're ready to be matched with amazing opportunities that align with your skills and values.
             </p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-col gap-3">
               <PrimaryButton onClick={() => { markOnboardingDone(); navigate('/dashboard/student') }}>
                 Explore opportunities
               </PrimaryButton>
@@ -218,7 +218,7 @@ export default function StudentOnboarding() {
   // Step 0: Profile
   if (step === 0) {
     return (
-      <OnboardingLayout showLogo>
+      <OnboardingLayout showNavigation>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -226,9 +226,9 @@ export default function StudentOnboarding() {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 p-4 rounded-xl bg-[#FFB400]/10 border border-[#FFB400]/30 text-sm text-[#0B163F]"
+              className="mb-8 p-4 rounded-2xl bg-[#FFB400]/10 border border-[#FFB400]/20 text-sm text-[#0B163F] font-medium"
             >
-              👋 Welcome back — your progress has been saved.
+              Welcome back — your progress has been saved.
             </motion.div>
           )}
 
@@ -237,6 +237,7 @@ export default function StudentOnboarding() {
               <FormCard
                 title="Let's start with your profile"
                 subtitle="This helps organizations understand who you are and what you're passionate about."
+                icon={User}
               >
                 <TextInput
                   label="Full name"
@@ -258,8 +259,8 @@ export default function StudentOnboarding() {
                 />
 
                 <TextInput
-                  label="City"
-                  placeholder="Your city (optional)"
+                  label="City (optional)"
+                  placeholder="Your city"
                   value={data.city || ''}
                   onChange={(val) => update('city', val)}
                 />
@@ -294,8 +295,8 @@ export default function StudentOnboarding() {
                   rows={3}
                 />
 
-                <div className="pt-6 border-t border-[#E6E8EF] flex items-center gap-2 text-xs text-[#4E6385]">
-                  <Shield size={16} />
+                <div className="pt-4 border-t border-[#E6E8EF] flex items-center gap-2 text-xs text-[#4E6385]">
+                  <Shield size={16} strokeWidth={1.5} />
                   Your information is secure and used only to improve your experience.
                 </div>
 
@@ -308,7 +309,7 @@ export default function StudentOnboarding() {
 
                 {saveStatus !== 'idle' && (
                   <motion.p
-                    className="text-xs mt-2"
+                    className="text-xs font-medium mt-2"
                     style={{
                       color: saveStatus === 'saved' ? '#059669' : saveStatus === 'error' ? '#FF4D4F' : '#6B7280',
                     }}
@@ -325,9 +326,9 @@ export default function StudentOnboarding() {
               title="Start here"
               subtitle="A complete profile helps us match you with the right opportunities."
               trustPoints={[
-                { icon: '🎯', title: 'Better matches', description: 'Find opportunities that fit your goals.' },
-                { icon: '💪', title: 'Show your potential', description: 'Organizations see your strengths.' },
-                { icon: '🚀', title: 'Get discovered', description: 'Build opportunities together.' },
+                { icon: Target, title: 'Better matches', description: 'Find opportunities that fit your goals.' },
+                { icon: TrendingUp, title: 'Show your potential', description: 'Organizations see your strengths.' },
+                { icon: Rocket, title: 'Get discovered', description: 'Build opportunities together.' },
               ]}
             />
           </div>
@@ -339,7 +340,7 @@ export default function StudentOnboarding() {
   // Step 1: Skills
   if (step === 1) {
     return (
-      <OnboardingLayout showLogo>
+      <OnboardingLayout showNavigation>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -348,6 +349,7 @@ export default function StudentOnboarding() {
               <FormCard
                 title="What are your skills?"
                 subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
+                icon={Sparkles}
               >
                 <ChipSelector
                   label="Select skill categories"
@@ -375,7 +377,7 @@ export default function StudentOnboarding() {
                 />
 
                 <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
                   <PrimaryButton onClick={next}>Continue</PrimaryButton>
                 </div>
               </FormCard>
@@ -385,9 +387,9 @@ export default function StudentOnboarding() {
               title="Show what you can do"
               subtitle="Your skills are what organizations are looking for."
               trustPoints={[
-                { icon: '⭐', title: 'Specificity matters', description: 'Detailed skills attract better matches.' },
-                { icon: '📚', title: 'Be honest', description: 'Organizations appreciate authentic profiles.' },
-                { icon: '🎯', title: 'Grow together', description: 'Learn new skills through real projects.' },
+                { icon: Sparkles, title: 'Specificity matters', description: 'Detailed skills attract better matches.' },
+                { icon: TrendingUp, title: 'Be honest', description: 'Organizations appreciate authentic profiles.' },
+                { icon: Target, title: 'Grow together', description: 'Learn new skills through real projects.' },
               ]}
             />
           </div>
@@ -399,7 +401,7 @@ export default function StudentOnboarding() {
   // Step 2: Causes
   if (step === 2) {
     return (
-      <OnboardingLayout showLogo>
+      <OnboardingLayout showNavigation>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -408,6 +410,7 @@ export default function StudentOnboarding() {
               <FormCard
                 title="What causes matter to you?"
                 subtitle="Select the causes and issues you're passionate about helping."
+                icon={Heart}
               >
                 <ChipSelector
                   label="Select causes you care about"
@@ -428,14 +431,14 @@ export default function StudentOnboarding() {
                 <FormField label="Work preference">
                   <div className="space-y-3">
                     {['Remote', 'In-person', 'Hybrid'].map(opt => (
-                      <label key={opt} className="flex items-center gap-3 cursor-pointer">
+                      <label key={opt} className="flex items-center gap-3 cursor-pointer group">
                         <input
                           type="radio"
                           name="workMode"
                           value={opt}
                           checked={data.workMode === opt}
                           onChange={(e) => update('workMode', e.target.value)}
-                          className="w-4 h-4"
+                          className="w-4 h-4 accent-[#FFB400]"
                         />
                         <span className="font-medium text-[#0B163F]">{opt}</span>
                       </label>
@@ -444,7 +447,7 @@ export default function StudentOnboarding() {
                 </FormField>
 
                 <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
                   <PrimaryButton onClick={next}>Continue</PrimaryButton>
                 </div>
               </FormCard>
@@ -454,9 +457,9 @@ export default function StudentOnboarding() {
               title="Make the impact you want"
               subtitle="Aligned values create better collaborations."
               trustPoints={[
-                { icon: '💚', title: 'Purpose-driven', description: 'Work on causes you believe in.' },
-                { icon: '🤝', title: 'Find allies', description: 'Connect with like-minded people.' },
-                { icon: '📈', title: 'Real change', description: 'Contribute to meaningful projects.' },
+                { icon: Heart, title: 'Purpose-driven', description: 'Work on causes you believe in.' },
+                { icon: Sparkles, title: 'Find allies', description: 'Connect with like-minded people.' },
+                { icon: TrendingUp, title: 'Real change', description: 'Contribute to meaningful projects.' },
               ]}
             />
           </div>
@@ -468,7 +471,7 @@ export default function StudentOnboarding() {
   // Step 3: Availability
   if (step === 3) {
     return (
-      <OnboardingLayout showLogo>
+      <OnboardingLayout showNavigation>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -477,6 +480,7 @@ export default function StudentOnboarding() {
               <FormCard
                 title="When can you contribute?"
                 subtitle="Help organizations understand your availability and preferences."
+                icon={Calendar}
               >
                 <SelectInput
                   label="Hours per week"
@@ -504,7 +508,7 @@ export default function StudentOnboarding() {
                     type="date"
                     value={data.startDate || ''}
                     onChange={(e) => update('startDate', e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] transition-all"
+                    className="w-full px-4 py-3.5 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
                   />
                 </FormField>
 
@@ -538,7 +542,7 @@ export default function StudentOnboarding() {
                 />
 
                 <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
                   <PrimaryButton onClick={next}>Continue</PrimaryButton>
                 </div>
               </FormCard>
@@ -548,9 +552,9 @@ export default function StudentOnboarding() {
               title="Set your expectations"
               subtitle="Clear availability helps both you and organizations."
               trustPoints={[
-                { icon: '⏰', title: 'Right fit', description: 'Match projects to your schedule.' },
-                { icon: '📋', title: 'Clear expectations', description: 'Everyone knows what to expect.' },
-                { icon: '✨', title: 'Sustainable impact', description: 'Work at a pace that suits you.' },
+                { icon: Calendar, title: 'Right fit', description: 'Match projects to your schedule.' },
+                { icon: Target, title: 'Clear expectations', description: 'Everyone knows what to expect.' },
+                { icon: Sparkles, title: 'Sustainable impact', description: 'Work at a pace that suits you.' },
               ]}
             />
           </div>
@@ -562,7 +566,7 @@ export default function StudentOnboarding() {
   // Step 4: Complete
   if (step === 4) {
     return (
-      <OnboardingLayout showLogo>
+      <OnboardingLayout showNavigation>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Stepper steps={STEPS} currentStep={step} />
 
@@ -571,49 +575,60 @@ export default function StudentOnboarding() {
               <FormCard
                 title="You're all set!"
                 subtitle="Review your profile and get started finding opportunities."
+                icon={Rocket}
               >
                 <div className="space-y-4">
-                  <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                  <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
                     <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-1">Profile</p>
                     <p className="text-base font-semibold text-[#0B163F]">{data.name || 'Your profile'}</p>
                     {data.field && <p className="text-sm text-[#4E6385]">{data.field} at {data.university || 'your university'}</p>}
                   </div>
 
                   {data.skills?.length > 0 && (
-                    <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
                       <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Skills</p>
                       <div className="flex flex-wrap gap-2">
-                        {data.skills.map(s => (
+                        {data.skills.slice(0, 4).map(s => (
                           <span key={s} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
                             {s}
                           </span>
                         ))}
+                        {data.skills.length > 4 && (
+                          <span className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#4E6385] border border-[#E6E8EF]">
+                            +{data.skills.length - 4} more
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {data.causes?.length > 0 && (
-                    <div className="p-4 bg-[#FAF6EA] rounded-lg border border-[#E6E8EF]">
+                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
                       <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Causes You Care About</p>
                       <div className="flex flex-wrap gap-2">
-                        {data.causes.map(c => (
+                        {data.causes.slice(0, 4).map(c => (
                           <span key={c} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
                             {c}
                           </span>
                         ))}
+                        {data.causes.length > 4 && (
+                          <span className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#4E6385] border border-[#E6E8EF]">
+                            +{data.causes.length - 4} more
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
-                  <p className="text-sm text-[#4E6385] mb-4">
-                    <strong>What happens next?</strong> We'll match you with opportunities that align with your skills, availability, and values. You can browse opportunities, apply to projects, and start making an impact.
+                  <p className="text-sm text-[#4E6385]">
+                    <strong className="text-[#0B163F]">What happens next?</strong> We'll match you with opportunities that align with your skills, availability, and values. You can browse opportunities, apply to projects, and start making an impact.
                   </p>
                 </div>
 
                 <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>← Back</SecondaryButton>
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
                   <PrimaryButton
                     onClick={next}
                     loading={submitting}
@@ -623,7 +638,7 @@ export default function StudentOnboarding() {
                 </div>
 
                 {submitError && (
-                  <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-lg border border-[#FFCCC7]">
+                  <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-2xl border border-[#FFCCC7] font-medium">
                     {submitError}
                   </motion.p>
                 )}
@@ -634,9 +649,9 @@ export default function StudentOnboarding() {
               title="Ready to make a difference"
               subtitle="Your profile is ready. Find opportunities now."
               trustPoints={[
-                { icon: '🔍', title: 'Discover projects', description: 'Browse opportunities that match you.' },
-                { icon: '📝', title: 'Apply now', description: 'Find the right fit for your goals.' },
-                { icon: '🚀', title: 'Start contributing', description: 'Make real impact from day one.' },
+                { icon: Eye, title: 'Discover projects', description: 'Browse opportunities that match you.' },
+                { icon: Target, title: 'Apply now', description: 'Find the right fit for your goals.' },
+                { icon: Rocket, title: 'Start contributing', description: 'Make real impact from day one.' },
               ]}
             />
           </div>
