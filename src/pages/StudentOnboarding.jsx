@@ -58,6 +58,8 @@ export default function StudentOnboarding() {
   const [welcomeBack, setWelcomeBack] = useState(false)
   const [newSkillId, setNewSkillId] = useState('')
   const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
+  const [newExp, setNewExp] = useState({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
+  const [editingExpIndex, setEditingExpIndex] = useState(null)
 
   const restoredRef = useRef(false)
   const debounceTimer = useRef(null)
@@ -138,6 +140,25 @@ export default function StudentOnboarding() {
     const skillsWithLevel = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
     const updated = skillsWithLevel.filter((_, i) => i !== index)
     update('skillsWithLevel', updated)
+  }
+
+  const handleSaveExperience = () => {
+    const experiences = Array.isArray(data.experiences) ? data.experiences : []
+    if (editingExpIndex !== null) {
+      const updated = [...experiences]
+      updated[editingExpIndex] = newExp
+      update('experiences', updated)
+      setEditingExpIndex(null)
+    } else if (newExp.title || newExp.description) {
+      update('experiences', [...experiences, newExp])
+    }
+    setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
+  }
+
+  const handleRemoveExperience = (index) => {
+    const experiences = Array.isArray(data.experiences) ? data.experiences : []
+    const updated = experiences.filter((_, i) => i !== index)
+    update('experiences', updated)
   }
 
   const doSave = useCallback(async (d, s) => {
@@ -258,6 +279,7 @@ export default function StudentOnboarding() {
           bio: data.bio?.trim() || null,
           skills: skillNames,
           skillsWithLevel: skillsWithLevel,
+          experiences: Array.isArray(data.experiences) ? data.experiences : [],
           interests: data.causes || [],
           languages: data.languages || [],
           work_mode: data.workMode || null,
@@ -498,25 +520,40 @@ export default function StudentOnboarding() {
                 icon={Sparkles}
               >
                 <div className="space-y-4">
-                  {/* Display added skills */}
+                  {/* Display added skills by category */}
                   {Array.isArray(data.skillsWithLevel) && data.skillsWithLevel.length > 0 && (
                     <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] mb-3 uppercase tracking-wider">Selected Skills ({data.skillsWithLevel.length})</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.skillsWithLevel.map((skill, idx) => {
-                          const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
-                          return (
-                            <div key={`skill-${idx}`} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
-                              <p className="text-xs font-semibold text-[#0B163F]">{skill.name}</p>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                {skill.level}
-                              </span>
-                              <button onClick={() => handleRemoveSkill(idx)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                                <X size={12} />
-                              </button>
+                      <p className="text-xs font-semibold text-[#4E6385] mb-4 uppercase tracking-wider">Selected Skills ({data.skillsWithLevel.length})</p>
+                      <div className="space-y-4">
+                        {(() => {
+                          const skillsByCategory = {}
+                          data.skillsWithLevel.forEach(skill => {
+                            const category = skill.category || 'Other'
+                            if (!skillsByCategory[category]) skillsByCategory[category] = []
+                            skillsByCategory[category].push(skill)
+                          })
+                          return Object.entries(skillsByCategory).map(([cat, skills]) => (
+                            <div key={cat}>
+                              <p className="text-xs font-semibold text-[#0B163F] mb-2">{cat}</p>
+                              <div className="flex flex-wrap gap-2">
+                                {skills.map((skill, idx) => {
+                                  const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+                                  return (
+                                    <div key={`skill-${cat}-${idx}`} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
+                                      <p className="text-xs font-semibold text-[#0B163F]">{skill.name}</p>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
+                                        {skill.level}
+                                      </span>
+                                      <button onClick={() => handleRemoveSkill(data.skillsWithLevel.indexOf(skill))} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                                        <X size={12} />
+                                      </button>
+                                    </div>
+                                  )
+                                })}
+                              </div>
                             </div>
-                          )
-                        })}
+                          ))
+                        })()}
                       </div>
                     </div>
                   )}
@@ -556,6 +593,99 @@ export default function StudentOnboarding() {
                     <PrimaryButton onClick={handleAddSkill} className="w-full">
                       Add the skill
                     </PrimaryButton>
+                  </div>
+
+                  {/* EXPERIENCE SECTION */}
+                  <div className="pt-4 border-t border-[#E6E8EF]">
+                    <p className="text-xs font-semibold text-[#0B163F] mb-3 uppercase tracking-wider">Work Experience</p>
+
+                    {/* Display added experiences */}
+                    {Array.isArray(data.experiences) && data.experiences.length > 0 && (
+                      <div className="mb-4 space-y-3">
+                        {data.experiences.map((exp, idx) => (
+                          <div key={idx} className="group p-3 rounded-lg bg-[#FAF6EA] border border-[#E6E8EF] hover:border-[#D4D8E0]">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="text-xs font-semibold text-[#0B163F]">{exp.title}</p>
+                                {exp.organization && <p className="text-[10px] text-[#4E6385]">{exp.organization}</p>}
+                                {exp.location && <p className="text-[10px] text-[#4E6385]">{exp.location}</p>}
+                              </div>
+                              <button
+                                onClick={() => handleRemoveExperience(idx)}
+                                className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add experience form */}
+                    <div className="p-4 rounded-2xl border-2 border-[#E6E8EF] bg-white space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Job title</label>
+                        <TextInput
+                          placeholder="e.g., Marketing Manager"
+                          value={newExp.title || ''}
+                          onChange={(val) => setNewExp({...newExp, title: val})}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Organization</label>
+                        <TextInput
+                          placeholder="e.g., Company name"
+                          value={newExp.organization || ''}
+                          onChange={(val) => setNewExp({...newExp, organization: val})}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-[#0B163F] block mb-2">Start date</label>
+                          <input
+                            type="date"
+                            value={newExp.startDate || ''}
+                            onChange={(e) => setNewExp({...newExp, startDate: e.target.value})}
+                            className="w-full px-3 py-2 rounded-lg text-xs border border-[#E6E8EF] outline-none focus:border-[#0B163F]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-[#0B163F] block mb-2">End date</label>
+                          <input
+                            type="date"
+                            value={newExp.endDate || ''}
+                            onChange={(e) => setNewExp({...newExp, endDate: e.target.value})}
+                            className="w-full px-3 py-2 rounded-lg text-xs border border-[#E6E8EF] outline-none focus:border-[#0B163F]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Location (optional)</label>
+                        <TextInput
+                          placeholder="e.g., New York, NY"
+                          value={newExp.location || ''}
+                          onChange={(val) => setNewExp({...newExp, location: val})}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Description (optional)</label>
+                        <TextArea
+                          placeholder="Describe your role and accomplishments"
+                          value={newExp.description || ''}
+                          onChange={(val) => setNewExp({...newExp, description: val})}
+                          rows={2}
+                        />
+                      </div>
+
+                      <PrimaryButton onClick={handleSaveExperience} className="w-full">
+                        Add experience
+                      </PrimaryButton>
+                    </div>
                   </div>
                 </div>
 
@@ -667,11 +797,11 @@ export default function StudentOnboarding() {
                 />
 
                 <FormField label="When can you start?">
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
                       onClick={() => update('startDate', 'immediate')}
-                      className={`w-full p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
+                      className={`p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
                         data.startDate === 'immediate'
                           ? 'border-[#0B163F] bg-[#0B163F] text-white'
                           : 'border-[#E6E8EF] bg-white text-[#0B163F] hover:bg-[#FAF6EA]'
@@ -679,24 +809,21 @@ export default function StudentOnboarding() {
                     >
                       <span>Immediately</span>
                     </button>
-                    <div className="relative">
-                      <label className="text-xs font-semibold text-[#0B163F] mb-2 block">Or pick a specific date</label>
-                      <input
-                        type="date"
-                        value={data.startDate && data.startDate !== 'immediate' ? data.startDate : ''}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            update('startDate', e.target.value)
-                          }
-                        }}
-                        className={`w-full px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
-                          data.startDate && data.startDate !== 'immediate'
-                            ? 'border-[#0B163F] bg-white'
-                            : 'border-[#E6E8EF] bg-white focus:border-[#0B163F]'
-                        }`}
-                        placeholder="Pick a date"
-                      />
-                    </div>
+                    <input
+                      type="date"
+                      value={data.startDate && data.startDate !== 'immediate' ? data.startDate : ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          update('startDate', e.target.value)
+                        }
+                      }}
+                      className={`px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
+                        data.startDate && data.startDate !== 'immediate'
+                          ? 'border-[#0B163F] bg-white'
+                          : 'border-[#E6E8EF] bg-white focus:border-[#0B163F]'
+                      }`}
+                      placeholder="Pick a date"
+                    />
                   </div>
                 </FormField>
 
