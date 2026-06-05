@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Building2, Target, Zap, CheckCircle2, Rocket, Shield } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, ngoProfileToData } from '../services/storage'
+import { COUNTRIES } from '../utils/countries'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
-import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
+import SearchableSelect from '../components/Onboarding/SearchableSelect'
+import { TextInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import PhoneInput from '../components/Onboarding/PhoneInput'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
@@ -236,14 +238,16 @@ export default function NGOOnboarding() {
                 />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <SelectInput
+                  <SearchableSelect
                     label="Country"
                     placeholder="Select your country"
                     value={data.country || ''}
                     onChange={(val) => update('country', val)}
                     required
                     error={errors.country}
-                    options={['Israel', 'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Other']}
+                    options={COUNTRIES}
+                    formatOption={(opt) => opt.name}
+                    searchFields={['name']}
                   />
 
                   <TextInput

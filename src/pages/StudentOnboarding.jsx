@@ -4,9 +4,11 @@ import { motion } from 'framer-motion'
 import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
+import { COUNTRIES } from '../utils/countries'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
+import SearchableSelect from '../components/Onboarding/SearchableSelect'
 import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
@@ -248,14 +250,16 @@ export default function StudentOnboarding() {
                 />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <SelectInput
+                  <SearchableSelect
                     label="Country"
                     placeholder="Select your country"
                     value={data.country || ''}
                     onChange={(val) => update('country', val)}
                     required
                     error={errors.country}
-                    options={['Israel', 'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Other']}
+                    options={COUNTRIES}
+                    formatOption={(opt) => opt.name}
+                    searchFields={['name']}
                   />
 
                   <TextInput
