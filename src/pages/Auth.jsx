@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Mail } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
 import { signUp, logIn, signInWithGoogle, getUserRow, updateUserRow, requestPasswordReset } from '../services/auth'
 
@@ -131,80 +131,83 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF7E6] flex flex-col">
-      <div className="p-6">
-        <Link to="/" aria-label="Hive home">
-          <HiveLogo size={28} nameSize="text-lg" />
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-[#FAF6EA] via-[#FFFBF5] to-[#FCF8EF]">
+      {/* Subtle radial glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 right-1/4 w-96 h-96 bg-[#FFB400] rounded-full opacity-5 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#0B163F] rounded-full opacity-3 blur-3xl" />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6 pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="w-full max-w-md"
-        >
-          <div className="card">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <motion.div
-                key={mode}
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-4xl mb-3"
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <div className="p-6">
+          <Link to="/" aria-label="Hive home">
+            <HiveLogo size={24} nameSize="text-sm" />
+          </Link>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6 pb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-md"
+          >
+            <div className="bg-white rounded-3xl p-8 border border-[#E6E8EF] shadow-sm">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-bold text-[#0B163F] mb-2">
+                  {mode === 'signup' ? 'Create your account' : 'Welcome back'}
+                </h1>
+                <p className="text-[#4E6385] text-xs">
+                  {mode === 'signup'
+                    ? 'Join students and NGOs doing real work around the world.'
+                    : "Good to see you again — let's pick up where you left off."}
+                </p>
+              </div>
+
+              {/* Mode toggle */}
+              <div className="flex bg-[#F5F7FB] rounded-2xl p-1 mb-6">
+                {['signup', 'login'].map(m => (
+                  <button
+                    key={m}
+                    onClick={() => { setMode(m); setError('') }}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                      mode === m ? 'bg-white text-[#0B163F] shadow-sm' : 'text-[#4E6385] hover:text-[#0B163F]'
+                    }`}
+                  >
+                    {m === 'signup' ? 'Sign up' : 'Log in'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Google button */}
+              <button
+                onClick={handleGoogleClick}
+                disabled={submitting || googleLoading}
+                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-[#E6E8EF] rounded-[16px] px-4 py-3 text-[#0B163F] font-semibold text-xs hover:border-[#D4D8E0] hover:shadow-sm active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               >
-                {mode === 'signup' ? '👋' : '✨'}
-              </motion.div>
-              <h1 className="text-2xl font-bold text-[#0D183D] mb-1">
-                {mode === 'signup' ? 'Create your account' : 'Welcome back'}
-              </h1>
-              <p className="text-[#4B6382] text-sm">
-                {mode === 'signup'
-                  ? 'Join students and NGOs doing real work around the world.'
-                  : "Good to see you again — let's pick up where you left off."}
-              </p>
-            </div>
-
-            {/* Mode toggle */}
-            <div className="flex bg-[#FFF7E6] rounded-2xl p-1 mb-6">
-              {['signup', 'login'].map(m => (
-                <button
-                  key={m}
-                  onClick={() => { setMode(m); setError('') }}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    mode === m ? 'bg-white text-[#0D183D] shadow-card' : 'text-navy-400 hover:text-navy-600'
-                  }`}
-                >
-                  {m === 'signup' ? 'Sign up' : 'Log in'}
-                </button>
-              ))}
-            </div>
-
-            {/* Google button */}
-            <button
-              onClick={handleGoogleClick}
-              disabled={submitting || googleLoading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-cream-300 rounded-2xl px-6 py-3 text-navy-700 font-semibold text-sm hover:bg-cream-50 hover:border-navy-200 hover:shadow-soft active:scale-[0.98] transition-all duration-200 shadow-card disabled:opacity-50 disabled:cursor-not-allowed mb-5"
-            >
-              {googleLoading ? (
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-                  className="inline-block w-4 h-4 border-2 border-navy-200 border-t-navy-600 rounded-full"
-                />
-              ) : (
-                <GoogleIcon />
-              )}
-              {googleLoading ? 'Redirecting…' : 'Continue with Google'}
-            </button>
+                {googleLoading ? (
+                  <>
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                      className="inline-block w-4 h-4 border-2 border-[#E6E8EF] border-t-[#0B163F] rounded-full"
+                    />
+                    Redirecting…
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon size={16} />
+                    Continue with Google
+                  </>
+                )}
+              </button>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex-1 h-px bg-cream-300" />
-              <span className="text-xs text-navy-300 font-medium tracking-wide">or continue with email</span>
-              <div className="flex-1 h-px bg-cream-300" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-[#E6E8EF]" />
+              <span className="text-[10px] text-[#9CA3AF] font-medium tracking-wide">or continue with email</span>
+              <div className="flex-1 h-px bg-[#E6E8EF]" />
             </div>
 
             {/* Email form */}
@@ -217,31 +220,33 @@ export default function Auth() {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <label className="block text-sm font-medium text-navy-700 mb-1.5">Full name</label>
+                    <label className="block text-xs font-semibold text-[#0B163F] mb-2">Full name</label>
                     <input
                       name="name" value={form.name} onChange={handleChange}
-                      placeholder="Your name" autoComplete="name" className="input-field"
+                      placeholder="Your name" autoComplete="name"
+                      className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <div>
-                <label className="block text-sm font-medium text-navy-700 mb-1.5">Email address</label>
+                <label className="block text-xs font-semibold text-[#0B163F] mb-2">Email address</label>
                 <input
                   name="email" type="email" value={form.email} onChange={handleChange}
-                  placeholder="you@example.com" autoComplete="email" className="input-field"
+                  placeholder="you@example.com" autoComplete="email"
+                  className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-sm font-medium text-navy-700">Password</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-semibold text-[#0B163F]">Password</label>
                   {mode === 'login' && (
                     <button
                       type="button"
                       onClick={() => { setForgotOpen(true); setResetEmail(form.email) }}
-                      className="text-xs text-navy-400 hover:text-navy-600 transition-colors"
+                      className="text-[10px] text-[#9CA3AF] hover:text-[#0B163F] transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -255,15 +260,15 @@ export default function Auth() {
                     onChange={handleChange}
                     placeholder="••••••••"
                     autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                    className="input-field pr-11"
+                    className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all pr-11"
                   />
                   <button
                     type="button"
                     onClick={() => setShow(s => !s)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-navy-300 hover:text-[#4B6382] transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#0B163F] transition-colors"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
@@ -272,7 +277,7 @@ export default function Auth() {
                 {error && (
                   <motion.p
                     initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2"
+                    className="text-xs text-[#FF4D4F] bg-[#FFF1F0] border border-[#FFCCC7] rounded-2xl px-3 py-2 font-medium"
                   >
                     {error}
                   </motion.p>
@@ -282,33 +287,38 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={submitting || googleLoading}
-                className="btn-honey mt-2 w-full text-base py-3.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs mt-1 transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
               >
                 {submitting ? (
-                  <span className="flex items-center justify-center gap-2">
+                  <>
                     <motion.span
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                       className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full"
                     />
-                    Please wait…
-                  </span>
-                ) : mode === 'signup' ? 'Create account' : 'Log in'}
+                    {mode === 'signup' ? 'Creating…' : 'Signing in…'}
+                  </>
+                ) : (
+                  <>
+                    {mode === 'signup' ? 'Create account' : 'Log in'}
+                    <ArrowRight size={14} className="ml-1" />
+                  </>
+                )}
               </button>
             </form>
 
-            <p className="text-center text-sm text-navy-400 mt-5">
+            <p className="text-center text-xs text-[#4E6385] mt-5">
               {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError('') }}
-                className="text-navy-600 font-medium hover:underline"
+                className="text-[#0B163F] font-semibold hover:underline"
               >
                 {mode === 'signup' ? 'Log in' : 'Sign up'}
               </button>
             </p>
 
             {mode === 'signup' && (
-              <p className="text-center text-xs text-navy-300 mt-4 leading-relaxed">
+              <p className="text-center text-[10px] text-[#9CA3AF] mt-4 leading-relaxed">
                 By creating an account you agree to our terms. We'll never share your data.
               </p>
             )}
@@ -325,7 +335,7 @@ export default function Auth() {
               key="backdrop"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-[#0D183D]/40 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
               onClick={closeForgot}
             />
 
@@ -338,33 +348,37 @@ export default function Auth() {
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className="fixed inset-0 z-50 flex items-center justify-center px-6 pointer-events-none"
             >
-              <div className="card w-full max-w-sm pointer-events-auto">
+              <div className="w-full max-w-sm pointer-events-auto bg-white rounded-3xl p-8 border border-[#E6E8EF] shadow-lg">
                 {resetState === 'sent' ? (
-                  <div className="text-center py-4">
-                    <div className="text-4xl mb-4">📬</div>
-                    <h2 className="text-lg font-bold text-[#0D183D] mb-2">Check your email</h2>
-                    <p className="text-sm text-[#4B6382] leading-relaxed mb-6">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-[#E6F2FF] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Mail size={24} className="text-[#0B163F]" />
+                    </div>
+                    <h2 className="text-lg font-bold text-[#0B163F] mb-2">Check your email</h2>
+                    <p className="text-xs text-[#4E6385] leading-relaxed mb-6">
                       We sent a password reset link to{' '}
-                      <span className="font-semibold text-[#0D183D]">{resetEmail}</span>.
+                      <span className="font-semibold text-[#0B163F]">{resetEmail}</span>.
                       It may take a minute to arrive.
                     </p>
-                    <button onClick={closeForgot} className="btn-honey w-full py-3">
+                    <button
+                      onClick={closeForgot}
+                      className="w-full px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs transition-all hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
+                    >
                       Back to login
                     </button>
                   </div>
                 ) : (
                   <>
                     <div className="text-center mb-6">
-                      <div className="text-3xl mb-3">🔑</div>
-                      <h2 className="text-lg font-bold text-[#0D183D] mb-1">Reset your password</h2>
-                      <p className="text-sm text-[#4B6382]">
+                      <h2 className="text-lg font-bold text-[#0B163F] mb-2">Reset your password</h2>
+                      <p className="text-xs text-[#4E6385]">
                         Enter your email and we'll send you a reset link.
                       </p>
                     </div>
 
                     <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1.5">
+                        <label className="block text-xs font-semibold text-[#0B163F] mb-2">
                           Email address
                         </label>
                         <input
@@ -373,7 +387,7 @@ export default function Auth() {
                           onChange={e => { setResetEmail(e.target.value); setResetError('') }}
                           placeholder="you@example.com"
                           autoComplete="email"
-                          className="input-field"
+                          className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
                         />
                       </div>
 
@@ -381,7 +395,7 @@ export default function Auth() {
                         {resetError && (
                           <motion.p
                             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                            className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2"
+                            className="text-xs text-[#FF4D4F] bg-[#FFF1F0] border border-[#FFCCC7] rounded-2xl px-3 py-2 font-medium"
                           >
                             {resetError}
                           </motion.p>
@@ -391,24 +405,29 @@ export default function Auth() {
                       <button
                         type="submit"
                         disabled={resetState === 'sending'}
-                        className="btn-honey w-full py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
                       >
                         {resetState === 'sending' ? (
-                          <span className="flex items-center justify-center gap-2">
+                          <>
                             <motion.span
                               animate={{ rotate: 360 }}
                               transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                               className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full"
                             />
                             Sending…
-                          </span>
-                        ) : 'Send reset link'}
+                          </>
+                        ) : (
+                          <>
+                            Send reset link
+                            <ArrowRight size={14} />
+                          </>
+                        )}
                       </button>
 
                       <button
                         type="button"
                         onClick={closeForgot}
-                        className="text-sm text-navy-400 hover:text-navy-600 transition-colors text-center"
+                        className="text-xs text-[#4E6385] hover:text-[#0B163F] transition-colors text-center font-medium"
                       >
                         Cancel
                       </button>
@@ -420,6 +439,7 @@ export default function Auth() {
           </>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }
