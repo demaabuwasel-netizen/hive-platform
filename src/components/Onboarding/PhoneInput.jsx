@@ -24,7 +24,7 @@ export default function PhoneInput({ label, value = '', onChange, required = fal
 
   return (
     <div className="flex gap-4">
-      <div className="w-32">
+      <div className="w-40">
         <SearchableSelect
           label=""
           placeholder="Code"
