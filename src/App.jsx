@@ -223,8 +223,8 @@ function AppRoutes() {
         <Route path="/applications"      element={<Applications />} />
         <Route path="/saved"             element={<Saved />} />
         <Route path="/matches"           element={<MatchResults />} />
-        <Route path="/profile/student"   element={<StudentProfile />} />
-        <Route path="/profile/ngo"       element={<NGOProfile />} />
+        <Route path="/profile/student"   element={<RequireAuth><StudentProfile /></RequireAuth>} />
+        <Route path="/profile/ngo"       element={<RequireAuth><NGOProfile /></RequireAuth>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
