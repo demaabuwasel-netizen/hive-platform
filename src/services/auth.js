@@ -49,19 +49,21 @@ export async function logOut() {
 // ── User row helpers ──────────────────────────────────────────────────────────
 
 export async function getUserRow(userId, { signal } = {}) {
-  console.log('[getUserRow] SELECT — uid:', userId)
+  const t = Date.now()
+  const ms = () => `+${Date.now() - t}ms`
+  console.log('[getUserRow] SELECT start — uid:', userId)
   try {
     let q = supabase.from('users').select('*').eq('id', userId).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 5000, 'getUserRow SELECT')
+    const { data, error } = await withQueryTimeout(q, 4000, 'getUserRow SELECT')
     if (error) {
-      console.error('[getUserRow] Supabase error:', error.message, '(code:', error.code, ')')
+      console.error(`[getUserRow] Supabase error ${ms()}:`, error.message, '(code:', error.code, ')')
       return null
     }
-    console.log('[getUserRow] done — row:', data ? `role=${data.role}` : 'null')
+    console.log(`[getUserRow] done ${ms()} — row:`, data ? `role=${data.role} onboarding=${data.onboarding_complete}` : 'null')
     return data
   } catch (err) {
-    console.error('[getUserRow] failed:', err.message)
+    console.error(`[getUserRow] timed out/threw ${ms()}:`, err.message)
     return null
   }
 }
@@ -106,26 +108,30 @@ function withQueryTimeout(queryBuilder, ms, label) {
 }
 
 // Ensure a public.users row exists — called on every sign-in (handles first OAuth).
+// Each Supabase call is capped internally at 4 s via Promise.race (belt-and-suspenders
+// against the outer withStep cap in AppContext and PostgREST promise-swallowing).
 export async function ensureUserRow(authUser, { signal } = {}) {
   const uid = authUser.id
   const t   = Date.now()
+  const ms  = () => `+${Date.now() - t}ms`
 
   // ── SELECT: check if row already exists ────────────────────────────────────
-  console.log('[ensureUserRow] SELECT — uid:', uid)
+  console.log('[ensureUserRow] SELECT start — uid:', uid)
   let existing = null
   try {
     let q = supabase.from('users').select('id').eq('id', uid).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 5000, 'ensureUserRow SELECT')
-    if (error) console.warn('[ensureUserRow] SELECT error (non-fatal):', error.message)
+    const { data, error } = await withQueryTimeout(q, 4000, 'ensureUserRow SELECT')
+    console.log(`[ensureUserRow] SELECT end ${ms()} — data:`, data, 'error:', error?.message ?? null)
+    if (error) console.warn('[ensureUserRow] SELECT error (non-fatal):', error.message, 'code:', error.code)
     existing = data
   } catch (err) {
-    console.warn('[ensureUserRow] SELECT failed:', err.message, 'after', Date.now()-t, 'ms — skipping row creation')
-    return  // bail out; getUserRow will also fail and hydrateUser falls back to minimal state
+    console.warn(`[ensureUserRow] SELECT timed out/threw ${ms()} — ${err.message} — skipping INSERT`)
+    return
   }
 
   if (existing) {
-    console.log('[ensureUserRow] row exists — uid:', uid, 'in', Date.now()-t, 'ms')
+    console.log(`[ensureUserRow] row exists ${ms()} — skipping INSERT`)
     return
   }
 
@@ -135,7 +141,7 @@ export async function ensureUserRow(authUser, { signal } = {}) {
              || authUser.email?.split('@')[0]
              || ''
 
-  console.log('[ensureUserRow] INSERT — uid:', uid)
+  console.log(`[ensureUserRow] INSERT start ${ms()} — uid:`, uid, 'name:', name, 'email:', authUser.email)
   try {
     let q = supabase.from('users').insert({
       id:                  uid,
@@ -146,14 +152,16 @@ export async function ensureUserRow(authUser, { signal } = {}) {
       provider:            authUser.app_metadata?.provider || 'email',
     })
     if (signal) q = q.abortSignal(signal)
-    const { error } = await withQueryTimeout(q, 5000, 'ensureUserRow INSERT')
+    const { data, error } = await withQueryTimeout(q, 4000, 'ensureUserRow INSERT')
     if (error && error.code !== '23505') {
-      console.error('[ensureUserRow] INSERT error:', error.message, '(code:', error.code, ')')
+      console.error(`[ensureUserRow] INSERT error ${ms()}:`, error.message, '(code:', error.code, ')')
+    } else if (error?.code === '23505') {
+      console.log(`[ensureUserRow] INSERT duplicate (race — row created by parallel call) ${ms()}`)
     } else {
-      console.log('[ensureUserRow] row created — uid:', uid, 'in', Date.now()-t, 'ms')
+      console.log(`[ensureUserRow] INSERT done ${ms()} — data:`, data)
     }
   } catch (err) {
-    console.warn('[ensureUserRow] INSERT failed:', err.message, 'after', Date.now()-t, 'ms')
-    // Non-fatal: getUserRow may still return a row (e.g. created by a trigger)
+    console.warn(`[ensureUserRow] INSERT timed out/threw ${ms()} — ${err.message}`)
+    // Non-fatal: getUserRow will still run and may find the row
   }
 }
