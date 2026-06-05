@@ -93,9 +93,22 @@ function GuestOnly({ children }) {
   const { user, loading } = useApp()
   if (loading) return <LoadingScreen />
   if (user) {
-    if (user.onboardingComplete)
+    // CRITICAL: If user is authenticated and onboarding is complete, ALWAYS send to dashboard
+    // This ensures accounts never get sent back to signup/role selection
+    if (user.onboardingComplete && user.role) {
+      console.log('[GuestOnly] User has completed onboarding — redirecting to dashboard')
       return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
-    return <Navigate to="/role-selection" replace />
+    }
+    // If authenticated but NO role set, send to role selection
+    if (!user.role) {
+      console.log('[GuestOnly] User has no role — redirecting to role selection')
+      return <Navigate to="/role-selection" replace />
+    }
+    // If authenticated with role but onboarding not complete, send to onboarding
+    if (!user.onboardingComplete) {
+      console.log('[GuestOnly] User onboarding incomplete — redirecting to onboarding')
+      return <Navigate to={`/onboarding/${user.role}`} replace />
+    }
   }
   return children
 }
