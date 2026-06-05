@@ -18,7 +18,7 @@ const STUDENT_PERKS = ['Describe your skills & goals in your own words', 'Get AI
 const NGO_PERKS     = ['Describe your mission in plain language', 'Get matched with students whose skills fit your needs', 'Every match comes with a clear explanation']
 
 export default function RoleSelection() {
-  const { user, updateRole } = useApp()
+  const { user, updateRole, logout } = useApp()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [showConfirmExit, setShowConfirmExit] = useState(false)
@@ -33,7 +33,7 @@ export default function RoleSelection() {
     }
   }
 
-  function handleConfirmExit() {
+  async function handleConfirmExit() {
     // Clear any draft data from localStorage
     try {
       const studentDraftKey = `onboarding_draft_student_${user?.id}`
@@ -41,6 +41,8 @@ export default function RoleSelection() {
       localStorage.removeItem(studentDraftKey)
       localStorage.removeItem(ngoDraftKey)
     } catch {}
+    // Logout so they can start fresh
+    await logout()
     navigate('/', { replace: true })
   }
 
