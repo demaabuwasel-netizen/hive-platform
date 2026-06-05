@@ -245,7 +245,7 @@ export default function NGOOnboarding() {
                     onChange={(val) => update('country', val)}
                     required
                     error={errors.country}
-                    options={COUNTRIES}
+                    options={COUNTRIES.map(c => ({ ...c, value: c.name }))}
                     formatOption={(opt) => opt.name}
                     searchFields={['name']}
                   />
