@@ -500,6 +500,16 @@ export default function NGOProfile() {
               )}
             </div>
           </motion.div>
+
+          {/* REGISTRATION NUMBER */}
+          {profile?.registrationNumber && (
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              <h3 className="text-[14px] font-extrabold text-[#0D183D] mb-3">Registration Number</h3>
+              <p className="text-[13px] font-semibold text-[#0D183D]">{profile.registrationNumber}</p>
+            </motion.div>
+          )}
         </div>
       </div>
     </main>
