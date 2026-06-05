@@ -13,12 +13,12 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
     setShowConfirm(true)
   }
 
-  const handleConfirmExit = () => {
-    // Clear localStorage
+  const handleConfirmExit = async () => {
+    // Clear localStorage and logout
     if (onExitOnboarding) {
-      onExitOnboarding()
+      await onExitOnboarding()
     }
-    navigate('/')
+    navigate('/', { replace: true })
   }
 
   return (
