@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Building2, MapPin, Mail, Phone, Globe, Instagram, Twitter, Edit3, Heart, Zap, Target } from 'lucide-react'
+import { Building2, MapPin, Mail, Phone, Globe, Twitter, Edit3, Heart, Zap, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import cardsBackground from '../assets/cards_background.png'
 
@@ -242,9 +242,7 @@ export default function NGOProfile() {
 
                 {profile?.instagram && (
                   <div>
-                    <p className="text-[11px] font-semibold text-[#0D183D] mb-1 flex items-center gap-1">
-                      <Instagram size={12} /> Instagram
-                    </p>
+                    <p className="text-[11px] font-semibold text-[#0D183D] mb-1">Instagram</p>
                     <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
                       className="text-[12px] text-[#3B82F6] hover:underline break-all">
                       {profile.instagram}
