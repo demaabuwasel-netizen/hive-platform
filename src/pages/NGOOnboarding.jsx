@@ -235,22 +235,24 @@ export default function NGOOnboarding() {
                   error={errors.name}
                 />
 
-                <SelectInput
-                  label="Country"
-                  placeholder="Select your country"
-                  value={data.country || ''}
-                  onChange={(val) => update('country', val)}
-                  required
-                  error={errors.country}
-                  options={['Israel', 'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Other']}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <SelectInput
+                    label="Country"
+                    placeholder="Select your country"
+                    value={data.country || ''}
+                    onChange={(val) => update('country', val)}
+                    required
+                    error={errors.country}
+                    options={['Israel', 'United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Other']}
+                  />
 
-                <TextInput
-                  label="City (optional)"
-                  placeholder="Enter your city"
-                  value={data.city || ''}
-                  onChange={(val) => update('city', val)}
-                />
+                  <TextInput
+                    label="City (optional)"
+                    placeholder="Enter your city"
+                    value={data.city || ''}
+                    onChange={(val) => update('city', val)}
+                  />
+                </div>
 
                 <PhoneInput
                   label="Phone number"
