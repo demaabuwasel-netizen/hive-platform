@@ -787,11 +787,11 @@ export default function StudentOnboarding() {
                 />
 
                 <FormField label="When can you start?">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => update('startDate', 'immediate')}
-                      className={`p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
+                      className={`flex-1 p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
                         data.startDate === 'immediate'
                           ? 'border-[#0B163F] bg-[#0B163F] text-white'
                           : 'border-[#E6E8EF] bg-white text-[#0B163F] hover:bg-[#FAF6EA]'
@@ -799,6 +799,7 @@ export default function StudentOnboarding() {
                     >
                       <span>Immediately</span>
                     </button>
+                    <span className="text-[#4B6382] font-semibold text-sm">or</span>
                     <input
                       type="date"
                       value={data.startDate && data.startDate !== 'immediate' ? data.startDate : ''}
@@ -807,7 +808,7 @@ export default function StudentOnboarding() {
                           update('startDate', e.target.value)
                         }
                       }}
-                      className={`px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
+                      className={`flex-1 px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
                         data.startDate && data.startDate !== 'immediate'
                           ? 'border-[#0B163F] bg-white'
                           : 'border-[#E6E8EF] bg-white focus:border-[#0B163F]'
