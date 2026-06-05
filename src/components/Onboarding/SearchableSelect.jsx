@@ -49,12 +49,18 @@ export default function SearchableSelect({
   }, [isOpen])
 
   return (
-    <FormField label={label} required={required} error={error} helper={helper}>
+    <div>
+      {label && (
+        <label className="block text-xs font-semibold text-[#0B163F] mb-2">
+          {label}
+          {required && <span className="text-[#FFB400] ml-1">*</span>}
+        </label>
+      )}
       <div className="relative" ref={containerRef}>
         <motion.button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] text-left flex items-center justify-between ${
+          className={`w-full px-4 py-2 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] text-left flex items-center justify-between ${
             error
               ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
               : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F]'
@@ -135,6 +141,12 @@ export default function SearchableSelect({
           )}
         </AnimatePresence>
       </div>
-    </FormField>
+      {error && (
+        <p className="text-[10px] text-[#FF4D4F] mt-1.5 font-medium">{error}</p>
+      )}
+      {helper && !error && (
+        <p className="text-[10px] text-[#4E6385] mt-1.5 leading-relaxed">{helper}</p>
+      )}
+    </div>
   )
 }
