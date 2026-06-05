@@ -177,6 +177,15 @@ export default function StudentProfile() {
     graduationYear: profile?.graduation_year || '',
   })
 
+  const [editingContact, setEditingContact] = useState(false)
+  const [contactDraft, setContactDraft] = useState({
+    phone: profile?.phone || '',
+    city: profile?.city || '',
+  })
+
+  const [editingGoals, setEditingGoals] = useState(false)
+  const [goalsDraft, setGoalsDraft] = useState(profile?.goals || '')
+
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))
   }
@@ -208,6 +217,16 @@ export default function StudentProfile() {
   const handleSaveEducation = async () => {
     await updateProfile({ ...profile, field: educationDraft.field, university: educationDraft.university, graduation_year: educationDraft.graduationYear })
     setEditingEducation(false)
+  }
+
+  const handleSaveContact = async () => {
+    await updateProfile({ ...profile, phone: contactDraft.phone, city: contactDraft.city })
+    setEditingContact(false)
+  }
+
+  const handleSaveGoals = async () => {
+    await updateProfile({ ...profile, goals: goalsDraft })
+    setEditingGoals(false)
   }
 
   const handleSaveLanguages = () => {
@@ -1265,6 +1284,125 @@ export default function StudentProfile() {
                   </div>
                 )}
               </div>
+            </motion.div>
+
+            {/* CONTACT INFO */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#EC489320' }}>
+                    <Phone size={14} style={{ color: '#EC4899' }}/>
+                  </span>
+                  Contact Info
+                </h3>
+                {!editingContact && (
+                  <button onClick={() => setEditingContact(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {contactDraft.phone || contactDraft.city ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingContact ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Phone</label>
+                    <input type="tel" value={contactDraft.phone} onChange={e => setContactDraft({...contactDraft, phone: e.target.value})}
+                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all"
+                      placeholder="e.g., +1 (555) 123-4567"/>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">City</label>
+                    <input type="text" value={contactDraft.city} onChange={e => setContactDraft({...contactDraft, city: e.target.value})}
+                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all"
+                      placeholder="e.g., San Francisco, CA"/>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={handleSaveContact}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setContactDraft({ phone: profile?.phone || '', city: profile?.city || '' })
+                      setEditingContact(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-[13px] text-[#0D183D]">
+                  {contactDraft.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone size={14} style={{ color: '#EC4899' }}/>
+                      <a href={`tel:${contactDraft.phone}`} className="hover:underline">{contactDraft.phone}</a>
+                    </div>
+                  )}
+                  {contactDraft.city && (
+                    <div className="flex items-center gap-2">
+                      <MapPin size={14} style={{ color: '#EC4899' }}/>
+                      {contactDraft.city}
+                    </div>
+                  )}
+                  {!contactDraft.phone && !contactDraft.city && (
+                    <p className="text-[#4B6382] text-center py-2">Add your contact information</p>
+                  )}
+                </div>
+              )}
+            </motion.div>
+
+            {/* GOALS */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#10B98120' }}>
+                    <Target size={14} style={{ color: '#10B981' }}/>
+                  </span>
+                  Goals & Aspirations
+                </h3>
+                {!editingGoals && (
+                  <button onClick={() => setEditingGoals(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {goalsDraft ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingGoals ? (
+                <div className="space-y-3">
+                  <textarea value={goalsDraft} onChange={e => setGoalsDraft(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
+                    placeholder="What are your professional goals? What do you want to achieve?"
+                    rows={4}
+                    style={{ background: '#F8F9FB' }}
+                    onFocus={e => e.target.style.borderColor = '#FFB703'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveGoals}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setGoalsDraft(profile?.goals || '')
+                      setEditingGoals(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {goalsDraft || 'No goals added yet. Share your aspirations and what you want to achieve.'}
+                </p>
+              )}
             </motion.div>
 
             {/* AVAILABILITY */}

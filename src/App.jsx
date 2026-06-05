@@ -14,6 +14,7 @@ import RoleSelection from './pages/RoleSelection'
 import StudentOnboarding from './pages/StudentOnboarding'
 import NGOOnboarding from './pages/NGOOnboarding'
 import StudentProfile from './pages/StudentProfile'
+import NGOProfile from './pages/NGOProfile'
 import StudentDashboard from './pages/StudentDashboard'
 import NGODashboard from './pages/NGODashboard'
 import MatchResults from './pages/MatchResults'
@@ -225,6 +226,7 @@ function AppRoutes() {
         <Route path="/saved"             element={<Saved />} />
         <Route path="/matches"           element={<MatchResults />} />
         <Route path="/profile/student"   element={<StudentProfile />} />
+        <Route path="/profile/ngo"       element={<NGOProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

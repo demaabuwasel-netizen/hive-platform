@@ -1,155 +1,286 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Pencil } from 'lucide-react'
+import { Building2, MapPin, Mail, Phone, Globe, Instagram, Twitter, Edit3, Heart, Zap, Target } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import Navbar from '../components/Navbar'
-import { AvatarDisplay } from '../components/Avatar'
-import { mockNGOs } from '../data/mockData'
-
-function SectionEmpty({ message }) {
-  return (
-    <div className="py-5 text-center">
-      <p className="text-navy-400 text-sm">{message}</p>
-    </div>
-  )
-}
+import cardsBackground from '../assets/cards_background.png'
 
 export default function NGOProfile() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
 
-  const data = profile || mockNGOs[0]
-  const orgName = data.name || user?.name || 'Your NGO'
-  const avatarSrc = data.imageUrl || data.avatar
-  const isOwnProfile = !!(user && user.onboardingComplete)
+  const [editingAbout, setEditingAbout] = useState(false)
+  const [aboutDraft, setAboutDraft] = useState(profile?.description || '')
+
+  const handleSaveAbout = async () => {
+    setEditingAbout(false)
+  }
+
+  const displayName = profile?.name || user?.name || 'Organization'
 
   return (
-    <div className="min-h-screen bg-[#FFF7E6]">
-      <Navbar />
+    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
+      <div className="px-8 py-7 max-w-6xl mx-auto">
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-        >
-          {/* Profile header */}
-          <div className="card mb-6 flex flex-col sm:flex-row items-start gap-6">
-            <AvatarDisplay src={avatarSrc} name={orgName} size="xl" />
+        {/* ══════════════════════════════════════════════════════
+            HERO PROFILE CARD
+        ══════════════════════════════════════════════════════ */}
+        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
+          className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6 shadow-sm relative overflow-hidden">
 
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold text-[#0D183D]">{orgName}</h1>
-                <span className="bg-navy-100 text-navy-700 text-xs font-semibold px-2.5 py-1 rounded-full">NGO</span>
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
+            style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat' }}/>
+
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
+            style={{ background: '#FFB703', transform: 'translate(40%, -40%)' }}/>
+
+          <div className="relative flex items-start justify-between gap-10">
+            {/* LEFT - Profile Info */}
+            <div className="flex-1">
+              <div className="w-20 h-20 rounded-xl overflow-hidden ring-4 ring-[#FFB703]/20 shadow-lg flex items-center justify-center bg-[#FFB703]/10 mb-4">
+                <Building2 size={40} className="text-[#0D183D]" />
               </div>
-
-              {data.location && (
-                <p className="text-[#4B6382] text-sm mb-1.5 flex items-center gap-1">
-                  <span aria-hidden="true">📍</span> {data.location}
-                </p>
-              )}
-
-              {data.phone && (
-                <p className="text-[#4B6382] text-xs mb-2 flex items-center gap-1.5">
-                  <span aria-hidden="true">📞</span>
-                  <a href={`tel:${data.phone}`} className="hover:text-[#0D183D] transition-colors">
-                    {data.phone}
-                  </a>
-                </p>
-              )}
-
-              {data.summary && (
-                <p className="text-navy-600 text-sm mt-2 leading-relaxed bg-cream-50 border border-[rgba(13,24,61,0.08)] rounded-xl p-3">
-                  {data.summary}
-                </p>
-              )}
-
-              {(data.links?.website || data.links?.instagram || data.links?.twitter) && (
-                <div className="flex gap-4 mt-3 flex-wrap">
-                  {data.links?.website && (
-                    <a href={data.links.website} target="_blank" rel="noreferrer"
-                      className="text-xs text-[#4B6382] hover:text-navy-700 transition-colors">
-                      🌐 Website
-                    </a>
-                  )}
-                  {data.links?.instagram && (
-                    <a href={data.links.instagram} target="_blank" rel="noreferrer"
-                      className="text-xs text-[#4B6382] hover:text-navy-700 transition-colors">
-                      📸 Instagram
-                    </a>
-                  )}
-                  {data.links?.twitter && (
-                    <a href={data.links.twitter} target="_blank" rel="noreferrer"
-                      className="text-xs text-[#4B6382] hover:text-navy-700 transition-colors">
-                      🐦 Twitter
-                    </a>
-                  )}
+              <h1 className="text-[32px] font-extrabold text-[#0D183D] mb-2">{displayName}</h1>
+              {profile?.location && (
+                <div className="flex items-center gap-2 text-[#4B6382] mb-4">
+                  <MapPin size={16} />
+                  <span>{profile.location}</span>
                 </div>
               )}
-            </div>
-          </div>
+              <p className="text-sm text-[#4B6382] mb-4 max-w-lg leading-relaxed">
+                {profile?.description || 'No description yet'}
+              </p>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* About */}
-            <div className="card md:col-span-2">
-              <h2 className="text-sm font-semibold text-[#4B6382] uppercase tracking-wider mb-3">About the organization</h2>
-              {data.description ? (
-                <p className="text-navy-600 text-sm leading-relaxed">{data.description}</p>
-              ) : (
-                <SectionEmpty message="No description added yet. Tell students about your mission and the communities you serve." />
-              )}
-            </div>
-
-            {/* Help needed */}
-            <div className="card md:col-span-2">
-              <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-sm font-semibold text-[#4B6382] uppercase tracking-wider">What we need help with</h2>
-                {data.helpNeeded && (
-                  <span className="bg-honey-100 text-honey-700 text-xs font-semibold px-2 py-0.5 rounded-full">Active need</span>
+              {/* Contact Info */}
+              <div className="flex flex-wrap gap-6 text-sm">
+                {profile?.phone && (
+                  <div className="flex items-center gap-2 text-[#4B6382]">
+                    <Phone size={16} />
+                    {profile.phone}
+                  </div>
+                )}
+                {user?.email && (
+                  <div className="flex items-center gap-2 text-[#4B6382]">
+                    <Mail size={16} />
+                    {user.email}
+                  </div>
                 )}
               </div>
-              {data.helpNeeded ? (
-                <p className="text-navy-600 text-sm leading-relaxed">{data.helpNeeded}</p>
-              ) : (
-                <SectionEmpty message="No needs described yet. Describing what you need in plain language is the most important part of getting a good match." />
-              )}
             </div>
 
-            {/* Tags */}
-            {data.tags?.length > 0 && (
-              <div className="card">
-                <h2 className="text-sm font-semibold text-[#4B6382] uppercase tracking-wider mb-3">Focus areas</h2>
+            {/* RIGHT - Action Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/profile/ngo/edit')}
+              className="px-6 py-3 rounded-xl font-semibold text-sm"
+              style={{ background: '#0D183D', color: 'white' }}>
+              <Edit3 size={16} className="inline mr-2"/>Edit Profile
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* ══════════════════════════════════════════════════════
+            CONTENT GRID
+        ══════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-3 gap-5">
+
+          {/* LEFT COLUMN */}
+          <div className="col-span-2 space-y-5">
+
+            {/* ABOUT */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
+                    <Building2 size={14} style={{ color: '#6366F1' }}/>
+                  </span>
+                  About
+                </h2>
+                {!editingAbout && (
+                  <button onClick={() => setEditingAbout(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    Edit <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingAbout ? (
+                <div className="space-y-3">
+                  <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
+                    placeholder="Write about your organization..."
+                    rows={4}
+                    style={{ background: '#F8F9FB' }}
+                    onFocus={e => e.target.style.borderColor = '#FFB703'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveAbout}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>Save</button>
+                    <button onClick={() => {
+                      setAboutDraft(profile?.description || '')
+                      setEditingAbout(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {profile?.description || 'Add a description to help students understand your organization.'}
+                </p>
+              )}
+            </motion.div>
+
+            {/* FOCUS AREAS (TAGS) */}
+            {profile?.tags && profile.tags.length > 0 && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#EC489320' }}>
+                    <Heart size={14} style={{ color: '#EC4899' }}/>
+                  </span>
+                  Focus Areas
+                </h2>
                 <div className="flex flex-wrap gap-2">
-                  {data.tags.map(tag => (
-                    <span key={tag} className="bg-[#FFF7E6] text-navy-700 text-sm px-3 py-1 rounded-full border border-cream-300">
+                  {profile.tags.map((tag, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                      style={{ background: '#EC489320', color: '#EC4899' }}>
                       {tag}
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
+            )}
+
+            {/* PREFERRED SKILLS */}
+            {profile?.preferred_skills && profile.preferred_skills.length > 0 && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#3B82F620' }}>
+                    <Zap size={14} style={{ color: '#3B82F6' }}/>
+                  </span>
+                  Preferred Student Skills
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.preferred_skills.map((skill, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                      style={{ background: '#3B82F620', color: '#3B82F6' }}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* PROJECT TYPES */}
+            {profile?.project_types && profile.project_types.length > 0 && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#10B98120' }}>
+                    <Target size={14} style={{ color: '#10B981' }}/>
+                  </span>
+                  Project Categories
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.project_types.map((type, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                      style={{ background: '#10B98120', color: '#10B981' }}>
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* HELP NEEDED */}
+            {profile?.helpNeeded && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] mb-4">What We Need Help With</h2>
+                <p className="text-[13px] leading-relaxed text-[#0D183D]">
+                  {profile.helpNeeded}
+                </p>
+              </motion.div>
             )}
           </div>
 
-          {/* CTA */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => navigate('/matches')}
-              className="btn-navy text-base px-8 py-3.5"
-            >
-              Find matching students →
-            </button>
-            {isOwnProfile && (
-              <button
-                onClick={() => navigate('/profile/ngo/edit')}
-                className="flex items-center gap-2 text-base px-8 py-3.5 rounded-2xl font-semibold border-2 transition-all hover:bg-[rgba(13,24,61,0.04)]"
-                style={{ color: '#0D183D', borderColor: 'rgba(13,24,61,0.18)' }}
-              >
-                <Pencil size={16} /> Edit profile
-              </button>
+          {/* RIGHT COLUMN */}
+          <div className="space-y-5">
+
+            {/* LINKS & SOCIAL */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
+              <h3 className="text-[15px] font-extrabold text-[#3B82F6] flex items-center gap-2 mb-4">
+                <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#3B82F620' }}>
+                  <Globe size={14} style={{ color: '#3B82F6' }}/>
+                </span>
+                Links & Social
+              </h3>
+
+              <div className="space-y-3">
+                {profile?.website && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#0D183D] mb-1">Website</p>
+                    <a href={profile.website} target="_blank" rel="noopener noreferrer"
+                      className="text-[12px] text-[#3B82F6] hover:underline break-all">
+                      {profile.website}
+                    </a>
+                  </div>
+                )}
+
+                {profile?.instagram && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#0D183D] mb-1 flex items-center gap-1">
+                      <Instagram size={12} /> Instagram
+                    </p>
+                    <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
+                      className="text-[12px] text-[#3B82F6] hover:underline break-all">
+                      {profile.instagram}
+                    </a>
+                  </div>
+                )}
+
+                {profile?.twitter && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#0D183D] mb-1 flex items-center gap-1">
+                      <Twitter size={12} /> Twitter
+                    </p>
+                    <a href={profile.twitter} target="_blank" rel="noopener noreferrer"
+                      className="text-[12px] text-[#3B82F6] hover:underline break-all">
+                      {profile.twitter}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* REGISTRATION INFO */}
+            {profile?.registrationNumber && (
+              <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
+                <h3 className="text-[15px] font-extrabold text-[#0D183D] mb-4">Registration</h3>
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4B6382] mb-1">Registration Number</p>
+                  <p className="text-[13px] font-semibold text-[#0D183D]">{profile.registrationNumber}</p>
+                </div>
+              </motion.div>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
