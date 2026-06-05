@@ -7,7 +7,7 @@ import {
   Users, Leaf, Heart, Code, Home, GraduationCap, Zap,
   PawPrint, Apple, Scale, Palette, Trees, Plus, Trash2,
   Briefcase, Globe, BookOpen, ChevronDown, ExternalLink, Link2,
-  BarChart2, TrendingUp,
+  BarChart2, TrendingUp, Target,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from '../components/Avatar'
@@ -167,6 +167,19 @@ export default function StudentProfile() {
   )
   const [newCause, setNewCause] = useState('')
 
+  const [editingMotivation, setEditingMotivation] = useState(false)
+  const [motivationDraft, setMotivationDraft] = useState(profile?.motivation || '')
+
+  const [editingProjectInterests, setEditingProjectInterests] = useState(false)
+  const [projectInterestsDraft, setProjectInterestsDraft] = useState(profile?.projectInterests || '')
+
+  const [editingEducation, setEditingEducation] = useState(false)
+  const [educationDraft, setEducationDraft] = useState({
+    field: profile?.field || '',
+    university: profile?.university || '',
+    graduationYear: profile?.graduation_year || '',
+  })
+
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))
   }
@@ -188,6 +201,21 @@ export default function StudentProfile() {
 
   const handleSaveAvailability = () => {
     setEditingAvailability(false)
+  }
+
+  const handleSaveMotivation = async () => {
+    await updateProfile({ ...profile, motivation: motivationDraft })
+    setEditingMotivation(false)
+  }
+
+  const handleSaveProjectInterests = async () => {
+    await updateProfile({ ...profile, projectInterests: projectInterestsDraft })
+    setEditingProjectInterests(false)
+  }
+
+  const handleSaveEducation = async () => {
+    await updateProfile({ ...profile, field: educationDraft.field, university: educationDraft.university, graduation_year: educationDraft.graduationYear })
+    setEditingEducation(false)
   }
 
   const handleSaveLanguages = () => {
@@ -838,6 +866,182 @@ export default function StudentProfile() {
                     </div>
                   )}
                 </>
+              )}
+            </motion.div>
+
+            {/* EDUCATION */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
+                    <GraduationCap size={14} style={{ color: '#6366F1' }}/>
+                  </span>
+                  Education
+                </h2>
+                {!editingEducation && (
+                  <button onClick={() => setEditingEducation(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {educationDraft.field || educationDraft.university ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingEducation ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Field of Study</label>
+                    <input type="text" value={educationDraft.field} onChange={e => setEducationDraft({...educationDraft, field: e.target.value})}
+                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
+                      placeholder="e.g., Computer Science"/>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">University / School</label>
+                    <input type="text" value={educationDraft.university} onChange={e => setEducationDraft({...educationDraft, university: e.target.value})}
+                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
+                      placeholder="e.g., Stanford University"/>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Year of Study</label>
+                    <select value={educationDraft.graduationYear} onChange={e => setEducationDraft({...educationDraft, graduationYear: e.target.value})}
+                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
+                      <option value="">Select year</option>
+                      <option value="1st year">1st year</option>
+                      <option value="2nd year">2nd year</option>
+                      <option value="3rd year">3rd year</option>
+                      <option value="4th year">4th year</option>
+                      <option value="5th year">5th year</option>
+                      <option value="Graduate">Graduate</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={handleSaveEducation}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setEducationDraft({ field: profile?.field || '', university: profile?.university || '', graduationYear: profile?.graduation_year || '' })
+                      setEditingEducation(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-[12px]">
+                  {educationDraft.field && (
+                    <p className="text-[#0D183D]"><strong>Field:</strong> {educationDraft.field}</p>
+                  )}
+                  {educationDraft.university && (
+                    <p className="text-[#0D183D]"><strong>School:</strong> {educationDraft.university}</p>
+                  )}
+                  {educationDraft.graduationYear && (
+                    <p className="text-[#0D183D]"><strong>Year:</strong> {educationDraft.graduationYear}</p>
+                  )}
+                  {!educationDraft.field && !educationDraft.university && !educationDraft.graduationYear && (
+                    <p className="text-[#4B6382]">Add your education details</p>
+                  )}
+                </div>
+              )}
+            </motion.div>
+
+            {/* MOTIVATION */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#EC489320' }}>
+                    <Heart size={14} style={{ color: '#EC4899' }}/>
+                  </span>
+                  Why These Causes Matter
+                </h2>
+                {!editingMotivation && (
+                  <button onClick={() => setEditingMotivation(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {motivationDraft ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingMotivation ? (
+                <div className="space-y-3">
+                  <textarea value={motivationDraft} onChange={e => setMotivationDraft(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
+                    placeholder="Why do these causes matter to you?"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={handleSaveMotivation}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setMotivationDraft(profile?.motivation || '')
+                      setEditingMotivation(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[12px] leading-relaxed text-[#0D183D]">
+                  {motivationDraft || 'Share your motivation for these causes.'}
+                </p>
+              )}
+            </motion.div>
+
+            {/* PROJECT INTERESTS */}
+            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+              viewport={{ once:true }}
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#0891B215' }}>
+                    <Target size={14} style={{ color: '#0891B2' }}/>
+                  </span>
+                  Project Interests
+                </h2>
+                {!editingProjectInterests && (
+                  <button onClick={() => setEditingProjectInterests(true)}
+                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                    {projectInterestsDraft ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                  </button>
+                )}
+              </div>
+
+              {editingProjectInterests ? (
+                <div className="space-y-3">
+                  <textarea value={projectInterestsDraft} onChange={e => setProjectInterestsDraft(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
+                    placeholder="What types of projects interest you? (e.g., website redesign, data analysis, social media strategy)"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={handleSaveProjectInterests}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      style={{ background: '#0D183D', color: 'white' }}>
+                      <Check size={12} className="inline mr-1"/>Save
+                    </button>
+                    <button onClick={() => {
+                      setProjectInterestsDraft(profile?.projectInterests || '')
+                      setEditingProjectInterests(false)
+                    }}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[12px] leading-relaxed text-[#0D183D]">
+                  {projectInterestsDraft || 'Tell us what types of projects interest you.'}
+                </p>
               )}
             </motion.div>
           </div>

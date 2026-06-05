@@ -524,37 +524,31 @@ export default function StudentOnboarding() {
                 />
 
                 <FormField label="When can you start?">
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white hover:bg-[#FAF6EA] transition-all group" onClick={() => update('startDate', 'immediate')}>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => update('startDate', 'immediate')}
+                      className={`p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
+                        data.startDate === 'immediate'
+                          ? 'border-[#0B163F] bg-[#0B163F] text-white'
+                          : 'border-[#E6E8EF] bg-white text-[#0B163F] hover:bg-[#FAF6EA]'
+                      }`}
+                    >
+                      <span>Immediately</span>
+                    </button>
+                    <div>
                       <input
-                        type="radio"
-                        name="startDate"
-                        value="immediate"
-                        checked={data.startDate === 'immediate'}
-                        onChange={(e) => update('startDate', e.target.value)}
-                        className="w-4 h-4 accent-[#0B163F]"
+                        type="date"
+                        value={data.startDate === 'immediate' ? '' : (data.startDate || '')}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            update('startDate', e.target.value)
+                          }
+                        }}
+                        className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+                        placeholder="Pick a date"
                       />
-                      <span className="font-semibold text-[#0B163F]">Immediately</span>
-                    </label>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="startDateType"
-                        value="specific"
-                        checked={data.startDate !== 'immediate' && !!data.startDate}
-                        onChange={() => {}}
-                        className="w-4 h-4 accent-[#0B163F] mt-1"
-                      />
-                      <div className="flex-1">
-                        <p className="font-semibold text-[#0B163F] mb-2">Specific date</p>
-                        <input
-                          type="date"
-                          value={data.startDate === 'immediate' ? '' : (data.startDate || '')}
-                          onChange={(e) => update('startDate', e.target.value)}
-                          className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
-                        />
-                      </div>
-                    </label>
+                    </div>
                   </div>
                 </FormField>
 
