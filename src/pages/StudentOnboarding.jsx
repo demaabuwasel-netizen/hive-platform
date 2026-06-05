@@ -9,7 +9,7 @@ import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
-import { TextInput, SelectInput, TextArea, FormField } from '../components/Onboarding/FormInputs'
+import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
 const STEPS = [
