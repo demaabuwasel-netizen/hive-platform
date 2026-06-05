@@ -308,19 +308,6 @@ export default function NGOOnboarding() {
                     Continue
                   </PrimaryButton>
                 </div>
-
-                {saveStatus !== 'idle' && (
-                  <motion.p
-                    className="text-xs font-medium mt-2"
-                    style={{
-                      color: saveStatus === 'saved' ? '#059669' : saveStatus === 'error' ? '#FF4D4F' : '#6B7280',
-                    }}
-                  >
-                    {saveStatus === 'saving' && 'Saving…'}
-                    {saveStatus === 'saved' && '✓ Saved'}
-                    {saveStatus === 'error' && 'Could not save — progress is safe locally'}
-                  </motion.p>
-                )}
               </FormCard>
             </div>
           </div>
