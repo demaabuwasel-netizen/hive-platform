@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check } from 'lucide-react'
+import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
@@ -9,7 +9,7 @@ import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
-import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
+import { TextInput, SelectInput, TextArea, FormField } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
 const STEPS = [
@@ -56,9 +56,89 @@ export default function StudentOnboarding() {
   const [submitError, setSubmitError] = useState('')
   const [saveStatus, setSaveStatus] = useState('idle')
   const [welcomeBack, setWelcomeBack] = useState(false)
+  const [newSkillId, setNewSkillId] = useState('')
+  const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
 
   const restoredRef = useRef(false)
   const debounceTimer = useRef(null)
+
+  const SKILLS_LIST = {
+    'Programming': [
+      { name: 'Python', level: 'Intermediate' },
+      { name: 'JavaScript', level: 'Advanced' },
+      { name: 'React', level: 'Advanced' },
+      { name: 'Java', level: 'Intermediate' },
+      { name: 'SQL', level: 'Intermediate' },
+      { name: 'Node.js', level: 'Advanced' },
+      { name: 'TypeScript', level: 'Advanced' },
+      { name: 'C++', level: 'Beginner' },
+    ],
+    'Data & AI': [
+      { name: 'Machine Learning', level: 'Advanced' },
+      { name: 'Data Analysis', level: 'Advanced' },
+      { name: 'TensorFlow', level: 'Intermediate' },
+      { name: 'Pandas', level: 'Advanced' },
+      { name: 'Statistics', level: 'Intermediate' },
+      { name: 'Deep Learning', level: 'Advanced' },
+    ],
+    'Tools & Platforms': [
+      { name: 'Git', level: 'Advanced' },
+      { name: 'Docker', level: 'Intermediate' },
+      { name: 'AWS', level: 'Intermediate' },
+      { name: 'Google Cloud', level: 'Beginner' },
+      { name: 'Figma', level: 'Advanced' },
+      { name: 'Linux', level: 'Intermediate' },
+    ],
+    'Soft Skills': [
+      { name: 'Communication', level: 'Advanced' },
+      { name: 'Leadership', level: 'Advanced' },
+      { name: 'Project Management', level: 'Intermediate' },
+      { name: 'Problem Solving', level: 'Advanced' },
+      { name: 'Teamwork', level: 'Advanced' },
+    ],
+    'Design': [
+      { name: 'UI Design', level: 'Advanced' },
+      { name: 'UX Design', level: 'Advanced' },
+      { name: 'Graphic Design', level: 'Intermediate' },
+      { name: 'Web Design', level: 'Advanced' },
+      { name: 'Prototyping', level: 'Intermediate' },
+    ],
+    'Marketing': [
+      { name: 'Digital Marketing', level: 'Advanced' },
+      { name: 'Content Writing', level: 'Advanced' },
+      { name: 'Social Media', level: 'Advanced' },
+      { name: 'SEO', level: 'Intermediate' },
+      { name: 'Email Marketing', level: 'Intermediate' },
+    ],
+  }
+
+  const SKILL_LEVEL_COLORS = {
+    'Beginner': { bg: '#FEE2E2', color: '#B91C1C' },
+    'Intermediate': { bg: '#FEF3C7', color: '#92400E' },
+    'Advanced': { bg: '#D1FAE5', color: '#065F46' },
+    'Expert': { bg: '#EDE9FE', color: '#5B21B6' },
+  }
+
+  const handleAddSkill = () => {
+    if (!newSkillId.trim()) return
+    const [category, skillName] = newSkillId.split('||')
+    if (!skillName || !category) return
+
+    // Check if skill already exists
+    const existingSkills = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
+    if (existingSkills.some(s => s.name === skillName)) return
+
+    const updatedSkills = [...existingSkills, { name: skillName, level: newSkillLevel, category }]
+    update('skillsWithLevel', updatedSkills)
+    setNewSkillId('')
+    setNewSkillLevel('Intermediate')
+  }
+
+  const handleRemoveSkill = (index) => {
+    const skillsWithLevel = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
+    const updated = skillsWithLevel.filter((_, i) => i !== index)
+    update('skillsWithLevel', updated)
+  }
 
   const doSave = useCallback(async (d, s) => {
     if (!user?.id) return
@@ -165,6 +245,9 @@ export default function StudentOnboarding() {
           }
         }
 
+        const skillsWithLevel = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
+        const skillNames = skillsWithLevel.map(s => s.name)
+
         const profile = {
           name: data.name?.trim() || null,
           field: data.field?.trim() || null,
@@ -173,7 +256,8 @@ export default function StudentOnboarding() {
           city: data.city?.trim() || null,
           graduation_year: data.graduationYear || null,
           bio: data.bio?.trim() || null,
-          skills: data.skills || [],
+          skills: skillNames,
+          skillsWithLevel: skillsWithLevel,
           interests: data.causes || [],
           languages: data.languages || [],
           work_mode: data.workMode || null,
@@ -181,7 +265,7 @@ export default function StudentOnboarding() {
           motivation: data.motivation?.trim() || null,
           availability: data.availability || null,
           project_length: data.projectLength || null,
-          project_interests: data.projectInterests?.trim() || null,
+          preferred_roles: data.preferredRoles || null,
           start_date: startDate || null,
           start_immediately: startImmediately,
           start_month: startMonth || null,
@@ -189,7 +273,7 @@ export default function StudentOnboarding() {
           // Camel case versions for profile object
           workMode: data.workMode || null,
           projectLength: data.projectLength || null,
-          projectInterests: data.projectInterests?.trim() || null,
+          preferredRoles: data.preferredRoles || null,
           startDate: startDate || null,
           startImmediately: startImmediately,
           startMonth: startMonth || null,
@@ -391,30 +475,67 @@ export default function StudentOnboarding() {
                 subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
                 icon={Sparkles}
               >
-                <ChipSelector
-                  label="Select skill categories"
-                  options={SKILL_CATEGORIES}
-                  value={data.skills || []}
-                  onChange={(val) => update('skills', val)}
-                  multi={true}
-                />
+                <div className="space-y-4">
+                  {/* Display added skills */}
+                  {Array.isArray(data.skillsWithLevel) && data.skillsWithLevel.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
+                      <p className="text-xs font-semibold text-[#4E6385] mb-3 uppercase tracking-wider">Selected Skills ({data.skillsWithLevel.length})</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.skillsWithLevel.map((skill, idx) => {
+                          const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+                          return (
+                            <div key={`skill-${idx}`} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
+                              <p className="text-xs font-semibold text-[#0B163F]">{skill.name}</p>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
+                                {skill.level}
+                              </span>
+                              <button onClick={() => handleRemoveSkill(idx)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                                <X size={12} />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-                <TextArea
-                  label="Other skills or interests"
-                  placeholder="Add any custom skills not listed above. (e.g., 'Video editing', 'Grant writing', 'Budget management')"
-                  value={data.otherSkills || ''}
-                  onChange={(val) => update('otherSkills', val)}
-                  rows={3}
-                />
+                  {/* Add skill section */}
+                  <div className="p-4 rounded-2xl border-2 border-[#E6E8EF] bg-white space-y-3">
+                    <div>
+                      <label className="text-xs font-semibold text-[#0B163F] block mb-2">Select a skill to add</label>
+                      <select value={newSkillId} onChange={e => setNewSkillId(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                        <option value="">Choose a skill...</option>
+                        {Object.entries(SKILLS_LIST).map(([category, skills]) => (
+                          <optgroup key={category} label={category}>
+                            {skills.map(skill => (
+                              <option key={skill.name} value={`${category}||${skill.name}`}>
+                                {skill.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
 
-                <TextArea
-                  label="Tell us about your experience"
-                  placeholder="Share any relevant projects, work, or volunteer experience. Be specific about what you've accomplished."
-                  value={data.goals || ''}
-                  onChange={(val) => update('goals', val)}
-                  rows={3}
-                  helper="This helps organizations understand what you can contribute."
-                />
+                    <div>
+                      <label className="text-xs font-semibold text-[#0B163F] block mb-2">Your expertise level</label>
+                      <select value={newSkillLevel} onChange={e => setNewSkillLevel(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                        <option>Expert</option>
+                      </select>
+                    </div>
+
+                    <PrimaryButton onClick={handleAddSkill} className="w-full">
+                      Add the skill
+                    </PrimaryButton>
+                  </div>
+                </div>
 
                 <div className="flex gap-3 pt-6">
                   <SecondaryButton onClick={back}>Back</SecondaryButton>
@@ -524,11 +645,11 @@ export default function StudentOnboarding() {
                 />
 
                 <FormField label="When can you start?">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     <button
                       type="button"
                       onClick={() => update('startDate', 'immediate')}
-                      className={`p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
+                      className={`w-full p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
                         data.startDate === 'immediate'
                           ? 'border-[#0B163F] bg-[#0B163F] text-white'
                           : 'border-[#E6E8EF] bg-white text-[#0B163F] hover:bg-[#FAF6EA]'
@@ -536,28 +657,47 @@ export default function StudentOnboarding() {
                     >
                       <span>Immediately</span>
                     </button>
-                    <div>
+                    <div className="relative">
+                      <label className="text-xs font-semibold text-[#0B163F] mb-2 block">Or pick a specific date</label>
                       <input
                         type="date"
-                        value={data.startDate === 'immediate' ? '' : (data.startDate || '')}
+                        value={data.startDate && data.startDate !== 'immediate' ? data.startDate : ''}
                         onChange={(e) => {
                           if (e.target.value) {
                             update('startDate', e.target.value)
                           }
                         }}
-                        className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+                        className={`w-full px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
+                          data.startDate && data.startDate !== 'immediate'
+                            ? 'border-[#0B163F] bg-white'
+                            : 'border-[#E6E8EF] bg-white focus:border-[#0B163F]'
+                        }`}
                         placeholder="Pick a date"
                       />
                     </div>
                   </div>
                 </FormField>
 
-                <TextArea
-                  label="Types of projects you're interested in"
-                  placeholder="What kind of work excites you? (e.g., website redesign, social media strategy, data analysis, research, event planning)"
-                  value={data.projectInterests || ''}
-                  onChange={(val) => update('projectInterests', val)}
-                  rows={3}
+                <SelectInput
+                  label="Your preferred role"
+                  placeholder="Select a preferred role"
+                  value={data.preferredRoles || ''}
+                  onChange={(val) => update('preferredRoles', val)}
+                  options={[
+                    { value: 'Designer', label: 'Designer' },
+                    { value: 'Data Analyst', label: 'Data Analyst' },
+                    { value: 'Marketing Specialist', label: 'Marketing Specialist' },
+                    { value: 'Content Writer', label: 'Content Writer' },
+                    { value: 'Frontend Developer', label: 'Frontend Developer' },
+                    { value: 'Backend Developer', label: 'Backend Developer' },
+                    { value: 'Full Stack Developer', label: 'Full Stack Developer' },
+                    { value: 'Project Manager', label: 'Project Manager' },
+                    { value: 'Business Analyst', label: 'Business Analyst' },
+                    { value: 'Social Media Manager', label: 'Social Media Manager' },
+                    { value: 'Event Coordinator', label: 'Event Coordinator' },
+                    { value: 'Research Analyst', label: 'Research Analyst' },
+                    { value: 'Fundraising Specialist', label: 'Fundraising Specialist' },
+                  ]}
                 />
 
                 <TextInput
