@@ -25,7 +25,7 @@ export default function PhoneInput({ label, value = '', onChange, required = fal
   return (
     <FormField label={label} required={required} error={error} helper={helper}>
       <div className="flex gap-3">
-        <div className="w-28">
+        <div className="w-48">
           <SearchableSelect
             label=""
             placeholder="Code"
@@ -42,7 +42,7 @@ export default function PhoneInput({ label, value = '', onChange, required = fal
           value={value}
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder={getPlaceholder()}
-          className={`flex-1 px-4 py-2 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
+          className={`w-48 px-4 py-2 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
             error
               ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
               : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
