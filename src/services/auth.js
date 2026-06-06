@@ -99,7 +99,10 @@ export async function updatePassword(newPassword) {
 function withQueryTimeout(queryBuilder, ms, label) {
   let tid
   const timer = new Promise((_, reject) => {
-    tid = setTimeout(() => reject(new Error(`${label} timed out after ${ms} ms`)), ms)
+    tid = setTimeout(() => {
+      console.warn(`[withQueryTimeout] ⏰ TIMER FIRED — ${label} after ${ms}ms`)
+      reject(new Error(`${label} timed out after ${ms} ms`))
+    }, ms)
   })
   return Promise.race([
     queryBuilder.then(result => { clearTimeout(tid); return result }),

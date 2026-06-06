@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import { useApp } from '../context/AppContext'
 import { useTheme } from '../contexts/ThemeContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { updateUserRow, updatePassword } from '../services/auth'
+import { supabase } from '../services/supabase'
 import { SUPPORTED_LANGS } from '../i18n/index'
 
 // ─── Section definitions ──────────────────────────────────────────────────────
@@ -287,15 +288,73 @@ function ProfileSection({ user, profile, updateProfile, patchUser }) {
   )
 }
 
+// Inline Google logo used in multiple places in this section
+function GoogleLogo({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+  )
+}
+
 // ─── Security section ─────────────────────────────────────────────────────────
 
 function SecuritySection({ user }) {
   const isEmailUser = !user?.provider || user.provider === 'email'
-  const [form,    setForm]    = useState({ newPw: '', confirm: '' })
-  const [show,    setShow]    = useState({ newPw: false, confirm: false })
-  const [saving,  setSaving]  = useState(false)
-  const [saved,   setSaved]   = useState(false)
-  const [error,   setError]   = useState('')
+
+  // ── Password change state ──────────────────────────────────────────────────
+  const [form,   setForm]   = useState({ newPw: '', confirm: '' })
+  const [show,   setShow]   = useState({ newPw: false, confirm: false })
+  const [saving, setSaving] = useState(false)
+  const [saved,  setSaved]  = useState(false)
+  const [error,  setError]  = useState('')
+
+  // ── Connected-accounts state ───────────────────────────────────────────────
+  // identities comes from supabase.auth.getUser() — the raw list of linked providers.
+  const [identities, setIdentities] = useState(null)   // null = loading
+  const [linking,    setLinking]    = useState(false)
+  const [linkMsg,    setLinkMsg]    = useState(null)    // { type: 'error'|'info', text }
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user: u }, error }) => {
+      if (error) { console.warn('[SecuritySection] getUser error:', error.message); return }
+      console.log('[SecuritySection] identities:', u?.identities?.map(i => i.provider))
+      setIdentities(u?.identities ?? [])
+    })
+  }, [])
+
+  const hasGoogle = identities?.some(i => i.provider === 'google')
+  const hasEmail  = identities?.some(i => i.provider === 'email')
+
+  async function linkGoogleAccount() {
+    setLinking(true)
+    setLinkMsg(null)
+    try {
+      // linkIdentity triggers a Google OAuth redirect. On return, the identity
+      // is attached to the existing Supabase user — no duplicate auth.users row.
+      // Requires "Manual linking" enabled in Supabase: Auth → Advanced → Allow manual linking.
+      const { error: linkErr } = await supabase.auth.linkIdentity({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/settings?section=security` },
+      })
+      if (linkErr) throw new Error(linkErr.message)
+      // Redirect happens — code below only runs if the browser doesn't navigate
+    } catch (e) {
+      setLinking(false)
+      const msg = e.message ?? ''
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('taken') || msg.toLowerCase().includes('duplicate')) {
+        setLinkMsg({
+          type: 'conflict',
+          text: 'This Google account is already linked to a separate Hive account. Please contact support or log in with that Google account directly to choose which profile to keep.',
+        })
+      } else {
+        setLinkMsg({ type: 'error', text: msg || 'Could not connect Google. Please try again.' })
+      }
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -322,7 +381,7 @@ function SecuritySection({ user }) {
         value={form[key]}
         onChange={e => { setForm(f => ({ ...f, [key]: e.target.value })); setError('') }}
         placeholder={placeholder}
-        autoComplete={key === 'newPw' ? 'new-password' : 'new-password'}
+        autoComplete="new-password"
         className={inputBase + ' pr-11'}
         style={inputStyle(!!error, false)}
         onFocus={e => onFocus(e, !!error)} onBlur={e => onBlur(e, !!error)}/>
@@ -339,15 +398,15 @@ function SecuritySection({ user }) {
     <div className="flex flex-col gap-7">
       <div>
         <h2 className="text-[16px] font-extrabold text-[#0D183D]">Security</h2>
-        <p className="text-[13px] text-[#4B6382] mt-0.5">Manage your password and sign-in method</p>
+        <p className="text-[13px] text-[#4B6382] mt-0.5">Manage your password and sign-in methods</p>
       </div>
 
+      {/* ── Password change (email users only) ─────────────────────────────── */}
       {isEmailUser ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="rounded-2xl border p-5 flex flex-col gap-5"
             style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
             <p className="text-[13px] font-extrabold text-[#0D183D]">Change password</p>
-
             <div>
               <label className="block text-[12px] font-semibold text-[#0D183D] mb-1.5">New password</label>
               {pwInput('newPw', 'At least 6 characters')}
@@ -356,14 +415,12 @@ function SecuritySection({ user }) {
               <label className="block text-[12px] font-semibold text-[#0D183D] mb-1.5">Confirm new password</label>
               {pwInput('confirm', 'Repeat your new password')}
             </div>
-
             {error && (
               <p className="flex items-center gap-1.5 text-red-500 text-[12px]">
                 <AlertCircle size={12}/>{error}
               </p>
             )}
           </div>
-
           <div className="flex justify-end">
             <button type="submit" disabled={saving || !form.newPw || !form.confirm}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
@@ -371,9 +428,7 @@ function SecuritySection({ user }) {
               {saving ? (
                 <><motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
                   className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full"/>Updating…</>
-              ) : saved ? (
-                <><Check size={13}/> Password updated!</>
-              ) : 'Update password'}
+              ) : saved ? <><Check size={13}/> Password updated!</> : 'Update password'}
             </button>
           </div>
         </form>
@@ -381,21 +436,92 @@ function SecuritySection({ user }) {
         <div className="rounded-2xl border p-5 flex items-start gap-3"
           style={{ borderColor: 'rgba(13,24,61,0.08)', background: 'rgba(13,24,61,0.02)' }}>
           <div className="w-9 h-9 rounded-xl bg-white border border-[rgba(13,24,61,0.1)] flex items-center justify-center shrink-0 mt-0.5">
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
+            <GoogleLogo size={18}/>
           </div>
           <div>
             <p className="text-[13px] font-semibold text-[#0D183D] mb-0.5">Signed in with Google</p>
             <p className="text-[12px] text-[#4B6382] leading-relaxed">
-              Your account uses Google for sign-in. Password management is handled through your Google account settings.
+              Password management is handled through your Google account settings.
             </p>
           </div>
         </div>
       )}
+
+      {/* ── Connected accounts ─────────────────────────────────────────────── */}
+      <div className="rounded-2xl border flex flex-col divide-y"
+        style={{ borderColor: 'rgba(13,24,61,0.08)', divideColor: 'rgba(13,24,61,0.06)' }}>
+
+        <div className="px-5 py-3.5">
+          <p className="text-[13px] font-extrabold text-[#0D183D]">Connected accounts</p>
+          <p className="text-[11px] text-[#4B6382] mt-0.5">
+            Linking Google lets you sign in with either method using the same Hive profile.
+          </p>
+        </div>
+
+        {/* Email row */}
+        <div className="px-5 py-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl border border-[rgba(13,24,61,0.1)] bg-[rgba(13,24,61,0.03)] flex items-center justify-center shrink-0">
+            <Shield size={16} style={{ color: '#4B6382' }}/>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-[#0D183D]">Email / password</p>
+            <p className="text-[11px] text-[#4B6382] truncate">{user?.email}</p>
+          </div>
+          {identities === null ? (
+            <div className="w-16 h-5 rounded-full bg-[rgba(13,24,61,0.05)] animate-pulse"/>
+          ) : hasEmail ? (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 shrink-0">Connected</span>
+          ) : (
+            <span className="text-[11px] text-[#4B6382] shrink-0">—</span>
+          )}
+        </div>
+
+        {/* Google row */}
+        <div className="px-5 py-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white border border-[rgba(13,24,61,0.1)] flex items-center justify-center shrink-0">
+            <GoogleLogo size={18}/>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-[#0D183D]">Google</p>
+            {hasGoogle && identities?.find(i => i.provider === 'google')?.identity_data?.email && (
+              <p className="text-[11px] text-[#4B6382] truncate">
+                {identities.find(i => i.provider === 'google').identity_data.email}
+              </p>
+            )}
+          </div>
+          {identities === null ? (
+            <div className="w-24 h-7 rounded-xl bg-[rgba(13,24,61,0.05)] animate-pulse"/>
+          ) : hasGoogle ? (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 shrink-0">Connected</span>
+          ) : (
+            <button
+              onClick={linkGoogleAccount}
+              disabled={linking}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold border transition-all hover:bg-[rgba(13,24,61,0.03)] disabled:opacity-50 shrink-0"
+              style={{ color: '#0D183D', borderColor: 'rgba(13,24,61,0.15)' }}>
+              {linking ? (
+                <><motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="inline-block w-3 h-3 border-2 border-[#0D183D]/30 border-t-[#0D183D] rounded-full"/>
+                  Connecting…</>
+              ) : 'Connect Google'}
+            </button>
+          )}
+        </div>
+
+        {/* Conflict / error message */}
+        {linkMsg && (
+          <div className={`px-5 py-3.5 flex items-start gap-2.5 rounded-b-2xl ${
+            linkMsg.type === 'conflict'
+              ? 'bg-amber-50 border-t border-amber-100'
+              : 'bg-red-50 border-t border-red-100'
+          }`}>
+            <AlertTriangle size={14} className={`mt-0.5 shrink-0 ${linkMsg.type === 'conflict' ? 'text-amber-600' : 'text-red-500'}`}/>
+            <p className={`text-[12px] leading-relaxed ${linkMsg.type === 'conflict' ? 'text-amber-800' : 'text-red-700'}`}>
+              {linkMsg.text}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
