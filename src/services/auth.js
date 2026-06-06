@@ -107,15 +107,82 @@ function withQueryTimeout(queryBuilder, ms, label) {
   ])
 }
 
-// Ensure a public.users row exists — called on every sign-in (handles first OAuth).
-// Each Supabase call is capped internally at 4 s via Promise.race (belt-and-suspenders
-// against the outer withStep cap in AppContext and PostgREST promise-swallowing).
+// ── Account reconciliation ────────────────────────────────────────────────────
+// Handles the case where the same person has signed up with both Google and
+// email/password. Supabase creates two auth.users rows (different IDs, same email).
+// This function calls a Supabase RPC (SECURITY DEFINER) that:
+//   1. Finds an existing public.users row with the same email but different ID
+//   2. Copies role/onboarding/prefs to the new auth ID
+//   3. Re-points student_profiles / ngo_profiles to the new user_id
+//
+// Required SQL (run once in Supabase SQL editor):
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE OR REPLACE FUNCTION reconcile_user_by_email(
+//   p_new_id  uuid, p_email text, p_name text, p_provider text
+// ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+// DECLARE v_old users%ROWTYPE; v_result jsonb;
+// BEGIN
+//   SELECT * INTO v_old FROM users WHERE email = p_email AND id != p_new_id LIMIT 1;
+//   IF v_old.id IS NULL THEN RETURN NULL; END IF;
+//   INSERT INTO users (id,name,email,role,onboarding_complete,onboarding_step,provider,preferred_language,preferred_theme)
+//   VALUES (p_new_id,COALESCE(v_old.name,p_name),p_email,v_old.role,v_old.onboarding_complete,
+//           v_old.onboarding_step,p_provider,v_old.preferred_language,v_old.preferred_theme)
+//   ON CONFLICT (id) DO UPDATE SET role=EXCLUDED.role, onboarding_complete=EXCLUDED.onboarding_complete,
+//     onboarding_step=EXCLUDED.onboarding_step, preferred_language=EXCLUDED.preferred_language,
+//     preferred_theme=EXCLUDED.preferred_theme;
+//   UPDATE student_profiles SET user_id = p_new_id WHERE user_id = v_old.id;
+//   UPDATE ngo_profiles     SET user_id = p_new_id WHERE user_id = v_old.id;
+//   SELECT jsonb_build_object('old_id',v_old.id,'role',v_old.role,
+//     'onboarding_complete',v_old.onboarding_complete,'onboarding_step',v_old.onboarding_step,
+//     'preferred_language',v_old.preferred_language,'preferred_theme',v_old.preferred_theme)
+//   INTO v_result;
+//   RETURN v_result;
+// END; $$;
+// REVOKE ALL ON FUNCTION reconcile_user_by_email FROM PUBLIC;
+// GRANT EXECUTE ON FUNCTION reconcile_user_by_email TO authenticated;
+// ─────────────────────────────────────────────────────────────────────────────
+export async function reconcileUserByEmail(authUser) {
+  const name     = authUser.user_metadata?.full_name || authUser.user_metadata?.name
+                || authUser.email?.split('@')[0] || ''
+  const provider = authUser.app_metadata?.provider || 'email'
+
+  console.log('[reconcile] checking for linked account — email:', authUser.email, 'uid:', authUser.id)
+
+  try {
+    const { data, error } = await withQueryTimeout(
+      supabase.rpc('reconcile_user_by_email', {
+        p_new_id: authUser.id, p_email: authUser.email, p_name: name, p_provider: provider,
+      }),
+      5000, 'reconcile_user_by_email'
+    )
+    if (error) {
+      console.warn('[reconcile] RPC unavailable (run the SQL above to enable):', error.message)
+      return null
+    }
+    if (data) {
+      console.log('[reconcile] ✓ accounts merged — old_id:', data.old_id, '→', authUser.id,
+        '| role:', data.role, '| onboarding_complete:', data.onboarding_complete)
+    } else {
+      console.log('[reconcile] no linked account found by email')
+    }
+    return data   // null if no match; object with role/onboarding data if merged
+  } catch (err) {
+    console.warn('[reconcile] error:', err.message)
+    return null
+  }
+}
+
+// Ensure a public.users row exists — called on every sign-in.
+// 1. SELECT by auth user ID. If found → done.
+// 2. If not found → try email reconciliation (links Google ↔ email/password accounts).
+// 3. If reconciliation finds nothing → INSERT a fresh blank row.
+// Each Supabase call is capped at 4 s via Promise.race.
 export async function ensureUserRow(authUser, { signal } = {}) {
   const uid = authUser.id
   const t   = Date.now()
   const ms  = () => `+${Date.now() - t}ms`
 
-  // ── SELECT: check if row already exists ────────────────────────────────────
+  // ── SELECT: check if row already exists by auth UID ───────────────────────
   console.log('[ensureUserRow] SELECT start — uid:', uid)
   let existing = null
   try {
@@ -131,11 +198,20 @@ export async function ensureUserRow(authUser, { signal } = {}) {
   }
 
   if (existing) {
-    console.log(`[ensureUserRow] row exists ${ms()} — skipping INSERT`)
+    console.log(`[ensureUserRow] row exists ${ms()}`)
     return
   }
 
-  // ── INSERT: create the row ─────────────────────────────────────────────────
+  // ── No row by ID — try email reconciliation first ─────────────────────────
+  // Handles Google sign-in for a user who previously registered by email/password.
+  // If the RPC isn't set up yet, this is a no-op and we fall through to INSERT.
+  const reconciled = await reconcileUserByEmail(authUser).catch(() => null)
+  if (reconciled) {
+    console.log(`[ensureUserRow] row created via reconciliation ${ms()}`)
+    return
+  }
+
+  // ── INSERT: create a fresh row for a genuinely new user ───────────────────
   const name = authUser.user_metadata?.full_name
              || authUser.user_metadata?.name
              || authUser.email?.split('@')[0]
@@ -156,12 +232,11 @@ export async function ensureUserRow(authUser, { signal } = {}) {
     if (error && error.code !== '23505') {
       console.error(`[ensureUserRow] INSERT error ${ms()}:`, error.message, '(code:', error.code, ')')
     } else if (error?.code === '23505') {
-      console.log(`[ensureUserRow] INSERT duplicate (race — row created by parallel call) ${ms()}`)
+      console.log(`[ensureUserRow] INSERT duplicate (race) ${ms()}`)
     } else {
-      console.log(`[ensureUserRow] INSERT done ${ms()} — data:`, data)
+      console.log(`[ensureUserRow] INSERT done ${ms()}`)
     }
   } catch (err) {
     console.warn(`[ensureUserRow] INSERT timed out/threw ${ms()} — ${err.message}`)
-    // Non-fatal: getUserRow will still run and may find the row
   }
 }

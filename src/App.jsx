@@ -1,7 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from './services/supabase'
-import { getUserRow } from './services/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import Landing from './pages/Landing'
 import ForStudents from './pages/ForStudents'
@@ -29,6 +28,7 @@ import Applications from './pages/Applications'
 import Saved from './pages/Saved'
 import CreateOpportunity from './pages/CreateOpportunity'
 import EditStudentProfile from './pages/EditStudentProfile'
+import EditNGOProfile from './pages/EditNGOProfile'
 import DashboardLayout from './components/DashboardLayout'
 import { AppProvider, useApp } from './context/AppContext'
 import HiveLogo from './components/HiveLogo'
@@ -114,28 +114,9 @@ function GuestOnly({ children }) {
   const { user, loading } = useApp()
   if (loading) return <LoadingScreen />
   if (user) {
-    // CRITICAL: If user is authenticated and onboarding is complete, ALWAYS send to dashboard
-    // This ensures accounts never get sent back to signup/role selection
-    if (user.onboardingComplete && user.role) {
-      console.log('[GuestOnly] User has completed onboarding — redirecting to dashboard')
+    if (user.onboardingComplete)
       return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
-    }
-    // SAFETY: If user has role but onboarding complete, don't send to role selection
-    // (This shouldn't happen but if it does, go to home not role-selection)
-    if (user.role && user.onboardingComplete) {
-      console.log('[GuestOnly] SAFETY: Completed user in guest guard — redirecting to home')
-      return <Navigate to="/" replace />
-    }
-    // If authenticated with role but onboarding not complete, send to onboarding
-    if (user.role && !user.onboardingComplete) {
-      console.log('[GuestOnly] User onboarding incomplete — redirecting to onboarding')
-      return <Navigate to={`/onboarding/${user.role}`} replace />
-    }
-    // If authenticated but NO role set, send to role selection (only valid for new users)
-    if (!user.role) {
-      console.log('[GuestOnly] User has no role — redirecting to role selection')
-      return <Navigate to="/role-selection" replace />
-    }
+    return <Navigate to="/role-selection" replace />
   }
   return children
 }
@@ -156,26 +137,6 @@ function OnboardingGuard({ children }) {
   return children
 }
 
-// Guard for role selection — prevent access if already onboarding/completed
-function RoleSelectionGuard({ children }) {
-  const { user, loading } = useApp()
-  if (loading) return <LoadingScreen />
-  if (!user) return <Navigate to="/auth" replace />
-  // CRITICAL SAFETY: If user has completed onboarding, NEVER let them access role-selection
-  // Send to home instead to prevent any chance of re-selecting a role
-  if (user.role) {
-    if (user.onboardingComplete) {
-      console.log('[RoleSelectionGuard] SAFETY: Completed user tried to access role-selection — redirecting to home')
-      return <Navigate to="/" replace />
-    } else {
-      console.log('[RoleSelectionGuard] User already has role — redirecting to onboarding')
-      return <Navigate to={`/onboarding/${user.role}`} replace />
-    }
-  }
-  // No role yet — allow role selection
-  return children
-}
-
 // Wraps the persistent DashboardLayout with auth guard
 function ProtectedDashboard() {
   const { user, loading } = useApp()
@@ -184,65 +145,79 @@ function ProtectedDashboard() {
   return <DashboardLayout />
 }
 
-// ─── Auth redirect handler ────────────────────────────────────────────────────
-// Listens for Supabase SIGNED_IN events and redirects to the correct page.
+// ─── OAuth redirect handler ───────────────────────────────────────────────────
+// Routes the user to the correct page after Google (or any OAuth) sign-in.
 //
-// WHY NOT check window.location.hash:
-//   Supabase JS clears #access_token synchronously inside createClient()
-//   (via history.replaceState in _handleImplicitGrantFlow). By the time
-//   any React useEffect runs, the hash is already gone.
+// Design decisions:
 //
-// WHY filter to non-email providers:
-//   Auth.jsx handles its own redirect after email/password sign-in.
-//   SIGNED_IN fires for all methods, so we only intercept OAuth here to
-//   avoid double-redirects.
+// 1. Uses AppContext's already-hydrated user state for routing — does NOT make
+//    its own getUserRow() call. AppContext's hydrateUser() already ran
+//    ensureUserRow + getUserRow (with reconciliation). Duplicating those calls
+//    here introduces a race where a cold DB query returns null and the user
+//    is wrongly sent to /role-selection.
+//
+// 2. Handles both SIGNED_IN and INITIAL_SESSION:
+//    - SIGNED_IN fires when a fresh OAuth token arrives.
+//    - INITIAL_SESSION fires when onAuthStateChange is subscribed with an
+//      existing session. OAuthCallback mounts after loading=false; if SIGNED_IN
+//      already fired while loading=true (the common case), we catch it via
+//      INITIAL_SESSION + a public-path guard instead of losing the redirect.
+//
+// 3. Email sign-in is handled by Auth.jsx — filtered out here by provider check.
+
+// Public pages where a returning OAuth user should be redirected to their dashboard.
+const OAUTH_PUBLIC_PATHS = new Set(['/', '/auth', '/for-students', '/for-ngos', '/how-it-works', '/about'])
 
 function OAuthCallback() {
-  const navigate = useNavigate()
+  const { user, loading } = useApp()
+  const navigate    = useNavigate()
+  const location    = useLocation()
+  const needsRoute  = useRef(false)
+  const locationRef = useRef(location.pathname)
 
+  // Keep locationRef current without re-subscribing to auth events on every navigation
+  useEffect(() => { locationRef.current = location.pathname }, [location.pathname])
+
+  // Subscribe once — set needsRoute flag when an OAuth sign-in is detected
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event !== 'SIGNED_IN' || !session?.user) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session?.user) return
+      const provider = session.user.app_metadata?.provider ?? 'email'
+      if (provider === 'email') return  // email flow handled in Auth.jsx
 
-        const provider = session.user.app_metadata?.provider ?? 'email'
+      console.log('[auth] OAuthCallback —', event, '| provider:', provider, '| uid:', session.user.id)
 
-        // Email/password sign-in is handled by Auth.jsx — skip it here
-        if (provider === 'email') return
-
-        const uid   = session.user.id
-        const email = session.user.email
-
-        console.log('[auth] OAuth SIGNED_IN', { uid, email, provider })
-
-        const userRow = await getUserRow(uid)
-        console.log('[auth] public.users row:', userRow)
-
-        let dest
-        // CRITICAL SAFETY: Never send completed users back to role-selection
-        // If they have a role AND completed onboarding, they should go to dashboard, period
-        if (userRow?.onboarding_complete && userRow?.role) {
-          dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
-          console.log('[auth] redirect →', dest, '(fully onboarded - safe routing)')
-        } else if (!userRow?.role) {
-          // No role at all - go to role selection (only valid for new users)
-          dest = '/role-selection'
-          console.log('[auth] redirect → /role-selection (no role set)')
-        } else if (!userRow?.onboarding_complete) {
-          // Has role but not done onboarding
-          dest = `/onboarding/${userRow.role}`
-          console.log('[auth] redirect →', dest, '(onboarding incomplete)')
-        } else {
-          // Fallback: go to dashboard if anything is weird
-          dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
-          console.log('[auth] redirect →', dest, '(safety fallback)')
-        }
-
-        navigate(dest, { replace: true })
+      if (event === 'SIGNED_IN') {
+        // Fresh OAuth sign-in — always need to route
+        needsRoute.current = true
+      } else if (event === 'INITIAL_SESSION' && OAUTH_PUBLIC_PATHS.has(locationRef.current)) {
+        // Component mounted after SIGNED_IN already fired (loading cleared quickly).
+        // If still on a public page we know the OAuth redirect hasn't routed yet.
+        needsRoute.current = true
       }
-    )
+    })
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [])
+
+  // Perform the route once AppContext has hydrated the user (loading=false, user set)
+  useEffect(() => {
+    if (!needsRoute.current || loading || !user) return
+    needsRoute.current = false
+
+    const dest = !user.role
+      ? '/role-selection'
+      : !user.onboardingComplete
+      ? `/onboarding/${user.role}`
+      : user.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
+
+    console.log('[auth] OAuthCallback → routing to', dest, {
+      uid:               user.id,
+      provider:          user.provider,
+      role:              user.role,
+      onboardingComplete: user.onboardingComplete,
+    })
+    navigate(dest, { replace: true })
+  }, [loading, user, navigate])
 
   return null
 }
@@ -268,12 +243,15 @@ function AppRoutes() {
       <Route path="/match/:id" element={<MatchExplanation />} />
 
       {/* ── Onboarding ── */}
-      <Route path="/role-selection"     element={<RoleSelectionGuard><RoleSelection /></RoleSelectionGuard>} />
+      <Route path="/role-selection"     element={<RequireAuth><RoleSelection /></RequireAuth>} />
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
       {/* ── Profile ── */}
+      <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
       <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
+      <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
+      <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
 
       {/* ── Create opportunity (full-page, no sidebar) ── */}
       <Route path="/opportunities/new"    element={<RequireAuth><CreateOpportunity /></RequireAuth>} />
@@ -291,8 +269,6 @@ function AppRoutes() {
         <Route path="/applications"      element={<Applications />} />
         <Route path="/saved"             element={<Saved />} />
         <Route path="/matches"           element={<MatchResults />} />
-        <Route path="/profile/student"   element={<RequireAuth><StudentProfile /></RequireAuth>} />
-        <Route path="/profile/ngo"       element={<RequireAuth><NGOProfile /></RequireAuth>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

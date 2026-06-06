@@ -314,7 +314,11 @@ export function AppProvider({ children }) {
     if (userErr) throw new Error(`User update failed: ${userErr.message}`)
     console.log(`[onboarding ${elapsed()}] step 2 — done`)
 
+    // Update local state so route guards immediately see onboarding as complete.
+    // Without this, user.onboardingComplete remains false until the next full
+    // hydrateUser cycle, causing OnboardingGuard to bounce the user back.
     setProfileState(profileData)
+    setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
     console.log(`[onboarding ${elapsed()}] complete ✓`)
   }
 
