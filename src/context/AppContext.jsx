@@ -7,18 +7,17 @@ import i18n from '../i18n/index'
 const AppContext = createContext(null)
 
 // ── Promise.race timeout helper ────────────────────────────────────────────────
-// Every async call in hydrateUser goes through this. It uses JS-level timers,
-// NOT AbortSignal — because PostgREST-js v2 can swallow AbortError and leave
-// the Promise pending even after signal.abort() fires (known issue).
+// Uses JS-level timers, NOT AbortSignal — PostgREST-js v2 can swallow AbortError
+// and leave the Promise pending even after signal.abort() fires (known issue).
 function withStep(promise, label, ms = 4000) {
   let tid
   return Promise.race([
     Promise.resolve(promise).then(r => { clearTimeout(tid); return r }),
     new Promise((_, reject) => {
-      tid = setTimeout(
-        () => reject(new Error(`[step:${label}] timed out after ${ms}ms`)),
-        ms
-      )
+      tid = setTimeout(() => {
+        console.warn(`[withStep] ⏰ TIMER FIRED — ${label} cap=${ms}ms`)
+        reject(new Error(`[step:${label}] timed out after ${ms}ms`))
+      }, ms)
     }),
   ])
 }
@@ -32,14 +31,24 @@ export function AppProvider({ children }) {
 
   // ── hydrateUser ─────────────────────────────────────────────────────────────
   // Steps 1+2 use withStep with 2 s caps. Step 3 (profile) is fire-and-forget.
-  // Worst-case blocking time: 2+2 = 4 s. Never throws — always resolves via try/catch.
+  // Every await has explicit BEFORE/AFTER console logs with a per-call run-ID
+  // and elapsed-ms so the exact hanging query is visible in the console.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null); setProfileState(null); return
     }
 
-    console.log('[hydrateUser] start — uid:', authUser.id,
-      'provider:', authUser.app_metadata?.provider ?? 'email')
+    // Unique 4-char ID so parallel calls are distinguishable in the console
+    const runId = Math.random().toString(36).slice(2, 6).toUpperCase()
+    const t0    = Date.now()
+    const ms    = () => `+${Date.now() - t0}ms`
+    const log   = (...a) => console.log( `[hU:${runId}]`, ms(), ...a)
+    const warn  = (...a) => console.warn( `[hU:${runId}]`, ms(), ...a)
+    const err   = (...a) => console.error(`[hU:${runId}]`, ms(), ...a)
+
+    log('START — uid:', authUser.id,
+      '| provider:', authUser.app_metadata?.provider ?? 'email',
+      '| email:', authUser.email)
 
     const minimal = {
       id:                 authUser.id,
@@ -58,20 +67,19 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── 1. ensureUserRow (2 s cap) ─────────────────────────────────────────
-      console.log('[hydrateUser] step 1 — ensureUserRow')
+      // ── Step 1: ensureUserRow (2 s outer cap via withStep) ─────────────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=2000ms]')
       await withStep(ensureUserRow(authUser), 'ensureUserRow', 2000)
-      console.log('[hydrateUser] step 1 — done')
+      log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── 2. getUserRow (2 s cap) ────────────────────────────────────────────
-      console.log('[hydrateUser] step 2 — getUserRow')
+      // ── Step 2: getUserRow (2 s outer cap via withStep) ────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=2000ms]')
       const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 2000)
-      console.log('[hydrateUser] step 2 — done:', userRow
-        ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
-        : 'null (will use minimal state)')
+      log('STEP 2 — AFTER  getUserRow    ',
+        userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
       if (!userRow) {
-        console.warn('[hydrateUser] users row missing — minimal state')
+        warn('STEP 2 — users row missing → applying minimal state')
         setUserState(minimal); userWasSet = true; return
       }
 
@@ -88,8 +96,9 @@ export function AppProvider({ children }) {
         preferredTheme:     userRow.preferred_theme    ?? 'system',
       }
       setUserState(merged); userWasSet = true
-      console.log('[hydrateUser] user set — role:', merged.role,
-        'onboardingComplete:', merged.onboardingComplete)
+      log('STEP 2 — user state SET | role:', merged.role,
+        '| onboardingComplete:', merged.onboardingComplete,
+        '| provider:', merged.provider)
 
       // Apply stored language / theme preferences
       const pLang  = userRow.preferred_language
@@ -109,33 +118,30 @@ export function AppProvider({ children }) {
         document.documentElement.classList[resolved === 'dark' ? 'add' : 'remove']('dark')
       }
 
-      // ── 3. Profile load — fire-and-forget (never blocks finish/loading) ────
-      // Loading clears after step 2. Profile arrives asynchronously and triggers
-      // a re-render on whichever page the user is viewing. Pages handle null profile.
+      // ── Step 3: profile — fire-and-forget (never blocks loading) ──────────
       if (userRow.role === 'student') {
-        console.log('[hydrateUser] step 3 — loadStudentProfile (background)')
+        log('STEP 3 — BEFORE loadStudentProfile (background, cap=4000ms)')
         withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
-          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
-          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
+          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadStudentProfile', p ? 'loaded' : 'null') })
+          .catch(e => warn('STEP 3 — loadStudentProfile ERROR:', e.message))
       } else if (userRow.role === 'ngo') {
-        console.log('[hydrateUser] step 3 — loadNgoProfile (background)')
+        log('STEP 3 — BEFORE loadNgoProfile (background, cap=4000ms)')
         withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
-          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
-          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
+          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadNgoProfile', p ? 'loaded' : 'null') })
+          .catch(e => warn('STEP 3 — loadNgoProfile ERROR:', e.message))
       } else {
-        console.log('[hydrateUser] step 3 — skipped (role null)')
+        log('STEP 3 — skipped (role=null)')
       }
 
-    } catch (err) {
-      console.error('[hydrateUser] failed at step:', err.message)
+    } catch (catchErr) {
+      err('CAUGHT at step:', catchErr.message)
       if (!userWasSet) {
-        console.warn('[hydrateUser] applying minimal fallback state')
+        warn('applying minimal fallback state')
         setUserState(minimal)
       }
-      // If we had set user already (step 3 timed out), keep the good state
     }
 
-    console.log('[hydrateUser] complete — uid:', authUser.id)
+    log('COMPLETE')
   }, [])
 
   // ── Bootstrap ────────────────────────────────────────────────────────────────
