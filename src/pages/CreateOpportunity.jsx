@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { createOpportunity, updateOpportunity, fetchOpportunity } from '../services/opportunities'
+import { createOpportunity, updateOpportunity, fetchOpportunity, saveDraftOpportunity } from '../services/opportunities'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, X, Check, CheckCircle2,
-  Briefcase, MapPin, Globe, Clock, Sparkles,
+  Briefcase, MapPin, Globe, Clock, Sparkles, Save, Loader2, AlertCircle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import SkillPicker from '../components/SkillPicker'
@@ -122,10 +122,19 @@ export default function CreateOpportunity() {
   const [step, setStep]           = useState(1)
   const [dir, setDir]             = useState(1)
   const [published, setPublished] = useState(false)
-  const [draftSaved, setDraftSaved] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [draftSaving, setDraftSaving] = useState(false)
+  const [draftSaved, setDraftSaved]   = useState(false)   // brief "Saved ✓" flash
+  const [draftError, setDraftError]   = useState(null)    // null or the real error string
+  const [lastSavedAt, setLastSavedAt] = useState(null)    // Date of last successful save
   const [focusedField, setFocused] = useState(null)
   const [errors, setErrors]       = useState({})
   const [loadingEdit, setLoadingEdit] = useState(!!editId)
+
+  // Track the ID of a draft that was created mid-session (so repeated saves update it)
+  const draftIdRef    = useRef(editId || null)
+  const autoSaveRef   = useRef(null)
+  const hasUserEdited = useRef(false)
 
   const [form, setForm] = useState({
     title: '', orgName: profile?.name || user?.name || '',
@@ -155,8 +164,17 @@ export default function CreateOpportunity() {
         deadline:      opp.deadline      || '',
       })
       setLoadingEdit(false)
+      draftIdRef.current = editId
     }).catch(() => setLoadingEdit(false))
   }, [editId]) // eslint-disable-line
+
+  // Autosave: debounce 2 s after any form change, only after user has actually edited
+  useEffect(() => {
+    if (!hasUserEdited.current || !user?.id || !form.title.trim()) return
+    clearTimeout(autoSaveRef.current)
+    autoSaveRef.current = setTimeout(() => saveDraft(), 2000)
+    return () => clearTimeout(autoSaveRef.current)
+  }, [form]) // eslint-disable-line
 
   if (loadingEdit) {
     return (
@@ -178,11 +196,13 @@ export default function CreateOpportunity() {
   })
 
   function set(key, val) {
+    hasUserEdited.current = true
     setForm(f => ({ ...f, [key]: val }))
     setErrors(e => ({ ...e, [key]: undefined }))
   }
 
   function toggleLang(lang) {
+    hasUserEdited.current = true
     set('languages', form.languages.includes(lang)
       ? form.languages.filter(l => l !== lang)
       : [...form.languages, lang])
@@ -221,32 +241,40 @@ export default function CreateOpportunity() {
   }
 
   async function saveDraft() {
-    if (!user?.id) return
+    if (!user?.id || draftSaving) return
+    setDraftSaving(true); setDraftSaved(false); setDraftError(null)
     try {
-      if (isEdit && editData?.id && !editData.id.startsWith('opp_')) {
-        await updateOpportunity(editData.id, user.id, form, 'draft')
-      } else {
-        await createOpportunity(user.id, form, 'draft')
-      }
+      const savedId = await saveDraftOpportunity(user.id, form, draftIdRef.current)
+      draftIdRef.current = savedId
+      setLastSavedAt(new Date())
       setDraftSaved(true)
-      setTimeout(() => setDraftSaved(false), 2200)
+      setTimeout(() => setDraftSaved(false), 3000)
     } catch (err) {
-      console.error('Save draft error:', err)
+      console.error('[saveDraft]', err.message)
+      setDraftError(err.message)
+      setTimeout(() => setDraftError(null), 8000)
+    } finally {
+      setDraftSaving(false)
     }
   }
 
   async function publish() {
     if (!validate()) return
     if (!user?.id) return
+    setPublishing(true)
     try {
-      if (isEdit && editData?.id && !editData.id.startsWith('opp_')) {
-        await updateOpportunity(editData.id, user.id, form, 'active')
+      const targetId = draftIdRef.current
+      if (targetId) {
+        await updateOpportunity(targetId, user.id, form, 'active')
       } else {
         await createOpportunity(user.id, form, 'active')
       }
       setPublished(true)
+      // Navigate to opportunities list so the new card is immediately visible
+      setTimeout(() => navigate('/opportunities'), 2500)
     } catch (err) {
       console.error('Publish error:', err)
+      setPublishing(false)
     }
   }
 
@@ -381,16 +409,11 @@ export default function CreateOpportunity() {
             </span>
           </div>
 
-          <button onClick={saveDraft}
-            className="shrink-0 flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-1.5 rounded-xl border transition-all"
-            style={{
-              color:        draftSaved ? '#059669'                : '#4B6382',
-              borderColor:  draftSaved ? 'rgba(5,150,105,0.3)'   : 'rgba(13,24,61,0.1)',
-              background:   draftSaved ? 'rgba(5,150,105,0.06)'  : 'transparent',
-            }}>
-            {draftSaved && <Check size={11} />}
-            {draftSaved ? 'Saved!' : 'Save draft'}
-          </button>
+          {lastSavedAt && (
+            <span className="shrink-0 text-[11px] font-medium" style={{ color: '#9BAAC0' }}>
+              Saved {lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
         </div>
       </header>
 
@@ -678,26 +701,60 @@ export default function CreateOpportunity() {
           </AnimatePresence>
 
           {/* Footer navigation */}
-          <div className="flex items-center justify-between mt-6 gap-3">
-            <button onClick={back} disabled={step === 1}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[13px] font-semibold border transition-all disabled:opacity-30 hover:bg-[rgba(13,24,61,0.03)]"
-              style={{ color: '#4B6382', borderColor: 'rgba(13,24,61,0.1)' }}>
-              <ChevronLeft size={15} /> Back
-            </button>
+          <div className="mt-6">
+            <div className="flex items-center gap-2">
+              <button onClick={back} disabled={step === 1}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[13px] font-semibold border transition-all disabled:opacity-30 hover:bg-[rgba(13,24,61,0.03)]"
+                style={{ color: '#4B6382', borderColor: 'rgba(13,24,61,0.1)' }}>
+                <ChevronLeft size={15} /> Back
+              </button>
 
-            {step < 4 ? (
-              <button onClick={next}
-                className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: '#0D183D', boxShadow: '0 2px 14px rgba(13,24,61,0.2)' }}>
-                Continue <ChevronRight size={15} />
+              {/* Save draft — centre of footer, always visible */}
+              <button onClick={saveDraft} disabled={draftSaving}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[13px] font-semibold border transition-all disabled:opacity-60"
+                style={{
+                  color:       draftError ? '#EF4444' : draftSaved ? '#059669' : '#4B6382',
+                  borderColor: draftError ? 'rgba(239,68,68,0.3)' : draftSaved ? 'rgba(5,150,105,0.3)' : 'rgba(13,24,61,0.1)',
+                  background:  draftError ? 'rgba(239,68,68,0.04)' : draftSaved ? 'rgba(5,150,105,0.06)' : 'transparent',
+                }}>
+                {draftSaving
+                  ? <><Loader2 size={12} className="animate-spin" /> Saving…</>
+                  : draftSaved
+                  ? <><Check size={11} /> Saved</>
+                  : draftError
+                  ? <><AlertCircle size={11} /> Save failed</>
+                  : <><Save size={12} /> Save draft</>
+                }
               </button>
-            ) : (
-              <button onClick={publish}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: '#FFB703', boxShadow: '0 4px 18px rgba(255,183,3,0.32)' }}>
-                <Sparkles size={13} /> {isEdit ? 'Save changes' : 'Publish opportunity'}
-              </button>
-            )}
+
+              {step < 4 ? (
+                <button onClick={next}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: '#0D183D', boxShadow: '0 2px 14px rgba(13,24,61,0.2)' }}>
+                  Continue <ChevronRight size={15} />
+                </button>
+              ) : (
+                <button onClick={publish} disabled={publishing}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                  style={{ background: '#FFB703', boxShadow: '0 4px 18px rgba(255,183,3,0.32)' }}>
+                  {publishing
+                    ? <><Loader2 size={12} className="animate-spin" /> Publishing…</>
+                    : <><Sparkles size={13} /> {isEdit ? 'Save changes' : 'Publish'}</>
+                  }
+                </button>
+              )}
+            </div>
+
+            {/* Status line — autosave time or real error message */}
+            {draftError ? (
+              <p className="text-center text-[11px] mt-2 leading-snug" style={{ color: '#EF4444' }}>
+                {draftError}
+              </p>
+            ) : lastSavedAt ? (
+              <p className="text-center text-[11px] mt-2" style={{ color: '#9BAAC0' }}>
+                Autosaved · {lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            ) : null}
           </div>
 
         </div>

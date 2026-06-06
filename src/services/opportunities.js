@@ -49,18 +49,19 @@ function oppToDb(ngoId, form, status = 'active') {
   }
 }
 
-// Create a new opportunity
+// Create a new opportunity.
+// Avoids .single() — if RLS SELECT policy is restrictive it would throw
+// PGRST116 even on a successful insert, silently killing the publish flow.
 export async function createOpportunity(ngoId, form, status = 'active') {
   const { data, error } = await supabase
     .from('opportunities')
     .insert(oppToDb(ngoId, form, status))
     .select()
-    .single()
   if (error) throw new Error(error.message)
-  return dbToOpp(data)
+  return dbToOpp(data?.[0] ?? null)
 }
 
-// Update an existing opportunity
+// Update an existing opportunity.
 export async function updateOpportunity(id, ngoId, form, status) {
   const updates = oppToDb(ngoId, form, status)
   delete updates.ngo_id  // don't overwrite ownership
@@ -68,11 +69,10 @@ export async function updateOpportunity(id, ngoId, form, status) {
     .from('opportunities')
     .update(updates)
     .eq('id', id)
-    .eq('ngo_id', ngoId)  // RLS extra safety
+    .eq('ngo_id', ngoId)
     .select()
-    .single()
   if (error) throw new Error(error.message)
-  return dbToOpp(data)
+  return dbToOpp(data?.[0] ?? null)
 }
 
 // Fetch all active opportunities (student browse view)
@@ -111,6 +111,51 @@ export async function fetchOpportunity(id) {
     .single()
   if (error) return null
   return dbToOpp(data)
+}
+
+// Save a partial draft — tolerates missing Step 2-4 fields.
+// Uses empty strings instead of null for text columns that may be NOT NULL.
+// Returns the saved opportunity ID (creates on first call, updates on subsequent).
+export async function saveDraftOpportunity(ngoId, form, existingId = null) {
+  const payload = {
+    ngo_id:         ngoId,
+    title:          form.title?.trim()         || 'Untitled draft',
+    org_name:       form.orgName?.trim()        || '',
+    category:       form.category              || null,
+    field:          form.field                 || null,
+    description:    form.description?.trim()   || '',
+    mission_impact: form.missionImpact?.trim() || '',
+    skills:         form.skills                ?? [],
+    languages:      form.languages             ?? [],
+    weekly_hours:   form.weeklyHours           || null,
+    duration:       form.duration              || null,
+    location:       form.location?.trim()      || '',
+    work_mode:      form.workMode              || null,
+    deadline:       form.deadline              || null,
+    status:         'draft',
+    updated_at:     new Date().toISOString(),
+  }
+
+  if (existingId) {
+    const { ngo_id: _drop, ...updates } = payload  // don't overwrite ownership on update
+    const { error } = await supabase
+      .from('opportunities')
+      .update(updates)
+      .eq('id', existingId)
+      .eq('ngo_id', ngoId)
+    if (error) throw new Error(error.message)
+    return existingId
+  }
+
+  // Insert — avoid .single() so RLS-hidden rows don't cause PGRST116
+  const { data, error } = await supabase
+    .from('opportunities')
+    .insert(payload)
+    .select('id')
+  if (error) throw new Error(error.message)
+  const id = data?.[0]?.id
+  if (!id) throw new Error('Draft saved but no ID returned — check RLS SELECT policy')
+  return id
 }
 
 // Update opportunity status (active/paused/closed)
