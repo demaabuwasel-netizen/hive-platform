@@ -10,13 +10,9 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchActiveOpportunities } from '../services/opportunities'
+import { fetchActiveOpportunities, fetchNgoOpportunities } from '../services/opportunities'
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const NGO_OPPORTUNITIES = []
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
@@ -188,30 +184,48 @@ export default function Opportunities() {
   const [q, setQ]           = useState('')
   const [cat, setCat]       = useState('All')
   const [opps, setOpps]     = useState([])
+  const [ngoOpps, setNgoOpps]   = useState([])
+  const [ngoError, setNgoError] = useState(null)
   const [savedIds, setSavedIds] = useState(new Set())
-  const [toggling, setToggling] = useState(null) // opportunityId being toggled
+  const [toggling, setToggling] = useState(null)
   const [loading, setLoading]   = useState(true)
   const [applyingTo, setApplyingTo] = useState(null)
 
+  // Fetch NGO's own opportunities
   useEffect(() => {
-    if (isNGO) { setLoading(false); return }
+    if (!isNGO || !user?.id) return
+    setLoading(true)
+    setNgoError(null)
+    fetchNgoOpportunities(user.id)
+      .then(data => setNgoOpps(data ?? []))
+      .catch(err => {
+        console.error('[Opportunities] fetchNgoOpportunities error:', err.message)
+        setNgoError(err.message)
+      })
+      .finally(() => setLoading(false))
+  }, [isNGO, user?.id])
+
+  // Fetch active opportunities for students
+  useEffect(() => {
+    if (isNGO) return
+    setLoading(true)
     Promise.all([
       fetchActiveOpportunities(),
       user?.id ? fetchSavedIds(user.id) : Promise.resolve(new Set()),
     ]).then(([raw, ids]) => {
       const cards = raw.map(opp => ({
-        id:      opp.id,
-        ngoId:   opp.ngoId,
+        id:            opp.id,
+        ngoId:         opp.ngoId,
         opportunityId: opp.id,
-        name:    opp.orgName,
-        cat:     opp.category  ?? '',
-        loc:     opp.location  ?? '',
-        hours:   opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
-        workMode: opp.workMode ?? '',
-        desc:    opp.description || opp.missionImpact || '',
-        skills:  (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
-        match:   profile ? computeMatch(profile, opp).score : null,
-        mission: opp.missionImpact || opp.description || '',
+        name:          opp.orgName,
+        cat:           opp.category  ?? '',
+        loc:           opp.location  ?? '',
+        hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
+        workMode:      opp.workMode ?? '',
+        desc:          opp.description || opp.missionImpact || '',
+        skills:        (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
+        match:         profile ? computeMatch(profile, opp).score : null,
+        mission:       opp.missionImpact || opp.description || '',
       }))
       setOpps(cards)
       setSavedIds(ids)
@@ -272,39 +286,83 @@ export default function Opportunities() {
         </div>
 
         {isNGO ? (
-          /* NGO view */
-          <div className="flex flex-col gap-3">
-            {NGO_OPPORTUNITIES.map((opp, i) => (
-              <motion.div key={opp.id}
-                initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-                transition={{ delay:i*0.06, duration:0.3 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 flex items-center gap-5 hover:shadow-[0_4px_20px_rgba(13,24,61,0.07)] transition-all">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <p className="font-bold text-[14px] text-[#0D183D]">{opp.title}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      opp.status==='Active' ? 'bg-emerald-100 text-emerald-700' :
-                      opp.status==='Paused' ? 'bg-amber-100 text-amber-700' : 'bg-[#F8F9FB] text-[#4B6382]'
-                    }`}>{opp.status}</span>
+          /* NGO view — real data from Supabase */
+          loading ? (
+            <div className="flex flex-col gap-3">
+              {[0,1,2].map(i => (
+                <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 w-1/3 rounded-full bg-[rgba(13,24,61,0.07)]"/>
+                      <div className="h-2.5 w-1/4 rounded-full bg-[rgba(13,24,61,0.05)]"/>
+                    </div>
+                    <div className="h-8 w-24 rounded-xl bg-[rgba(13,24,61,0.05)]"/>
                   </div>
-                  <p className="text-[12px] text-[#4B6382]">{opp.posted} · {opp.applicants} applicants · {opp.match} match score</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
-                    className="px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => navigate('/applicants')}
-                    className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                    style={{ background:'#0D183D' }}>
-                    View applicants
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : ngoError ? (
+            <div className="text-center py-16">
+              <p className="text-[14px] font-semibold text-[#0D183D] mb-1">Could not load opportunities</p>
+              <p className="text-[12px] text-[#EF4444] mb-4 max-w-sm mx-auto">{ngoError}</p>
+              <button onClick={() => { setNgoError(null); setLoading(true); fetchNgoOpportunities(user.id).then(d => setNgoOpps(d ?? [])).catch(e => setNgoError(e.message)).finally(() => setLoading(false)) }}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
+                style={{ background: '#0D183D' }}>Retry</button>
+            </div>
+          ) : ngoOpps.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(255,183,3,0.1)' }}>
+                <Briefcase size={24} style={{ color: '#FFB703' }}/>
+              </div>
+              <p className="text-[15px] font-extrabold text-[#0D183D] mb-1">No opportunities yet</p>
+              <p className="text-[13px] text-[#4B6382] mb-5">Post your first opportunity to start receiving applications from students.</p>
+              <button onClick={() => navigate('/opportunities/new')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white mx-auto transition-all hover:opacity-90"
+                style={{ background:'#FFB703', boxShadow:'0 4px 14px rgba(255,183,3,0.28)' }}>
+                <Plus size={14}/> Post your first opportunity
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {ngoOpps.map((opp, i) => (
+                <motion.div key={opp.id}
+                  initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
+                  transition={{ delay:i*0.05, duration:0.28 }}
+                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 flex items-center gap-5 hover:shadow-[0_4px_20px_rgba(13,24,61,0.07)] transition-all">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <p className="font-bold text-[14px] text-[#0D183D] truncate">{opp.title}</p>
+                      <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        opp.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                        opp.status === 'draft'  ? 'bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.1)]' :
+                        opp.status === 'paused' ? 'bg-amber-100 text-amber-700' :
+                        'bg-[#F8F9FB] text-[#4B6382]'
+                      }`}>{opp.status ?? 'draft'}</span>
+                    </div>
+                    <p className="text-[12px] text-[#4B6382]">
+                      {opp.category ? `${opp.category} · ` : ''}
+                      {opp.location ? `${opp.location} · ` : ''}
+                      {opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
+                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => navigate('/applicants')}
+                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+                      style={{ background:'#0D183D' }}>
+                      Applicants
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )
         ) : (
           /* Student view */
           <>

@@ -49,18 +49,19 @@ function oppToDb(ngoId, form, status = 'active') {
   }
 }
 
-// Create a new opportunity
+// Create a new opportunity.
+// Avoids .single() — if RLS SELECT policy is restrictive it would throw
+// PGRST116 even on a successful insert, silently killing the publish flow.
 export async function createOpportunity(ngoId, form, status = 'active') {
   const { data, error } = await supabase
     .from('opportunities')
     .insert(oppToDb(ngoId, form, status))
     .select()
-    .single()
   if (error) throw new Error(error.message)
-  return dbToOpp(data)
+  return dbToOpp(data?.[0] ?? null)
 }
 
-// Update an existing opportunity
+// Update an existing opportunity.
 export async function updateOpportunity(id, ngoId, form, status) {
   const updates = oppToDb(ngoId, form, status)
   delete updates.ngo_id  // don't overwrite ownership
@@ -68,11 +69,10 @@ export async function updateOpportunity(id, ngoId, form, status) {
     .from('opportunities')
     .update(updates)
     .eq('id', id)
-    .eq('ngo_id', ngoId)  // RLS extra safety
+    .eq('ngo_id', ngoId)
     .select()
-    .single()
   if (error) throw new Error(error.message)
-  return dbToOpp(data)
+  return dbToOpp(data?.[0] ?? null)
 }
 
 // Fetch all active opportunities (student browse view)

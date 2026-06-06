@@ -270,6 +270,8 @@ export default function CreateOpportunity() {
         await createOpportunity(user.id, form, 'active')
       }
       setPublished(true)
+      // Navigate to opportunities list so the new card is immediately visible
+      setTimeout(() => navigate('/opportunities'), 2500)
     } catch (err) {
       console.error('Publish error:', err)
       setPublishing(false)
