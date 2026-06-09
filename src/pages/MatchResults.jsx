@@ -301,10 +301,12 @@ export default function MatchResults() {
 
   if (user && !user.onboardingComplete) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-7">
-        <EmptyState icon={Search} title="No matches yet"
-          description="Complete your profile so our AI can find NGOs that match your skills and values."
-          actionLabel="Complete my profile" actionHref="/" card={false} />
+      <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+        <div className="max-w-7xl mx-auto">
+          <EmptyState icon={Search} title="No matches yet"
+            description="Complete your profile so our AI can find NGOs that match your skills and values."
+            actionLabel="Complete my profile" actionHref="/" card={false} />
+        </div>
       </div>
     )
   }
@@ -313,16 +315,17 @@ export default function MatchResults() {
 
   return (
     <>
-    <div className="max-w-5xl mx-auto px-8 py-7">
+    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+      <div className="max-w-7xl mx-auto">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }} className="mb-8">
+          transition={{ duration: 0.4 }} className="mb-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-[#FFB703]/10 flex items-center justify-center">
               <Sparkles size={20} className="text-[#FFB703]" />
             </div>
-            <h1 className="text-2xl font-bold text-[#0D183D]">
+            <h1 className="text-3xl font-bold text-[#0D183D]">
               {loading ? 'Finding your matches…' : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} found for you`}
             </h1>
           </div>
@@ -404,6 +407,7 @@ export default function MatchResults() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       {/* Inline explanation modal */}
