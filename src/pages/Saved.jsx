@@ -48,8 +48,9 @@ export default function Saved() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-7">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#0D183D]">Saved</h1>
           <p className="text-[14px] text-[#4B6382] mt-1">
@@ -63,20 +64,20 @@ export default function Saved() {
             Browse more
           </Link>
         )}
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-sm text-red-600 bg-red-50 border border-red-200">
-          <AlertCircle size={15} className="shrink-0"/>
-          {error}
-          <button onClick={load} className="ml-auto font-semibold underline underline-offset-2">Retry</button>
         </div>
-      )}
 
-      {/* Loading skeleton */}
-      {loading && !error && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Error */}
+        {error && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-sm text-red-600 bg-red-50 border border-red-200">
+            <AlertCircle size={15} className="shrink-0"/>
+            {error}
+            <button onClick={load} className="ml-auto font-semibold underline underline-offset-2">Retry</button>
+          </div>
+        )}
+
+        {/* Loading skeleton */}
+        {loading && !error && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0, 1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 animate-pulse">
               <div className="flex items-center gap-3 mb-3">
@@ -93,33 +94,33 @@ export default function Saved() {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !error && items.length === 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
-              <Bookmark size={28} className="text-[#FFB703]" />
-            </div>
-            <h2 className="text-lg font-bold text-[#0D183D] mb-2">No saved opportunities yet</h2>
-            <p className="text-[14px] text-[#4B6382] text-center mb-6 max-w-sm">
-              Browse opportunities and tap the bookmark icon to save them here.
-            </p>
-            <Link to="/opportunities"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-              style={{ background: '#FFB703' }}>
-              Browse opportunities
-              <ChevronRight size={14} />
-            </Link>
           </div>
-        </motion.div>
-      )}
+        )}
 
-      {/* Cards */}
-      {!loading && items.length > 0 && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Empty state */}
+        {!loading && !error && items.length === 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mt-8">
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mx-auto mb-4">
+                <Bookmark size={32} className="text-[#FFB703]" />
+              </div>
+              <h2 className="text-xl font-bold text-[#0D183D] mb-2">No saved opportunities yet</h2>
+              <p className="text-[14px] text-[#4B6382] mb-6 max-w-xl mx-auto">
+                Browse opportunities and tap the bookmark icon to save them here.
+              </p>
+              <Link to="/opportunities"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#FFB703' }}>
+                Browse opportunities
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Cards */}
+        {!loading && items.length > 0 && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence mode="popLayout">
             {items.map((item, i) => (
               <motion.div key={item.opportunityId}
@@ -193,9 +194,10 @@ export default function Saved() {
                 </Link>
               </motion.div>
             ))}
-          </AnimatePresence>
-        </div>
-      )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
