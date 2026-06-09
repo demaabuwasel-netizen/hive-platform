@@ -301,7 +301,7 @@ export default function MatchResults() {
 
   if (user && !user.onboardingComplete) {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-8 py-7">
         <EmptyState icon={Search} title="No matches yet"
           description="Complete your profile so our AI can find NGOs that match your skills and values."
           actionLabel="Complete my profile" actionHref="/" />
@@ -313,7 +313,7 @@ export default function MatchResults() {
 
   return (
     <>
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-8 py-7">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
