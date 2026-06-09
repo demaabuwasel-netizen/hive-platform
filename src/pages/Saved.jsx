@@ -97,7 +97,7 @@ export default function Saved() {
         </div>
       )}
 
-      {/* Empty state — card-wrapped to match Applications page */}
+      {/* Empty state */}
       {!loading && !error && items.length === 0 && (
         <EmptyState
           icon={Bookmark}
@@ -105,6 +105,7 @@ export default function Saved() {
           description="Browse opportunities and tap the bookmark icon to save them here."
           actionLabel="Browse opportunities"
           actionHref="/opportunities"
+          card={false}
         />
       )}
 

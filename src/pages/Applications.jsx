@@ -85,21 +85,23 @@ export default function Applications() {
 
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
-            <Send size={28} className="text-[#FFB703]" />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
+              <Send size={28} className="text-[#FFB703]" />
+            </div>
+            <h2 className="text-lg font-bold text-[#0D183D] mb-2">No applications yet</h2>
+            <p className="text-[14px] text-[#4B6382] text-center mb-6 max-w-sm">
+              Browse available opportunities and start applying to NGOs that match your skills and interests.
+            </p>
+            <Link to="/opportunities"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#FFB703' }}>
+              Browse opportunities
+              <ChevronRight size={14} />
+            </Link>
           </div>
-          <h2 className="text-lg font-bold text-[#0D183D] mb-2">No applications yet</h2>
-          <p className="text-[14px] text-[#4B6382] text-center mb-6 max-w-sm">
-            Browse available opportunities and start applying to NGOs that match your skills and interests.
-          </p>
-          <Link to="/opportunities"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: '#FFB703' }}>
-            Browse opportunities
-            <ChevronRight size={14} />
-          </Link>
-        </div>
+        </motion.div>
       )}
 
       {/* Applications list */}
