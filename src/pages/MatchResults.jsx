@@ -304,7 +304,7 @@ export default function MatchResults() {
       <div className="max-w-5xl mx-auto px-8 py-7">
         <EmptyState icon={Search} title="No matches yet"
           description="Complete your profile so our AI can find NGOs that match your skills and values."
-          actionLabel="Complete my profile" actionHref="/" />
+          actionLabel="Complete my profile" actionHref="/" card={false} />
       </div>
     )
   }
@@ -393,7 +393,7 @@ export default function MatchResults() {
         ) : matchesToShow.length === 0 ? (
           <EmptyState compact icon={Search} title="No matches yet"
             description="Add more skills, interests, and experience to your profile for stronger matches."
-            actionLabel="Update profile" actionHref="/settings" />
+            actionLabel="Update profile" actionHref="/settings" card={false} />
         ) : (
           <div className="flex flex-col gap-5" role="list" aria-label="Match results">
             {matchesToShow.map((match, i) => (
