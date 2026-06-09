@@ -49,7 +49,7 @@ export default function Saved() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-7">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-[#0D183D]">Saved</h1>
           <p className="text-[14px] text-[#4B6382] mt-1">
@@ -99,7 +99,7 @@ export default function Saved() {
       {/* Empty state */}
       {!loading && !error && items.length === 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center py-12">
             <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
               <Bookmark size={28} className="text-[#FFB703]" />
             </div>
