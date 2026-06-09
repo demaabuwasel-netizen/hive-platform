@@ -46,25 +46,31 @@ export default function Applications() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#0D183D] mb-1">Applications</h1>
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-[#0D183D] mb-2">Applications</h1>
         <p className="text-[14px] text-[#4B6382]">Track your applications and interview progress</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-8">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         {Object.entries(TAB_COUNTS).map(([label, count]) => (
-          <button
+          <motion.button
             key={label}
             onClick={() => setTab(label)}
-            className={`px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all flex items-center gap-2 ${
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-2xl border px-6 py-5 transition-all text-left ${
               tab === label
-                ? 'bg-[#0D183D] text-white shadow-sm'
-                : 'bg-white text-[#4B6382] border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB]'
+                ? 'bg-[#0D183D] border-[#0D183D] shadow-md'
+                : 'bg-white border-[rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] hover:shadow-sm'
             }`}>
-            <span className={`text-sm font-bold ${tab === label ? 'text-white' : 'text-[#FFB703]'}`}>{count}</span>
-            {label}
-          </button>
+            <p className={`text-sm font-semibold mb-2 ${tab === label ? 'text-white/70' : 'text-[#4B6382]'}`}>
+              {label}
+            </p>
+            <p className={`text-3xl font-bold ${tab === label ? 'text-white' : 'text-[#0D183D]'}`}>
+              {count}
+            </p>
+          </motion.button>
         ))}
       </div>
 
@@ -106,18 +112,18 @@ export default function Applications() {
               <motion.div key={a.id}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-5 flex items-center gap-4 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all">
-                <GradientAvatar name={a.ngoName || 'NGO'} size={48} radius="0.75rem" className="shrink-0" />
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex items-center gap-5 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all">
+                <GradientAvatar name={a.ngoName || 'NGO'} size={52} radius="0.85rem" className="shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="flex items-start justify-between gap-6 mb-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-semibold text-[#0D183D]">{a.ngoName || 'NGO'}</p>
-                      <div className="flex items-center gap-3 mt-1 text-[13px] text-[#4B6382]">
+                      <p className="text-[15px] font-semibold text-[#0D183D]">{a.ngoName || 'NGO'}</p>
+                      <div className="flex items-center gap-4 mt-2 text-[13px] text-[#4B6382] flex-wrap">
                         <span>{a.role || 'Opportunity'}</span>
                         {a.location && (
                           <>
                             <span className="text-[rgba(13,24,61,0.2)]">•</span>
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1.5">
                               <MapPin size={13} className="text-[#4B6382]" />
                               {a.location}
                             </span>
@@ -125,20 +131,18 @@ export default function Applications() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg shrink-0 ${cfg.bg} ${cfg.color}`}>
-                        <Icon size={12} />
-                        {a.statusLabel}
-                      </span>
-                    </div>
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2 rounded-lg shrink-0 whitespace-nowrap ${cfg.bg} ${cfg.color}`}>
+                      <Icon size={13} />
+                      {a.statusLabel}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-[rgba(13,24,61,0.04)]">
+                  <div className="flex items-center justify-between pt-3 border-t border-[rgba(13,24,61,0.06)]">
                     <p className="text-[12px] text-[#4B6382]">
                       Applied {new Date(a.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}
                     </p>
                     {a.status !== 'rejected' && (
                       <Link to="/messages"
-                        className="text-[12px] font-semibold flex items-center gap-1 transition-opacity hover:opacity-70"
+                        className="text-[12px] font-semibold flex items-center gap-1.5 transition-colors hover:text-[#FFB703]"
                         style={{ color: '#FFB703' }}>
                         Message
                         <ChevronRight size={13} />
