@@ -50,7 +50,7 @@ export default function Saved() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-7">
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#0D183D]">Saved</h1>
           <p className="text-[14px] text-[#4B6382] mt-1">
@@ -77,9 +77,9 @@ export default function Saved() {
 
       {/* Loading skeleton */}
       {loading && !error && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0, 1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 animate-pulse">
+            <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 animate-pulse">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
                 <div className="flex-1 space-y-1.5">
@@ -110,7 +110,7 @@ export default function Saved() {
 
       {/* Cards */}
       {!loading && items.length > 0 && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence mode="popLayout">
             {items.map((item, i) => (
               <motion.div key={item.opportunityId}
@@ -118,7 +118,7 @@ export default function Saved() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -16, scale: 0.97 }}
                 transition={{ delay: i * 0.05, duration: 0.25 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex flex-col gap-4 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all">
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex flex-col gap-3 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all">
 
                 {/* Header */}
                 <div className="flex items-start justify-between">

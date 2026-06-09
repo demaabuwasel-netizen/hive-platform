@@ -52,7 +52,7 @@ export default function Applications() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
         {Object.entries(TAB_COUNTS).map(([label, count]) => (
           <motion.button
             key={label}
@@ -76,7 +76,7 @@ export default function Applications() {
 
       {/* Loading */}
       {loading && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {[1,2,3].map(i => (
             <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-5 h-24 animate-pulse" />
           ))}
@@ -104,7 +104,7 @@ export default function Applications() {
 
       {/* Applications list */}
       {!loading && filtered.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {filtered.map((a, i) => {
             const cfg = STATUS_CFG[a.status] || STATUS_CFG.submitted
             const Icon = cfg.icon
