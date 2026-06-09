@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Bookmark, MapPin, Trash2, AlertCircle } from 'lucide-react'
+import { Bookmark, MapPin, Trash2, AlertCircle, ChevronRight } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import EmptyState from '../components/EmptyState'
 import { fetchSavedOpportunities, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 
@@ -99,14 +98,23 @@ export default function Saved() {
 
       {/* Empty state */}
       {!loading && !error && items.length === 0 && (
-        <EmptyState
-          icon={Bookmark}
-          title="No saved opportunities yet"
-          description="Browse opportunities and tap the bookmark icon to save them here."
-          actionLabel="Browse opportunities"
-          actionHref="/opportunities"
-          card={false}
-        />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
+              <Bookmark size={28} className="text-[#FFB703]" />
+            </div>
+            <h2 className="text-lg font-bold text-[#0D183D] mb-2">No saved opportunities yet</h2>
+            <p className="text-[14px] text-[#4B6382] text-center mb-6 max-w-sm">
+              Browse opportunities and tap the bookmark icon to save them here.
+            </p>
+            <Link to="/opportunities"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#FFB703' }}>
+              Browse opportunities
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        </motion.div>
       )}
 
       {/* Cards */}
