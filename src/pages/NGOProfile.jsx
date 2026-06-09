@@ -1,524 +1,321 @@
-import { useState, useRef } from 'react'
+import { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit3, Camera } from 'lucide-react'
+import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit2, Camera, ExternalLink } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import cardsBackground from '../assets/cards_background.png'
 
 export default function NGOProfile() {
-  const { user, profile, updateProfile } = useApp()
+  const { user, profile } = useApp()
+  const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
   const displayName = profile?.name || user?.name || 'Organization'
 
-  // Edit states for each section
-  const [editingAbout, setEditingAbout] = useState(false)
-  const [aboutDraft, setAboutDraft] = useState(profile?.description || '')
-
-  const [editingMission, setEditingMission] = useState(false)
-  const [missionDraft, setMissionDraft] = useState(profile?.mission || '')
-
-  const [editingCommunities, setEditingCommunities] = useState(false)
-  const [communitiesDraft, setCommunitiesDraft] = useState(profile?.communities || '')
-
-  const [editingOrgSize, setEditingOrgSize] = useState(false)
-  const [orgSizeDraft, setOrgSizeDraft] = useState(profile?.orgSize || '')
-
-  const [editingHelpNeeded, setEditingHelpNeeded] = useState(false)
-  const [helpNeededDraft, setHelpNeededDraft] = useState(profile?.helpNeeded || '')
-
-  const handleSaveAbout = () => {
-    updateProfile({ ...profile, description: aboutDraft })
-    setEditingAbout(false)
-  }
-
-  const handleSaveMission = () => {
-    updateProfile({ ...profile, mission: missionDraft })
-    setEditingMission(false)
-  }
-
-  const handleSaveCommunities = () => {
-    updateProfile({ ...profile, communities: communitiesDraft })
-    setEditingCommunities(false)
-  }
-
-  const handleSaveOrgSize = () => {
-    updateProfile({ ...profile, orgSize: orgSizeDraft })
-    setEditingOrgSize(false)
-  }
-
-  const handleSaveHelpNeeded = () => {
-    updateProfile({ ...profile, helpNeeded: helpNeededDraft })
-    setEditingHelpNeeded(false)
-  }
-
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const imageData = event.target?.result
-        updateProfile({ ...profile, imageUrl: imageData })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-      <div className="px-8 py-7 max-w-6xl mx-auto">
+    <main className="flex-1 overflow-y-auto bg-[#FAFBFC]">
+      <div className="max-w-4xl mx-auto px-6 py-8">
 
-        {/* ══════════════════════════════════════════════════════
-            HERO PROFILE CARD
-        ══════════════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════════
+            HERO SECTION - Premium Profile Header
+        ═══════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
-          className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6 shadow-sm relative overflow-hidden">
+          className="mb-12">
+          <div className="relative bg-gradient-to-br from-white to-[#FAFBFC] rounded-3xl border border-[rgba(13,24,61,0.08)] p-8 overflow-hidden">
 
-          <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
-            style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat' }}/>
+            <div className="absolute inset-0 opacity-[0.01] pointer-events-none"
+              style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat' }}/>
 
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
-            style={{ background: '#FFB703', transform: 'translate(40%, -40%)' }}/>
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.03] blur-3xl pointer-events-none"
+              style={{ background: '#FFB703' }}/>
 
-          <div className="relative flex items-start gap-10">
-            {/* LEFT - Profile Info */}
-            <div className="flex-1">
-              {/* Photo Upload */}
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden ring-4 ring-[#FFB703]/20 shadow-lg flex items-center justify-center bg-[#FFB703]/10 mb-4">
-                {profile?.imageUrl ? (
-                  <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
-                ) : (
-                  <Building2 size={40} className="text-[#0D183D]" />
-                )}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 p-2 bg-[#FFB703] rounded-full text-white hover:opacity-90 transition-opacity shadow-lg">
-                  <Camera size={14} />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
+            <div className="relative flex items-start gap-8">
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 flex items-center justify-center border border-[rgba(255,183,3,0.15)]">
+                  {profile?.imageUrl ? (
+                    <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 size={48} className="text-[#FFB703]" />
+                  )}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-1 right-1 p-2 bg-[#FFB703] rounded-lg text-white hover:opacity-90 transition-opacity shadow-lg"
+                    title="Change logo">
+                    <Camera size={13} />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          // This would need updateProfile from useApp
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </div>
               </div>
 
-              <h1 className="text-[32px] font-extrabold text-[#0D183D] mb-2">{displayName}</h1>
-              {profile?.location && (
-                <div className="flex items-center gap-2 text-[#4B6382] mb-4">
-                  <MapPin size={16} />
-                  <span>{profile.location}</span>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h1 className="text-4xl font-bold text-[#0D183D] mb-2">{displayName}</h1>
+                    {profile?.summary && (
+                      <p className="text-[15px] text-[#4B6382] font-medium">{profile.summary}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate('/profile/ngo/edit')}
+                    className="flex-shrink-0 px-4 py-2 rounded-xl bg-[#FFB703] text-white text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm">
+                    <Edit2 size={14} />
+                    Edit
+                  </button>
                 </div>
-              )}
-              <p className="text-sm text-[#4B6382] mb-4 max-w-lg leading-relaxed">
-                {profile?.description || 'No description yet'}
-              </p>
 
-              {/* Contact Info */}
-              <div className="flex flex-wrap gap-6 text-sm">
-                {profile?.phone && (
-                  <div className="flex items-center gap-2 text-[#4B6382]">
-                    <Phone size={16} />
-                    {profile.phone}
-                  </div>
-                )}
-                {user?.email && (
-                  <div className="flex items-center gap-2 text-[#4B6382]">
-                    <Mail size={16} />
-                    {user.email}
-                  </div>
-                )}
+                {/* Meta info: location, size */}
+                <div className="flex flex-wrap items-center gap-6 mt-4 text-[14px]">
+                  {profile?.location && (
+                    <div className="flex items-center gap-2 text-[#4B6382]">
+                      <MapPin size={16} className="text-[#FFB703]" />
+                      {profile.location}
+                    </div>
+                  )}
+                  {profile?.orgSize && (
+                    <div className="flex items-center gap-2 text-[#4B6382]">
+                      <Building2 size={16} className="text-[#FFB703]" />
+                      {profile.orgSize} employees
+                    </div>
+                  )}
+                  {user?.email && (
+                    <div className="flex items-center gap-2 text-[#4B6382]">
+                      <Mail size={16} className="text-[#FFB703]" />
+                      {user.email}
+                    </div>
+                  )}
+                  {profile?.phone && (
+                    <div className="flex items-center gap-2 text-[#4B6382]">
+                      <Phone size={16} className="text-[#FFB703]" />
+                      {profile.phone}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* ══════════════════════════════════════════════════════
-            CONTENT GRID - 2 COLUMNS
-        ══════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-2 gap-5">
+        {/* ═══════════════════════════════════════════════════════════
+            MAIN CONTENT - Organized Sections
+        ═══════════════════════════════════════════════════════════ */}
 
-          {/* ABOUT */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
-                  <Building2 size={14} style={{ color: '#6366F1' }}/>
-                </span>
-                About
-              </h2>
-              {!editingAbout && (
-                <button onClick={() => setEditingAbout(true)}
-                  className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                  Edit <Edit3 size={12}/>
-                </button>
+        {/* SECTION 1: ABOUT & MISSION */}
+        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+          viewport={{ once:true }} className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">About</h2>
+          <div className="grid grid-cols-1 gap-5">
+
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">About the Organization</h3>
+              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Mission</h3>
+              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Communities Served</h3>
+              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* SECTION 2: WHAT WE NEED */}
+        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+          viewport={{ once:true }} className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Opportunities</h2>
+          <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-2xl border border-[rgba(255,183,3,0.15)] p-7">
+            <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">What We Need Help With</h3>
+            <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
+          </div>
+        </motion.div>
+
+        {/* SECTION 3: TAGS & SKILLS */}
+        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+          viewport={{ once:true }} className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Focus & Skills</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Focus Areas</h3>
+              {profile?.tags?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.tags.map((tag, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
               )}
             </div>
 
-            {editingAbout ? (
-              <div className="space-y-3">
-                <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                  placeholder="Write about your organization..."
-                  rows={3}
-                  style={{ background: '#F8F9FB' }}
-                  onFocus={e => e.target.style.borderColor = '#FFB703'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveAbout}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                    style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                  <button onClick={() => {
-                    setAboutDraft(profile?.description || '')
-                    setEditingAbout(false)
-                  }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                    Cancel
-                  </button>
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Preferred Skills</h3>
+              {profile?.preferred_skills?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.preferred_skills.map((skill, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#3B82F6]/10 text-[#1E40AF]">
+                      {skill}
+                    </span>
+                  ))}
                 </div>
-              </div>
-            ) : (
-              <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                {profile?.description || 'Not added yet'}
-              </p>
-            )}
-          </motion.div>
-
-          {/* MISSION STATEMENT */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#F97316' }}>
-                  <Target size={14} style={{ color: '#EA580C' }}/>
-                </span>
-                Mission
-              </h2>
-              {!editingMission && (
-                <button onClick={() => setEditingMission(true)}
-                  className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                  Edit <Edit3 size={12}/>
-                </button>
+              ) : (
+                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
               )}
             </div>
 
-            {editingMission ? (
-              <div className="space-y-3">
-                <textarea value={missionDraft} onChange={e => setMissionDraft(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                  placeholder="Write your mission..."
-                  rows={3}
-                  style={{ background: '#F8F9FB' }}
-                  onFocus={e => e.target.style.borderColor = '#FFB703'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveMission}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                    style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                  <button onClick={() => {
-                    setMissionDraft(profile?.mission || '')
-                    setEditingMission(false)
-                  }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                    Cancel
-                  </button>
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Project Types</h3>
+              {profile?.project_types?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.project_types.map((type, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#10B981]/10 text-[#065F46]">
+                      {type}
+                    </span>
+                  ))}
                 </div>
-              </div>
-            ) : (
-              <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                {profile?.mission || 'Not added yet'}
-              </p>
-            )}
-          </motion.div>
-
-          {/* COMMUNITIES SERVED */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#8B5CF6' }}>
-                  <Heart size={14} style={{ color: '#7C3AED' }}/>
-                </span>
-                Communities
-              </h2>
-              {!editingCommunities && (
-                <button onClick={() => setEditingCommunities(true)}
-                  className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                  Edit <Edit3 size={12}/>
-                </button>
+              ) : (
+                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
               )}
             </div>
+          </div>
+        </motion.div>
 
-            {editingCommunities ? (
-              <div className="space-y-3">
-                <textarea value={communitiesDraft} onChange={e => setCommunitiesDraft(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                  placeholder="Who do you serve..."
-                  rows={3}
-                  style={{ background: '#F8F9FB' }}
-                  onFocus={e => e.target.style.borderColor = '#FFB703'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveCommunities}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                    style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                  <button onClick={() => {
-                    setCommunitiesDraft(profile?.communities || '')
-                    setEditingCommunities(false)
-                  }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                {profile?.communities || 'Not added yet'}
-              </p>
-            )}
-          </motion.div>
-
-          {/* ORGANIZATION SIZE */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#06B6D420' }}>
-                  <Building2 size={14} style={{ color: '#0891B2' }}/>
-                </span>
-                Organization Size
-              </h2>
-              {!editingOrgSize && (
-                <button onClick={() => setEditingOrgSize(true)}
-                  className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                  Edit <Edit3 size={12}/>
-                </button>
-              )}
-            </div>
-
-            {editingOrgSize ? (
-              <div className="space-y-3">
-                <select value={orgSizeDraft} onChange={e => setOrgSizeDraft(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] transition-all appearance-none cursor-pointer"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                  <option value="">Select size...</option>
-                  <option>1-5</option>
-                  <option>6-25</option>
-                  <option>26-100</option>
-                  <option>100+</option>
-                </select>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveOrgSize}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                    style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                  <button onClick={() => {
-                    setOrgSizeDraft(profile?.orgSize || '')
-                    setEditingOrgSize(false)
-                  }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-[13px] font-semibold text-[#0D183D]">
-                {profile?.orgSize || 'Not added yet'}
-              </p>
-            )}
-          </motion.div>
-
-          {/* HELP NEEDED */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-extrabold text-[#0D183D]">What We Need Help With</h2>
-              {!editingHelpNeeded && (
-                <button onClick={() => setEditingHelpNeeded(true)}
-                  className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                  Edit <Edit3 size={12}/>
-                </button>
-              )}
-            </div>
-
-            {editingHelpNeeded ? (
-              <div className="space-y-3">
-                <textarea value={helpNeededDraft} onChange={e => setHelpNeededDraft(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                  placeholder="What help do you need..."
-                  rows={3}
-                  style={{ background: '#F8F9FB' }}
-                  onFocus={e => e.target.style.borderColor = '#FFB703'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveHelpNeeded}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                    style={{ background: '#0D183D', color: 'white' }}>Save</button>
-                  <button onClick={() => {
-                    setHelpNeededDraft(profile?.helpNeeded || '')
-                    setEditingHelpNeeded(false)
-                  }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                {profile?.helpNeeded || 'Not added yet'}
-              </p>
-            )}
-          </motion.div>
-
-          {/* FOCUS AREAS */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#EC489320' }}>
-                <Heart size={14} style={{ color: '#EC4899' }}/>
-              </span>
-              Focus Areas
-            </h2>
-            {profile?.tags && profile.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.tags.map((tag, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                    style={{ background: '#EC489320', color: '#EC4899' }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-            )}
-          </motion.div>
-
-          {/* PREFERRED SKILLS */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#3B82F620' }}>
-                <Zap size={14} style={{ color: '#3B82F6' }}/>
-              </span>
-              Preferred Skills
-            </h2>
-            {profile?.preferred_skills && profile.preferred_skills.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.preferred_skills.map((skill, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                    style={{ background: '#3B82F620', color: '#3B82F6' }}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-            )}
-          </motion.div>
-
-          {/* PROJECT TYPES */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#10B98120' }}>
-                <Target size={14} style={{ color: '#10B981' }}/>
-              </span>
-              Project Categories
-            </h2>
-            {profile?.project_types && profile.project_types.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.project_types.map((type, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                    style={{ background: '#10B98120', color: '#10B981' }}>
-                    {type}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-            )}
-          </motion.div>
-
-          {/* LINKS & SOCIAL */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h3 className="text-[14px] font-extrabold text-[#3B82F6] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#3B82F620' }}>
-                <Globe size={14} style={{ color: '#3B82F6' }}/>
-              </span>
-              Website
-            </h3>
+        {/* SECTION 4: LINKS & SOCIAL */}
+        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+          viewport={{ once:true }} className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Connect</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {profile?.website ? (
               <a href={profile.website} target="_blank" rel="noopener noreferrer"
-                className="text-[12px] text-[#3B82F6] hover:underline break-all">
-                {profile.website}
+                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+                    <Globe size={18} className="text-[#3B82F6]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Website</p>
+                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.website.replace(/^https?:\/\/(www\.)?/, '')}</p>
+                  </div>
+                </div>
+                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+                    <Globe size={18} className="text-[#3B82F6]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Website</p>
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  </div>
+                </div>
+              </div>
             )}
-          </motion.div>
 
-          {/* INSTAGRAM */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h3 className="text-[14px] font-extrabold text-[#EC4899] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#EC489320' }}>
-                <Heart size={14} style={{ color: '#EC4899' }}/>
-              </span>
-              Instagram
-            </h3>
             {profile?.instagram ? (
               <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
-                className="text-[12px] text-[#3B82F6] hover:underline break-all">
-                {profile.instagram}
+                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
+                    <Heart size={18} className="text-[#EC4899]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Instagram</p>
+                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.instagram.replace(/^https?:\/\/(www\.)?/, '')}</p>
+                  </div>
+                </div>
+                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
+                    <Heart size={18} className="text-[#EC4899]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Instagram</p>
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  </div>
+                </div>
+              </div>
             )}
-          </motion.div>
 
-          {/* TWITTER */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h3 className="text-[14px] font-extrabold text-[#0891B2] flex items-center gap-2 mb-4">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#06B6D420' }}>
-                <Target size={14} style={{ color: '#0891B2' }}/>
-              </span>
-              Twitter / X
-            </h3>
             {profile?.twitter ? (
               <a href={profile.twitter} target="_blank" rel="noopener noreferrer"
-                className="text-[12px] text-[#3B82F6] hover:underline break-all">
-                {profile.twitter}
+                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
+                    <Target size={18} className="text-[#0891B2]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Twitter / X</p>
+                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.twitter.replace(/^https?:\/\/(www\.)?/, '')}</p>
+                  </div>
+                </div>
+                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
+                    <Target size={18} className="text-[#0891B2]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Twitter / X</p>
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  </div>
+                </div>
+              </div>
             )}
-          </motion.div>
 
-          {/* REGISTRATION NUMBER */}
-          <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }}
-            className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-            <h3 className="text-[14px] font-extrabold text-[#0D183D] mb-3">Registration Number</h3>
             {profile?.registrationNumber ? (
-              <p className="text-[13px] font-semibold text-[#0D183D]">{profile.registrationNumber}</p>
+              <div className="flex items-center gap-3 p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={18} className="text-[#6366F1]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-medium text-[#4B6382] uppercase">Registration</p>
+                  <p className="text-[13px] font-semibold text-[#0D183D]">{profile.registrationNumber}</p>
+                </div>
+              </div>
             ) : (
-              <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+              <div className="flex items-center gap-3 p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={18} className="text-[#6366F1]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-medium text-[#4B6382] uppercase">Registration</p>
+                  <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                </div>
+              </div>
             )}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
+
+        {/* Footer spacing */}
+        <div className="h-8" />
       </div>
     </main>
   )

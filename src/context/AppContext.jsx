@@ -115,13 +115,27 @@ export function AppProvider({ children }) {
       if (userRow.role === 'student') {
         console.log('[hydrateUser] step 3 — loadStudentProfile (background)')
         withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
-          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
-          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
+          .then(p => {
+            setProfileState(p)
+            console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
+          })
+          .catch(e => {
+            console.warn('[hydrateUser] step 3 profile error:', e.message)
+            // Still set to null so pages know profile failed to load
+            setProfileState(null)
+          })
       } else if (userRow.role === 'ngo') {
         console.log('[hydrateUser] step 3 — loadNgoProfile (background)')
         withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
-          .then(p => { setProfileState(p); console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null') })
-          .catch(e => console.warn('[hydrateUser] step 3 profile error:', e.message))
+          .then(p => {
+            setProfileState(p)
+            console.log('[hydrateUser] step 3 — done, profile:', p ? 'loaded' : 'null')
+          })
+          .catch(e => {
+            console.warn('[hydrateUser] step 3 profile error:', e.message)
+            // Still set to null so pages know profile failed to load
+            setProfileState(null)
+          })
       } else {
         console.log('[hydrateUser] step 3 — skipped (role null)')
       }

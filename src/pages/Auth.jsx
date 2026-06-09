@@ -43,38 +43,29 @@ export default function Auth() {
     if (error) setError('')
   }
 
-  // After email sign-up/in, apply prefilled role if provided, then navigate.
-  async function applyRoleAndRedirect(authUserId, isNewUser = false) {
-    // Apply prefilled role from landing-page CTA (?role=student / ?role=ngo)
-    if (prefilledRole && (prefilledRole === 'student' || prefilledRole === 'ngo')) {
+  // After email sign-up, apply prefilled role ONLY for new users.
+  // Do NOT navigate — let AppContext's hydrateUser + guards handle routing.
+  // This prevents the double-navigation race that causes role flips and blank pages.
+  async function applyPrefillRoleForNewUser(authUserId) {
+    // CRITICAL SAFETY: Only apply prefilled role to NEW users, never returning users.
+    // Returning users must keep their existing role (no flipping based on URL param).
+    if (!prefilledRole || (prefilledRole !== 'student' && prefilledRole !== 'ngo')) {
+      return // No prefilled role, skip
+    }
+
+    try {
       await updateUserRow(authUserId, { role: prefilledRole })
+      console.log('[auth] prefilled role set to', prefilledRole, 'for new user', authUserId)
+    } catch (err) {
+      console.error('[auth] failed to set prefilled role:', err.message)
+      // Non-fatal: user can still select role manually
     }
-
-    // Read the authoritative user row to decide where to send the user.
-    // For new sign-ups, the role may have just been set above.
-    const userRow = await getUserRow(authUserId)
-
-    console.log('[auth] email SIGNED_IN', {
-      uid:      authUserId,
-      isNewUser,
-      role:     userRow?.role,
-      onboarding_complete: userRow?.onboarding_complete,
-    })
-
-    let dest
-    if (!userRow?.role) {
-      dest = '/role-selection'
-    } else if (!userRow?.onboarding_complete) {
-      dest = `/onboarding/${userRow.role}`
-    } else {
-      dest = userRow.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
-    }
-
-    console.log('[auth] redirect →', dest)
-    navigate(dest, { replace: true })
   }
 
   // ── Email submit ─────────────────────────────────────────────────────────────
+  // After sign-up/login, do NOT navigate here.
+  // AppContext's onAuthStateChange listener will fire immediately and handle routing via hydrateUser + guards.
+  // This eliminates the race condition that causes role flips and blank pages.
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.email.trim() || !form.password) { setError('Please fill in all required fields.'); return }
@@ -84,11 +75,19 @@ export default function Auth() {
     try {
       if (mode === 'signup') {
         const authUser = await signUp({ name: form.name, email: form.email, password: form.password })
-        await applyRoleAndRedirect(authUser.id, true)
+        // For new sign-ups, optionally apply prefilled role from URL param
+        // (e.g., landing page CTA with ?role=student)
+        // But ONLY for brand new users, not returning users.
+        await applyPrefillRoleForNewUser(authUser.id)
+        // DO NOT NAVIGATE — AppContext will handle it via onAuthStateChange
       } else {
         const authUser = await logIn({ email: form.email, password: form.password })
-        await applyRoleAndRedirect(authUser.id, false)
+        // For returning users, do NOT touch the role — it's already in DB
+        // AppContext's onAuthStateChange will fire and route based on existing data
+        // DO NOT NAVIGATE — AppContext will handle it via onAuthStateChange
       }
+      // Success: Supabase will fire SIGNED_IN, AppContext will hydrate, guards will route
+      // User will see loading screen briefly while AppContext initializes
     } catch (err) {
       setError(err.message)
       setSubmitting(false)

@@ -87,10 +87,13 @@ function TextArea({ value, onChange, placeholder, rows=4, focused, onFocus, onBl
   )
 }
 
-function Section({ title, children }) {
+function Section({ title, subtitle, children }) {
   return (
-    <div className="bg-white rounded-3xl border border-[rgba(13,24,61,0.08)] p-6 flex flex-col gap-5">
-      <h2 className="text-[13px] font-extrabold text-[#0D183D] uppercase tracking-widest">{title}</h2>
+    <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-8 flex flex-col gap-6">
+      <div>
+        <h2 className="text-sm font-bold text-[#0D183D] uppercase tracking-widest">{title}</h2>
+        {subtitle && <p className="text-[13px] text-[#4B6382] mt-1">{subtitle}</p>}
+      </div>
       {children}
     </div>
   )
@@ -177,109 +180,120 @@ export default function EditNGOProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB]">
+    <div className="min-h-screen bg-[#FAFBFC]">
 
       {/* Sticky top bar */}
-      <header className="sticky top-0 z-20 bg-white" style={{ borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
-        <div className="max-w-2xl mx-auto px-6 h-14 flex items-center justify-between gap-5">
+      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-sm border-b border-[rgba(13,24,61,0.08)]">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between gap-5">
           <button onClick={() => navigate('/profile/ngo')}
-            className="flex items-center gap-1 text-[13px] font-medium text-[#4B6382] hover:text-[#0D183D] transition-colors shrink-0">
-            <ChevronLeft size={15}/> Profile
+            className="flex items-center gap-2 text-[13px] font-semibold text-[#4B6382] hover:text-[#0D183D] transition-colors shrink-0">
+            <ChevronLeft size={16}/> Back to profile
           </button>
-          <p className="text-[14px] font-extrabold text-[#0D183D]">Edit profile</p>
+          <p className="text-[15px] font-bold text-[#0D183D]">Edit Organization Profile</p>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => navigate('/profile/ngo')}
-              className="px-4 py-1.5 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"
+              className="px-4 py-2 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[#F0F1F3] transition-colors"
               style={{ borderColor:'rgba(13,24,61,0.1)' }}>
               Cancel
             </button>
             <button onClick={save} disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
               style={{ background:'#FFB703', boxShadow:'0 2px 10px rgba(255,183,3,0.28)' }}>
-              {saving ? <><Check size={11}/>Saved!</> : 'Save changes'}
+              {saving ? <><Check size={12}/>Saved!</> : 'Save changes'}
             </button>
           </div>
         </div>
       </header>
 
       {/* Form */}
-      <main className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-5">
+      <main className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-8">
 
-        {/* Logo / photo */}
-        <Section title="Organization logo">
-          <AvatarPicker value={form.avatar} onChange={v => set('avatar', v)} name={form.name}/>
+        {/* 1. ORGANIZATION IDENTITY */}
+        <Section title="Organization Identity" subtitle="Logo, name, and basic details">
+          <div className="flex flex-col gap-6">
+            <Field label="Organization logo">
+              <AvatarPicker value={form.avatar} onChange={v => set('avatar', v)} name={form.name}/>
+            </Field>
+
+            <div className="h-px bg-[rgba(13,24,61,0.05)]" />
+
+            <Field label="Organization name" required>
+              <TextInput value={form.name} onChange={e => set('name', e.target.value)}
+                placeholder="Your NGO's name" {...fo('name')}/>
+              {errors.name && <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>}
+            </Field>
+
+            <Field label="Location">
+              <TextInput value={form.location} onChange={e => set('location', e.target.value)}
+                placeholder="e.g. Tel Aviv, Jerusalem" {...fo('location')}/>
+            </Field>
+
+            <Field label="Tagline / Summary" hint="A short sentence that captures your mission.">
+              <TextArea value={form.summary} onChange={e => set('summary', e.target.value)}
+                placeholder="e.g. Empowering at-risk youth through technology and mentorship."
+                rows={2} {...fo('summary')}/>
+            </Field>
+
+            <Field label="Phone number" hint="Used for interview coordination. Not shown publicly.">
+              <TextInput type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
+                placeholder="+972 2 000 0000" {...fo('phone')}/>
+              {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}
+            </Field>
+          </div>
         </Section>
 
-        {/* Basic info */}
-        <Section title="Basic info">
-          <Field label="Organization name" required>
-            <TextInput value={form.name} onChange={e => set('name', e.target.value)}
-              placeholder="Your NGO's name" {...fo('name')}/>
-            {errors.name && <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>}
-          </Field>
-          <Field label="Phone number" hint="Used for interview coordination. Not shown publicly.">
-            <TextInput type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
-              placeholder="+972 2 000 0000" {...fo('phone')}/>
-            {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}
-          </Field>
-          <Field label="Location">
-            <TextInput value={form.location} onChange={e => set('location', e.target.value)}
-              placeholder="e.g. Tel Aviv, Jerusalem" {...fo('location')}/>
-          </Field>
-          <Field label="Tagline / summary" hint="A short sentence that captures your mission — shown at the top of your profile.">
-            <TextArea value={form.summary} onChange={e => set('summary', e.target.value)}
-              placeholder="e.g. Empowering at-risk youth through technology and mentorship."
-              rows={2} {...fo('summary')}/>
-          </Field>
+        {/* 2. ABOUT & MISSION */}
+        <Section title="About & Mission" subtitle="Tell your story and what drives you">
+          <div className="flex flex-col gap-6">
+            <Field label="About the organization" hint="Tell students about your work, communities, and what drives you.">
+              <TextArea value={form.description} onChange={e => set('description', e.target.value)}
+                placeholder="Describe your organization's mission, history, and the communities you serve…"
+                rows={5} {...fo('description')}/>
+            </Field>
+
+            <Field label="What we need help with" hint="This is the most important field for matching. Be specific about skills and responsibilities.">
+              <TextArea value={form.helpNeeded} onChange={e => set('helpNeeded', e.target.value)}
+                placeholder="e.g. We need a developer to rebuild our volunteer coordination tool in React. The ideal person is comfortable with databases and can work independently…"
+                rows={4} {...fo('helpNeeded')}/>
+            </Field>
+          </div>
         </Section>
 
-        {/* Mission & needs */}
-        <Section title="Mission &amp; needs">
-          <Field label="About the organization" hint="Tell students about your work, your communities, and what drives you.">
-            <TextArea value={form.description} onChange={e => set('description', e.target.value)}
-              placeholder="Describe your organization's mission, history, and the communities you serve…"
-              rows={5} {...fo('description')}/>
-          </Field>
-          <Field label="What we need help with" hint="This is the most important field for matching. Be specific.">
-            <TextArea value={form.helpNeeded} onChange={e => set('helpNeeded', e.target.value)}
-              placeholder="e.g. We need a developer to rebuild our volunteer coordination tool in React. The ideal person is comfortable with databases and can work independently…"
-              rows={4} {...fo('helpNeeded')}/>
-          </Field>
-        </Section>
-
-        {/* Focus areas */}
-        <Section title="Focus areas">
+        {/* 3. FOCUS & SKILLS */}
+        <Section title="Focus Areas & Skills" subtitle="Tags that describe your organization">
           <Field label="Tags / causes" hint="Press Enter or comma after each tag.">
             <TagInput value={form.tags} onChange={v => set('tags', v)}
               placeholder="Youth, Technology, Education, Environment…"/>
           </Field>
         </Section>
 
-        {/* Links */}
-        <Section title="Links &amp; social">
-          {[
-            { k:'website',   label:'Website',   placeholder:'https://yourorg.org'          },
-            { k:'instagram', label:'Instagram', placeholder:'instagram.com/yourorg'        },
-            { k:'twitter',   label:'Twitter',   placeholder:'twitter.com/yourorg'          },
-          ].map(({ k, label, placeholder }) => (
-            <Field key={k} label={label}>
-              <TextInput value={form[k]} onChange={e => set(k, e.target.value)}
-                placeholder={placeholder} {...fo(k)}/>
-            </Field>
-          ))}
+        {/* 4. CONNECT & SOCIAL */}
+        <Section title="Web & Social Presence" subtitle="Where people can learn more about you">
+          <div className="flex flex-col gap-6">
+            {[
+              { k:'website',   label:'Website',   placeholder:'https://yourorg.org'          },
+              { k:'instagram', label:'Instagram', placeholder:'instagram.com/yourorg'        },
+              { k:'twitter',   label:'Twitter / X',   placeholder:'twitter.com/yourorg'          },
+            ].map(({ k, label, placeholder }) => (
+              <Field key={k} label={label}>
+                <TextInput value={form[k]} onChange={e => set(k, e.target.value)}
+                  placeholder={placeholder} {...fo(k)}/>
+              </Field>
+            ))}
+          </div>
         </Section>
 
         {/* Bottom actions */}
-        <div className="flex gap-3 pb-6">
+        <div className="flex gap-3 pb-8 pt-4">
           <button onClick={() => navigate('/profile/ngo')}
-            className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-white transition-colors"
+            className="flex-1 py-3 rounded-xl text-[13px] font-semibold border text-[#4B6382] hover:bg-[#F0F1F3] transition-colors"
             style={{ borderColor:'rgba(13,24,61,0.1)' }}>
             Cancel
           </button>
           <button onClick={save} disabled={saving}
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
-            style={{ background:'#FFB703', boxShadow:'0 4px 16px rgba(255,183,3,0.28)', flex:2 }}>
-            {saving ? <><Check size={14}/>Saving…</> : 'Save changes →'}
+            className="flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60 flex-1"
+            style={{ background:'#FFB703', boxShadow:'0 4px 16px rgba(255,183,3,0.28)' }}>
+            {saving ? <><Check size={14}/>Saved!</> : 'Save changes'}
           </button>
         </div>
       </main>
