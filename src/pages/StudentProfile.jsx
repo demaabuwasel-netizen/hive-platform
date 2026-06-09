@@ -441,13 +441,7 @@ export default function StudentProfile() {
                 <p className="text-[11px] font-semibold text-[#FFB703] mb-2">
                   {score >= 75 ? 'Strong' : score >= 50 ? 'Good' : 'Getting there'}
                 </p>
-                <p className="text-[10px] text-[#4B6382] mb-2">Keep going! Complete a few more sections.</p>
-                <button onClick={() => setGlobalEditMode(!globalEditMode)}
-                  className="px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 text-[12px] w-full"
-                  style={{ background: globalEditMode ? '#FFB703' : '#0D183D', color: globalEditMode ? '#0D183D' : 'white' }}>
-                  <Edit3 size={14}/>
-                  {globalEditMode ? 'Done Editing' : 'Edit Profile'}
-                </button>
+                <p className="text-[10px] text-[#4B6382]">Keep going! Complete a few more sections.</p>
               </div>
             </div>
           </div>
