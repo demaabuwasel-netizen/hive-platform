@@ -7,7 +7,7 @@ import {
   Users, Leaf, Heart, Code, Home, GraduationCap, Zap,
   PawPrint, Apple, Scale, Palette, Trees, Plus, Trash2,
   Briefcase, Globe, BookOpen, ChevronDown, ExternalLink, Link2,
-  BarChart2, TrendingUp, Target,
+  BarChart2, TrendingUp, Target, Phone,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from '../components/Avatar'
