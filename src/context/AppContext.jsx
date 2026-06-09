@@ -31,8 +31,8 @@ export function AppProvider({ children }) {
   const [loadingTimedOut, setTimedOut]   = useState(false)
 
   // ── hydrateUser ─────────────────────────────────────────────────────────────
-  // Steps 1+2 use withStep with 4 s caps. Step 3 (profile) is fire-and-forget.
-  // Worst-case blocking time: 4+4 = 8 s (under the 9 s ceiling). Never throws — always resolves via try/catch.
+  // Steps 1+2 use withStep with 6 s caps. Step 3 (profile) is fire-and-forget.
+  // Worst-case blocking time: 6+6 = 12 s (exceeds 9 s ceiling but never throws). Never throws — always resolves via try/catch.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null); setProfileState(null); return
@@ -58,16 +58,16 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── 1. ensureUserRow (4 s cap) ─────────────────────────────────────────
-      // Increased from 2s to 4s to match internal query timeouts
+      // ── 1. ensureUserRow (6 s cap) ─────────────────────────────────────────
+      // Increased from 4s to 6s for slow Supabase connections
       console.log('[hydrateUser] step 1 — ensureUserRow')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 4000)
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 6000)
       console.log('[hydrateUser] step 1 — done')
 
-      // ── 2. getUserRow (4 s cap) ────────────────────────────────────────────
-      // Increased from 2s to 4s to match internal query timeouts
+      // ── 2. getUserRow (6 s cap) ────────────────────────────────────────────
+      // Increased from 4s to 6s for slow Supabase connections
       console.log('[hydrateUser] step 2 — getUserRow')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 4000)
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 6000)
       console.log('[hydrateUser] step 2 — done:', userRow
         ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
         : 'null (will use minimal state)')
