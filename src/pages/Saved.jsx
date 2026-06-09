@@ -49,7 +49,7 @@ export default function Saved() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-3xl font-bold text-[#0D183D]">Saved</h1>
