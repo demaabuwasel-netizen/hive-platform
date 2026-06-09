@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X } from 'lucide-react'
+import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X, MessageCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import EmptyState from '../components/EmptyState'
@@ -262,7 +262,7 @@ export default function Messages() {
       ) : (
         <div className="flex-1 flex items-center justify-center p-8">
           <EmptyState
-            emoji="💬"
+            icon={MessageCircle}
             title="No messages yet"
             description="Start a conversation with a matched NGO or student."
             actionLabel="View matches"

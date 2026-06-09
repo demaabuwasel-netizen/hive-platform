@@ -98,7 +98,7 @@ export default function Saved() {
       {/* Empty state — card-wrapped to match Applications page */}
       {!loading && !error && items.length === 0 && (
         <EmptyState
-          emoji="🔖"
+          icon={Bookmark}
           title="No saved opportunities yet"
           description="Browse opportunities and tap the bookmark icon to save them here."
           actionLabel="Browse opportunities"

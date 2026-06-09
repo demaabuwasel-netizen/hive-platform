@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle2, Sparkles, MessageCircle, Send } from 'lucide-react'
+import { X, CheckCircle2, Sparkles, MessageCircle, Send, Search, Target, Brain } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
 import EmptyState from '../components/EmptyState'
@@ -302,7 +302,7 @@ export default function MatchResults() {
   if (user && !user.onboardingComplete) {
     return (
       <div className="max-w-2xl mx-auto px-8 py-10">
-        <EmptyState emoji="🔍" title="No matches yet"
+        <EmptyState icon={Search} title="No matches yet"
           description="Complete your profile so our AI can find NGOs that match your skills and values."
           actionLabel="Complete my profile" actionHref="/" />
       </div>
@@ -318,8 +318,10 @@ export default function MatchResults() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }} className="mb-8">
-          <div className="flex items-center gap-2.5 mb-2">
-            <span className="text-2xl" aria-hidden="true">✦</span>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-[#FFB703]/10 flex items-center justify-center">
+              <Sparkles size={20} className="text-[#FFB703]" />
+            </div>
             <h1 className="text-2xl font-bold text-[#0D183D]">
               {loading ? 'Finding your matches…' : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} found for you`}
             </h1>
@@ -335,7 +337,9 @@ export default function MatchResults() {
             transition={{ delay: 0.1 }}
             className="rounded-2xl p-4 mb-6 flex items-start gap-3"
             style={{ background: 'rgba(13,24,61,0.04)', border: '1px solid rgba(13,24,61,0.08)' }}>
-            <span className="text-xl shrink-0" aria-hidden="true">🎯</span>
+            <div className="w-8 h-8 rounded-lg bg-[#10B981]/10 flex items-center justify-center shrink-0">
+              <Target size={16} className="text-[#10B981]" />
+            </div>
             <div>
               <p className="text-sm font-semibold text-[#0D183D] mb-0.5">
                 Matched to your profile
@@ -358,7 +362,9 @@ export default function MatchResults() {
           transition={{ delay: 0.18 }}
           className="rounded-2xl p-5 mb-8 flex gap-4 items-start text-white"
           style={{ background: '#0D183D' }}>
-          <span className="text-xl shrink-0" aria-hidden="true">🧠</span>
+          <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/10 flex items-center justify-center shrink-0">
+            <Brain size={16} className="text-[#8B5CF6]" />
+          </div>
           <div>
             <p className="font-semibold text-sm mb-1">How semantic matching works</p>
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
@@ -385,7 +391,7 @@ export default function MatchResults() {
             ))}
           </div>
         ) : matchesToShow.length === 0 ? (
-          <EmptyState compact emoji="🔍" title="No matches yet"
+          <EmptyState compact icon={Search} title="No matches yet"
             description="Add more skills, interests, and experience to your profile for stronger matches."
             actionLabel="Update profile" actionHref="/settings" />
         ) : (

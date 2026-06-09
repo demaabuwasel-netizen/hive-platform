@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, Clock, Sparkles, RefreshCw, BookOpen, Mic,
   CheckCircle2, Video, Phone, Users, ChevronDown, ChevronUp,
-  MapPin, X, Check,
+  MapPin, X, Check, Search, Lightbulb, HelpCircle, Clock as ClockIcon,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -24,10 +24,10 @@ const STUDENT_QUESTIONS = [
 ]
 
 const TIPS = [
-  { icon: '📋', title: 'Research the NGO',        desc: 'Read their annual report and recent news before the call.' },
-  { icon: '💡', title: 'Prepare STAR stories',     desc: 'Situation, Task, Action, Result for each answer.'        },
-  { icon: '❓', title: 'Prepare your own questions', desc: 'Ask about team culture, impact measurement, day-to-day.'  },
-  { icon: '⏰', title: 'Join 5 minutes early',     desc: 'Test your camera and mic before the interview starts.'   },
+  { icon: Search, title: 'Research the NGO',        desc: 'Read their annual report and recent news before the call.' },
+  { icon: Lightbulb, title: 'Prepare STAR stories',     desc: 'Situation, Task, Action, Result for each answer.'        },
+  { icon: HelpCircle, title: 'Prepare your own questions', desc: 'Ask about team culture, impact measurement, day-to-day.'  },
+  { icon: Clock, title: 'Join 5 minutes early',     desc: 'Test your camera and mic before the interview starts.'   },
 ]
 
 const TYPE_ICON = { video: Video, phone: Phone, onsite: MapPin }
@@ -169,20 +169,25 @@ function StudentView() {
 
       {/* Interview tips */}
       <section>
-        <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-3">Interview tips</h2>
+        <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-4">Interview tips</h2>
         <div className="grid sm:grid-cols-2 gap-3">
-          {TIPS.map((t, i) => (
-            <motion.div key={i}
-              initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.3 + i*0.06 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-4 flex items-start gap-3">
-              <span className="text-xl shrink-0">{t.icon}</span>
-              <div>
-                <p className="text-[13px] font-bold text-[#0D183D] mb-0.5">{t.title}</p>
-                <p className="text-[12px] text-[#4B6382] leading-relaxed">{t.desc}</p>
-              </div>
-            </motion.div>
-          ))}
+          {TIPS.map((t, i) => {
+            const IconComponent = t.icon
+            return (
+              <motion.div key={i}
+                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+                transition={{ delay:0.3 + i*0.06 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex items-start gap-4 hover:border-[rgba(13,24,61,0.12)] hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-lg bg-[#FFB703]/10 flex items-center justify-center shrink-0 flex-shrink-0">
+                  <IconComponent size={18} className="text-[#FFB703]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-[#0D183D] mb-1">{t.title}</p>
+                  <p className="text-[12px] text-[#4B6382] leading-relaxed">{t.desc}</p>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </section>
     </>

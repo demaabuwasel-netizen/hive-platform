@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom'
  * Reusable empty-state for dashboard pages.
  *
  * Props:
- *   emoji        – large icon character (e.g. '📄')
+ *   emoji        – (deprecated) large icon character
+ *   icon         – Lucide icon component (preferred)
  *   title        – bold heading
  *   description  – short muted line
  *   actionLabel  – CTA button text
@@ -17,6 +18,7 @@ import { Link } from 'react-router-dom'
  */
 export default function EmptyState({
   emoji,
+  icon: IconComponent,
   title,
   description,
   actionLabel,
@@ -33,7 +35,18 @@ export default function EmptyState({
       transition={{ duration: 0.35 }}
       className={`flex flex-col items-center justify-center text-center w-full ${compact ? 'py-10 px-6' : 'py-16 px-8'}`}>
 
-      {emoji && (
+      {IconComponent ? (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.05 }}
+          className={`${compact ? 'mb-3' : 'mb-5'} flex items-center justify-center`}
+          aria-hidden="true">
+          <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center">
+            <IconComponent size={32} className="text-[#FFB703]" />
+          </div>
+        </motion.div>
+      ) : emoji && (
         <motion.div
           initial={{ scale: 0.65, rotate: -6 }}
           animate={{ scale: 1, rotate: 0 }}
