@@ -31,8 +31,8 @@ export function AppProvider({ children }) {
   const [loadingTimedOut, setTimedOut]   = useState(false)
 
   // ── hydrateUser ─────────────────────────────────────────────────────────────
-  // Steps 1+2 use withStep with 2 s caps. Step 3 (profile) is fire-and-forget.
-  // Worst-case blocking time: 2+2 = 4 s. Never throws — always resolves via try/catch.
+  // Steps 1+2 use withStep with 4 s caps. Step 3 (profile) is fire-and-forget.
+  // Worst-case blocking time: 4+4 = 8 s (under the 9 s ceiling). Never throws — always resolves via try/catch.
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser) {
       setUserState(null); setProfileState(null); return
@@ -58,14 +58,16 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── 1. ensureUserRow (2 s cap) ─────────────────────────────────────────
+      // ── 1. ensureUserRow (4 s cap) ─────────────────────────────────────────
+      // Increased from 2s to 4s to match internal query timeouts
       console.log('[hydrateUser] step 1 — ensureUserRow')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 2000)
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 4000)
       console.log('[hydrateUser] step 1 — done')
 
-      // ── 2. getUserRow (2 s cap) ────────────────────────────────────────────
+      // ── 2. getUserRow (4 s cap) ────────────────────────────────────────────
+      // Increased from 2s to 4s to match internal query timeouts
       console.log('[hydrateUser] step 2 — getUserRow')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 2000)
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 4000)
       console.log('[hydrateUser] step 2 — done:', userRow
         ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}`
         : 'null (will use minimal state)')
