@@ -350,7 +350,7 @@ export default function Interviews() {
   const isNGO = user?.role === 'ngo'
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-7">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-6">
         <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Interviews</h1>
         <p className="text-[13px] text-[#4B6382] mt-0.5">

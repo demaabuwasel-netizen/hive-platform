@@ -44,7 +44,7 @@ export default function Applications() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#0D183D] mb-1">Applications</h1>
