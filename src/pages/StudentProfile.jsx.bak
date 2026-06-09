@@ -1,0 +1,14 @@
+ISSUE: Removed add buttons and edit forms that should have been kept
+
+WHAT NEEDS TO BE RESTORED:
+1. ✅ Add skill button + form (visible in edit mode)
+2. ✅ Add language button + form
+3. ✅ Add cause button + form  
+4. ✅ Edit bio button + inline textarea
+5. ✅ Add/edit experience button + full form with all fields
+6. ✅ Edit level for skills
+7. ✅ All delete/remove buttons visible in edit mode
+8. ✅ All inline save/cancel buttons
+
+KEEP: Modern design, colors, structure
+FIX: Restore ALL edit functionality
