@@ -44,15 +44,16 @@ export default function Applications() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-7">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[#0D183D] mb-2">Applications</h1>
-        <p className="text-[14px] text-[#4B6382]">Track your applications and interview progress</p>
-      </div>
+    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#0D183D] mb-1">Applications</h1>
+          <p className="text-[14px] text-[#4B6382]">Track your applications and interview progress</p>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-12">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {Object.entries(TAB_COUNTS).map(([label, count]) => (
           <motion.button
             key={label}
@@ -74,39 +75,39 @@ export default function Applications() {
         ))}
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="space-y-4">
-          {[1,2,3].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-5 h-24 animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && filtered.length === 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mb-4">
-              <Send size={28} className="text-[#FFB703]" />
-            </div>
-            <h2 className="text-lg font-bold text-[#0D183D] mb-2">No applications yet</h2>
-            <p className="text-[14px] text-[#4B6382] text-center mb-6 max-w-sm">
-              Browse available opportunities and start applying to NGOs that match your skills and interests.
-            </p>
-            <Link to="/opportunities"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-              style={{ background: '#FFB703' }}>
-              Browse opportunities
-              <ChevronRight size={14} />
-            </Link>
+        {/* Loading */}
+        {loading && (
+          <div className="space-y-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-5 h-20 animate-pulse" />
+            ))}
           </div>
-        </motion.div>
-      )}
+        )}
 
-      {/* Applications list */}
-      {!loading && filtered.length > 0 && (
-        <div className="space-y-4">
+        {/* Empty state */}
+        {!loading && filtered.length === 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mt-12">
+            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-[#FFB703]/10 flex items-center justify-center mx-auto mb-4">
+                <Send size={32} className="text-[#FFB703]" />
+              </div>
+              <h2 className="text-xl font-bold text-[#0D183D] mb-2">No applications yet</h2>
+              <p className="text-[14px] text-[#4B6382] mb-6 max-w-xl mx-auto">
+                Browse available opportunities and start applying to NGOs that match your skills and interests.
+              </p>
+              <Link to="/opportunities"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#FFB703' }}>
+                Browse opportunities
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Applications list */}
+        {!loading && filtered.length > 0 && (
+          <div className="space-y-3">
           {filtered.map((a, i) => {
             const cfg = STATUS_CFG[a.status] || STATUS_CFG.submitted
             const Icon = cfg.icon
@@ -155,8 +156,9 @@ export default function Applications() {
               </motion.div>
             )
           })}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
