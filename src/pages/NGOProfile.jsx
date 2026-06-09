@@ -119,7 +119,14 @@ export default function NGOProfile() {
         {/* SECTION 1: ABOUT & MISSION */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">About</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">About</h2>
+            <button
+              onClick={() => navigate('/profile/ngo/edit')}
+              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
+              <Edit2 size={13} /> Edit
+            </button>
+          </div>
           <div className="grid grid-cols-1 gap-5">
 
             <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
@@ -142,7 +149,14 @@ export default function NGOProfile() {
         {/* SECTION 2: WHAT WE NEED */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Opportunities</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Opportunities</h2>
+            <button
+              onClick={() => navigate('/profile/ngo/edit')}
+              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
+              <Edit2 size={13} /> Edit
+            </button>
+          </div>
           <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-2xl border border-[rgba(255,183,3,0.15)] p-7">
             <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">What We Need Help With</h3>
             <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
@@ -152,7 +166,14 @@ export default function NGOProfile() {
         {/* SECTION 3: TAGS & SKILLS */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Focus & Skills</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Focus & Skills</h2>
+            <button
+              onClick={() => navigate('/profile/ngo/edit')}
+              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
+              <Edit2 size={13} /> Edit
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
               <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Focus Areas</h3>
@@ -204,7 +225,14 @@ export default function NGOProfile() {
         {/* SECTION 4: LINKS & SOCIAL */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Connect</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Connect</h2>
+            <button
+              onClick={() => navigate('/profile/ngo/edit')}
+              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
+              <Edit2 size={13} /> Edit
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {profile?.website ? (
               <a href={profile.website} target="_blank" rel="noopener noreferrer"
