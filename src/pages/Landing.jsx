@@ -454,7 +454,7 @@ export default function Landing() {
           <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-24">
             <h2 className="text-5xl font-bold mb-6 leading-tight" style={{ color:C.primary }}>
-              Two paths, one mission.<br />
+              Two paths, one mission:<br />
               <span style={{ color: C.honey }}>meaningful connection</span>
             </h2>
             <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color:C.muted }}>
