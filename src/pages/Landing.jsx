@@ -434,12 +434,12 @@ export default function Landing() {
       ══════════════════════════════════════════════════════ */}
       <HeroParallaxWithImages />
 
-      {/* Smooth gradient transition between hero and content */}
+      {/* Subtle transition between hero and content */}
       <div style={{
-        height: '80px',
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,1) 100%)',
+        height: '40px',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 60%, rgba(255,255,255,1) 100%)',
         pointerEvents: 'none',
-        marginTop: '-20px'
+        marginTop: '-1px'
       }}/>
 
       {/* ══════════════════════════════════════════════════════
