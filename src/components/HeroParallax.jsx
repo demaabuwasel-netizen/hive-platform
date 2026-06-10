@@ -144,10 +144,8 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
             Connect talent<br />
             with<br />
             <span style={{
-              background: 'linear-gradient(135deg, #FFB703 0%, #F59E0B 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
+              color: '#FFB703',
+              textShadow: '0 2px 12px rgba(0,0,0,0.25)'
             }}>
               purpose
             </span>
