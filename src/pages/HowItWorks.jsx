@@ -35,7 +35,7 @@ const PRINCIPLES = [
 
 export default function HowItWorks() {
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: C.bg }}>
+    <div className="flex flex-col min-h-screen" style={{ background: '#F9FAFB' }}>
       <Navbar />
 
       {/* Hero */}
