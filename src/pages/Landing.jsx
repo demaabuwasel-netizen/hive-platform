@@ -525,10 +525,10 @@ export default function Landing() {
           {/* Premium step cards */}
           <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto mb-28">
             {[
-              { num: '01', title: 'Create profile', desc: 'Share who you are', accent: C.honey },
-              { num: '02', title: 'Find matches', desc: 'Hive connects the dots', accent: '#3B82F6' },
-              { num: '03', title: 'Apply & connect', desc: 'Real conversations start', accent: '#10B981' },
-              { num: '04', title: 'Create impact', desc: 'Make it real', accent: '#F59E0B' },
+              { num: '01', title: 'Create profile', desc: 'Share who you are' },
+              { num: '02', title: 'Find matches', desc: 'Hive connects the dots' },
+              { num: '03', title: 'Apply & connect', desc: 'Real conversations start' },
+              { num: '04', title: 'Create impact', desc: 'Make it real' },
             ].map((step, i) => (
               <motion.div key={step.num}
                 initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
@@ -537,7 +537,7 @@ export default function Landing() {
                 style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 16px rgba(13,24,61,0.06)' }}>
                 <div className="flex items-start gap-4 mb-6">
                   <div className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl"
-                    style={{ background: `${step.accent}15`, color: step.accent }}>
+                    style={{ background: 'rgba(13,24,61,0.06)', color: C.primary }}>
                     {step.num}
                   </div>
                 </div>
@@ -558,32 +558,28 @@ export default function Landing() {
                 title: 'Student',
                 subtitle: 'What you share',
                 items: ['Your unique skills', 'Interests & values', 'Languages spoken', 'Availability'],
-                color: 'from-blue-50 to-blue-25',
-                accent: '#3B82F6'
               },
               {
                 title: 'Organization',
                 subtitle: 'What you post',
                 items: ['Role & mission', 'Skills you need', 'Time commitment', 'Impact area'],
-                color: 'from-emerald-50 to-emerald-25',
-                accent: '#10B981'
               },
             ].map((section, i) => (
               <motion.div key={section.title}
                 initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
                 viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.5 }}
-                className={`rounded-3xl p-12 border bg-gradient-to-br ${section.color}`}
-                style={{ borderColor: `${section.accent}30`, boxShadow: `0 12px 40px ${section.accent}10` }}>
+                className="rounded-3xl p-12 border bg-white"
+                style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 16px rgba(13,24,61,0.06)' }}>
                 <h3 className="text-2xl font-bold mb-2" style={{ color:C.primary }}>
                   {section.title}
                 </h3>
-                <p className="text-sm font-semibold mb-8" style={{ color: section.accent }}>
+                <p className="text-sm font-semibold mb-8" style={{ color: C.honey }}>
                   {section.subtitle}
                 </p>
                 <div className="space-y-4">
                   {section.items.map((item, j) => (
                     <div key={j} className="flex items-center gap-4">
-                      <div className="w-3 h-3 rounded-full" style={{ background: section.accent }}/>
+                      <div className="w-3 h-3 rounded-full" style={{ background: C.honey }}/>
                       <span className="text-base font-medium" style={{ color:C.primary }}>
                         {item}
                       </span>
