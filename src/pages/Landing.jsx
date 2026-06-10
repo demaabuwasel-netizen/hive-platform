@@ -448,51 +448,54 @@ export default function Landing() {
       {/* invisible anchor so both For Students and For NGOs nav links land here */}
       <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
 
-      <section id="for-students" className="py-16 px-6 bg-white" style={{ marginTop: '-20px' }}>
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4" style={{ color:C.primary }}>
-              Built for everyone in the hive
+      <section id="for-students" className="py-28 px-6 bg-white" style={{ marginTop: '-20px' }}>
+        <div className="max-w-7xl mx-auto">
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} className="text-center mb-20">
+            <h2 className="text-5xl font-bold mb-6" style={{ color:C.primary }}>
+              Your path to impact
             </h2>
-            <p className="text-lg max-w-3xl mx-auto" style={{ color:C.muted }}>
-              Whether you're building experience or finding talent — Hive connects you with the right opportunities and people.
+            <p className="text-xl max-w-2xl mx-auto" style={{ color:C.muted }}>
+              Choose your journey. Whether you're a student building real experience or an organization finding the right volunteers.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-10">
             {FEATURE_CARDS.map((card, i) => (
               <motion.div key={card.tag}
-                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.5 }}
-                whileHover={{ y:-8, boxShadow:'0 20px 40px rgba(13,24,61,0.12)', transition:{ duration:0.25 } }}
-                className="rounded-2xl overflow-hidden flex flex-col bg-white border"
-                style={{ borderColor:'rgba(13,24,61,0.06)', boxShadow:'0 4px 20px rgba(13,24,61,0.06)' }}>
+                initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.15, duration:0.6 }}
+                whileHover={{ y:-12, boxShadow:'0 32px 64px rgba(13,24,61,0.15)', transition:{ duration:0.3 } }}
+                className="group rounded-3xl overflow-hidden flex flex-col bg-white border transition-all"
+                style={{ borderColor:'rgba(13,24,61,0.08)', boxShadow:'0 8px 32px rgba(13,24,61,0.08)' }}>
 
-                {/* Image area — clean and minimal */}
-                <div className="relative overflow-hidden w-full" style={{ height: 280 }}>
+                {/* Premium image area with better proportions */}
+                <div className="relative overflow-hidden w-full bg-gradient-to-br from-slate-100 to-slate-50" style={{ height: 380 }}>
                   <motion.img src={card.img} alt={card.tag}
                     className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.03, transition:{ duration:0.4 } }}
+                    whileHover={{ scale: 1.04, transition:{ duration:0.5 } }}
                     draggable={false} />
 
-                  {/* Subtle gradient overlay fade */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white pointer-events-none" style={{ opacity: 0.3 }} />
+                  {/* Elegant gradient fade */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent pointer-events-none" />
                 </div>
 
-                {/* Content */}
-                <div className="p-8 flex flex-col gap-6 flex-1">
+                {/* Premium content area */}
+                <div className="px-8 py-10 flex flex-col gap-7 flex-1">
                   <div>
-                    <h3 className="text-2xl font-bold mb-3" style={{ color:C.primary }}>
+                    <p className="text-sm font-semibold tracking-wide mb-3" style={{ color: C.honey, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {card.tag}
+                    </p>
+                    <h3 className="text-3xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>
                       {card.title}
                     </h3>
-                    <p className="text-base leading-relaxed" style={{ color: C.muted }}>
+                    <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
                       {card.desc}
                     </p>
                   </div>
 
                   <Link to={card.href}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-base font-semibold text-white transition-all hover:opacity-85 mt-auto"
+                    className="inline-flex items-center justify-center px-7 py-4 rounded-2xl text-base font-semibold text-white transition-all hover:shadow-lg active:scale-95"
                     style={{ background:card.btnBg, boxShadow:card.btnShadow }}>
                     {card.cta}
                   </Link>

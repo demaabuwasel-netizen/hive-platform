@@ -1,30 +1,10 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
-import BrandIllustration from '../components/BrandIllustration'
 import studentLandingPage from '../assets/student_landing_page.png'
+import { CheckCircle2, Sparkles, Users, Briefcase, Award } from 'lucide-react'
 
 const C = { bg: '#FFFFFF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-}
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } }
-
-const BENEFITS = [
-  { emoji: '🎯', title: 'AI-matched to your skills', desc: 'Our engine reads your profile — skills, field, interests, languages — and surfaces NGOs that actually need what you bring.' },
-  { emoji: '🌱', title: 'Real-world experience', desc: 'Work on live projects with real impact, not fictional case studies. Build something you can point to.' },
-  { emoji: '🤝', title: 'Meaningful connections', desc: 'Meet professionals who care about the same things you do. These relationships last beyond the project.' },
-  { emoji: '📁', title: 'Build your portfolio', desc: 'Every project you complete is a concrete outcome you can show in interviews and on your CV.' },
-]
-
-const STEPS = [
-  { n: '01', title: 'Create your profile', desc: 'Tell us your field, skills, languages, and what kind of impact you want to make.' },
-  { n: '02', title: 'Get matched', desc: 'Hive\'s AI reads your profile and surfaces NGOs whose needs align with your strengths.' },
-  { n: '03', title: 'Apply in one click', desc: 'An AI-drafted application is ready for you to personalise and send — no blank-page anxiety.' },
-  { n: '04', title: 'Start contributing', desc: 'Land the role, do meaningful work, and walk away with real experience and real impact.' },
-]
 
 export default function ForStudents() {
   return (
@@ -57,7 +37,6 @@ export default function ForStudents() {
         </motion.div>
       </section>
 
-
       {/* Smooth transition */}
       <div style={{
         height: '60px',
@@ -66,65 +45,84 @@ export default function ForStudents() {
         marginTop: '-15px'
       }}/>
 
-      {/* Your journey */}
-      <section className="py-24 px-6 bg-white" style={{ marginTop: '-15px' }}>
-        <div className="max-w-5xl mx-auto">
+      {/* Your Journey Section */}
+      <section className="py-32 px-6 bg-white" style={{ marginTop: '-15px' }}>
+        <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-6" style={{ color: C.primary }}>
-              Your journey starts here
+            className="text-center mb-24">
+            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
+              Your journey in four steps
             </h2>
-            <p className="text-lg" style={{ color: C.muted }}>
-              Four simple steps from discovery to real impact.
+            <p className="text-xl" style={{ color: C.muted }}>
+              From building your profile to making real impact
             </p>
           </motion.div>
 
-          <div className="space-y-5">
-            {STEPS.map((s, i) => (
-              <motion.div key={s.n}
-                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.45 }}
-                className="rounded-2xl p-8 flex gap-8 items-start bg-white border transition-all hover:shadow-md"
-                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <div className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
-                  style={{ background: 'rgba(255,183,3,0.1)', color: C.honey }}>
-                  {s.n}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-2" style={{ color: C.primary }}>
-                    {s.title}
-                  </h3>
-                  <p className="text-base leading-relaxed" style={{ color: C.muted }}>
-                    {s.desc}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="space-y-6 max-w-4xl mx-auto">
+            {[
+              { num: '01', icon: CheckCircle2, title: 'Build your profile', desc: 'Share your skills, interests, languages, and what kind of impact you want to make. The more details, the better your matches.' },
+              { num: '02', icon: Sparkles, title: 'Get matched with purpose', desc: 'Hive\'s AI reads the meaning behind your profile - not just keywords. We find NGOs whose missions align with your values.' },
+              { num: '03', icon: Users, title: 'Apply with confidence', desc: 'See exactly why each match fits. An AI-drafted application is ready for you to personalize and send.' },
+              { num: '04', icon: Award, title: 'Build real experience', desc: 'Start contributing to something that matters. Build skills, make connections, and create impact on your CV.' },
+            ].map((step, i) => {
+              const IconComponent = step.icon
+              return (
+                <motion.div key={step.num}
+                  initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="rounded-2xl p-8 bg-white border transition-all hover:shadow-lg hover:border-amber-200"
+                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                  <div className="flex gap-8 items-start">
+                    <div className="flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl"
+                        style={{ background: 'rgba(255,183,3,0.1)', color: C.honey }}>
+                        {step.num}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-2xl font-bold" style={{ color: C.primary }}>
+                          {step.title}
+                        </h3>
+                      </div>
+                      <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
+                        {step.desc}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* Why students trust Hive */}
-      <section className="py-20 px-6" style={{ background: 'rgba(255, 183, 3, 0.03)' }}>
-        <div className="max-w-5xl mx-auto">
+      {/* Why Students Choose Hive */}
+      <section className="py-28 px-6" style={{ background: 'rgba(255, 183, 3, 0.03)' }}>
+        <div className="max-w-6xl mx-auto">
           <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-3xl font-bold text-center mb-16" style={{ color: C.primary }}>
-            Why students trust Hive
+            className="text-5xl font-bold text-center mb-20" style={{ color: C.primary }}>
+            Why students choose Hive
           </motion.h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {BENEFITS.slice(0, 4).map((b, i) => (
-              <motion.div key={b.title}
-                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.45 }}
-                className="bg-white rounded-xl p-7 border"
+          <div className="grid md:grid-cols-2 gap-10">
+            {[
+              { title: 'AI-matched to your values', desc: 'We read meaning, not keywords. Matches that feel right from day one.' },
+              { title: 'Real-world projects', desc: 'Work on live issues with actual impact. Build a portfolio piece you\'re proud of.' },
+              { title: 'Meaningful connections', desc: 'Meet professionals who share your passion. Relationships that extend beyond the project.' },
+              { title: 'Career building', desc: 'Every completed project is a concrete outcome for interviews and your CV.' },
+            ].map((benefit, i) => (
+              <motion.div key={benefit.title}
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
+                className="rounded-2xl p-8 bg-white border"
                 style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <h3 className="text-lg font-bold mb-3" style={{ color: C.primary }}>
-                  {b.title}
+                <h3 className="text-2xl font-bold mb-4" style={{ color: C.primary }}>
+                  {benefit.title}
                 </h3>
-                <p className="text-base leading-relaxed" style={{ color: C.muted }}>
-                  {b.desc}
+                <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
+                  {benefit.desc}
                 </p>
               </motion.div>
             ))}
@@ -132,28 +130,28 @@ export default function ForStudents() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6 bg-white">
+      {/* CTA Section */}
+      <section className="py-32 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.5 }}>
-            <h2 className="text-3xl font-bold mb-4" style={{ color: C.primary }}>
-              Ready to find your next opportunity?
+          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.6 }}>
+            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
+              Ready to make an impact?
             </h2>
-            <p className="text-lg mb-8" style={{ color: C.muted }}>
-              Join hundreds of students building real experience that matters.
+            <p className="text-xl mb-10 leading-relaxed" style={{ color: C.muted }}>
+              Join hundreds of students building real experience that matters. Create your profile in minutes.
             </p>
-            <Link to="/auth?mode=signup"
-              className="inline-block px-8 py-4 rounded-xl text-base font-bold text-white transition-all hover:opacity-90"
-              style={{ background: C.primary, boxShadow: '0 8px 20px rgba(13,24,61,0.15)' }}>
-              Start your profile →
+            <Link to="/auth?mode=signup&role=student"
+              className="inline-block px-10 py-5 rounded-2xl text-lg font-bold text-white transition-all hover:shadow-xl active:scale-95"
+              style={{ background: C.primary, boxShadow: '0 12px 32px rgba(13,24,61,0.2)' }}>
+              Start your journey →
             </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Footer spacer */}
-      <div className="py-10 text-center text-[12px]" style={{ color: C.muted }}>
+      <div className="py-12 text-center text-sm" style={{ color: C.muted }}>
         © {new Date().getFullYear()} Hive. All rights reserved.
       </div>
     </div>
