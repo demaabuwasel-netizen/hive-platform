@@ -15,7 +15,13 @@ export default function About() {
 
       <section className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-white">
         <img src={aboutLandingPage} alt="About" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, #FFFFFF 100%)', pointerEvents: 'none' }}/>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, rgba(255,255,255,0.95) 100%)', pointerEvents: 'none' }}/>
+        <motion.div className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
+          <h1 className="text-[3.5rem] font-extrabold leading-[1.1] text-center max-w-3xl px-6" style={{ color: C.primary }}>
+            We believe talent and<br />mission belong<br />
+            <span style={{ color: C.honey }}>together.</span>
+          </h1>
+        </motion.div>
       </section>
 
       <div style={{ height: '60px', background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)', pointerEvents: 'none', marginTop: '-20px' }}/>
