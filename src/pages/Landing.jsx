@@ -8,7 +8,7 @@ import { useApp } from '../context/AppContext'
 import { Sparkles, Users, Eye, Heart, Zap } from 'lucide-react'
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
-import img1 from '../assets/img1.png'   // hero: student with connection network
+import home2 from '../assets/home2.png'   // hero: home landing page image
 import img2 from '../assets/img2.png'   // For Students card
 import img3 from '../assets/img3.png'   // For NGOs card
 import img4 from '../assets/img4.png'   // For Impact card
@@ -85,7 +85,7 @@ function HeroRight() {
         transition={{ delay: 0.28, duration: 0.8, ease: 'easeOut' }}>
         <div className="relative w-full flex justify-center">
           <img
-            src={img1}
+            src={home2}
             alt="Student connecting with NGOs through Hive"
             className="w-full object-contain"
             style={{
