@@ -469,8 +469,8 @@ export default function Landing() {
                 className="group rounded-3xl overflow-hidden flex flex-col bg-white border transition-all"
                 style={{ borderColor:'rgba(13,24,61,0.08)', boxShadow:'0 8px 32px rgba(13,24,61,0.08)' }}>
 
-                {/* Premium image area with better proportions */}
-                <div className="relative overflow-hidden w-full bg-gradient-to-br from-slate-100 to-slate-50" style={{ height: 380 }}>
+                {/* Image area with balanced proportions */}
+                <div className="relative overflow-hidden w-full bg-gradient-to-br from-slate-100 to-slate-50" style={{ height: 280 }}>
                   <motion.img src={card.img} alt={card.tag}
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.04, transition:{ duration:0.5 } }}
@@ -480,22 +480,22 @@ export default function Landing() {
                   <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent pointer-events-none" />
                 </div>
 
-                {/* Premium content area */}
-                <div className="px-8 py-10 flex flex-col gap-7 flex-1">
+                {/* Content area */}
+                <div className="px-7 py-8 flex flex-col gap-6 flex-1">
                   <div>
-                    <p className="text-sm font-semibold tracking-wide mb-3" style={{ color: C.honey, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: C.honey, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {card.tag}
                     </p>
-                    <h3 className="text-3xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>
+                    <h3 className="text-2xl font-bold mb-3 leading-tight" style={{ color:C.primary }}>
                       {card.title}
                     </h3>
-                    <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
+                    <p className="text-base leading-relaxed" style={{ color: C.muted }}>
                       {card.desc}
                     </p>
                   </div>
 
                   <Link to={card.href}
-                    className="inline-flex items-center justify-center px-7 py-4 rounded-2xl text-base font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95 mt-auto"
                     style={{ background:card.btnBg, boxShadow:card.btnShadow }}>
                     {card.cta}
                   </Link>
