@@ -301,7 +301,7 @@ export default function MatchResults() {
 
   if (user && !user.onboardingComplete) {
     return (
-      <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+      <div className="w-full px-8 py-7 bg-white">
         <div className="max-w-7xl mx-auto">
           <EmptyState icon={Search} title="No matches yet"
             description="Complete your profile so our AI can find NGOs that match your skills and values."
@@ -315,7 +315,7 @@ export default function MatchResults() {
 
   return (
     <>
-    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+    <div className="w-full px-8 py-7 bg-white">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

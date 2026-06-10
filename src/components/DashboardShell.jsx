@@ -13,7 +13,7 @@ export default function DashboardShell({ navItems, children }) {
   const role = user?.role === 'ngo' ? 'NGO Account' : 'Student'
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#F8F9FB' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#FFFFFF' }}>
 
       {/* ── Sidebar ── */}
       <aside className="w-[220px] shrink-0 flex flex-col h-screen sticky top-0 z-10 bg-white"

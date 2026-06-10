@@ -44,7 +44,7 @@ export default function Applications() {
   }
 
   return (
-    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+    <div className="w-full px-8 py-7 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

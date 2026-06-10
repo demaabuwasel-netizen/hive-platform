@@ -48,7 +48,7 @@ export default function Saved() {
   }
 
   return (
-    <div className="w-full px-8 py-7 bg-[#FAFBFC]">
+    <div className="w-full px-8 py-7 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
         <div>

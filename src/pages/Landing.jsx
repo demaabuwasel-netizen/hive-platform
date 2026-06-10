@@ -17,7 +17,7 @@ import cardsBackground from '../assets/cards_background.png'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const C = {
-  bg:      '#FAF6EF',
+  bg:      '#FFFFFF',
   primary: '#0D183D',
   honey:   '#FFB703',
   muted:   '#4B6382',
