@@ -434,7 +434,7 @@ export default function Landing() {
       {/* Gradient fade transition between hero and content */}
       <div style={{
         height: '250px',
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 10%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.5) 55%, rgba(255,255,255,0.85) 80%, white 100%)',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.04) 10%, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.25) 55%, rgba(255,255,255,0.5) 80%, rgba(255,255,255,0.75) 100%)',
         pointerEvents: 'none'
       }}/>
 
