@@ -14,6 +14,8 @@ import img4 from '../assets/img4.png'   // For Impact card
 import img5 from '../assets/img5.png'   // partner logos strip
 import img6 from '../assets/img6.png'   // bee decorative (tiny, once)
 import cardsBackground from '../assets/cards_background.png'
+import studentBox from '../assets/student_box.png'
+import ngoBox from '../assets/ngo_box.png'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const C = {
@@ -196,7 +198,7 @@ const VALUE_PROPS = [
 
 const FEATURE_CARDS = [
   {
-    img: img2,
+    img: studentBox,
     imgBg: 'rgba(255,183,3,0.07)',
     tag: 'For Students',
     tagColor: C.honey,
@@ -209,7 +211,7 @@ const FEATURE_CARDS = [
     btnShadow: '0 4px 16px rgba(5,10,21,0.3)',
   },
   {
-    img: img3,
+    img: ngoBox,
     imgBg: 'rgba(13,24,61,0.05)',
     tag: 'For Organizations',
     tagColor: C.primary,
