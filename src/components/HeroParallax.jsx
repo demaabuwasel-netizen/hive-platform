@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 
 export default function HeroParallax({ bgImage, leafImages = {} }) {
   const containerRef = useRef(null)
@@ -131,6 +132,28 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         )}
       </div>
 
+      {/* Hero Title Overlay */}
+      <motion.div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+      >
+        <div className="text-center max-w-4xl px-6">
+          <h1 className="text-6xl md:text-7xl font-bold leading-tight" style={{ color: '#FFFFFF' }}>
+            Connect talent<br />
+            with<br />
+            <span style={{
+              background: 'linear-gradient(135deg, #FFB703 0%, #F59E0B 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              purpose
+            </span>
+          </h1>
+        </div>
+      </motion.div>
 
       {/* Leaf layers with parallax effect */}
       {/* Top Left */}
