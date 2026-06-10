@@ -63,7 +63,7 @@ export default function ForNGOs() {
         height: '60px',
         background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,1) 100%)',
         pointerEvents: 'none',
-        marginTop: '-30px'
+        marginTop: '-15px'
       }}/>
 
       {/* Benefits */}
