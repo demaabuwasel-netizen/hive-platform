@@ -423,7 +423,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" style={{ filter: 'hue-rotate(-2deg) brightness(0.99)' }}>
       <Navbar />
 
       {/* ══════════════════════════════════════════════════════
