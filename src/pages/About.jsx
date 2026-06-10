@@ -15,21 +15,10 @@ export default function About() {
 
       <section className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-white">
         <img src={aboutLandingPage} alt="About" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 65%, rgba(255,255,255,0.95) 100%)', pointerEvents: 'none' }}/>
-        <motion.div className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}>
-          <div className="text-center max-w-3xl px-6">
-            <h1 className="text-7xl font-bold leading-tight mb-6" style={{ color: C.primary }}>
-              Talent and purpose<br />
-              <span style={{ color: C.honey }}>should belong together.</span>
-            </h1>
-            <p className="text-2xl leading-relaxed" style={{ color: C.muted }}>
-              At Hive, we believe the right connection changes everything.
-            </p>
-          </div>
-        </motion.div>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, #FFFFFF 100%)', pointerEvents: 'none' }}/>
       </section>
 
-      <div style={{ height: '60px', background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)', pointerEvents: 'none', marginTop: '-30px' }}/>
+      <div style={{ height: '60px', background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)', pointerEvents: 'none', marginTop: '-20px' }}/>
 
       {/* Our Story */}
       <section className="py-40 px-6 bg-white">
