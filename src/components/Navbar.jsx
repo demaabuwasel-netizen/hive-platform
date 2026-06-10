@@ -42,8 +42,8 @@ export default function Navbar({ minimal = false }) {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
 
         {/* Logo */}
-        <Link to="/" aria-label="Hive home" className="shrink-0">
-          <img src={logo} alt="Hive logo" style={{ height: '170px', width: 'auto', marginTop: '70px', marginLeft: '-32px' }} />
+        <Link to="/" aria-label="Hive home" className="shrink-0" style={{ display: 'flex', alignItems: 'center' }}>
+          <img src={logo} alt="Hive logo" style={{ height: '160px', width: 'auto', marginTop: '70px', marginLeft: '-32px', display: 'block' }} />
         </Link>
 
         {/* Centre nav — shown when NOT logged in, desktop only */}
