@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar'
 import HiveLogo from '../components/HiveLogo'
 import HeroParallaxWithImages from '../components/HeroParallaxWithImages'
 import { useApp } from '../context/AppContext'
+import { Sparkles, Users, Eye } from 'lucide-react'
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
 import img1 from '../assets/img1.png'   // hero: student with connection network
@@ -512,7 +513,7 @@ export default function Landing() {
       <section id="how-it-works" className="py-28 px-6 bg-gradient-to-b from-white via-white to-slate-50">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-20">
+            viewport={{ once:true }} className="text-center mb-24">
             <h2 className="text-5xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>Three principles</h2>
             <p className="text-xl" style={{ color:C.muted }}>
               How Hive works and why it matters
@@ -521,33 +522,54 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {[
-              { title: 'Smart matching', desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.', color: 'rgba(255,183,3,0.1)', accent: C.honey },
-              { title: 'Real impact', desc: 'Students build portfolios. NGOs find committed volunteers.', color: 'rgba(13,24,61,0.05)', accent: C.primary },
-              { title: 'Transparent', desc: 'Every match explains why. No guessing. Complete clarity.', color: 'rgba(79,172,254,0.1)', accent: '#4FAC FE' },
-            ].map((item, i) => (
-              <motion.div key={item.title}
-                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.5 }}
-                className="rounded-2xl p-10 border transition-all hover:shadow-lg hover:border-yellow-200"
-                style={{
-                  background: item.color,
-                  border:'1px solid rgba(13,24,61,0.08)',
-                  boxShadow:'0 4px 24px rgba(13,24,61,0.06)',
-                }}>
-                <div className="w-14 h-14 rounded-xl mb-6 flex items-center justify-center"
-                  style={{ background: item.accent, opacity: 0.15 }}>
-                  <div style={{ color: item.accent, fontSize: '24px', fontWeight: 'bold' }}>
-                    {i + 1}
+              {
+                title: 'Smart matching',
+                desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.',
+                icon: Sparkles,
+                gradient: 'from-amber-50 to-white',
+                accentBg: 'rgba(255,183,3,0.15)',
+                accentColor: C.honey
+              },
+              {
+                title: 'Real impact',
+                desc: 'Students build portfolios. NGOs find committed volunteers.',
+                icon: Users,
+                gradient: 'from-blue-50 to-white',
+                accentBg: 'rgba(59, 130, 246, 0.15)',
+                accentColor: '#3B82F6'
+              },
+              {
+                title: 'Transparent',
+                desc: 'Every match explains why. No guessing. Complete clarity.',
+                icon: Eye,
+                gradient: 'from-emerald-50 to-white',
+                accentBg: 'rgba(16, 185, 129, 0.15)',
+                accentColor: '#10B981'
+              },
+            ].map((item, i) => {
+              const IconComponent = item.icon
+              return (
+                <motion.div key={item.title}
+                  initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
+                  viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.5 }}
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  className={`rounded-3xl p-10 border transition-all bg-gradient-to-br ${item.gradient}`}
+                  style={{
+                    borderColor: 'rgba(13,24,61,0.08)',
+                    boxShadow: '0 8px 32px rgba(13,24,61,0.08)',
+                  }}>
+                  <div className="w-16 h-16 rounded-2xl mb-7 flex items-center justify-center" style={{ background: item.accentBg }}>
+                    <IconComponent size={32} style={{ color: item.accentColor, strokeWidth: 1.5 }} />
                   </div>
-                </div>
-                <h3 className="text-2xl font-bold mb-4" style={{ color:C.primary }}>
-                  {item.title}
-                </h3>
-                <p className="text-lg leading-relaxed" style={{ color:C.muted }}>
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <h3 className="text-2xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>
+                    {item.title}
+                  </h3>
+                  <p className="text-base leading-relaxed" style={{ color:C.muted }}>
+                    {item.desc}
+                  </p>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
