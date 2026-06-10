@@ -15,7 +15,7 @@ import img5 from '../assets/img5.png'   // partner logos strip
 import img6 from '../assets/img6.png'   // bee decorative (tiny, once)
 import cardsBackground from '../assets/cards_background.png'
 import studentBox from '../assets/student_box.png'
-import ngoBox from '../assets/ngo_box.png'
+import ngoBox from '../assets/ngo2_box.png'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const C = {
