@@ -247,17 +247,18 @@ function AppRoutes() {
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
-      {/* ── Profile ── */}
-      <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
-      <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
-      <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
-      <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
-
       {/* ── Create opportunity (full-page, no sidebar) ── */}
       <Route path="/opportunities/new"    element={<RequireAuth><CreateOpportunity /></RequireAuth>} />
 
       {/* ── Dashboard shell — sidebar persists across all child routes ── */}
       <Route element={<ProtectedDashboard />}>
+        {/* Profile routes */}
+        <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
+        <Route path="/profile/student/edit" element={<EditStudentProfile />} />
+        <Route path="/profile/ngo"          element={<NGOProfile />} />
+        <Route path="/profile/ngo/edit"     element={<EditNGOProfile />} />
+
+        {/* Dashboard routes */}
         <Route path="/dashboard/student" element={<StudentDashboard />} />
         <Route path="/dashboard/ngo"     element={<NGODashboard />} />
         <Route path="/opportunities"     element={<Opportunities />} />
