@@ -449,16 +449,17 @@ export default function Landing() {
       {/* invisible anchor so both For Students and For NGOs nav links land here */}
       <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
 
-      <section id="for-students" className="py-32 px-6 bg-white" style={{ marginTop: '-20px' }}>
+      <section id="for-students" className="py-40 px-6 bg-white" style={{ marginTop: '-20px' }}>
         <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-24">
-            <h2 className="text-6xl font-bold mb-6 leading-tight" style={{ color:C.primary }}>
-              Your path to<br />
-              <span style={{ color: C.honey }}>real impact</span>
+          <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} className="text-center mb-32">
+            <h2 className="text-7xl font-bold mb-8 leading-tight" style={{ color:C.primary }}>
+              Two paths.<br />
+              One mission:<br />
+              <span style={{ color: C.honey }}>meaningful connection</span>
             </h2>
-            <p className="text-xl max-w-2xl mx-auto" style={{ color:C.muted }}>
-              Whether you're building experience or finding talent, Hive connects you with the right people.
+            <p className="text-xl max-w-3xl mx-auto leading-relaxed" style={{ color:C.muted }}>
+              Whether you're a student seeking real experience or an organization looking for capable volunteers, Hive brings the right people together with purpose and intention.
             </p>
           </motion.div>
 
