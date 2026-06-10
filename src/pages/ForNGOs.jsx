@@ -19,7 +19,7 @@ export default function ForNGOs() {
         <motion.div className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
           <h1 className="text-[3.5rem] font-extrabold leading-[1.1] text-center max-w-3xl px-6" style={{ color: C.primary }}>
             Find volunteers<br />who actually fit<br />
-            <span style={{ color: C.accent }}>your mission.</span>
+            <span style={{ color: '#FFB703' }}>your mission.</span>
           </h1>
         </motion.div>
       </section>
