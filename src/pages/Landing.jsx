@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 import HiveLogo from '../components/HiveLogo'
 import HeroParallaxWithImages from '../components/HeroParallaxWithImages'
 import { useApp } from '../context/AppContext'
-import { Sparkles, Users, Eye } from 'lucide-react'
+import { Sparkles, Users, Eye, Heart, Zap } from 'lucide-react'
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
 import img1 from '../assets/img1.png'   // hero: student with connection network
@@ -516,7 +516,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-28">
-            <h2 className="text-6xl font-bold mb-6 leading-tight" style={{ color:C.primary }}>How Hive<br />connects talent<br />with purpose</h2>
+            <h2 className="text-6xl font-bold mb-6 leading-tight" style={{ color:C.primary }}>How Hive connects<br /><span style={{ color: C.honey }}>talent with purpose</span></h2>
             <p className="text-xl max-w-2xl mx-auto" style={{ color:C.muted }}>
               A simple, powerful process that brings the right people together.
             </p>
@@ -537,7 +537,7 @@ export default function Landing() {
                 style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 16px rgba(13,24,61,0.06)' }}>
                 <div className="flex items-start gap-4 mb-6">
                   <div className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl"
-                    style={{ background: 'rgba(13,24,61,0.06)', color: C.primary }}>
+                    style={{ background: `${C.honey}20`, color: C.honey }}>
                     {step.num}
                   </div>
                 </div>
@@ -611,40 +611,45 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {[
               {
-                icon: '🧠',
+                icon: Sparkles,
                 title: 'Meaning-based matching',
                 desc: 'Our AI reads what\'s real, not just keywords. It understands mission fit and actual compatibility.'
               },
               {
-                icon: '❤️',
+                icon: Heart,
                 title: 'Mission comes first',
                 desc: 'Students find roles aligned with their values. Organizations find people who care about the cause.'
               },
               {
-                icon: '👁️',
+                icon: Eye,
                 title: 'Total transparency',
                 desc: 'Every match shows why you fit. No mystery. Just clarity and confidence in every connection.'
               },
               {
-                icon: '⚙️',
+                icon: Zap,
                 title: 'Built for real work',
                 desc: 'From profile creation to application, every step is designed for students and nonprofits.'
               },
-            ].map((benefit, i) => (
-              <motion.div key={benefit.title}
-                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.08, duration:0.5 }}
-                className="p-10 rounded-3xl border bg-white transition-all hover:shadow-lg"
-                style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 20px rgba(13,24,61,0.05)' }}>
-                <div className="text-5xl mb-6">{benefit.icon}</div>
-                <h3 className="text-2xl font-bold mb-4" style={{ color:C.primary }}>
-                  {benefit.title}
-                </h3>
-                <p className="text-base leading-relaxed" style={{ color:C.muted }}>
-                  {benefit.desc}
-                </p>
-              </motion.div>
-            ))}
+            ].map((benefit, i) => {
+              const IconComponent = benefit.icon
+              return (
+                <motion.div key={benefit.title}
+                  initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+                  viewport={{ once:true }} transition={{ delay:i*0.08, duration:0.5 }}
+                  className="p-10 rounded-3xl border bg-white transition-all hover:shadow-lg"
+                  style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 20px rgba(13,24,61,0.05)' }}>
+                  <div className="mb-6" style={{ color: C.honey }}>
+                    <IconComponent size={32} strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4" style={{ color:C.primary }}>
+                    {benefit.title}
+                  </h3>
+                  <p className="text-base leading-relaxed" style={{ color:C.muted }}>
+                    {benefit.desc}
+                  </p>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>

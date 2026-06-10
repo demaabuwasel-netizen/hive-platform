@@ -26,118 +26,45 @@ export default function ForNGOs() {
 
       <div style={{ height: '60px', background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)', pointerEvents: 'none', marginTop: '-20px' }}/>
 
-      {/* The Problem Section */}
-      <section className="py-40 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-            className="mb-32">
-            <h2 className="text-5xl font-bold mb-8 leading-tight" style={{ color: C.primary }}>
-              The volunteer recruitment challenge
-            </h2>
-            <p className="text-xl max-w-3xl leading-relaxed mb-12" style={{ color: C.muted }}>
-              You know exactly what your organization needs. But finding capable, motivated students who understand your mission? That's the hard part. Hive changes that.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  problem: 'Too many applications, not enough matches',
-                  solution: 'Hive surfaces only qualified candidates who align with your mission.'
-                },
-                {
-                  problem: 'Volunteers without understanding of your work',
-                  solution: 'Real alignment means students who actually care about your cause.'
-                },
-                {
-                  problem: 'Manual screening takes time away from impact',
-                  solution: 'Smart matching reduces screening hours, not quality.'
-                },
-              ].map((item, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="rounded-2xl p-8 bg-gradient-to-br from-red-50 to-white border"
-                  style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
-                  <h3 className="font-bold mb-4 text-lg" style={{ color: '#DC2626' }}>
-                    {item.problem}
-                  </h3>
-                  <p className="text-sm" style={{ color: C.primary }}>
-                    <strong>Our solution:</strong> {item.solution}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* How It Works */}
-      <section className="py-40 px-6 bg-gradient-to-b from-white via-white to-slate-50">
+      <section className="py-32 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-            className="text-center mb-32">
+            className="text-center mb-20">
             <h2 className="text-5xl font-bold mb-6 leading-tight" style={{ color: C.primary }}>
               How Hive makes hiring easier
             </h2>
-            <p className="text-xl max-w-2xl mx-auto" style={{ color: C.muted }}>
-              Six steps from setup to collaboration. Every step designed to save your team time while finding the right fit.
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: C.muted }}>
+              A simple process from setup to impact.
             </p>
           </motion.div>
 
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto lg:grid-cols-3">
             {[
-              {
-                num: '01',
-                title: 'Create your organization profile',
-                desc: 'Tell us about your mission, who you serve, and why your work matters.',
-              },
-              {
-                num: '02',
-                title: 'Post your volunteer roles',
-                desc: 'Describe what you need. Real descriptions, not generic job postings.',
-              },
-              {
-                num: '03',
-                title: 'Let Hive find candidates',
-                desc: 'Our system surfaces students whose skills and values match your needs.',
-              },
-              {
-                num: '04',
-                title: 'Review qualified applicants',
-                desc: 'See only the candidates who fit. Understand exactly why they match.',
-              },
-              {
-                num: '05',
-                title: 'Connect and interview',
-                desc: 'Real conversations built on genuine mission alignment. Built-in messaging.',
-              },
-              {
-                num: '06',
-                title: 'Onboard and grow',
-                desc: 'New volunteers ready to contribute. Your impact grows with every addition.',
-              },
+              { num: '01', title: 'Create profile', desc: 'Tell us about your mission' },
+              { num: '02', title: 'Post roles', desc: 'Describe what you need' },
+              { num: '03', title: 'Find candidates', desc: 'Hive surfaces fits' },
+              { num: '04', title: 'Review & connect', desc: 'Interview with confidence' },
+              { num: '05', title: 'Onboard', desc: 'Get them started' },
+              { num: '06', title: 'Grow impact', desc: 'Build your mission' },
             ].map((step, i) => (
               <motion.div key={step.num}
-                initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.5 }}
-                className="rounded-2xl p-10 bg-white border transition-all hover:shadow-lg"
-                style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 4px 12px rgba(13,24,61,0.04)' }}>
-                <div className="flex gap-8">
-                  <div className="flex-shrink-0">
-                    <div className="w-16 h-16 rounded-xl flex items-center justify-center font-bold text-2xl"
-                      style={{ background: 'rgba(13,24,61,0.08)', color: C.primary }}>
-                      {step.num}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold mb-3" style={{ color: C.primary }}>
-                      {step.title}
-                    </h3>
-                    <p className="text-base leading-relaxed" style={{ color: C.muted }}>
-                      {step.desc}
-                    </p>
+                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.4 }}
+                className="rounded-2xl p-6 bg-white border transition-all hover:shadow-lg"
+                style={{ borderColor: 'rgba(13,24,61,0.08)', boxShadow: '0 2px 8px rgba(13,24,61,0.04)' }}>
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm"
+                    style={{ background: `${C.honey}20`, color: C.honey }}>
+                    {step.num}
                   </div>
                 </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: C.primary }}>
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: C.muted }}>
+                  {step.desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -145,7 +72,7 @@ export default function ForNGOs() {
       </section>
 
       {/* Why Organizations Choose Hive */}
-      <section className="py-40 px-6 bg-white">
+      <section className="py-32 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
             className="mb-24">
