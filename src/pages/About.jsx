@@ -124,7 +124,7 @@ export default function About() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="rounded-3xl px-10 py-14 text-center"
-          style={{ background: 'rgba(255,183,3,0.08)', border: '1px solid rgba(255,183,3,0.2)' }}>
+          style={{ background: 'rgba(13,24,61,0.04)', border: '1px solid rgba(13,24,61,0.08)' }}>
           <p className="text-[2rem] font-extrabold mb-3" style={{ color: C.primary }}>Join the Hive.</p>
           <p className="text-[15px] mb-8" style={{ color: C.muted }}>
             Whether you're a student looking to make an impact, or an NGO looking for your next collaborator —
@@ -135,7 +135,7 @@ export default function About() {
             transition={{ duration: 0.5, delay: 0.1 }}>
             <Link to="/auth?mode=signup"
               className="px-8 py-3.5 rounded-2xl text-[15px] font-bold text-white transition-all hover:opacity-90"
-              style={{ background: C.honey, boxShadow: '0 4px 20px rgba(255,183,3,0.35)' }}>
+              style={{ background: '#0D183D', boxShadow: '0 4px 20px rgba(13,24,61,0.2)' }}>
               Get started →
             </Link>
             <Link to="/how-it-works"

@@ -101,7 +101,7 @@ export default function ForStudents() {
               viewport={{ once: true }} transition={{ delay: i * 0.09, duration: 0.42 }}
               className="bg-white rounded-2xl border px-7 py-5 flex items-start gap-6"
               style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-              <span className="text-[1.6rem] font-extrabold shrink-0" style={{ color: 'rgba(255,183,3,0.35)' }}>{s.n}</span>
+              <span className="text-[1.6rem] font-extrabold shrink-0" style={{ color: 'rgba(75,99,130,0.3)' }}>{s.n}</span>
               <div>
                 <p className="text-[14px] font-bold mb-1" style={{ color: C.primary }}>{s.title}</p>
                 <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{s.desc}</p>
@@ -125,7 +125,7 @@ export default function ForStudents() {
             transition={{ duration: 0.5, delay: 0.1 }}>
             <Link to="/auth?mode=signup"
               className="inline-block px-8 py-3.5 rounded-2xl text-[15px] font-bold transition-all hover:opacity-90"
-              style={{ background: C.honey, color: 'white', boxShadow: '0 4px 20px rgba(255,183,3,0.3)' }}>
+              style={{ background: '#0D183D', color: 'white', boxShadow: '0 4px 20px rgba(13,24,61,0.2)' }}>
               Create free account →
             </Link>
           </motion.div>
