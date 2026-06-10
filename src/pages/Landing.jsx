@@ -509,35 +509,41 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════
           HOW IT WORKS + BELIEFS MERGED
       ══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-32 px-6 bg-white">
+      <section id="how-it-works" className="py-28 px-6 bg-gradient-to-b from-white via-white to-slate-50">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-24">
-            <h2 className="text-4xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>Three principles</h2>
-            <p className="text-lg" style={{ color:C.muted }}>
+            viewport={{ once:true }} className="text-center mb-20">
+            <h2 className="text-5xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>Three principles</h2>
+            <p className="text-xl" style={{ color:C.muted }}>
               How Hive works and why it matters
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {[
-              { title: 'Smart matching', desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.' },
-              { title: 'Real impact', desc: 'Students build portfolios. NGOs find committed volunteers.' },
-              { title: 'Transparent', desc: 'Every match explains why. No guessing. Complete clarity.' },
+              { title: 'Smart matching', desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.', color: 'rgba(255,183,3,0.1)', accent: C.honey },
+              { title: 'Real impact', desc: 'Students build portfolios. NGOs find committed volunteers.', color: 'rgba(13,24,61,0.05)', accent: C.primary },
+              { title: 'Transparent', desc: 'Every match explains why. No guessing. Complete clarity.', color: 'rgba(79,172,254,0.1)', accent: '#4FAC FE' },
             ].map((item, i) => (
               <motion.div key={item.title}
-                initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.42 }}
-                className="rounded-2xl p-8"
+                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.5 }}
+                className="rounded-2xl p-10 border transition-all hover:shadow-lg hover:border-yellow-200"
                 style={{
-                  background:C.bg,
+                  background: item.color,
                   border:'1px solid rgba(13,24,61,0.08)',
-                  boxShadow:'0 4px 20px rgba(13,24,61,0.04)',
+                  boxShadow:'0 4px 24px rgba(13,24,61,0.06)',
                 }}>
-                <h3 className="text-xl font-bold mb-3" style={{ color:C.primary }}>
+                <div className="w-14 h-14 rounded-xl mb-6 flex items-center justify-center"
+                  style={{ background: item.accent, opacity: 0.15 }}>
+                  <div style={{ color: item.accent, fontSize: '24px', fontWeight: 'bold' }}>
+                    {i + 1}
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold mb-4" style={{ color:C.primary }}>
                   {item.title}
                 </h3>
-                <p className="text-base leading-relaxed" style={{ color:C.muted }}>
+                <p className="text-lg leading-relaxed" style={{ color:C.muted }}>
                   {item.desc}
                 </p>
               </motion.div>
