@@ -140,7 +140,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
       >
         <div className="text-center max-w-4xl px-6">
-          <h1 className="text-6xl md:text-7xl font-bold leading-tight" style={{ color: '#FFFFFF' }}>
+          <h1 className="text-6xl md:text-7xl font-bold leading-tight" style={{ color: '#FFFFFF', textShadow: '0 4px 24px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)' }}>
             Connect talent<br />
             with<br />
             <span style={{
