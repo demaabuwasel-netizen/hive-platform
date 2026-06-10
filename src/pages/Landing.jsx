@@ -431,11 +431,12 @@ export default function Landing() {
       ══════════════════════════════════════════════════════ */}
       <HeroParallaxWithImages />
 
-      {/* Gradient fade transition between hero and content */}
+      {/* Smooth gradient transition between hero and content */}
       <div style={{
-        height: '250px',
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.04) 10%, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.25) 55%, rgba(255,255,255,0.5) 80%, rgba(255,255,255,0.75) 100%)',
-        pointerEvents: 'none'
+        height: '80px',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,1) 100%)',
+        pointerEvents: 'none',
+        marginTop: '-40px'
       }}/>
 
       {/* ══════════════════════════════════════════════════════
@@ -445,7 +446,7 @@ export default function Landing() {
       {/* invisible anchor so both For Students and For NGOs nav links land here */}
       <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
 
-      <section id="for-students" className="py-0 px-6 bg-white">
+      <section id="for-students" className="py-0 px-6 bg-white" style={{ marginTop: '-40px' }}>
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-14">

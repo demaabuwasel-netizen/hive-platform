@@ -58,15 +58,16 @@ export default function ForStudents() {
       </section>
 
 
-      {/* Gradient transition */}
+      {/* Smooth transition */}
       <div style={{
-        height: '120px',
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 15%, rgba(255,255,255,0.2) 35%, rgba(255,255,255,0.5) 65%, rgba(255,255,255,0.85) 85%, white 100%)',
-        pointerEvents: 'none'
+        height: '60px',
+        background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,1) 100%)',
+        pointerEvents: 'none',
+        marginTop: '-30px'
       }}/>
 
       {/* Benefits */}
-      <section className="max-w-6xl mx-auto px-6 py-0">
+      <section className="max-w-6xl mx-auto px-6 py-0" style={{ marginTop: '-30px' }}>
         <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           transition={{ duration: 0.45 }}
           className="text-[1.9rem] font-extrabold text-center mb-12" style={{ color: C.primary }}>
