@@ -144,8 +144,7 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
             Connect talent<br />
             with<br />
             <span style={{
-              color: '#FFB703',
-              textShadow: '0 2px 12px rgba(0,0,0,0.25)'
+              color: '#FFB703'
             }}>
               purpose
             </span>
