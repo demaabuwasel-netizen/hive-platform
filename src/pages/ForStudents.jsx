@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import studentLandingPage from '../assets/student_landing_page.png'
-import { CheckCircle2, Sparkles, Users, Briefcase, Award } from 'lucide-react'
+import { CheckCircle2, Sparkles, Users, Award } from 'lucide-react'
 
 const C = { bg: '#FFFFFF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
 
@@ -45,52 +45,40 @@ export default function ForStudents() {
         marginTop: '-15px'
       }}/>
 
-      {/* Your Journey Section */}
-      <section className="py-32 px-6 bg-white" style={{ marginTop: '-15px' }}>
+      {/* Your Journey Section - Visual */}
+      <section className="py-28 px-6 bg-white" style={{ marginTop: '-15px' }}>
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-24">
-            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
-              Your journey in four steps
+            className="text-center mb-20">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: C.primary }}>
+              Four simple steps
             </h2>
-            <p className="text-xl" style={{ color: C.muted }}>
-              From building your profile to making real impact
+            <p className="text-lg" style={{ color: C.muted }}>
+              From profile to impact
             </p>
           </motion.div>
 
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {[
-              { num: '01', icon: CheckCircle2, title: 'Build your profile', desc: 'Share your skills, interests, languages, and what kind of impact you want to make. The more details, the better your matches.' },
-              { num: '02', icon: Sparkles, title: 'Get matched with purpose', desc: 'Hive\'s AI reads the meaning behind your profile - not just keywords. We find NGOs whose missions align with your values.' },
-              { num: '03', icon: Users, title: 'Apply with confidence', desc: 'See exactly why each match fits. An AI-drafted application is ready for you to personalize and send.' },
-              { num: '04', icon: Award, title: 'Build real experience', desc: 'Start contributing to something that matters. Build skills, make connections, and create impact on your CV.' },
+              { num: '1', icon: CheckCircle2, title: 'Build profile' },
+              { num: '2', icon: Sparkles, title: 'Get matched' },
+              { num: '3', icon: Users, title: 'Apply & connect' },
+              { num: '4', icon: Award, title: 'Make impact' },
             ].map((step, i) => {
               const IconComponent = step.icon
               return (
                 <motion.div key={step.num}
-                  initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="rounded-2xl p-8 bg-white border transition-all hover:shadow-lg hover:border-amber-200"
-                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                  <div className="flex gap-8 items-start">
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl"
-                        style={{ background: 'rgba(255,183,3,0.1)', color: C.honey }}>
-                        {step.num}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-2xl font-bold" style={{ color: C.primary }}>
-                          {step.title}
-                        </h3>
-                      </div>
-                      <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
-                        {step.desc}
-                      </p>
-                    </div>
+                  initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
+                  className="text-center">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+                    style={{ background: 'rgba(255,183,3,0.1)' }}>
+                    <IconComponent size={32} style={{ color: C.honey }} strokeWidth={1.5} />
                   </div>
+                  <h3 className="font-bold text-sm" style={{ color: C.primary }}>
+                    {step.title}
+                  </h3>
                 </motion.div>
               )
             })}
@@ -98,31 +86,31 @@ export default function ForStudents() {
         </div>
       </section>
 
-      {/* Why Students Choose Hive */}
-      <section className="py-28 px-6" style={{ background: 'rgba(255, 183, 3, 0.03)' }}>
-        <div className="max-w-6xl mx-auto">
+      {/* Why Hive - Brief */}
+      <section className="py-24 px-6" style={{ background: 'rgba(255, 183, 3, 0.03)' }}>
+        <div className="max-w-5xl mx-auto">
           <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-5xl font-bold text-center mb-20" style={{ color: C.primary }}>
-            Why students choose Hive
+            className="text-3xl font-bold text-center mb-16" style={{ color: C.primary }}>
+            Why Hive
           </motion.h2>
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid md:grid-cols-2 gap-8">
             {[
-              { title: 'AI-matched to your values', desc: 'We read meaning, not keywords. Matches that feel right from day one.' },
-              { title: 'Real-world projects', desc: 'Work on live issues with actual impact. Build a portfolio piece you\'re proud of.' },
-              { title: 'Meaningful connections', desc: 'Meet professionals who share your passion. Relationships that extend beyond the project.' },
-              { title: 'Career building', desc: 'Every completed project is a concrete outcome for interviews and your CV.' },
-            ].map((benefit, i) => (
-              <motion.div key={benefit.title}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="rounded-2xl p-8 bg-white border"
+              { title: 'Real opportunities', desc: 'Work on actual projects with real impact.' },
+              { title: 'AI-matched', desc: 'Connected to NGOs aligned with your values.' },
+              { title: 'Build portfolio', desc: 'Concrete outcomes for your CV and future.' },
+              { title: 'Meaningful connections', desc: 'Meet professionals who care about impact.' },
+            ].map((item, i) => (
+              <motion.div key={item.title}
+                initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.4 }}
+                className="p-6 bg-white rounded-xl border"
                 style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <h3 className="text-2xl font-bold mb-4" style={{ color: C.primary }}>
-                  {benefit.title}
+                <h3 className="font-bold mb-2" style={{ color: C.primary }}>
+                  {item.title}
                 </h3>
-                <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
-                  {benefit.desc}
+                <p className="text-sm" style={{ color: C.muted }}>
+                  {item.desc}
                 </p>
               </motion.div>
             ))}
@@ -131,28 +119,28 @@ export default function ForStudents() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-6 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.6 }}>
-            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
-              Ready to make an impact?
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5 }}>
+            <h2 className="text-3xl font-bold mb-4" style={{ color: C.primary }}>
+              Ready to start?
             </h2>
-            <p className="text-xl mb-10 leading-relaxed" style={{ color: C.muted }}>
-              Join hundreds of students building real experience that matters. Create your profile in minutes.
+            <p className="text-base mb-8" style={{ color: C.muted }}>
+              Build your profile and get matched with opportunities that matter.
             </p>
             <Link to="/auth?mode=signup&role=student"
-              className="inline-block px-10 py-5 rounded-2xl text-lg font-bold text-white transition-all hover:shadow-xl active:scale-95"
-              style={{ background: C.primary, boxShadow: '0 12px 32px rgba(13,24,61,0.2)' }}>
-              Start your journey →
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg"
+              style={{ background: C.primary, boxShadow: '0 8px 20px rgba(13,24,61,0.15)' }}>
+              Get started
             </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Footer spacer */}
-      <div className="py-12 text-center text-sm" style={{ color: C.muted }}>
-        © {new Date().getFullYear()} Hive. All rights reserved.
+      <div className="py-8 text-center text-xs" style={{ color: C.muted }}>
+        © {new Date().getFullYear()} Hive
       </div>
     </div>
   )

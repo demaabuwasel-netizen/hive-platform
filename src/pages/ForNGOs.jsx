@@ -45,51 +45,41 @@ export default function ForNGOs() {
         marginTop: '-15px'
       }}/>
 
-      {/* The Process Section */}
-      <section className="py-32 px-6 bg-white" style={{ marginTop: '-30px' }}>
+      {/* The Process Section - Visual */}
+      <section className="py-28 px-6 bg-white" style={{ marginTop: '-30px' }}>
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-24">
-            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
-              From need to collaboration
+            className="text-center mb-20">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: C.primary }}>
+              Five simple steps
             </h2>
-            <p className="text-xl" style={{ color: C.muted }}>
-              Five straightforward steps to find and onboard the right volunteers
+            <p className="text-lg" style={{ color: C.muted }}>
+              From need to collaboration
             </p>
           </motion.div>
 
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-5 gap-6 max-w-6xl mx-auto">
             {[
-              { num: '01', icon: FileText, title: 'Create your organization profile', desc: 'Tell us about your mission, what you do, and the impact you want to make. Help students understand your organization.' },
-              { num: '02', icon: Users, title: 'Post your needs', desc: 'Describe the roles and projects you need help with. No formal job descriptions needed—just describe what you\'re looking for.' },
-              { num: '03', icon: Zap, title: 'Get matched candidates', desc: 'Hive surfaces students whose skills, experience, and values align with your mission. See why each match fits.' },
-              { num: '04', icon: MessageCircle, title: 'Connect and interview', desc: 'Message candidates directly on Hive. Schedule interviews and review AI-generated insights to guide conversations.' },
-              { num: '05', icon: CheckCircle2, title: 'Welcome your volunteer', desc: 'Confirm placements and start collaborating. Track relationships and manage multiple volunteers in one place.' },
+              { num: '1', icon: FileText, title: 'Create profile' },
+              { num: '2', icon: Users, title: 'Post roles' },
+              { num: '3', icon: Zap, title: 'Get matches' },
+              { num: '4', icon: MessageCircle, title: 'Connect' },
+              { num: '5', icon: CheckCircle2, title: 'Collaborate' },
             ].map((step, i) => {
               const IconComponent = step.icon
               return (
                 <motion.div key={step.num}
-                  initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
-                  className="rounded-2xl p-8 bg-white border transition-all hover:shadow-lg hover:border-blue-200"
-                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                  <div className="flex gap-8 items-start">
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl"
-                        style={{ background: 'rgba(13,24,61,0.08)', color: C.primary }}>
-                        {step.num}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold mb-3" style={{ color: C.primary }}>
-                        {step.title}
-                      </h3>
-                      <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
-                        {step.desc}
-                      </p>
-                    </div>
+                  initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
+                  className="text-center">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                    style={{ background: 'rgba(13,24,61,0.08)' }}>
+                    <IconComponent size={24} style={{ color: C.primary }} strokeWidth={1.5} />
                   </div>
+                  <h3 className="font-bold text-xs" style={{ color: C.primary }}>
+                    {step.title}
+                  </h3>
                 </motion.div>
               )
             })}
@@ -97,31 +87,31 @@ export default function ForNGOs() {
         </div>
       </section>
 
-      {/* Why Organizations Choose Hive */}
-      <section className="py-28 px-6" style={{ background: 'rgba(13, 24, 61, 0.02)' }}>
-        <div className="max-w-6xl mx-auto">
+      {/* Why Orgs Choose Hive - Brief */}
+      <section className="py-24 px-6" style={{ background: 'rgba(13, 24, 61, 0.02)' }}>
+        <div className="max-w-5xl mx-auto">
           <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-5xl font-bold text-center mb-20" style={{ color: C.primary }}>
-            Why organizations trust Hive
+            className="text-3xl font-bold text-center mb-16" style={{ color: C.primary }}>
+            Why organizations choose Hive
           </motion.h2>
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid md:grid-cols-2 gap-8">
             {[
-              { title: 'Smart matching saves time', desc: 'No more sifting through unqualified applications. Hive surfaces ranked candidates with detailed match explanations.' },
-              { title: 'Quality over quantity', desc: 'Access motivated, capable students who are genuinely interested in your mission and have relevant skills.' },
-              { title: 'Built-in communication', desc: 'Message candidates, schedule interviews, and manage placements—all in one place without email chaos.' },
-              { title: 'Transparent relationships', desc: 'See exactly why each candidate matches your needs. Every decision is informed and intentional.' },
-            ].map((benefit, i) => (
-              <motion.div key={benefit.title}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="rounded-2xl p-8 bg-white border"
+              { title: 'Smart matching', desc: 'Ranked candidates who actually fit your mission.' },
+              { title: 'Save time', desc: 'No more sifting through unqualified applications.' },
+              { title: 'Quality candidates', desc: 'Access motivated, capable students.' },
+              { title: 'Built-in tools', desc: 'Message, interview, and manage in one place.' },
+            ].map((item, i) => (
+              <motion.div key={item.title}
+                initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.4 }}
+                className="p-6 bg-white rounded-xl border"
                 style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <h3 className="text-2xl font-bold mb-4" style={{ color: C.primary }}>
-                  {benefit.title}
+                <h3 className="font-bold mb-2" style={{ color: C.primary }}>
+                  {item.title}
                 </h3>
-                <p className="text-lg leading-relaxed" style={{ color: C.muted }}>
-                  {benefit.desc}
+                <p className="text-sm" style={{ color: C.muted }}>
+                  {item.desc}
                 </p>
               </motion.div>
             ))}
@@ -130,28 +120,28 @@ export default function ForNGOs() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-6 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.6 }}>
-            <h2 className="text-5xl font-bold mb-6" style={{ color: C.primary }}>
-              Find your next volunteer today
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5 }}>
+            <h2 className="text-3xl font-bold mb-4" style={{ color: C.primary }}>
+              Find your next volunteer
             </h2>
-            <p className="text-xl mb-10 leading-relaxed" style={{ color: C.muted }}>
-              Register your organization and post your first opportunity. It takes less than 10 minutes to get started.
+            <p className="text-base mb-8" style={{ color: C.muted }}>
+              Register your organization and post your first opportunity today.
             </p>
             <Link to="/auth?mode=signup&role=ngo"
-              className="inline-block px-10 py-5 rounded-2xl text-lg font-bold text-white transition-all hover:shadow-xl active:scale-95"
-              style={{ background: C.primary, boxShadow: '0 12px 32px rgba(13,24,61,0.2)' }}>
-              Get started →
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg"
+              style={{ background: C.primary, boxShadow: '0 8px 20px rgba(13,24,61,0.15)' }}>
+              Get started
             </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Footer spacer */}
-      <div className="py-12 text-center text-sm" style={{ color: C.muted }}>
-        © {new Date().getFullYear()} Hive. All rights reserved.
+      <div className="py-8 text-center text-xs" style={{ color: C.muted }}>
+        © {new Date().getFullYear()} Hive
       </div>
     </div>
   )

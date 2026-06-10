@@ -507,61 +507,37 @@ export default function Landing() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          HOW IT WORKS
+          HOW IT WORKS + BELIEFS MERGED
       ══════════════════════════════════════════════════════ */}
       <section id="how-it-works" className="py-32 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>How Hive works</h2>
+            viewport={{ once:true }} className="text-center mb-24">
+            <h2 className="text-4xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>Three principles</h2>
             <p className="text-lg" style={{ color:C.muted }}>
-              No long forms. No guessing. Just smart matching.
+              How Hive works and why it matters
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Subtle dotted connectors on desktop */}
-            <div className="hidden md:block absolute top-16 left-0 right-0 h-px pointer-events-none" aria-hidden="true"
-              style={{
-                background: `repeating-linear-gradient(90deg, ${C.honey}20 0px, ${C.honey}20 8px, transparent 8px, transparent 16px)`,
-                opacity: 0.4,
-              }} />
-
+          <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step:'01', icon:'✍️', title:'Tell us about you', desc:'Share your skills, goals, and causes you care about.' },
-              { step:'02', icon:'✨', title:'Hive finds the fit', desc:'Our AI matches students and NGOs by meaning, not keywords.' },
-              { step:'03', icon:'🤝', title:'Start with clarity', desc:'See why each match fits, then connect with confidence.' },
+              { title: 'Smart matching', desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.' },
+              { title: 'Real impact', desc: 'Students build portfolios. NGOs find committed volunteers.' },
+              { title: 'Transparent', desc: 'Every match explains why. No guessing. Complete clarity.' },
             ].map((item, i) => (
-              <motion.div key={i}
+              <motion.div key={item.title}
                 initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.42 }}
-                whileHover={{ y:-6, transition:{ duration:0.2 } }}
-                className="relative rounded-2xl p-8 cursor-default group"
+                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.42 }}
+                className="rounded-2xl p-8"
                 style={{
                   background:C.bg,
                   border:'1px solid rgba(13,24,61,0.08)',
                   boxShadow:'0 4px 20px rgba(13,24,61,0.04)',
-                  transition:'all 0.3s ease',
                 }}>
-                {/* Top accent bar */}
-                <div className="absolute top-0 left-6 right-6 h-1 rounded-full"
-                  style={{ background:`linear-gradient(90deg, ${C.honey}, transparent)` }} />
-
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background:`rgba(255,183,3,0.12)` }}>
-                    {item.icon}
-                  </div>
-                  <span className="text-sm font-bold tracking-wider" style={{ color:C.honey }}>
-                    {item.step}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold mb-3" style={{ color:C.primary }}>
+                <h3 className="text-xl font-bold mb-3" style={{ color:C.primary }}>
                   {item.title}
                 </h3>
-
-                <p className="text-sm leading-relaxed" style={{ color:C.muted }}>
+                <p className="text-base leading-relaxed" style={{ color:C.muted }}>
                   {item.desc}
                 </p>
               </motion.div>
@@ -573,7 +549,7 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════
           VOICES
       ══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-6" style={{ background:C.bg }}>
+      <section className="py-28 px-6" style={{ background:C.bg }}>
         <div className="max-w-5xl mx-auto">
 
           {/* Section header */}
@@ -650,75 +626,6 @@ export default function Landing() {
         )}
       </AnimatePresence>
 
-      {/* ══════════════════════════════════════════════════════
-          ABOUT — Mission, AI, Impact
-      ══════════════════════════════════════════════════════ */}
-      <section id="about" className="py-32 px-6 bg-white" style={{ borderTop:'1px solid rgba(13,24,61,0.07)' }}>
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-6 leading-tight" style={{ color:C.primary }}>
-              We believe skills should serve more than careers.
-            </h2>
-            <p className="text-lg leading-relaxed" style={{ color:C.muted }}>
-              The most capable students and mission-driven organisations should find each other. They don't. Not because the fit doesn't exist, but because discovery is broken.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: '✦',
-                accentColor: C.honey,
-                title: 'Semantic AI matching',
-                body: 'We read meaning, not keywords. Matches that feel right from day one.',
-              },
-              {
-                icon: '🌍',
-                accentColor: '#0891B2',
-                title: 'Inclusive by design',
-                body: 'Built for diverse communities. Language and culture matter in our model.',
-              },
-              {
-                icon: '🤝',
-                accentColor: '#059669',
-                title: 'Transparent connections',
-                body: 'Every match explains why you fit. No black boxes. No guessing.',
-              },
-            ].map((item, i) => (
-              <motion.div key={item.title}
-                initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.42 }}
-                whileHover={{ y:-6, transition:{ duration:0.2 } }}
-                className="relative rounded-2xl p-8 cursor-default"
-                style={{
-                  background:C.bg,
-                  border:'1px solid rgba(13,24,61,0.08)',
-                  boxShadow:'0 4px 20px rgba(13,24,61,0.04)',
-                  transition:'all 0.3s ease',
-                }}>
-                {/* Top accent bar */}
-                <div className="absolute top-0 left-6 right-6 h-1 rounded-full"
-                  style={{ background:`linear-gradient(90deg, ${item.accentColor}, transparent)` }} />
-
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-5 flex-shrink-0"
-                  style={{ background:`${item.accentColor}20` }}>
-                  {item.icon}
-                </div>
-
-                <h3 className="text-lg font-bold mb-3" style={{ color:C.primary }}>
-                  {item.title}
-                </h3>
-
-                <p className="text-sm leading-relaxed" style={{ color:C.muted }}>
-                  {item.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════
           TRUST — Israeli universities + NGOs ecosystem
