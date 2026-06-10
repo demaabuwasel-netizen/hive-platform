@@ -448,78 +448,51 @@ export default function Landing() {
       {/* invisible anchor so both For Students and For NGOs nav links land here */}
       <span id="for-ngos" style={{ display:'block', height:0, visibility:'hidden' }}/>
 
-      <section id="for-students" className="py-0 px-6 bg-white" style={{ marginTop: '-20px' }}>
-        <div className="max-w-5xl mx-auto">
+      <section id="for-students" className="py-16 px-6 bg-white" style={{ marginTop: '-20px' }}>
+        <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} className="text-center mb-14">
-            <h2 className="text-[2.2rem] font-bold mb-4" style={{ color:C.primary, fontFamily: "'The Seasons', serif" }}>
+            viewport={{ once:true }} className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4" style={{ color:C.primary }}>
               Built for everyone in the hive
             </h2>
-            <p className="text-base max-w-2xl mx-auto" style={{ color:C.muted }}>
+            <p className="text-lg max-w-3xl mx-auto" style={{ color:C.muted }}>
               Whether you're building experience or finding talent — Hive connects you with the right opportunities and people.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-5 justify-center">
+          <div className="grid md:grid-cols-2 gap-8">
             {FEATURE_CARDS.map((card, i) => (
               <motion.div key={card.tag}
-                initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.45 }}
-                whileHover={{ y:-5, boxShadow:'0 12px 36px rgba(13,24,61,0.10)', transition:{ duration:0.2 } }}
-                className="rounded-3xl overflow-hidden flex flex-col bg-white border"
-                style={{ borderColor:'rgba(13,24,61,0.08)', boxShadow:'0 2px 16px rgba(13,24,61,0.05)' }}>
+                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.12, duration:0.5 }}
+                whileHover={{ y:-8, boxShadow:'0 20px 40px rgba(13,24,61,0.12)', transition:{ duration:0.25 } }}
+                className="rounded-2xl overflow-hidden flex flex-col bg-white border"
+                style={{ borderColor:'rgba(13,24,61,0.06)', boxShadow:'0 4px 20px rgba(13,24,61,0.06)' }}>
 
-                {/* Illustration area — cream canvas, multiply blend, no hard box */}
-                <div className="relative overflow-hidden" style={{ height: 360, background: C.bg }}>
-
-                  {/* Ambient honey glow */}
-                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full"
-                      style={{ background:'radial-gradient(circle, rgba(255,183,3,0.14) 0%, transparent 70%)' }}/>
-                  </div>
-
-                  {/* Tiny hex accents — different positions per card */}
-                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                    <svg className="absolute" style={{ top:'10%', left:'8%', opacity:0.12 }} width="26" height="26" viewBox="0 0 24 24">
-                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.5" fill="rgba(255,183,3,0.2)"/>
-                    </svg>
-                    <svg className="absolute" style={{ bottom:'22%', right:`${8 + i*6}%`, opacity:0.09 }} width="34" height="34" viewBox="0 0 24 24">
-                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.2" fill="rgba(255,183,3,0.15)"/>
-                    </svg>
-                    <svg className="absolute" style={{ top:`${12 + i*4}%`, right:'12%', opacity:0.07 }} width="18" height="18" viewBox="0 0 24 24">
-                      <path d="M12 2 L20.7 7 L20.7 17 L12 22 L3.3 17 L3.3 7 Z" stroke="#FFB703" strokeWidth="1.5" fill="rgba(255,183,3,0.2)"/>
-                    </svg>
-                  </div>
-
+                {/* Image area — clean and minimal */}
+                <div className="relative overflow-hidden w-full" style={{ height: 280 }}>
                   <motion.img src={card.img} alt={card.tag}
                     className="w-full h-full object-cover"
-                    style={{
-                      mixBlendMode: 'multiply',
-                      maskImage: 'radial-gradient(ellipse 82% 78% at 50% 56%, black 22%, rgba(0,0,0,0.8) 52%, rgba(0,0,0,0.3) 72%, transparent 90%)',
-                      WebkitMaskImage: 'radial-gradient(ellipse 82% 78% at 50% 56%, black 22%, rgba(0,0,0,0.8) 52%, rgba(0,0,0,0.3) 72%, transparent 90%)',
-                    }}
-                    whileHover={{ scale: 1.04, transition:{ duration:0.3 } }}
+                    whileHover={{ scale: 1.03, transition:{ duration:0.4 } }}
                     draggable={false} />
 
-                  {/* Cream-to-white fade into card content */}
-                  <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none z-10"
-                    style={{ background:`linear-gradient(to bottom, transparent, ${C.white})` }} />
+                  {/* Subtle gradient overlay fade */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white pointer-events-none" style={{ opacity: 0.3 }} />
                 </div>
 
                 {/* Content */}
-                <div className="p-6 flex flex-col gap-4 flex-1 items-center justify-between text-center">
-                  {card.badge && (
-                    <span className="text-[10px] font-semibold px-3 py-1 rounded-full"
-                      style={{ background: card.tagBg, color: card.tagColor }}>
-                      {card.badge}
-                    </span>
-                  )}
-                  <h3 className="text-lg font-semibold leading-snug" style={{ color:C.primary, fontFamily: "'The Seasons', serif" }}>{card.title}</h3>
-                  {card.desc && (
-                    <p className="text-sm" style={{ color: C.muted }}>{card.desc}</p>
-                  )}
+                <div className="p-8 flex flex-col gap-6 flex-1">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-3" style={{ color:C.primary }}>
+                      {card.title}
+                    </h3>
+                    <p className="text-base leading-relaxed" style={{ color: C.muted }}>
+                      {card.desc}
+                    </p>
+                  </div>
+
                   <Link to={card.href}
-                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-base font-semibold text-white transition-all hover:opacity-85 mt-auto"
                     style={{ background:card.btnBg, boxShadow:card.btnShadow }}>
                     {card.cta}
                   </Link>

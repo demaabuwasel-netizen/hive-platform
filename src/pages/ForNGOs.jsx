@@ -66,71 +66,90 @@ export default function ForNGOs() {
         marginTop: '-15px'
       }}/>
 
-      {/* Benefits */}
-      <section className="max-w-6xl mx-auto px-6 py-0" style={{ marginTop: '-30px' }}>
-        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
-          className="text-[1.9rem] font-extrabold text-center mb-12" style={{ color: C.primary }}>
-          Why NGOs trust Hive
-        </motion.h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {BENEFITS.map((b, i) => (
-            <motion.div key={b.title}
-              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }}
-              className="bg-white rounded-2xl border p-6 flex flex-col gap-3"
-              style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-              <span className="text-3xl">{b.emoji}</span>
-              <p className="text-[14px] font-bold" style={{ color: C.primary }}>{b.title}</p>
-              <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{b.desc}</p>
-            </motion.div>
-          ))}
+      {/* Your process */}
+      <section className="py-24 px-6 bg-white" style={{ marginTop: '-30px' }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-20">
+            <h2 className="text-4xl font-bold mb-6" style={{ color: C.primary }}>
+              From listing to collaboration
+            </h2>
+            <p className="text-lg" style={{ color: C.muted }}>
+              Four straightforward steps to find the right volunteers for your mission.
+            </p>
+          </motion.div>
+
+          <div className="space-y-5">
+            {STEPS.map((s, i) => (
+              <motion.div key={s.n}
+                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.45 }}
+                className="rounded-2xl p-8 flex gap-8 items-start bg-white border transition-all hover:shadow-md"
+                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                <div className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl"
+                  style={{ background: 'rgba(13,24,61,0.1)', color: C.primary }}>
+                  {s.n}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-2" style={{ color: C.primary }}>
+                    {s.title}
+                  </h3>
+                  <p className="text-base leading-relaxed" style={{ color: C.muted }}>
+                    {s.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ duration: 0.45 }}
-          className="text-[1.9rem] font-extrabold text-center mb-12" style={{ color: C.primary }}>
-          From listing to placement in 4 steps
-        </motion.h2>
-        <div className="flex flex-col gap-4">
-          {STEPS.map((s, i) => (
-            <motion.div key={s.n}
-              initial={{ opacity: 0, x: -16 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.09, duration: 0.42 }}
-              className="bg-white rounded-2xl border px-7 py-5 flex items-start gap-6"
-              style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-              <span className="text-[1.6rem] font-extrabold shrink-0" style={{ color: 'rgba(75,99,130,0.3)' }}>{s.n}</span>
-              <div>
-                <p className="text-[14px] font-bold mb-1" style={{ color: C.primary }}>{s.title}</p>
-                <p className="text-[13px] leading-relaxed" style={{ color: C.muted }}>{s.desc}</p>
-              </div>
-            </motion.div>
-          ))}
+      {/* Why NGOs choose Hive */}
+      <section className="py-20 px-6" style={{ background: 'rgba(13, 24, 61, 0.02)' }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold text-center mb-16" style={{ color: C.primary }}>
+            Why organizations choose Hive
+          </motion.h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {BENEFITS.slice(0, 4).map((b, i) => (
+              <motion.div key={b.title}
+                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.45 }}
+                className="bg-white rounded-xl p-7 border"
+                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                <h3 className="text-lg font-bold mb-3" style={{ color: C.primary }}>
+                  {b.title}
+                </h3>
+                <p className="text-base leading-relaxed" style={{ color: C.muted }}>
+                  {b.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="rounded-3xl px-10 py-14 text-center"
-          style={{ background: C.primary }}>
-          <p className="text-[2rem] font-extrabold text-white mb-3">Ready to find your next volunteer?</p>
-          <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Register your NGO and post your first opportunity — it takes less than 10 minutes.
-          </p>
-          <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}>
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            transition={{ duration: 0.5 }}>
+            <h2 className="text-3xl font-bold mb-4" style={{ color: C.primary }}>
+              Ready to find dedicated volunteers?
+            </h2>
+            <p className="text-lg mb-8" style={{ color: C.muted }}>
+              Post your roles and connect with students who share your mission.
+            </p>
             <Link to="/auth?mode=signup"
-              className="inline-block px-8 py-3.5 rounded-2xl text-[15px] font-bold transition-all hover:opacity-90"
-              style={{ background: '#0D183D', color: 'white', boxShadow: '0 4px 20px rgba(13,24,61,0.2)' }}>
-              Register your NGO →
+              className="inline-block px-8 py-4 rounded-xl text-base font-bold text-white transition-all hover:opacity-90"
+              style={{ background: C.primary, boxShadow: '0 8px 20px rgba(13,24,61,0.15)' }}>
+              Get started →
             </Link>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       <div className="py-10 text-center text-[12px]" style={{ color: C.muted }}>
