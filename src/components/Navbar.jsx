@@ -43,7 +43,7 @@ export default function Navbar({ minimal = false }) {
 
         {/* Logo */}
         <Link to="/" aria-label="Hive home" className="shrink-0" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', paddingTop: '70px' }}>
-          <span style={{ fontSize: '24px', fontWeight: '900', color: '#0D183D', paddingTop: '0px', marginLeft: '-16px' }}>Hive</span>
+          <span style={{ fontSize: '24px', fontWeight: '900', color: '#0D183D', paddingTop: '20px', marginLeft: '-48px' }}>Hive</span>
           <img src={logo} alt="Hive logo" style={{ height: '160px', width: 'auto', marginLeft: '-32px', display: 'block' }} />
         </Link>
 
