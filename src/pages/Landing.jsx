@@ -508,68 +508,111 @@ export default function Landing() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          HOW IT WORKS + BELIEFS MERGED
+          HOW IT WORKS — Visual 4-step flow
       ══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-28 px-6 bg-gradient-to-b from-white via-white to-slate-50">
+      <section id="how-it-works" className="py-32 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }}
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
             viewport={{ once:true }} className="text-center mb-24">
-            <h2 className="text-5xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>Three principles</h2>
-            <p className="text-xl" style={{ color:C.muted }}>
-              How Hive works and why it matters
+            <h2 className="text-5xl font-bold mb-6" style={{ color:C.primary }}>How Hive works</h2>
+            <p className="text-xl max-w-2xl mx-auto" style={{ color:C.muted }}>
+              Four simple steps. Real impact.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto mb-20">
+            {[
+              { step: '1', title: 'Create', desc: 'Build your profile', icon: '📋' },
+              { step: '2', title: 'Share', desc: 'Add skills or roles', icon: '🎯' },
+              { step: '3', title: 'Match', desc: 'Get connected', icon: '⚡' },
+              { step: '4', title: 'Impact', desc: 'Make a difference', icon: '💚' },
+            ].map((item, i) => (
+              <motion.div key={item.step}
+                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.08, duration:0.4 }}
+                className="text-center">
+                <div className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center text-4xl"
+                  style={{ background: 'rgba(255,183,3,0.1)' }}>
+                  {item.icon}
+                </div>
+                <h3 className="text-2xl font-bold mb-2" style={{ color:C.primary }}>
+                  {item.title}
+                </h3>
+                <p className="text-base" style={{ color:C.muted }}>
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Visual example cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {[
               {
-                title: 'Smart matching',
-                desc: 'AI reads meaning, not keywords. Connects people who genuinely fit.',
-                icon: Sparkles,
-                gradient: 'from-amber-50 to-white',
-                accentBg: 'rgba(255,183,3,0.15)',
-                accentColor: C.honey
+                label: 'Student Profile',
+                items: ['Build your story', 'Add skills', 'Show interests', 'Ready to match'],
+                bg: 'from-blue-50 to-white'
               },
               {
-                title: 'Real impact',
-                desc: 'Students build portfolios. NGOs find committed volunteers.',
-                icon: Users,
-                gradient: 'from-blue-50 to-white',
-                accentBg: 'rgba(59, 130, 246, 0.15)',
-                accentColor: '#3B82F6'
+                label: 'NGO Opportunity',
+                items: ['Describe the role', 'Share mission', 'List requirements', 'Find volunteers'],
+                bg: 'from-emerald-50 to-white'
               },
-              {
-                title: 'Transparent',
-                desc: 'Every match explains why. No guessing. Complete clarity.',
-                icon: Eye,
-                gradient: 'from-emerald-50 to-white',
-                accentBg: 'rgba(16, 185, 129, 0.15)',
-                accentColor: '#10B981'
-              },
-            ].map((item, i) => {
-              const IconComponent = item.icon
-              return (
-                <motion.div key={item.title}
-                  initial={{ opacity:0, y:24 }} whileInView={{ opacity:1, y:0 }}
-                  viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.5 }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className={`rounded-3xl p-10 border transition-all bg-gradient-to-br ${item.gradient}`}
-                  style={{
-                    borderColor: 'rgba(13,24,61,0.08)',
-                    boxShadow: '0 8px 32px rgba(13,24,61,0.08)',
-                  }}>
-                  <div className="w-16 h-16 rounded-2xl mb-7 flex items-center justify-center" style={{ background: item.accentBg }}>
-                    <IconComponent size={32} style={{ color: item.accentColor, strokeWidth: 1.5 }} />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 leading-tight" style={{ color:C.primary }}>
-                    {item.title}
-                  </h3>
-                  <p className="text-base leading-relaxed" style={{ color:C.muted }}>
-                    {item.desc}
-                  </p>
-                </motion.div>
-              )
-            })}
+            ].map((example, i) => (
+              <motion.div key={example.label}
+                initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.1, duration:0.4 }}
+                className={`rounded-2xl p-8 border bg-gradient-to-br ${example.bg}`}
+                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                <p className="text-sm font-bold tracking-wide mb-6" style={{ color:C.honey, textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                  {example.label}
+                </p>
+                <div className="space-y-3">
+                  {example.items.map((item, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full" style={{ background:C.honey }}/>
+                      <span style={{ color:C.primary }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          WHY HIVE IS DIFFERENT
+      ══════════════════════════════════════════════════════ */}
+      <section className="py-28 px-6" style={{ background: 'rgba(255,183,3,0.03)' }}>
+        <div className="max-w-6xl mx-auto">
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
+            viewport={{ once:true }} className="text-center mb-20">
+            <h2 className="text-4xl font-bold" style={{ color:C.primary }}>
+              Why Hive is different
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {[
+              { title: 'Skill-based matching', desc: 'AI understands what you do, not just keywords.' },
+              { title: 'Mission fit', desc: 'Connected by values, not just availability.' },
+              { title: 'Transparent', desc: 'See exactly why you match someone.' },
+              { title: 'Built for both', desc: 'Designed for students and organizations.' },
+            ].map((benefit, i) => (
+              <motion.div key={benefit.title}
+                initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true }} transition={{ delay:i*0.06, duration:0.4 }}
+                className="p-8 rounded-2xl border"
+                style={{ borderColor: 'rgba(13,24,61,0.08)', background: C.bg }}>
+                <h3 className="font-bold mb-3 text-lg" style={{ color:C.primary }}>
+                  {benefit.title}
+                </h3>
+                <p style={{ color:C.muted }}>
+                  {benefit.desc}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
