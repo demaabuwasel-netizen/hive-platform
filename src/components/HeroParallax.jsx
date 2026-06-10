@@ -131,14 +131,6 @@ export default function HeroParallax({ bgImage, leafImages = {} }) {
         )}
       </div>
 
-      {/* Fade out overlay at bottom of background */}
-      <div
-        className="absolute bottom-0 left-0 right-0 pointer-events-none"
-        style={{
-          height: '350px',
-          background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.4) 100%)',
-        }}
-      />
 
       {/* Leaf layers with parallax effect */}
       {/* Top Left */}
