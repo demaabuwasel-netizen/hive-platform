@@ -476,8 +476,8 @@ export default function Landing() {
                     whileHover={{ scale: 1.04, transition:{ duration:0.5 } }}
                     draggable={false} />
 
-                  {/* Elegant gradient fade */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent pointer-events-none" />
+                  {/* Very subtle gradient fade */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-white/5 to-transparent pointer-events-none" />
                 </div>
 
                 {/* Content area */}
@@ -495,7 +495,7 @@ export default function Landing() {
                   </div>
 
                   <Link to={card.href}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95 mt-auto"
+                    className="inline-flex items-center justify-center px-6 py-4 rounded-2xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95 mt-auto w-full"
                     style={{ background:card.btnBg, boxShadow:card.btnShadow }}>
                     {card.cta}
                   </Link>
