@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar'
 import ngoLandingPage from '../assets/ngo_landing_page.png'
 import { ArrowRight, Target, Users, Zap, Shield, Compass, CheckCircle2 } from 'lucide-react'
 
-const C = { bg: '#FFFFFF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
+const C = { bg: '#FFFFFF', primary: '#0D183D', accent: '#3B82F6', muted: '#4B6382' }
 
 export default function ForNGOs() {
   return (
@@ -19,7 +19,7 @@ export default function ForNGOs() {
         <motion.div className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
           <h1 className="text-[3.5rem] font-extrabold leading-[1.1] text-center max-w-3xl px-6" style={{ color: C.primary }}>
             Find volunteers<br />who actually fit<br />
-            <span style={{ color: C.honey }}>your mission.</span>
+            <span style={{ color: C.accent }}>your mission.</span>
           </h1>
         </motion.div>
       </section>
@@ -64,8 +64,8 @@ export default function ForNGOs() {
                   viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="p-8 rounded-2xl bg-gradient-to-br from-slate-50 to-white border"
                   style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'rgba(255,183,3,0.15)' }}>
-                    <Icon size={28} style={{ color: C.honey }} strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: 'rgba(59,130,246,0.15)' }}>
+                    <Icon size={28} style={{ color: C.accent }} strokeWidth={1.5} />
                   </div>
                   <h3 className="text-xl font-bold mb-4" style={{ color: C.primary }}>
                     {item.title}
@@ -87,7 +87,7 @@ export default function ForNGOs() {
             className="text-center mb-32">
             <h2 className="text-5xl font-bold mb-6 leading-tight" style={{ color: C.primary }}>
               Your journey to finding<br />
-              <span style={{ color: C.honey }}>the right volunteers</span>
+              <span style={{ color: C.accent }}>the right volunteers</span>
             </h2>
             <p className="text-xl max-w-2xl mx-auto" style={{ color: C.muted }}>
               From setup to your first volunteer. Six straightforward steps.
@@ -141,7 +141,7 @@ export default function ForNGOs() {
                 <div className="flex gap-8">
                   <div className="flex-shrink-0">
                     <div className="w-16 h-16 rounded-xl flex items-center justify-center font-bold text-2xl"
-                      style={{ background: 'rgba(255,183,3,0.15)', color: C.honey }}>
+                      style={{ background: 'rgba(59,130,246,0.15)', color: C.accent }}>
                       {step.num}
                     </div>
                   </div>
