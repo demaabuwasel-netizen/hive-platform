@@ -5,7 +5,7 @@ import HiveLogo from '../components/HiveLogo'
 import BrandIllustration from '../components/BrandIllustration'
 import aboutLandingPage from '../assets/about_landing_page.png'
 
-const C = { bg: '#FAF6EF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
+const C = { bg: '#FFFFFF', primary: '#0D183D', honey: '#FFB703', muted: '#4B6382' }
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -35,7 +35,7 @@ export default function About() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, #FAF6EF 100%)',
+          background: 'linear-gradient(to bottom, transparent 0%, transparent 70%, #FFFFFF 100%)',
           pointerEvents: 'none'
         }}/>
         <motion.div
