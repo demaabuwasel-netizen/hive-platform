@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from './Avatar'
-import HiveLogo from './HiveLogo'
+import logo from '../assets/logo.PNG'
 
 const NAV_LINKS = [
   { label: 'Home',         to: '/'             },
@@ -43,7 +43,7 @@ export default function Navbar({ minimal = false }) {
 
         {/* Logo */}
         <Link to="/" aria-label="Hive home" className="shrink-0">
-          <HiveLogo size={32} nameSize="text-lg" />
+          <img src={logo} alt="Hive logo" style={{ height: '32px', width: 'auto' }} />
         </Link>
 
         {/* Centre nav — shown when NOT logged in, desktop only */}
