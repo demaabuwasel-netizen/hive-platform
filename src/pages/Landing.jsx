@@ -470,7 +470,7 @@ export default function Landing() {
                 style={{ borderColor:'rgba(13,24,61,0.08)', boxShadow:'0 2px 16px rgba(13,24,61,0.05)' }}>
 
                 {/* Illustration area — cream canvas, multiply blend, no hard box */}
-                <div className="relative overflow-hidden" style={{ height: 232, background: C.bg }}>
+                <div className="relative overflow-hidden" style={{ height: 360, background: C.bg }}>
 
                   {/* Ambient honey glow */}
                   <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -492,7 +492,7 @@ export default function Landing() {
                   </div>
 
                   <motion.img src={card.img} alt={card.tag}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     style={{
                       mixBlendMode: 'multiply',
                       maskImage: 'radial-gradient(ellipse 82% 78% at 50% 56%, black 22%, rgba(0,0,0,0.8) 52%, rgba(0,0,0,0.3) 72%, transparent 90%)',
