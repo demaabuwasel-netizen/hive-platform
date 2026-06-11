@@ -508,7 +508,10 @@ function Sidebar({ user, profile, onLogout }) {
 
       {/* Logo */}
       <div className="px-5 py-[14px]" style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
-        <Link to="/"><HiveLogo size={24} nameSize="text-base" /></Link>
+        <Link to="/" className="flex items-center gap-2">
+          <HiveLogo size={24} nameSize="text-base" />
+          <span style={{ fontSize: '14px', fontWeight: '900', color: '#0D183D' }}>Hive</span>
+        </Link>
       </div>
 
       {/* Nav */}
