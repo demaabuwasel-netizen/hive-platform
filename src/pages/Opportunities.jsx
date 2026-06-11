@@ -16,6 +16,47 @@ import { computeMatch } from '../services/matching'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
+// Parse skill - handle JSON strings, objects, or garbage
+function parseSkill(s) {
+  if (!s) return { name: '', level: '' }
+
+  // If it's a string that looks like JSON
+  if (typeof s === 'string') {
+    if (s.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(s)
+        return {
+          name: parsed.name || '',
+          level: parsed.level || ''
+        }
+      } catch (e) {
+        // If it fails to parse, just return the string as name
+        return { name: s, level: '' }
+      }
+    }
+    return { name: s, level: '' }
+  }
+
+  // If it's already an object
+  if (typeof s === 'object') {
+    // Check if it has a nested "name" field that's a JSON string
+    if (s.name && typeof s.name === 'string' && s.name.startsWith('{')) {
+      try {
+        const nested = JSON.parse(s.name)
+        return {
+          name: nested.name || s.name,
+          level: s.level || nested.level || ''
+        }
+      } catch (e) {
+        return { name: s.name || '', level: s.level || '' }
+      }
+    }
+    return { name: s.name || '', level: s.level || '' }
+  }
+
+  return { name: '', level: '' }
+}
+
 function generateAppMessage(user, ngo) {
   const name = user?.name || 'I'
   const first = name.split(' ')[0]
@@ -159,23 +200,11 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
                 <div className="flex flex-wrap gap-2">
                   {opp.skills.map((s, i) => {
-                    let skillName = ''
-                    let skillLevel = ''
-
-                    if (typeof s === 'string') {
-                      skillName = s
-                    } else if (typeof s === 'object' && s !== null) {
-                      skillName = s.name || ''
-                      skillLevel = s.level || ''
-                    }
-
-                    if (!skillName && s) {
-                      skillName = String(s).replace(/^{/, '').replace(/}$/, '')
-                    }
-
+                    const { name, level } = parseSkill(s)
+                    if (!name) return null
                     return (
                       <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
-                        {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
+                        {level ? `${name} · ${level}` : name}
                       </span>
                     )
                   })}
@@ -738,25 +767,11 @@ export default function Opportunities() {
                     {ngo.skills && ngo.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {ngo.skills.slice(0, 3).map((s, idx) => {
-                          // Handle string, object, or anything else
-                          let skillName = ''
-                          let skillLevel = ''
-
-                          if (typeof s === 'string') {
-                            skillName = s
-                          } else if (typeof s === 'object' && s !== null) {
-                            skillName = s.name || ''
-                            skillLevel = s.level || ''
-                          }
-
-                          // If still empty, convert to string as fallback
-                          if (!skillName && s) {
-                            skillName = String(s).replace(/^{/, '').replace(/}$/, '')
-                          }
-
+                          const { name, level } = parseSkill(s)
+                          if (!name) return null
                           return (
                             <span key={idx} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.06)]">
-                              {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
+                              {level ? `${name} · ${level}` : name}
                             </span>
                           )
                         })}
