@@ -95,33 +95,41 @@ export async function loadStudentProfile(userId, { signal } = {}) {
 function dbToNgo(row) {
   if (!row) return null
   return {
-    name:        row.name,
-    location:    row.location,
-    phone:       row.phone,
-    description: row.description,
-    helpNeeded:  row.help_needed,
-    imageUrl:    row.image_url,
-    tags:        row.tags ?? [],
-    website:     row.website,
-    instagram:   row.instagram,
-    twitter:     row.twitter,
+    name:              row.name,
+    location:          row.location,
+    phone:             row.phone,
+    description:       row.description,
+    helpNeeded:        row.help_needed,
+    mission:           row.mission,
+    communities:       row.communities,
+    imageUrl:          row.image_url,
+    tags:              row.tags ?? [],
+    preferred_skills:  row.preferred_skills ?? [],
+    project_types:     row.project_types ?? [],
+    website:           row.website,
+    instagram:         row.instagram,
+    twitter:           row.twitter,
   }
 }
 
 function ngoToDb(userId, profile) {
   return {
-    user_id:     userId,
-    name:        profile.name        ?? null,
-    location:    profile.location    ?? null,
-    phone:       profile.phone       ?? null,
-    description: profile.description ?? null,
-    help_needed: profile.helpNeeded  ?? null,
-    image_url:   profile.imageUrl    ?? null,
-    tags:        profile.tags        ?? [],
-    website:     profile.website     ?? null,
-    instagram:   profile.instagram   ?? null,
-    twitter:     profile.twitter     ?? null,
-    updated_at:  new Date().toISOString(),
+    user_id:          userId,
+    name:             profile.name             ?? null,
+    location:         profile.location         ?? null,
+    phone:            profile.phone            ?? null,
+    description:      profile.description      ?? null,
+    help_needed:      profile.helpNeeded       ?? null,
+    mission:          profile.mission          ?? null,
+    communities:      profile.communities      ?? null,
+    image_url:        profile.imageUrl         ?? null,
+    tags:             profile.tags             ?? [],
+    preferred_skills: profile.preferred_skills ?? [],
+    project_types:    profile.project_types    ?? [],
+    website:          profile.website          ?? null,
+    instagram:        profile.instagram        ?? null,
+    twitter:          profile.twitter          ?? null,
+    updated_at:       new Date().toISOString(),
   }
 }
 
@@ -218,14 +226,19 @@ export function studentProfileToData(profile) {
 export function ngoProfileToData(profile) {
   if (!profile) return {}
   return {
-    name:        profile.name        ?? '',
-    location:    profile.location    ?? '',
-    phone:       profile.phone       ?? '',
-    description: profile.description ?? '',
-    helpNeeded:  profile.helpNeeded  ?? '',
-    imageUrl:    profile.imageUrl    ?? '',
-    website:     profile.website     ?? '',
-    instagram:   profile.instagram   ?? '',
-    twitter:     profile.twitter     ?? '',
+    name:              profile.name              ?? '',
+    location:          profile.location          ?? '',
+    phone:             profile.phone             ?? '',
+    description:       profile.description       ?? '',
+    helpNeeded:        profile.helpNeeded        ?? '',
+    mission:           profile.mission           ?? '',
+    communities:       profile.communities       ?? '',
+    imageUrl:          profile.imageUrl          ?? '',
+    tags:              profile.tags              ?? [],
+    preferred_skills:  profile.preferred_skills  ?? [],
+    project_types:     profile.project_types     ?? [],
+    website:           profile.website           ?? '',
+    instagram:         profile.instagram         ?? '',
+    twitter:           profile.twitter           ?? '',
   }
 }
