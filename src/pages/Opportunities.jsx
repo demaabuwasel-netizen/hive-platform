@@ -544,8 +544,10 @@ export default function Opportunities() {
   }
 
   const filtered = opps.filter(n =>
-    (cat === 'All' || n.cat === cat) &&
-    (n.name.toLowerCase().includes(q.toLowerCase()) || n.desc.toLowerCase().includes(q.toLowerCase())) &&
+    (cat === 'All' || n.category === cat) &&
+    ((n.title?.toLowerCase().includes(q.toLowerCase()) || false) ||
+     (n.orgName?.toLowerCase().includes(q.toLowerCase()) || false) ||
+     (n.description?.toLowerCase().includes(q.toLowerCase()) || false)) &&
     (!filterNgoId || n.ngoId === filterNgoId)
   )
 
