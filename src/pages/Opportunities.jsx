@@ -91,6 +91,52 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="space-y-8">
 
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {opp.location && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Location</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.location}</p>
+                </div>
+              )}
+              {opp.workMode && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Work Mode</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.workMode}</p>
+                </div>
+              )}
+              {opp.weeklyHours && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Hours/Week</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
+                </div>
+              )}
+              {opp.duration && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Duration</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.duration}</p>
+                </div>
+              )}
+              {opp.deadline && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Application Deadline</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{new Date(opp.deadline).toLocaleDateString()}</p>
+                </div>
+              )}
+              {opp.field && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Field</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.field}</p>
+                </div>
+              )}
+              {opp.category && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Category</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.category}</p>
+                </div>
+              )}
+            </div>
+
             {/* Description */}
             {opp.description && (
               <div>
