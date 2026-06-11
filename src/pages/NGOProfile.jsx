@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit2, Camera, ExternalLink, X, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import TopicPicker from '../components/TopicPicker'
 import cardsBackground from '../assets/cards_background.png'
 
 export default function NGOProfile() {
@@ -354,17 +355,12 @@ export default function NGOProfile() {
               </div>
               {editingField === 'tags' ? (
                 <div className="space-y-2">
-                  <select multiple
+                  <TopicPicker
                     value={editValues.tags || []}
-                    onChange={(e) => setEditValues({tags: Array.from(e.target.selectedOptions, option => option.value)})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
-                    <option value="Youth Empowerment">Youth Empowerment</option>
-                    <option value="Education">Education</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Environment">Environment</option>
-                    <option value="Technology">Technology</option>
-                    <option value="Community Development">Community Development</option>
-                  </select>
+                    onChange={(newTags) => setEditValues({tags: newTags})}
+                    options={['Youth Empowerment', 'Education', 'Healthcare', 'Environment', 'Technology', 'Community Development']}
+                    placeholder="Search or add focus areas…"
+                  />
                   <div className="flex gap-2">
                     <button
                       onClick={() => saveEdit('tags')}
@@ -410,17 +406,12 @@ export default function NGOProfile() {
               </div>
               {editingField === 'preferred_skills' ? (
                 <div className="space-y-2">
-                  <select multiple
+                  <TopicPicker
                     value={editValues.preferred_skills || []}
-                    onChange={(e) => setEditValues({preferred_skills: Array.from(e.target.selectedOptions, option => option.value)})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
-                    <option value="Communication">Communication</option>
-                    <option value="Leadership">Leadership</option>
-                    <option value="Data Analysis">Data Analysis</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Programming">Programming</option>
-                  </select>
+                    onChange={(newSkills) => setEditValues({preferred_skills: newSkills})}
+                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research']}
+                    placeholder="Search or add preferred skills…"
+                  />
                   <div className="flex gap-2">
                     <button
                       onClick={() => saveEdit('preferred_skills')}
@@ -466,17 +457,12 @@ export default function NGOProfile() {
               </div>
               {editingField === 'project_types' ? (
                 <div className="space-y-2">
-                  <select multiple
+                  <TopicPicker
                     value={editValues.project_types || []}
-                    onChange={(e) => setEditValues({project_types: Array.from(e.target.selectedOptions, option => option.value)})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
-                    <option value="Website">Website</option>
-                    <option value="Mobile App">Mobile App</option>
-                    <option value="Research">Research</option>
-                    <option value="Content Creation">Content Creation</option>
-                    <option value="Event Planning">Event Planning</option>
-                    <option value="Fundraising">Fundraising</option>
-                  </select>
+                    onChange={(newTypes) => setEditValues({project_types: newTypes})}
+                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting']}
+                    placeholder="Search or add project types…"
+                  />
                   <div className="flex gap-2">
                     <button
                       onClick={() => saveEdit('project_types')}
