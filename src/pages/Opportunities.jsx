@@ -27,6 +27,126 @@ function generateAppMessage(user, ngo) {
   return `Hi ${ngo.name} team,\n\nMy name is ${first} and I'm studying ${field}. I came across your opportunity through Hive and I'd love to contribute to your mission.\n\n${ngo.mission}\n\nMy background in ${skills} means I can contribute meaningfully from day one. I'm drawn to the chance to create real impact — not just build a portfolio, but genuinely help people.\n\nI'm available flexibly and excited about the possibility of working together.\n\nLooking forward to hearing from you,\n${first}`
 }
 
+// ─── Opportunity Detail Modal ────────────────────────────────────────────────
+
+function OpportunityDetailModal({ opp, onClose, onApply }) {
+  return (
+    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background:'rgba(10,18,48,0.5)', backdropFilter:'blur(8px)' }}
+      onClick={onClose}>
+      <motion.div initial={{ opacity:0, scale:0.97, y:20 }} animate={{ opacity:1, scale:1, y:0 }}
+        exit={{ opacity:0, scale:0.97 }} transition={{ type:'spring', stiffness:360, damping:30 }}
+        className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col"
+        style={{ boxShadow:'0 24px 80px rgba(10,18,48,0.25)', maxHeight:'90vh' }}
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-6 pt-5 pb-4 shrink-0 border-b border-[rgba(13,24,61,0.08)]">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
+              <X size={14}/>
+            </button>
+            <Link to={`/ngo/${opp.ngoId}`}
+              className="px-4 py-2 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"
+              style={{ borderColor:'rgba(13,24,61,0.1)' }}>
+              View NGO profile
+            </Link>
+          </div>
+          <div>
+            <h2 className="text-[1.5rem] font-extrabold text-[#0D183D] mb-2">{opp.title}</h2>
+            <p className="text-[14px] text-[#4B6382] font-medium">{opp.orgName}</p>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6">
+
+          {/* Key Details */}
+          <div className="grid grid-cols-2 gap-4">
+            {opp.location && (
+              <div>
+                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Location</p>
+                <p className="text-[13px] text-[#0D183D]">{opp.location}</p>
+              </div>
+            )}
+            {opp.workMode && (
+              <div>
+                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Work Mode</p>
+                <p className="text-[13px] text-[#0D183D]">{opp.workMode}</p>
+              </div>
+            )}
+            {opp.weeklyHours && (
+              <div>
+                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Hours/Week</p>
+                <p className="text-[13px] text-[#0D183D]">{opp.weeklyHours}</p>
+              </div>
+            )}
+            {opp.duration && (
+              <div>
+                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Duration</p>
+                <p className="text-[13px] text-[#0D183D]">{opp.duration}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Full Description */}
+          {opp.description && (
+            <div>
+              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">About this role</h3>
+              <p className="text-[13px] text-[#4B6382] leading-relaxed whitespace-pre-wrap">{opp.description}</p>
+            </div>
+          )}
+
+          {/* Mission Impact */}
+          {opp.missionImpact && (
+            <div>
+              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Mission Impact</h3>
+              <p className="text-[13px] text-[#4B6382] leading-relaxed whitespace-pre-wrap">{opp.missionImpact}</p>
+            </div>
+          )}
+
+          {/* Skills */}
+          {opp.skills?.length > 0 && (
+            <div>
+              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Required Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {opp.skills.map((s, i) => (
+                  <span key={i} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
+                    {typeof s === 'string' ? s : s.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Languages */}
+          {opp.languages?.length > 0 && (
+            <div>
+              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Languages</h3>
+              <p className="text-[13px] text-[#4B6382]">{opp.languages.join(', ')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-[rgba(13,24,61,0.08)] px-6 py-4 flex gap-3 shrink-0 bg-[#F8F9FB]">
+          <button onClick={onClose}
+            className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-white transition-colors"
+            style={{ borderColor:'rgba(13,24,61,0.12)' }}>
+            Cancel
+          </button>
+          <button onClick={onApply}
+            className="flex-1 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background:'#FFB703' }}>
+            Apply now →
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ─── Apply Modal ──────────────────────────────────────────────────────────────
 
 function ApplyModal({ ngo, user, studentId, onClose }) {
@@ -189,6 +309,7 @@ export default function Opportunities() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [toggling, setToggling] = useState(null)
   const [loading, setLoading]   = useState(true)
+  const [viewingOpp, setViewingOpp] = useState(null)
   const [applyingTo, setApplyingTo] = useState(null)
 
   // Fetch NGO's own opportunities
@@ -456,10 +577,10 @@ export default function Opportunities() {
                     </div>
 
                     <div className="flex gap-2 mt-1">
-                      <button onClick={() => setApplyingTo(ngo)}
+                      <button onClick={() => setViewingOpp(ngo)}
                         className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
                         style={{ background:'#FFB703' }}>
-                        Apply now →
+                        View details →
                       </button>
                       <button onClick={() => navigate('/matches')}
                         className="px-3 py-2 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
@@ -473,6 +594,18 @@ export default function Opportunities() {
           </>
         )}
       </div>
+
+      {/* Detail modal */}
+      <AnimatePresence>
+        {viewingOpp && (
+          <OpportunityDetailModal
+            key="detail"
+            opp={viewingOpp}
+            onClose={() => setViewingOpp(null)}
+            onApply={() => { setViewingOpp(null); setApplyingTo(viewingOpp) }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Apply modal */}
       <AnimatePresence>
