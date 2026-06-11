@@ -76,8 +76,9 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <Link to={`/ngo-profile/${opp.ngoId}`}
-                className="px-3 py-2 rounded-lg text-[12px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors whitespace-nowrap">
-                View NGO
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl text-[12px] font-semibold bg-[#FFB703] text-white hover:opacity-90 transition-all whitespace-nowrap">
+                View NGO Profile
               </Link>
               <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
                 <X size={20}/>
@@ -112,8 +113,20 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
                 <div className="flex flex-wrap gap-2">
                   {opp.skills.map((s, i) => {
-                    const skillName = typeof s === 'string' ? s : s.name
-                    const skillLevel = typeof s === 'object' && s.level ? s.level : ''
+                    let skillName = ''
+                    let skillLevel = ''
+
+                    if (typeof s === 'string') {
+                      skillName = s
+                    } else if (typeof s === 'object' && s !== null) {
+                      skillName = s.name || ''
+                      skillLevel = s.level || ''
+                    }
+
+                    if (!skillName && s) {
+                      skillName = String(s).replace(/^{/, '').replace(/}$/, '')
+                    }
+
                     return (
                       <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
                         {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
