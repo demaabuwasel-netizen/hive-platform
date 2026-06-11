@@ -130,17 +130,38 @@ export default function NGOProfile() {
           <div className="grid grid-cols-1 gap-3">
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">About the Organization</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">About the Organization</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">Mission</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Mission</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">Communities Served</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Communities Served</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
             </div>
           </div>
@@ -158,7 +179,14 @@ export default function NGOProfile() {
             </button>
           </div>
           <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-xl border border-[rgba(255,183,3,0.15)] p-4">
-            <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">What We Need Help With</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">What We Need Help With</h3>
+              <button
+                onClick={() => navigate('/profile/ngo/edit')}
+                className="p-1 rounded-lg hover:bg-white/50 transition-colors text-[#FFB703]">
+                <Edit2 size={12} />
+              </button>
+            </div>
             <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
           </div>
         </motion.div>
@@ -176,7 +204,14 @@ export default function NGOProfile() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Focus Areas</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Focus Areas</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               {profile?.tags?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.tags.map((tag, i) => (
@@ -191,7 +226,14 @@ export default function NGOProfile() {
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Preferred Skills</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Preferred Skills</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               {profile?.preferred_skills?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.preferred_skills.map((skill, i) => (
@@ -206,7 +248,14 @@ export default function NGOProfile() {
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Project Types</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Project Types</h3>
+                <button
+                  onClick={() => navigate('/profile/ngo/edit')}
+                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              </div>
               {profile?.project_types?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.project_types.map((type, i) => (
