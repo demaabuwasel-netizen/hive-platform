@@ -65,8 +65,8 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
 // ─── Hive Visualization ───────────────────────────────────────────────────────
 
 function HiveVisualization({ opportunities, applicants, navigate }) {
-  const R = 26
-  const CX = 250, CY = 170
+  const R = 18
+  const CX = 160, CY = 110
   const d = Math.sqrt(3) * R
 
   function hexPoints(cx, cy, r = R) {
@@ -153,16 +153,23 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   }
 
   return (
-    <div style={{ marginBottom: 48 }}>
-      <div style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
-        <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
-          {opportunities.length} active opportunity{opportunities.length !== 1 ? 'ies' : ''} · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl p-6 border mb-6"
+      style={{ background: 'white', borderColor: 'rgba(13,24,61,0.08)' }}>
+
+      <div style={{ marginBottom: 16 }}>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
+        <p style={{ fontSize: 12, color: '#4B6382', margin: '3px 0 0' }}>
+          {opportunities.length} active · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 32 }}>
-        <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+        <svg viewBox="80 20 240 200" style={{ flex: 1, minWidth: 280, maxWidth: '100%' }} xmlns="http://www.w3.org/2000/svg">
           {hexes.slice(1, 7).map((h, i) =>
             h.type === 'opp' ? (
               <line key={`cl-${i}`}
@@ -191,16 +198,16 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   strokeWidth="1.5"
                 />
                 {h.type === 'center' && (
-                  <text x={h.x} y={h.y + 5} textAnchor="middle" fill="#FFB84D"
-                    fontSize="11" fontWeight="900" fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                  <text x={h.x} y={h.y + 4} textAnchor="middle" fill="#FFB84D"
+                    fontSize="8" fontWeight="900" fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
                     style={{ pointerEvents: 'none' }}>
                     hive
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} y={h.y + 5} textAnchor="middle"
+                  <text x={h.x} y={h.y + 3.5} textAnchor="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '12'}
+                    fontSize={h.type === 'slot-opp' ? '12' : '9'}
                     fontWeight={h.type === 'slot-opp' ? '300' : '800'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
                     style={{ pointerEvents: 'none' }}>
@@ -212,28 +219,28 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
           })}
         </svg>
 
-        <div style={{ flex: 0.8, minWidth: 200 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ flex: 0.65, minWidth: 160 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { color: '#FFB84D', stroke: '#E8A038', label: 'Active with applications' },
-              { color: '#FFF8E8', stroke: '#FDE68A', label: 'No applications yet' },
-              { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending review' },
-              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted volunteer' },
+              { color: '#FFB84D', stroke: '#E8A038', label: 'Active' },
+              { color: '#FFF8E8', stroke: '#FDE68A', label: 'No apps' },
+              { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending' },
+              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted' },
               { color: '#DBEAFE', stroke: '#93C5FD', label: 'Completed' },
-              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
+              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open' },
             ].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{
-                  width: 16, height: 16, borderRadius: 3,
-                  background: l.color, border: `1.5px solid ${l.stroke}`
+                  width: 12, height: 12, borderRadius: 2,
+                  background: l.color, border: `1px solid ${l.stroke}`, flexShrink: 0
                 }} />
-                <span style={{ fontSize: 12, color: '#4B6382' }}>{l.label}</span>
+                <span style={{ fontSize: 11, color: '#4B6382', lineHeight: 1.2 }}>{l.label}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
