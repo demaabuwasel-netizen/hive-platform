@@ -32,7 +32,7 @@ export default function NGOProfile() {
             <div className="relative flex items-start gap-8">
               {/* Logo */}
               <div className="flex-shrink-0">
-                <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 flex items-center justify-center border border-[rgba(255,183,3,0.15)]">
+                <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 flex items-center justify-center border border-[rgba(255,183,3,0.15)]">
                   {profile?.imageUrl ? (
                     <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
@@ -127,21 +127,21 @@ export default function NGOProfile() {
               <Edit2 size={13} /> Edit
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-5">
+          <div className="grid grid-cols-1 gap-3">
 
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">About the Organization</h3>
-              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">About the Organization</h3>
+              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Mission</h3>
-              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">Mission</h3>
+              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Communities Served</h3>
-              <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">Communities Served</h3>
+              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
             </div>
           </div>
         </motion.div>
@@ -157,9 +157,9 @@ export default function NGOProfile() {
               <Edit2 size={13} /> Edit
             </button>
           </div>
-          <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-2xl border border-[rgba(255,183,3,0.15)] p-7">
-            <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">What We Need Help With</h3>
-            <p className="text-[15px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
+          <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-xl border border-[rgba(255,183,3,0.15)] p-4">
+            <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-2">What We Need Help With</h3>
+            <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
           </div>
         </motion.div>
 
@@ -174,9 +174,9 @@ export default function NGOProfile() {
               <Edit2 size={13} /> Edit
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Focus Areas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Focus Areas</h3>
               {profile?.tags?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.tags.map((tag, i) => (
@@ -190,8 +190,8 @@ export default function NGOProfile() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Preferred Skills</h3>
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Preferred Skills</h3>
               {profile?.preferred_skills?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.preferred_skills.map((skill, i) => (
@@ -205,8 +205,8 @@ export default function NGOProfile() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-7">
-              <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#0D183D] mb-4">Project Types</h3>
+            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D] mb-3">Project Types</h3>
               {profile?.project_types?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.project_types.map((type, i) => (
@@ -233,10 +233,10 @@ export default function NGOProfile() {
               <Edit2 size={13} /> Edit
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {profile?.website ? (
               <a href={profile.website} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
                     <Globe size={18} className="text-[#3B82F6]" />
@@ -249,7 +249,7 @@ export default function NGOProfile() {
                 <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
                     <Globe size={18} className="text-[#3B82F6]" />
@@ -264,7 +264,7 @@ export default function NGOProfile() {
 
             {profile?.instagram ? (
               <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
                     <Heart size={18} className="text-[#EC4899]" />
@@ -277,7 +277,7 @@ export default function NGOProfile() {
                 <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
                     <Heart size={18} className="text-[#EC4899]" />
@@ -292,7 +292,7 @@ export default function NGOProfile() {
 
             {profile?.twitter ? (
               <a href={profile.twitter} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
+                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
                     <Target size={18} className="text-[#0891B2]" />
@@ -305,7 +305,7 @@ export default function NGOProfile() {
                 <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
               </a>
             ) : (
-              <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
                     <Target size={18} className="text-[#0891B2]" />
@@ -319,7 +319,7 @@ export default function NGOProfile() {
             )}
 
             {profile?.registrationNumber ? (
-              <div className="flex items-center gap-3 p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
                 <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
                   <Building2 size={18} className="text-[#6366F1]" />
                 </div>
@@ -329,7 +329,7 @@ export default function NGOProfile() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 rounded-2xl border border-[rgba(13,24,61,0.08)] bg-white">
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
                 <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
                   <Building2 size={18} className="text-[#6366F1]" />
                 </div>
