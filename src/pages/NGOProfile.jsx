@@ -295,14 +295,7 @@ export default function NGOProfile() {
         {/* SECTION 2: WHAT WE NEED */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Opportunities</h2>
-            <button
-              onClick={() => navigate('/profile/ngo/edit')}
-              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
-              <Edit2 size={13} /> Edit
-            </button>
-          </div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Opportunities</h2>
           <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-xl border border-[rgba(255,183,3,0.15)] p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">What We Need Help With</h3>
@@ -345,78 +338,173 @@ export default function NGOProfile() {
         {/* SECTION 3: TAGS & SKILLS */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Focus & Skills</h2>
-            <button
-              onClick={() => navigate('/profile/ngo/edit')}
-              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
-              <Edit2 size={13} /> Edit
-            </button>
-          </div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Focus & Skills</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Focus Areas */}
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Focus Areas</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'tags' && (
+                  <button
+                    onClick={() => startEdit('tags')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              {profile?.tags?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.tags.map((tag, i) => (
-                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
-                      {tag}
-                    </span>
-                  ))}
+              {editingField === 'tags' ? (
+                <div className="space-y-2">
+                  <select multiple
+                    value={editValues.tags || []}
+                    onChange={(e) => setEditValues({tags: Array.from(e.target.selectedOptions, option => option.value)})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
+                    <option value="Youth Empowerment">Youth Empowerment</option>
+                    <option value="Education">Education</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Environment">Environment</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Community Development">Community Development</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('tags')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                <>
+                  {profile?.tags?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {profile.tags.map((tag, i) => (
+                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  )}
+                </>
               )}
             </div>
 
+            {/* Preferred Skills */}
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Preferred Skills</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'preferred_skills' && (
+                  <button
+                    onClick={() => startEdit('preferred_skills')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              {profile?.preferred_skills?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.preferred_skills.map((skill, i) => (
-                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#3B82F6]/10 text-[#1E40AF]">
-                      {skill}
-                    </span>
-                  ))}
+              {editingField === 'preferred_skills' ? (
+                <div className="space-y-2">
+                  <select multiple
+                    value={editValues.preferred_skills || []}
+                    onChange={(e) => setEditValues({preferred_skills: Array.from(e.target.selectedOptions, option => option.value)})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
+                    <option value="Communication">Communication</option>
+                    <option value="Leadership">Leadership</option>
+                    <option value="Data Analysis">Data Analysis</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Programming">Programming</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('preferred_skills')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                <>
+                  {profile?.preferred_skills?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {profile.preferred_skills.map((skill, i) => (
+                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#3B82F6]/10 text-[#1E40AF]">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  )}
+                </>
               )}
             </div>
 
+            {/* Project Types */}
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Project Types</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'project_types' && (
+                  <button
+                    onClick={() => startEdit('project_types')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              {profile?.project_types?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.project_types.map((type, i) => (
-                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#10B981]/10 text-[#065F46]">
-                      {type}
-                    </span>
-                  ))}
+              {editingField === 'project_types' ? (
+                <div className="space-y-2">
+                  <select multiple
+                    value={editValues.project_types || []}
+                    onChange={(e) => setEditValues({project_types: Array.from(e.target.selectedOptions, option => option.value)})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#FFB703]">
+                    <option value="Website">Website</option>
+                    <option value="Mobile App">Mobile App</option>
+                    <option value="Research">Research</option>
+                    <option value="Content Creation">Content Creation</option>
+                    <option value="Event Planning">Event Planning</option>
+                    <option value="Fundraising">Fundraising</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('project_types')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                <>
+                  {profile?.project_types?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {profile.project_types.map((type, i) => (
+                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#10B981]/10 text-[#065F46]">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -425,14 +513,7 @@ export default function NGOProfile() {
         {/* SECTION 4: LINKS & SOCIAL */}
         <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
           viewport={{ once:true }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">Connect</h2>
-            <button
-              onClick={() => navigate('/profile/ngo/edit')}
-              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
-              <Edit2 size={13} /> Edit
-            </button>
-          </div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Connect</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {profile?.website ? (
               <a href={profile.website} target="_blank" rel="noopener noreferrer"
