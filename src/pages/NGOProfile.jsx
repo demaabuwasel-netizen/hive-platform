@@ -409,7 +409,7 @@ export default function NGOProfile() {
                   <TopicPicker
                     value={editValues.preferred_skills || []}
                     onChange={(newSkills) => setEditValues({preferred_skills: newSkills})}
-                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research']}
+                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research', 'Writing', 'Graphic Design', 'Video Production', 'Public Speaking', 'Social Media', 'Fundraising', 'Mentoring', 'Curriculum Development', 'Data Visualization', 'Web Development', 'Mobile Development', 'Business Analysis', 'Grant Writing', 'Copywriting', 'SEO', 'Content Strategy', 'User Experience', 'Strategic Planning', 'Community Engagement']}
                     placeholder="Search or add preferred skills…"
                   />
                   <div className="flex gap-2">
@@ -460,7 +460,7 @@ export default function NGOProfile() {
                   <TopicPicker
                     value={editValues.project_types || []}
                     onChange={(newTypes) => setEditValues({project_types: newTypes})}
-                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting']}
+                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting', 'Marketing Campaign', 'Social Media Strategy', 'Grant Writing', 'Policy Brief', 'Video Production', 'Podcast', 'Newsletter', 'Database Development', 'Data Analysis', 'Branding', 'Curriculum Design', 'Workshop', 'Mentorship Program', 'Community Survey', 'Annual Report', 'Strategic Plan', 'Budget Analysis', 'Case Study', 'Impact Assessment']}
                     placeholder="Search or add project types…"
                   />
                   <div className="flex gap-2">
