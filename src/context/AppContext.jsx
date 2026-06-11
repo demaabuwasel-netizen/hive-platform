@@ -69,12 +69,12 @@ export function AppProvider({ children }) {
     try {
       // ── Step 1: ensureUserRow (65 s outer cap via withStep) ─────────────────
       log('STEP 1 — BEFORE ensureUserRow  [withStep cap=65000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 65000)
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 180000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (65 s outer cap via withStep) ────────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=65000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 65000)
+      // ── Step 2: getUserRow (180 s outer cap via withStep) ───────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=180000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 180000)
       log('STEP 2 — AFTER  getUserRow    ',
         userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
@@ -146,7 +146,7 @@ export function AppProvider({ children }) {
       // ── Step 3: profile — fire-and-forget (never blocks loading) ──────────
       if (userRow.role === 'student') {
         log('STEP 3 — BEFORE loadStudentProfile (background, cap=4000ms)')
-        withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
+        withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 30000)
           .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadStudentProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadStudentProfile ERROR:', e.message))
       } else if (userRow.role === 'ngo') {
@@ -179,17 +179,17 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 140 s ───────────────────────────────────────────────
-    // Worst case: bail(3 s) + ensureUserRow(60 s) + getUserRow(60 s) = 123 s.
-    // The ceiling at 140 s is a fallback safety net for truly broken Supabase.
+    // ── Absolute ceiling: 300 s ───────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(180 s) + getUserRow(180 s) = 363 s.
+    // The ceiling at 300 s is a fallback safety net for very slow Supabase.
     // (temporary for demo — Supabase database is slow, will optimize after)
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 140 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 300 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 140000)
+    }, 300000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
