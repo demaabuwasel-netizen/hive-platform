@@ -329,11 +329,34 @@ export default function Opportunities() {
     if (!isNGO || !user?.id) return
     setLoading(true)
     setNgoError(null)
+
+    // Try to load from cache first
+    const cached = localStorage.getItem(`hive_ngo_opps_${user.id}`)
+    if (cached) {
+      try {
+        setNgoOpps(JSON.parse(cached))
+      } catch (e) {
+        console.warn('Failed to parse cached NGO opportunities')
+      }
+    }
+
+    // Fetch fresh data
     fetchNgoOpportunities(user.id)
-      .then(data => setNgoOpps(data ?? []))
+      .then(data => {
+        setNgoOpps(data ?? [])
+        // Cache it
+        try {
+          localStorage.setItem(`hive_ngo_opps_${user.id}`, JSON.stringify(data ?? []))
+        } catch (e) {
+          console.warn('Failed to cache NGO opportunities')
+        }
+      })
       .catch(err => {
         console.error('[Opportunities] fetchNgoOpportunities error:', err.message)
-        setNgoError(err.message)
+        // If we have cache, don't show error - just use cache silently
+        if (!cached) {
+          setNgoError(err.message)
+        }
       })
       .finally(() => setLoading(false))
   }, [isNGO, user?.id])
@@ -342,6 +365,32 @@ export default function Opportunities() {
   useEffect(() => {
     if (isNGO) return
     setLoading(true)
+
+    // Try to load from cache first
+    const cached = localStorage.getItem('hive_active_opps')
+    if (cached) {
+      try {
+        const cachedData = JSON.parse(cached)
+        const cards = cachedData.map(opp => ({
+          id:            opp.id,
+          ngoId:         opp.ngoId,
+          opportunityId: opp.id,
+          name:          opp.orgName,
+          cat:           opp.category  ?? '',
+          loc:           opp.location  ?? '',
+          hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
+          workMode:      opp.workMode ?? '',
+          desc:          opp.description || opp.missionImpact || '',
+          skills:        (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
+          match:         profile ? computeMatch(profile, opp).score : null,
+          mission:       opp.missionImpact || opp.description || '',
+        }))
+        setOpps(cards)
+      } catch (e) {
+        console.warn('Failed to parse cached active opportunities')
+      }
+    }
+
     Promise.all([
       fetchActiveOpportunities(),
       user?.id ? fetchSavedIds(user.id) : Promise.resolve(new Set()),
@@ -362,6 +411,12 @@ export default function Opportunities() {
       }))
       setOpps(cards)
       setSavedIds(ids)
+      // Cache fresh data
+      try {
+        localStorage.setItem('hive_active_opps', JSON.stringify(raw))
+      } catch (e) {
+        console.warn('Failed to cache active opportunities')
+      }
     }).catch(() => {}).finally(() => setLoading(false))
   }, [isNGO, user?.id, profile])
 
