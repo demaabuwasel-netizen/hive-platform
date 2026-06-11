@@ -67,14 +67,14 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── Step 1: ensureUserRow (5 s outer cap via withStep) ─────────────────
-      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=5000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 5000)
+      // ── Step 1: ensureUserRow (12 s outer cap via withStep) ─────────────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=12000ms]')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 12000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (5 s outer cap via withStep) ────────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=5000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 5000)
+      // ── Step 2: getUserRow (12 s outer cap via withStep) ────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=12000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 12000)
       log('STEP 2 — AFTER  getUserRow    ',
         userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
@@ -154,16 +154,16 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 15 s ────────────────────────────────────────────────
-    // Worst case: bail(3 s) + ensureUserRow(5 s) + getUserRow(5 s) = 13 s.
-    // The ceiling at 15 s gives a 2 s buffer and should NEVER fire in practice.
+    // ── Absolute ceiling: 25 s ────────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(12 s) + getUserRow(12 s) = 27 s.
+    // The ceiling at 25 s is a fallback safety net for truly broken Supabase.
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 15 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 25 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 15000)
+    }, 25000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
