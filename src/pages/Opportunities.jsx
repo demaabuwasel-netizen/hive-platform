@@ -42,59 +42,50 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         onClick={e => e.stopPropagation()}>
 
         {/* Header Section */}
-        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7 flex items-start justify-between gap-6">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold text-[#0D183D] mb-2 leading-tight">{opp.title}</h1>
-            <div className="flex items-center gap-4">
-              <GradientAvatar name={opp.orgName} size={40} radius="0.625rem"/>
-              <div>
-                <p className="text-[14px] font-semibold text-[#0D183D]">{opp.orgName}</p>
-                {opp.category && <p className="text-[12px] text-[#4B6382]">{opp.category}</p>}
+        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7">
+          <div className="flex items-start justify-between gap-6 mb-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-[#0D183D] mb-3 leading-tight">{opp.title}</h1>
+              <div className="flex items-center gap-4">
+                <GradientAvatar name={opp.orgName} size={40} radius="0.625rem"/>
+                <div>
+                  <p className="text-[15px] font-bold text-[#0D183D]">{opp.orgName}</p>
+                  {opp.category && <p className="text-[12px] text-[#4B6382]">{opp.category}</p>}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-start gap-3 flex-shrink-0">
-            <Link to={`/ngo-profile/${opp.ngoId}`}
-              className="px-4 py-2 rounded-lg text-[12px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors whitespace-nowrap">
-              View NGO
-            </Link>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
-              <X size={20}/>
-            </button>
+            </div>
+
+          <div className="flex items-center gap-3 justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              {opp.location && (
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.location}</span>
+              )}
+              {opp.workMode && (
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.workMode}</span>
+              )}
+              {opp.weeklyHours && (
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.weeklyHours}</span>
+              )}
+              {opp.duration && (
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.duration}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to={`/ngo-profile/${opp.ngoId}`}
+                className="px-3 py-2 rounded-lg text-[12px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors whitespace-nowrap">
+                View NGO
+              </Link>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
+                <X size={20}/>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="space-y-8">
-
-            {/* Quick Info Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {opp.workMode && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Work Mode</p>
-                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.workMode}</p>
-                </div>
-              )}
-              {opp.location && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Location</p>
-                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.location}</p>
-                </div>
-              )}
-              {opp.weeklyHours && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Hours/Week</p>
-                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.weeklyHours}</p>
-                </div>
-              )}
-              {opp.duration && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Duration</p>
-                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.duration}</p>
-                </div>
-              )}
-            </div>
 
             {/* Description */}
             {opp.description && (
