@@ -95,33 +95,41 @@ export async function loadStudentProfile(userId, { signal } = {}) {
 function dbToNgo(row) {
   if (!row) return null
   return {
-    name:        row.name,
-    location:    row.location,
-    phone:       row.phone,
-    description: row.description,
-    helpNeeded:  row.help_needed,
-    imageUrl:    row.image_url,
-    tags:        row.tags ?? [],
-    website:     row.website,
-    instagram:   row.instagram,
-    twitter:     row.twitter,
+    name:             row.name,
+    location:         row.location,
+    phone:            row.phone,
+    description:      row.description,
+    mission:          row.mission,
+    communities:      row.communities,
+    helpNeeded:       row.help_needed,
+    imageUrl:         row.image_url,
+    tags:             row.tags ?? [],
+    preferred_skills: row.preferred_skills ?? [],
+    project_types:    row.project_types ?? [],
+    website:          row.website,
+    instagram:        row.instagram,
+    twitter:          row.twitter,
   }
 }
 
 function ngoToDb(userId, profile) {
   return {
-    user_id:     userId,
-    name:        profile.name        ?? null,
-    location:    profile.location    ?? null,
-    phone:       profile.phone       ?? null,
-    description: profile.description ?? null,
-    help_needed: profile.helpNeeded  ?? null,
-    image_url:   profile.imageUrl    ?? null,
-    tags:        profile.tags        ?? [],
-    website:     profile.website     ?? null,
-    instagram:   profile.instagram   ?? null,
-    twitter:     profile.twitter     ?? null,
-    updated_at:  new Date().toISOString(),
+    user_id:         userId,
+    name:            profile.name            ?? null,
+    location:        profile.location        ?? null,
+    phone:           profile.phone           ?? null,
+    description:     profile.description     ?? null,
+    mission:         profile.mission         ?? null,
+    communities:     profile.communities     ?? null,
+    help_needed:     profile.helpNeeded      ?? null,
+    image_url:       profile.imageUrl        ?? null,
+    tags:            profile.tags            ?? [],
+    preferred_skills: profile.preferred_skills ?? [],
+    project_types:   profile.project_types   ?? [],
+    website:         profile.website         ?? null,
+    instagram:       profile.instagram       ?? null,
+    twitter:         profile.twitter         ?? null,
+    updated_at:      new Date().toISOString(),
   }
 }
 
