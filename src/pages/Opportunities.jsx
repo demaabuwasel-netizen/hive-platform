@@ -577,7 +577,7 @@ export default function Opportunities() {
                     </div>
 
                     <div className="flex gap-2 mt-1">
-                      <button onClick={() => setViewingOpp(ngo)}
+                      <button onClick={() => navigate(`/opportunities/${ngo.id}`)}
                         className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
                         style={{ background:'#FFB703' }}>
                         View details →
