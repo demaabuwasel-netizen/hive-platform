@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
   MessageCircle, Settings, Briefcase, Users, BarChart2, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight,
+  X, CheckCircle2, Clock, ChevronRight, Globe,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -132,67 +132,65 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         <div className="flex-1 overflow-y-auto bg-[#F8F9FB]">
           <div className="px-8 py-10 space-y-8 max-w-3xl mx-auto">
 
-            {/* ━━━━━━━━━━━━━━━━━━ DESCRIPTION (MAIN FOCUS) ━━━━━━━━━━━━━━━━━━ */}
-            {opp.description && (
+            {/* ━━━━━━━━━━━━━━━━━━ ABOUT THIS ROLE ━━━━━━━━━━━━━━━━━━ */}
+            {(opp.description || opp.missionImpact) && (
               <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
                 <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">About this role</h2>
-                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
+                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {opp.description || opp.missionImpact}
+                </p>
+              </div>
+            )}
+
+            {/* ━━━━━━━━━━━━━━━━━━ MISSION & IMPACT ━━━━━━━━━━━━━━━━━━ */}
+            {opp.missionImpact && opp.description && (
+              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Why this matters</h2>
+                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
               </div>
             )}
 
             {/* ━━━━━━━━━━━━━━━━━━ QUICK INFO CARDS ━━━━━━━━━━━━━━━━━━ */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {opp.location && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
                   <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Location</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.location}</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.location}</p>
                 </div>
               )}
               {opp.workMode && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Mode</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.workMode}</p>
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Work Mode</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.workMode}</p>
                 </div>
               )}
               {opp.weeklyHours && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Hours</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Hours/Week</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
                 </div>
               )}
               {opp.duration && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
                   <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Duration</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.duration}</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.duration}</p>
                 </div>
               )}
               {opp.deadline && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
                   <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Deadline</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{new Date(opp.deadline).toLocaleDateString()}</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">
+                    {new Date(opp.deadline).toLocaleDateString()}
+                  </p>
                 </div>
               )}
-              {opp.field && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Field</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.field}</p>
-                </div>
-              )}
-              {opp.category && (
-                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+              {(opp.category || opp.field) && (
+                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
                   <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Category</p>
-                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.category}</p>
+                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.category || opp.field || 'Not specified'}</p>
                 </div>
               )}
             </div>
-
-            {/* ━━━━━━━━━━━━━━━━━━ MISSION & IMPACT ━━━━━━━━━━━━━━━━━━ */}
-            {opp.missionImpact && (
-              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Mission & impact</h2>
-                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
-              </div>
-            )}
 
             {/* ━━━━━━━━━━━━━━━━━━ REQUIRED SKILLS ━━━━━━━━━━━━━━━━━━ */}
             {opp.skills && opp.skills.length > 0 && (
@@ -233,7 +231,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
             {/* ━━━━━━━━━━━━━━━━━━ LANGUAGES ━━━━━━━━━━━━━━━━━━ */}
             {opp.languages && opp.languages.length > 0 && (
               <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Languages</h2>
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Required languages</h2>
                 <div className="flex flex-wrap gap-3">
                   {opp.languages.map((lang, i) => (
                     <span key={i} className="px-4 py-2.5 rounded-full text-[13px] font-semibold bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/30">
@@ -244,7 +242,6 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
               </div>
             )}
 
-            {/* Spacing for scrolled content */}
             <div className="h-4" />
           </div>
         </div>
@@ -505,18 +502,10 @@ export default function Opportunities() {
       user?.id ? fetchSavedIds(user.id) : Promise.resolve(new Set()),
     ]).then(([raw, ids]) => {
       const cards = raw.map(opp => ({
-        id:            opp.id,
-        ngoId:         opp.ngoId,
-        opportunityId: opp.id,
-        name:          opp.orgName,
-        cat:           opp.category  ?? '',
-        loc:           opp.location  ?? '',
-        hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
-        workMode:      opp.workMode ?? '',
-        desc:          opp.description || opp.missionImpact || '',
-        skills:        (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
-        match:         profile ? computeMatch(profile, opp).score : null,
-        mission:       opp.missionImpact || opp.description || '',
+        // ── All original fields for modal ──
+        ...opp,
+        // ── Computed fields for card display ──
+        match: profile ? computeMatch(profile, opp).score : null,
       }))
       setOpps(cards)
       setSavedIds(ids)
@@ -732,7 +721,7 @@ export default function Opportunities() {
                     {/* Top: Logo + Title + Save */}
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
-                        <GradientAvatar name={ngo.name} size={56} radius="0.875rem"/>
+                        <GradientAvatar name={ngo.orgName} size={56} radius="0.875rem"/>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-[15px] font-bold text-[#0D183D] leading-tight mb-1 line-clamp-2 group-hover:text-[#FFB703] transition-colors">
@@ -741,7 +730,7 @@ export default function Opportunities() {
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
                           className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
-                          {ngo.name}
+                          {ngo.orgName}
                         </button>
                       </div>
                       <button
@@ -762,25 +751,31 @@ export default function Opportunities() {
                         </span>
                       )}
                       <div className="flex items-center gap-3 flex-wrap text-[12px] text-[#4B6382]">
-                        {ngo.loc && (
+                        {ngo.location && (
                           <span className="flex items-center gap-1.5 whitespace-nowrap">
                             <MapPin size={13} className="text-[#FFB703]" />
-                            {ngo.loc}
+                            {ngo.location}
                           </span>
                         )}
-                        {ngo.hours && (
+                        {ngo.workMode && (
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <Globe size={13} className="text-[#FFB703]" />
+                            {ngo.workMode}
+                          </span>
+                        )}
+                        {ngo.weeklyHours && (
                           <span className="flex items-center gap-1.5 whitespace-nowrap">
                             <Clock size={13} className="text-[#FFB703]" />
-                            {ngo.hours}
+                            {ngo.weeklyHours} hrs/week
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Description */}
-                    {ngo.desc && (
+                    {/* Description Preview */}
+                    {(ngo.description || ngo.missionImpact) && (
                       <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">
-                        {ngo.desc}
+                        {ngo.description || ngo.missionImpact}
                       </p>
                     )}
 
