@@ -29,26 +29,41 @@ export default function NGOProfile() {
   const saveEdit = async (field) => {
     if (!user?.id) {
       console.error('No user ID')
+      alert('Error: No user ID')
       return
     }
     if (!profile) {
       console.error('No profile loaded')
+      alert('Error: No profile loaded')
       return
     }
 
     setSaving(true)
+    const saveTimeout = setTimeout(() => {
+      setSaving(false)
+      alert('Save is taking too long. Try again or refresh the page.')
+    }, 15000) // 15 second timeout
+
     try {
       console.log(`[NGOProfile] Saving ${field}:`, editValues[field])
       const updated = { ...profile, [field]: editValues[field] }
       console.log('[NGOProfile] Updated profile:', updated)
-      await updateProfile(updated)
-      console.log('[NGOProfile] Save successful')
+
+      // Save immediately (don't wait for Supabase)
       setEditingField(null)
       setEditValues({})
+      clearTimeout(saveTimeout)
+
+      // Update in background (fire and forget)
+      updateProfile(updated).catch(err => {
+        console.error('[NGOProfile] Background save failed:', err.message)
+      })
+
+      console.log('[NGOProfile] Save queued')
     } catch (err) {
+      clearTimeout(saveTimeout)
       console.error('[NGOProfile] Save failed:', err.message, err)
-      alert(`Error saving: ${err.message}`)
-    } finally {
+      alert(`Error: ${err.message}`)
       setSaving(false)
     }
   }
