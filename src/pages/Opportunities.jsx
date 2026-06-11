@@ -45,12 +45,15 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7">
           <div className="flex items-start justify-between gap-6 mb-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold text-[#0D183D] mb-3 leading-tight">{opp.title}</h1>
-              <div className="flex items-center gap-4">
-                <GradientAvatar name={opp.orgName} size={40} radius="0.625rem"/>
+              <p className="text-[13px] font-extrabold text-[#FFB703] mb-2 uppercase tracking-wider">
+                {opp.orgName || opp.name || 'Organization'}
+              </p>
+              <h1 className="text-4xl font-extrabold text-[#0D183D] mb-4 leading-tight">{opp.title}</h1>
+              <div className="flex items-center gap-3">
+                <GradientAvatar name={opp.orgName || opp.name} size={44} radius="0.625rem"/>
                 <div>
-                  <p className="text-[15px] font-bold text-[#0D183D]">{opp.orgName}</p>
-                  {opp.category && <p className="text-[12px] text-[#4B6382]">{opp.category}</p>}
+                  <p className="text-[16px] font-bold text-[#0D183D]">{opp.orgName || opp.name}</p>
+                  {opp.category && <p className="text-[13px] text-[#4B6382]">{opp.category}</p>}
                 </div>
               </div>
             </div>
