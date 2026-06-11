@@ -83,18 +83,18 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         onClick={e => e.stopPropagation()}>
 
         {/* Header Section */}
-        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7">
+        <div className="sticky top-0 bg-gradient-to-br from-[#0D183D] to-[#1a2952] border-b border-[rgba(13,24,61,0.2)] px-8 py-7">
           <div className="flex items-start justify-between gap-6 mb-4">
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-extrabold text-[#FFB703] mb-2 uppercase tracking-wider">
                 {opp.orgName || opp.name || 'Organization'}
               </p>
-              <h1 className="text-4xl font-extrabold text-[#0D183D] mb-4 leading-tight">{opp.title}</h1>
+              <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">{opp.title}</h1>
               <div className="flex items-center gap-3">
                 <GradientAvatar name={opp.orgName || opp.name} size={44} radius="0.625rem"/>
                 <div>
-                  <p className="text-[16px] font-bold text-[#0D183D]">{opp.orgName || opp.name}</p>
-                  {opp.category && <p className="text-[13px] text-[#4B6382]">{opp.category}</p>}
+                  <p className="text-[16px] font-bold text-white">{opp.orgName || opp.name}</p>
+                  {opp.category && <p className="text-[13px] text-[#B0CCFF]">{opp.category}</p>}
                 </div>
               </div>
             </div>
@@ -103,16 +103,16 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
           <div className="flex items-center gap-3 justify-between">
             <div className="flex items-center gap-2 flex-wrap">
               {opp.location && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.location}</span>
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.location}</span>
               )}
               {opp.workMode && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.workMode}</span>
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.workMode}</span>
               )}
               {opp.weeklyHours && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.weeklyHours}</span>
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.weeklyHours}</span>
               )}
               {opp.duration && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.duration}</span>
+                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.duration}</span>
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -761,26 +761,6 @@ export default function Opportunities() {
                       <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">
                         {ngo.desc}
                       </p>
-                    )}
-
-                    {/* Skills - Formatted properly */}
-                    {ngo.skills && ngo.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {ngo.skills.slice(0, 3).map((s, idx) => {
-                          const { name, level } = parseSkill(s)
-                          if (!name) return null
-                          return (
-                            <span key={idx} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.06)]">
-                              {level ? `${name} · ${level}` : name}
-                            </span>
-                          )
-                        })}
-                        {ngo.skills.length > 3 && (
-                          <span className="text-[11px] font-medium px-2.5 py-1.5 text-[#4B6382]">
-                            +{ngo.skills.length - 3} more
-                          </span>
-                        )}
-                      </div>
                     )}
 
                     {/* View Details Button */}
