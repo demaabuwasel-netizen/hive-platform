@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -33,12 +33,12 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.5)', backdropFilter:'blur(8px)' }}
+      style={{ background:'rgba(10,18,48,0.6)', backdropFilter:'blur(12px)' }}
       onClick={onClose}>
-      <motion.div initial={{ opacity:0, scale:0.97, y:20 }} animate={{ opacity:1, scale:1, y:0 }}
-        exit={{ opacity:0, scale:0.97 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 24px 80px rgba(10,18,48,0.25)', maxHeight:'90vh' }}
+      <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
+        exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
+        className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col"
+        style={{ boxShadow:'0 24px 120px rgba(10,18,48,0.35)', maxHeight:'95vh' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -299,6 +299,8 @@ function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
 export default function Opportunities() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const filterNgoId = searchParams.get('ngo')
   const isNGO = user?.role === 'ngo'
 
   const [q, setQ]           = useState('')
@@ -380,7 +382,8 @@ export default function Opportunities() {
 
   const filtered = opps.filter(n =>
     (cat === 'All' || n.cat === cat) &&
-    (n.name.toLowerCase().includes(q.toLowerCase()) || n.desc.toLowerCase().includes(q.toLowerCase()))
+    (n.name.toLowerCase().includes(q.toLowerCase()) || n.desc.toLowerCase().includes(q.toLowerCase())) &&
+    (!filterNgoId || n.ngoId === filterNgoId)
   )
 
   return (
@@ -577,7 +580,7 @@ export default function Opportunities() {
                     </div>
 
                     <div className="flex gap-2 mt-1">
-                      <button onClick={() => navigate(`/opportunities/${ngo.id}`)}
+                      <button onClick={() => setViewingOpp(ngo)}
                         className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
                         style={{ background:'#FFB703' }}>
                         View details →
