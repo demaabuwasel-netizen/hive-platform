@@ -75,20 +75,11 @@ function NGOOpportunityCard({ opp, onViewDetails }) {
         </h3>
         <button
           onClick={handleSaveClick}
-          disabled={toggling === opp.id}
-          className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors flex-shrink-0 disabled:opacity-50"
+          className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors flex-shrink-0"
         >
-          {isSaved ? (
-            <div className="w-[18px] h-[18px] fill-[#FFB703] text-[#FFB703]">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-          ) : (
-            <svg className="w-[18px] h-[18px] text-[#4B6382]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-5-7 5V5z" />
-            </svg>
-          )}
+          <svg className="w-[18px] h-[18px] text-[#4B6382]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-5-7 5V5z" />
+          </svg>
         </button>
       </div>
 
