@@ -67,14 +67,14 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── Step 1: ensureUserRow (12 s outer cap via withStep) ─────────────────
-      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=12000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 12000)
+      // ── Step 1: ensureUserRow (35 s outer cap via withStep) ─────────────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=35000ms]')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 35000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (12 s outer cap via withStep) ────────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=12000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 12000)
+      // ── Step 2: getUserRow (35 s outer cap via withStep) ────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=35000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 35000)
       log('STEP 2 — AFTER  getUserRow    ',
         userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
@@ -154,16 +154,17 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 25 s ────────────────────────────────────────────────
-    // Worst case: bail(3 s) + ensureUserRow(12 s) + getUserRow(12 s) = 27 s.
-    // The ceiling at 25 s is a fallback safety net for truly broken Supabase.
+    // ── Absolute ceiling: 75 s ────────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(30 s) + getUserRow(30 s) = 63 s.
+    // The ceiling at 75 s is a fallback safety net for truly broken Supabase.
+    // (temporary for demo — can optimize database later)
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 25 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 75 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 25000)
+    }, 75000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
