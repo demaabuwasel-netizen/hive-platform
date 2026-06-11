@@ -1,16 +1,45 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit2, Camera, ExternalLink } from 'lucide-react'
+import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit2, Camera, ExternalLink, X, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import cardsBackground from '../assets/cards_background.png'
 
 export default function NGOProfile() {
-  const { user, profile } = useApp()
+  const { user, profile, updateProfile } = useApp()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
+  const [editingField, setEditingField] = useState(null)
+  const [editValues, setEditValues] = useState({})
+  const [saving, setSaving] = useState(false)
+
   const displayName = profile?.name || user?.name || 'Organization'
+
+  const startEdit = (field) => {
+    setEditingField(field)
+    setEditValues({ [field]: profile?.[field] || '' })
+  }
+
+  const cancelEdit = () => {
+    setEditingField(null)
+    setEditValues({})
+  }
+
+  const saveEdit = async (field) => {
+    if (!user?.id) return
+    setSaving(true)
+    try {
+      const updated = { ...profile, [field]: editValues[field] }
+      await updateProfile(updated)
+      setEditingField(null)
+      setEditValues({})
+    } catch (err) {
+      console.error('Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <main className="flex-1 overflow-y-auto bg-[#FAFBFC]">
@@ -132,37 +161,115 @@ export default function NGOProfile() {
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">About the Organization</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'description' && (
+                  <button
+                    onClick={() => startEdit('description')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
+              {editingField === 'description' ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editValues.description || ''}
+                    onChange={(e) => setEditValues({description: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
+                    rows="4"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('description')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
+              )}
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Mission</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'mission' && (
+                  <button
+                    onClick={() => startEdit('mission')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
+              {editingField === 'mission' ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editValues.mission || ''}
+                    onChange={(e) => setEditValues({mission: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
+                    rows="4"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('mission')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
+              )}
             </div>
 
             <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Communities Served</h3>
-                <button
-                  onClick={() => navigate('/profile/ngo/edit')}
-                  className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
-                </button>
+                {editingField !== 'communities' && (
+                  <button
+                    onClick={() => startEdit('communities')}
+                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
+                    <Edit2 size={12} />
+                  </button>
+                )}
               </div>
-              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
+              {editingField === 'communities' ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editValues.communities || ''}
+                    onChange={(e) => setEditValues({communities: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
+                    rows="4"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit('communities')}
+                      disabled={saving}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      <Check size={12} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <X size={12} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
+              )}
             </div>
           </div>
         </motion.div>
@@ -181,13 +288,39 @@ export default function NGOProfile() {
           <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-xl border border-[rgba(255,183,3,0.15)] p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">What We Need Help With</h3>
-              <button
-                onClick={() => navigate('/profile/ngo/edit')}
-                className="p-1 rounded-lg hover:bg-white/50 transition-colors text-[#FFB703]">
-                <Edit2 size={12} />
-              </button>
+              {editingField !== 'helpNeeded' && (
+                <button
+                  onClick={() => startEdit('helpNeeded')}
+                  className="p-1 rounded-lg hover:bg-white/50 transition-colors text-[#FFB703]">
+                  <Edit2 size={12} />
+                </button>
+              )}
             </div>
-            <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
+            {editingField === 'helpNeeded' ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editValues.helpNeeded || ''}
+                  onChange={(e) => setEditValues({helpNeeded: e.target.value})}
+                  className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
+                  rows="4"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveEdit('helpNeeded')}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                    <Check size={12} /> Save
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                    <X size={12} /> Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
+            )}
           </div>
         </motion.div>
 
