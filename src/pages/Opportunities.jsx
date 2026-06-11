@@ -539,57 +539,69 @@ export default function Opportunities() {
                   <motion.div key={ngo.id}
                     initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
                     transition={{ delay:i*0.05, duration:0.3 }}
-                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex flex-col gap-3 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:-translate-y-0.5 transition-all duration-200">
+                    onClick={() => setViewingOpp(ngo)}
+                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex flex-col gap-4 hover:shadow-[0_8px_32px_rgba(13,24,61,0.12)] hover:-translate-y-1 transition-all duration-200 cursor-pointer group">
 
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <GradientAvatar name={ngo.name} size={40} radius="0.65rem"/>
-                        <div className="min-w-0">
-                          <p className="text-[13px] font-bold text-[#0D183D] leading-snug truncate">{ngo.name}</p>
-                          <p className="text-[11px] text-[#4B6382]">{ngo.cat}</p>
-                        </div>
-                      </div>
+                    {/* Header with logo and save button */}
+                    <div className="flex items-start justify-between gap-3">
+                      <GradientAvatar name={ngo.name} size={48} radius="0.75rem"/>
                       <button
-                        onClick={() => toggleSave(ngo)}
+                        onClick={(e) => { e.stopPropagation(); toggleSave(ngo) }}
                         disabled={toggling === ngo.id}
-                        className="p-1.5 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40"
-                        aria-label={savedIds.has(ngo.id) ? 'Unsave' : 'Save'}>
-                        <BookmarkIcon size={14} className={
+                        className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40">
+                        <BookmarkIcon size={16} className={
                           savedIds.has(ngo.id) ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'
                         }/>
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* Title and organization */}
+                    <div>
+                      <h3 className="text-[14px] font-extrabold text-[#0D183D] leading-snug mb-1 group-hover:text-[#FFB703] transition-colors line-clamp-2">
+                        {ngo.title}
+                      </h3>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
+                        className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
+                        {ngo.name}
+                      </button>
+                    </div>
+
+                    {/* Key info */}
+                    <div className="flex flex-wrap items-center gap-3 text-[11px]">
                       {ngo.match !== null && (
-                        <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                        <span className="font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
                           {ngo.match}% match
                         </span>
                       )}
-                      {ngo.loc && <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><MapPin size={10}/>{ngo.loc}</span>}
-                      {ngo.hours && <span className="text-[11px] text-[#4B6382] flex items-center gap-1"><Clock size={10}/>{ngo.hours}</span>}
+                      {ngo.loc && <span className="text-[#4B6382] flex items-center gap-1"><MapPin size={10}/>{ngo.loc}</span>}
+                      {ngo.hours && <span className="text-[#4B6382] flex items-center gap-1"><Clock size={10}/>{ngo.hours}</span>}
                     </div>
 
-                    <p className="text-[12px] text-[#4B6382] leading-relaxed flex-1 line-clamp-3">{ngo.desc}</p>
+                    {/* Description */}
+                    <p className="text-[13px] text-[#4B6382] leading-relaxed flex-1 line-clamp-3">{ngo.desc}</p>
 
-                    <div className="flex flex-wrap gap-1.5">
-                      {ngo.skills.map(s => (
-                        <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border border-[rgba(13,24,61,0.08)]"
-                          style={{ background:'#F8F9FB', color:'#4B6382' }}>{s}</span>
-                      ))}
-                    </div>
+                    {/* Skills */}
+                    {ngo.skills && ngo.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {ngo.skills.slice(0, 2).map((s, idx) => (
+                          <span key={idx} className="text-[11px] font-semibold px-2 py-1 rounded-lg border border-[rgba(13,24,61,0.08)]"
+                            style={{ background:'#F8F9FB', color:'#4B6382' }}>
+                            {typeof s === 'string' ? s : s.name}
+                          </span>
+                        ))}
+                        {ngo.skills.length > 2 && (
+                          <span className="text-[11px] text-[#4B6382] px-2 py-1">+{ngo.skills.length - 2} more</span>
+                        )}
+                      </div>
+                    )}
 
-                    <div className="flex gap-2 mt-1">
-                      <button onClick={() => setViewingOpp(ngo)}
-                        className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white text-center transition-all hover:opacity-90"
-                        style={{ background:'#FFB703' }}>
-                        View details →
-                      </button>
-                      <button onClick={() => navigate('/matches')}
-                        className="px-3 py-2 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
-                        <ChevronRight size={14}/>
-                      </button>
-                    </div>
+                    {/* Button */}
+                    <button onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
+                      className="w-full py-3 rounded-xl text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
+                      style={{ background:'#FFB703', boxShadow: '0 4px 12px rgba(255,183,3,0.2)' }}>
+                      View details →
+                    </button>
                   </motion.div>
                 ))}
               </div>
