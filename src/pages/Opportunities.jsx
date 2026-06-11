@@ -3,10 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  MessageCircle, Settings, Briefcase, Users, BarChart2, Search,
-  MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight,
+  Search, MapPin, Clock, Bookmark as BookmarkIcon, X, CheckCircle2,
+  Globe, Zap, RefreshCw, ExternalLink, ChevronRight, AlertCircle
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -14,175 +12,237 @@ import { fetchActiveOpportunities, fetchNgoOpportunities } from '../services/opp
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 
-const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
+const CATEGORIES = ['All', 'Technology', 'Education', 'Environment', 'Healthcare', 'Youth Services', 'Accessibility']
 
-// Parse skill - handle JSON strings, objects, or garbage
+// ─── Skill Parser ──────────────────────────────────────────────────────────
 function parseSkill(s) {
   if (!s) return { name: '', level: '' }
-
-  // If it's a string that looks like JSON
   if (typeof s === 'string') {
     if (s.startsWith('{')) {
       try {
         const parsed = JSON.parse(s)
-        return {
-          name: parsed.name || '',
-          level: parsed.level || ''
-        }
+        return { name: parsed.name || '', level: parsed.level || '' }
       } catch (e) {
-        // If it fails to parse, just return the string as name
         return { name: s, level: '' }
       }
     }
     return { name: s, level: '' }
   }
-
-  // If it's already an object
   if (typeof s === 'object') {
-    // Check if it has a nested "name" field that's a JSON string
     if (s.name && typeof s.name === 'string' && s.name.startsWith('{')) {
       try {
         const nested = JSON.parse(s.name)
-        return {
-          name: nested.name || s.name,
-          level: s.level || nested.level || ''
-        }
+        return { name: nested.name || s.name, level: s.level || nested.level || '' }
       } catch (e) {
         return { name: s.name || '', level: s.level || '' }
       }
     }
     return { name: s.name || '', level: s.level || '' }
   }
-
   return { name: '', level: '' }
 }
 
-function generateAppMessage(user, ngo) {
-  const name = user?.name || 'I'
-  const first = name.split(' ')[0]
-  const profile = user
-  const field = profile?.field || 'my field'
-  const skills = Array.isArray(profile?.skills)
-    ? profile.skills.slice(0,2).join(' and ')
-    : 'relevant skills'
-  return `Hi ${ngo.name} team,\n\nMy name is ${first} and I'm studying ${field}. I came across your opportunity through Hive and I'd love to contribute to your mission.\n\n${ngo.mission}\n\nMy background in ${skills} means I can contribute meaningfully from day one. I'm drawn to the chance to create real impact — not just build a portfolio, but genuinely help people.\n\nI'm available flexibly and excited about the possibility of working together.\n\nLooking forward to hearing from you,\n${first}`
+// ─── Skill Chip Component ──────────────────────────────────────────────────
+function SkillChip({ skill }) {
+  const { name, level } = parseSkill(skill)
+  if (!name) return null
+  return (
+    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
+      {level ? `${name} · ${level}` : name}
+    </span>
+  )
 }
 
-// ─── Opportunity Detail Modal ────────────────────────────────────────────────
-
-function OpportunityDetailModal({ opp, onClose, onApply }) {
+// ─── Info Pill Component ────────────────────────────────────────────────────
+function InfoPill({ icon: Icon, label, value }) {
+  if (!value) return null
   return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.7)', backdropFilter:'blur(12px)' }}
-      onClick={onClose}>
-      <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
-        exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight:'90vh' }}
-        onClick={e => e.stopPropagation()}>
+    <div className="flex items-center gap-2">
+      <Icon size={14} className="text-[#FFB703] flex-shrink-0" />
+      <span className="text-[13px] text-[#4B6382]">{value}</span>
+    </div>
+  )
+}
 
-        {/* Header Section */}
-        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7">
-          <div className="flex items-start justify-between gap-6 mb-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-extrabold text-[#FFB703] mb-2 uppercase tracking-wider">
-                {opp.orgName || opp.name || 'Organization'}
+// ─── Opportunity Card (Redesigned) ────────────────────────────────────────
+function OpportunityCard({ opp, isSaved, onToggleSave, onViewDetails, toggling }) {
+  const handleSaveClick = (e) => {
+    e.stopPropagation()
+    onToggleSave(opp)
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 hover:shadow-lg hover:border-[rgba(13,24,61,0.12)] transition-all duration-200 cursor-pointer group"
+      onClick={() => onViewDetails(opp)}
+    >
+      {/* Top Row: Logo + Title + Save */}
+      <div className="flex gap-4 mb-4">
+        <div className="flex-shrink-0">
+          <GradientAvatar name={opp.name} size={48} radius="0.75rem" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[15px] font-bold text-[#0D183D] leading-tight line-clamp-2 group-hover:text-[#FFB703] transition-colors">
+            {opp.title}
+          </h3>
+          <p className="text-[13px] font-medium text-[#FFB703] mt-1">{opp.name}</p>
+        </div>
+        <button
+          onClick={handleSaveClick}
+          disabled={toggling === opp.id}
+          className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors flex-shrink-0 disabled:opacity-50"
+        >
+          <BookmarkIcon
+            size={18}
+            className={isSaved ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'}
+          />
+        </button>
+      </div>
+
+      {/* Match Badge + Meta Row */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        {opp.match !== null && (
+          <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 whitespace-nowrap">
+            {opp.match}% match
+          </span>
+        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          <InfoPill icon={MapPin} value={opp.loc} />
+          <InfoPill icon={Globe} value={opp.workMode} />
+          <InfoPill icon={Clock} value={opp.hours} />
+        </div>
+      </div>
+
+      {/* Description Preview */}
+      {opp.desc && (
+        <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 mb-4">
+          {opp.desc}
+        </p>
+      )}
+
+      {/* Skills */}
+      {opp.skills && opp.skills.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {opp.skills.slice(0, 3).map((s, idx) => (
+            <SkillChip key={idx} skill={s} />
+          ))}
+          {opp.skills.length > 3 && (
+            <span className="text-[11px] font-medium text-[#4B6382] px-2.5 py-1.5">
+              +{opp.skills.length - 3} more
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* View Details Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onViewDetails(opp)
+        }}
+        className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-95 bg-[#FFB703]"
+      >
+        View opportunity
+      </button>
+    </motion.div>
+  )
+}
+
+// ─── Opportunity Details Modal (Redesigned) ──────────────────────────────
+function OpportunityDetailModal({ opp, onClose, onApply, navigate }) {
+  const infoItems = [
+    { icon: MapPin, label: 'Location', value: opp.location },
+    { icon: Globe, label: 'Work Mode', value: opp.workMode },
+    { icon: Clock, label: 'Hours/Week', value: opp.weeklyHours },
+    { icon: Zap, label: 'Duration', value: opp.duration },
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+        className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col"
+        style={{ maxHeight: '90vh', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-6">
+          <div className="flex items-start justify-between gap-6 mb-6">
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-[#FFB703] uppercase tracking-wider mb-2">
+                {opp.orgName || opp.name}
               </p>
-              <h1 className="text-4xl font-extrabold text-[#0D183D] mb-4 leading-tight">{opp.title}</h1>
+              <h1 className="text-[32px] font-bold text-[#0D183D] leading-tight mb-4">
+                {opp.title}
+              </h1>
               <div className="flex items-center gap-3">
-                <GradientAvatar name={opp.orgName || opp.name} size={44} radius="0.625rem"/>
+                <GradientAvatar name={opp.orgName || opp.name} size={40} radius="0.625rem" />
                 <div>
-                  <p className="text-[16px] font-bold text-[#0D183D]">{opp.orgName || opp.name}</p>
-                  {opp.category && <p className="text-[13px] text-[#4B6382]">{opp.category}</p>}
+                  <p className="text-[14px] font-semibold text-[#0D183D]">
+                    {opp.orgName || opp.name}
+                  </p>
+                  {opp.category && (
+                    <p className="text-[12px] text-[#4B6382]">{opp.category}</p>
+                  )}
                 </div>
               </div>
             </div>
-            </div>
-
-          <div className="flex items-center gap-3 justify-between">
-            <div className="flex items-center gap-2 flex-wrap">
-              {opp.location && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.location}</span>
-              )}
-              {opp.workMode && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.workMode}</span>
-              )}
-              {opp.weeklyHours && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.weeklyHours}</span>
-              )}
-              {opp.duration && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382]">{opp.duration}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Link to={`/ngo-profile/${opp.ngoId}`}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Link
+                to={`/ngo-profile/${opp.ngoId}`}
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-[12px] font-semibold bg-[#FFB703] text-white hover:opacity-90 transition-all whitespace-nowrap">
+                className="px-4 py-2.5 rounded-xl text-[12px] font-semibold bg-[#FFB703] text-white hover:opacity-90 transition-all whitespace-nowrap"
+              >
                 View NGO Profile
               </Link>
-              <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
-                <X size={20}/>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]"
+              >
+                <X size={20} />
               </button>
             </div>
+          </div>
+
+          {/* Quick Info Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {infoItems.map((item, idx) => (
+              item.value && (
+                <div
+                  key={idx}
+                  className="flex flex-col gap-1 px-3 py-2 rounded-lg bg-[#F8F9FB] border border-[rgba(13,24,61,0.06)]"
+                >
+                  <p className="text-[10px] font-semibold text-[#4B6382] uppercase">
+                    {item.label}
+                  </p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{item.value}</p>
+                </div>
+              )
+            ))}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="space-y-8">
-
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {opp.location && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Location</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.location}</p>
-                </div>
-              )}
-              {opp.workMode && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Work Mode</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.workMode}</p>
-                </div>
-              )}
-              {opp.weeklyHours && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Hours/Week</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
-                </div>
-              )}
-              {opp.duration && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Duration</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.duration}</p>
-                </div>
-              )}
-              {opp.deadline && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Application Deadline</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{new Date(opp.deadline).toLocaleDateString()}</p>
-                </div>
-              )}
-              {opp.field && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Field</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.field}</p>
-                </div>
-              )}
-              {opp.category && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Category</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.category}</p>
-                </div>
-              )}
-            </div>
-
+          <div className="space-y-8 max-w-2xl">
             {/* Description */}
             {opp.description && (
               <div>
-                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">About this opportunity</h2>
-                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">About this role</h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {opp.description}
+                </p>
               </div>
             )}
 
@@ -190,24 +250,20 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
             {opp.missionImpact && (
               <div>
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Mission & impact</h2>
-                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {opp.missionImpact}
+                </p>
               </div>
             )}
 
-            {/* Skills */}
+            {/* Required Skills */}
             {opp.skills?.length > 0 && (
               <div>
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
                 <div className="flex flex-wrap gap-2">
-                  {opp.skills.map((s, i) => {
-                    const { name, level } = parseSkill(s)
-                    if (!name) return null
-                    return (
-                      <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
-                        {level ? `${name} · ${level}` : name}
-                      </span>
-                    )
-                  })}
+                  {opp.skills.map((s, i) => (
+                    <SkillChip key={i} skill={s} />
+                  ))}
                 </div>
               </div>
             )}
@@ -218,7 +274,10 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Languages</h2>
                 <div className="flex flex-wrap gap-2">
                   {opp.languages.map((lang, i) => (
-                    <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/20">
+                    <span
+                      key={i}
+                      className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/20"
+                    >
                       {lang}
                     </span>
                   ))}
@@ -228,15 +287,18 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
           </div>
         </div>
 
-        {/* Footer - Sticky */}
+        {/* Footer */}
         <div className="sticky bottom-0 border-t border-[rgba(13,24,61,0.08)] bg-white px-8 py-6 flex gap-3">
-          <button onClick={onClose}
-            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
+          <button
+            onClick={onClose}
+            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"
+          >
             Cancel
           </button>
-          <button onClick={onApply}
-            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
+          <button
+            onClick={onApply}
+            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95 bg-[#FFB703]"
+          >
             Apply now
           </button>
         </div>
@@ -245,31 +307,24 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
   )
 }
 
-// ─── Apply Modal ──────────────────────────────────────────────────────────────
-
+// ─── Apply Modal (Keep existing) ────────────────────────────────────────
 function ApplyModal({ ngo, user, studentId, onClose }) {
-  const [step, setStep]     = useState('form')
-  const [message, setMsg]   = useState(() => generateAppMessage(user, ngo))
-  const [links, setLinks]   = useState({ linkedin:'', github:'', portfolio:'' })
-  const [avail, setAvail]   = useState('')
-  const [gen, setGen]       = useState(false)
-  const [focusKey, setFocus] = useState(null)
+  const [step, setStep] = useState('form')
+  const [message, setMsg] = useState('')
+  const [links, setLinks] = useState({ linkedin: '', github: '', portfolio: '' })
+  const [avail, setAvail] = useState('')
+  const [gen, setGen] = useState(false)
 
-  const AVAIL_OPTIONS = ['Immediately','1–5 hrs/week','5–10 hrs/week','10–15 hrs/week','15–20 hrs/week','20+ hrs/week']
-
-  function regen() {
-    setGen(true)
-    setTimeout(() => { setMsg(generateAppMessage(user, ngo)); setGen(false) }, 600)
-  }
+  const AVAIL_OPTIONS = ['Immediately', '1–5 hrs/week', '5–10 hrs/week', '10–15 hrs/week', '15–20 hrs/week', '20+ hrs/week']
 
   async function submit() {
     try {
       await submitApplication({
-        studentId:     studentId,
+        studentId: studentId,
         opportunityId: ngo.opportunityId ?? null,
-        ngoId:         ngo.ngoId ?? String(ngo.id),
+        ngoId: ngo.ngoId ?? String(ngo.id),
         message,
-        availability:  avail,
+        availability: avail,
         links,
       })
     } catch (err) {
@@ -278,538 +333,321 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
     setStep('success')
   }
 
-  const iStyle = k => ({ background:'white', color:'#0D183D', border:`1.5px solid ${focusKey===k?'#FFB703':'rgba(13,24,61,0.1)'}` })
+  if (step === 'success') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-3xl p-8 max-w-sm w-full text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-emerald-50"
+          >
+            <CheckCircle2 size={32} className="text-emerald-500" />
+          </motion.div>
+          <h2 className="text-[24px] font-bold text-[#0D183D] mb-2">Application sent!</h2>
+          <p className="text-[14px] text-[#4B6382] mb-6">
+            Your application to <strong>{ngo.name}</strong> has been submitted.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full px-6 py-3 rounded-xl text-[14px] font-semibold text-white bg-[#0D183D] hover:opacity-90 transition-all"
+          >
+            Done
+          </button>
+        </motion.div>
+      </motion.div>
+    )
+  }
 
   return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.5)', backdropFilter:'blur(8px)' }}
-      onClick={onClose}>
-      <motion.div initial={{ opacity:0, scale:0.97, y:20 }} animate={{ opacity:1, scale:1, y:0 }}
-        exit={{ opacity:0, scale:0.97 }} transition={{ type:'spring', stiffness:360, damping:30 }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 24px 80px rgba(10,18,48,0.25)', maxHeight:'90vh' }}
-        onClick={e => e.stopPropagation()}>
-
-        {step === 'success' ? (
-          <div className="flex flex-col items-center text-center px-8 py-10">
-            <motion.div initial={{ scale:0 }} animate={{ scale:1 }}
-              transition={{ type:'spring', stiffness:280, damping:18, delay:0.1 }}
-              className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5"
-              style={{ background:'rgba(16,185,129,0.1)' }}>
-              <CheckCircle2 size={32} className="text-emerald-500"/>
-            </motion.div>
-            <h2 className="text-[1.3rem] font-extrabold text-[#0D183D] mb-2">Application sent!</h2>
-            <p className="text-[13px] text-[#4B6382] mb-2">Your application to <strong>{ngo.name}</strong> is on its way.</p>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-              style={{ background:'rgba(255,183,3,0.08)', border:'1px solid rgba(255,183,3,0.2)' }}>
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"/>
-              <span className="text-[12px] font-semibold" style={{ color:'#D99E00' }}>Status: Under Review</span>
+        style={{ maxHeight: '90vh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 px-6 pt-5 pb-4 bg-gradient-to-br from-[#FFF7E6] to-[#F0EEFF] border-b border-[rgba(13,24,61,0.07)]">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-black/5 transition-colors text-[#4B6382]"
+          >
+            <X size={20} />
+          </button>
+          <div className="flex items-center gap-3">
+            <GradientAvatar name={ngo.name} size={40} radius="0.75rem" />
+            <div>
+              <p className="text-[14px] font-bold text-[#0D183D]">Apply to {ngo.name}</p>
             </div>
-            <button onClick={onClose} className="px-8 py-3 rounded-2xl text-[13px] font-semibold text-white hover:opacity-90"
-              style={{ background:'#0D183D' }}>
-              Done
-            </button>
           </div>
-        ) : (
-          <>
-            <div className="px-6 pt-5 pb-4 shrink-0"
-              style={{ background:'linear-gradient(160deg,#FFF7E6,#F0EEFF)', borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
-              <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
-                <X size={14}/>
-              </button>
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={ngo.name} size={44} radius="0.75rem"/>
-                <div>
-                  <p className="text-[15px] font-extrabold text-[#0D183D]">Apply to {ngo.name}</p>
-                  <p className="text-[12px] text-[#4B6382]">{ngo.cat} · {ngo.loc} · {ngo.match}% match</p>
-                </div>
-              </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div>
+            <p className="text-[12px] font-semibold text-[#0D183D] uppercase mb-2">Your message</p>
+            <textarea
+              value={message}
+              onChange={(e) => setMsg(e.target.value)}
+              placeholder="Tell them why you're interested..."
+              rows={6}
+              className="w-full px-4 py-3 rounded-xl border border-[rgba(13,24,61,0.1)] text-[13px] outline-none resize-none focus:ring-2 focus:ring-[#FFB703]/50 focus:border-[#FFB703]"
+            />
+          </div>
+
+          <div>
+            <p className="text-[12px] font-semibold text-[#0D183D] uppercase mb-2">Availability</p>
+            <div className="flex flex-wrap gap-2">
+              {AVAIL_OPTIONS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setAvail(a)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                    avail === a
+                      ? 'bg-[#0D183D] text-white'
+                      : 'bg-white border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:border-[#FFB703]'
+                  }`}
+                >
+                  {a}
+                </button>
+              ))}
             </div>
+          </div>
+        </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background:'#FFB703' }}>
-                      <Sparkles size={11} className="text-white"/>
-                    </div>
-                    <p className="text-[12px] font-extrabold text-[#0D183D]">AI-generated message</p>
-                  </div>
-                  <button onClick={regen} className={`flex items-center gap-1 text-[11px] font-semibold ${gen?'opacity-50':''}`} style={{ color:'#FFB703' }}>
-                    <RefreshCw size={11} className={gen?'animate-spin':''}/> Regenerate
-                  </button>
-                </div>
-                <textarea value={message} onChange={e => setMsg(e.target.value)} rows={7}
-                  onFocus={()=>setFocus('msg')} onBlur={()=>setFocus(null)}
-                  className="w-full px-4 py-3 rounded-xl text-[12px] outline-none resize-none"
-                  style={{ ...iStyle('msg'), lineHeight:1.65 }}/>
-                <p className="text-[10px] text-[#4B6382] mt-1">✏️ Edit freely before sending.</p>
-              </div>
-
-              <div>
-                <p className="text-[12px] font-semibold text-[#0D183D] mb-2">Availability</p>
-                <div className="flex flex-wrap gap-2">
-                  {AVAIL_OPTIONS.map(a => (
-                    <button key={a} onClick={() => setAvail(a)}
-                      className="px-3.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all"
-                      style={avail===a?{background:'#0D183D',color:'white',borderColor:'#0D183D'}:{background:'white',color:'#4B6382',borderColor:'rgba(13,24,61,0.1)'}}>
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2.5">
-                <p className="text-[12px] font-semibold text-[#0D183D]">Links <span className="text-[11px] font-normal text-[#4B6382]">(optional)</span></p>
-                {[{k:'linkedin',lbl:'LinkedIn'},{k:'github',lbl:'GitHub'},{k:'portfolio',lbl:'Portfolio'}].map(({k,lbl}) => (
-                  <div key={k} className="flex items-center gap-3">
-                    <span className="text-[11px] text-[#4B6382] w-16 shrink-0">{lbl}</span>
-                    <input value={links[k]} onChange={e=>setLinks(l=>({...l,[k]:e.target.value}))}
-                      placeholder={`${lbl} URL`}
-                      onFocus={()=>setFocus(k)} onBlur={()=>setFocus(null)}
-                      className="flex-1 px-3 py-2.5 rounded-xl text-[12px] outline-none placeholder-[#4B6382]/40"
-                      style={iStyle(k)}/>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="shrink-0 px-6 py-4 border-t flex gap-3"
-              style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
-              <button onClick={onClose} className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors" style={{ borderColor:'rgba(13,24,61,0.12)' }}>Cancel</button>
-              <button onClick={submit} className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background:'#FFB703', boxShadow:'0 4px 16px rgba(255,183,3,0.3)', flex:2 }}>
-                <Send size={13}/> Submit application →
-              </button>
-            </div>
-          </>
-        )}
+        <div className="sticky bottom-0 border-t border-[rgba(13,24,61,0.08)] bg-white px-6 py-4 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 rounded-xl text-[13px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={!message.trim() || !avail}
+            className="flex-1 px-4 py-3 rounded-xl text-[13px] font-bold text-white bg-[#FFB703] hover:opacity-90 disabled:opacity-50 transition-all"
+          >
+            Send application
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
-
+// ─── Main Component ────────────────────────────────────────────────────────
 export default function Opportunities() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const filterNgoId = searchParams.get('ngo')
-  const isNGO = user?.role === 'ngo'
 
-  const [q, setQ]           = useState('')
-  const [cat, setCat]       = useState('All')
-  const [opps, setOpps]     = useState([])
-  const [ngoOpps, setNgoOpps]   = useState([])
-  const [ngoError, setNgoError] = useState(null)
-  const [savedIds, setSavedIds] = useState(new Set())
-  const [toggling, setToggling] = useState(null)
-  const [loading, setLoading]   = useState(true)
+  const [q, setQ] = useState('')
+  const [cat, setCat] = useState('All')
+  const [opps, setOpps] = useState([])
+  const [loading, setLoading] = useState(true)
   const [viewingOpp, setViewingOpp] = useState(null)
   const [applyingTo, setApplyingTo] = useState(null)
+  const [savedIds, setSavedIds] = useState(new Set())
+  const [toggling, setToggling] = useState(null)
 
-  // Fetch NGO's own opportunities
+  const filterNgoId = searchParams.get('ngo')
+
+  // Fetch opportunities
   useEffect(() => {
-    if (!isNGO || !user?.id) return
     setLoading(true)
-    setNgoError(null)
-
-    // Try to load from cache first
-    const cached = localStorage.getItem(`hive_ngo_opps_${user.id}`)
-    if (cached) {
-      try {
-        setNgoOpps(JSON.parse(cached))
-      } catch (e) {
-        console.warn('Failed to parse cached NGO opportunities')
-      }
-    }
-
-    // Fetch fresh data
-    fetchNgoOpportunities(user.id)
-      .then(data => {
-        setNgoOpps(data ?? [])
-        // Cache it
-        try {
-          localStorage.setItem(`hive_ngo_opps_${user.id}`, JSON.stringify(data ?? []))
-        } catch (e) {
-          console.warn('Failed to cache NGO opportunities')
-        }
-      })
-      .catch(err => {
-        console.error('[Opportunities] fetchNgoOpportunities error:', err.message)
-        // If we have cache, don't show error - just use cache silently
-        if (!cached) {
-          setNgoError(err.message)
-        }
-      })
-      .finally(() => setLoading(false))
-  }, [isNGO, user?.id])
-
-  // Fetch active opportunities for students
-  useEffect(() => {
-    if (isNGO) return
-    setLoading(true)
-
-    // Try to load from cache first
-    const cached = localStorage.getItem('hive_active_opps')
-    if (cached) {
-      try {
-        const cachedData = JSON.parse(cached)
-        const cards = cachedData.map(opp => ({
-          id:            opp.id,
-          ngoId:         opp.ngoId,
-          opportunityId: opp.id,
-          name:          opp.orgName,
-          cat:           opp.category  ?? '',
-          loc:           opp.location  ?? '',
-          hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
-          workMode:      opp.workMode ?? '',
-          desc:          opp.description || opp.missionImpact || '',
-          skills:        (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
-          match:         profile ? computeMatch(profile, opp).score : null,
-          mission:       opp.missionImpact || opp.description || '',
-        }))
-        setOpps(cards)
-      } catch (e) {
-        console.warn('Failed to parse cached active opportunities')
-      }
-    }
 
     Promise.all([
       fetchActiveOpportunities(),
       user?.id ? fetchSavedIds(user.id) : Promise.resolve(new Set()),
-    ]).then(([raw, ids]) => {
-      const cards = raw.map(opp => ({
-        id:            opp.id,
-        ngoId:         opp.ngoId,
-        opportunityId: opp.id,
-        name:          opp.orgName,
-        cat:           opp.category  ?? '',
-        loc:           opp.location  ?? '',
-        hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
-        workMode:      opp.workMode ?? '',
-        desc:          opp.description || opp.missionImpact || '',
-        skills:        (opp.skills ?? []).slice(0, 4).map(skillName).filter(Boolean),
-        match:         profile ? computeMatch(profile, opp).score : null,
-        mission:       opp.missionImpact || opp.description || '',
-      }))
-      setOpps(cards)
-      setSavedIds(ids)
-      // Cache fresh data
-      try {
-        localStorage.setItem('hive_active_opps', JSON.stringify(raw))
-      } catch (e) {
-        console.warn('Failed to cache active opportunities')
-      }
-    }).catch(() => {}).finally(() => setLoading(false))
-  }, [isNGO, user?.id, profile])
-
-  async function toggleSave(opp) {
-    if (!user?.id || toggling) return
-    setToggling(opp.id)
-    const isSaved = savedIds.has(opp.id)
-    // Optimistic update
-    setSavedIds(prev => {
-      const next = new Set(prev)
-      isSaved ? next.delete(opp.id) : next.add(opp.id)
-      return next
-    })
-    try {
-      if (isSaved) await unsaveOpportunity(user.id, opp.id)
-      else         await saveOpportunity(user.id, opp.id)
-    } catch {
-      // Revert on error
-      setSavedIds(prev => {
-        const next = new Set(prev)
-        isSaved ? next.add(opp.id) : next.delete(opp.id)
-        return next
+    ])
+      .then(([raw, ids]) => {
+        const cards = raw.map((opp) => ({
+          id: opp.id,
+          ngoId: opp.ngoId,
+          opportunityId: opp.id,
+          name: opp.orgName,
+          title: opp.title,
+          cat: opp.category ?? '',
+          loc: opp.location ?? '',
+          hours: opp.weeklyHours ? `${opp.weeklyHours} hrs/week` : '',
+          workMode: opp.workMode ?? '',
+          desc: opp.description || opp.missionImpact || '',
+          skills: opp.skills ?? [],
+          match: profile ? computeMatch(profile, opp).score : null,
+          ...opp,
+        }))
+        setOpps(cards)
+        setSavedIds(ids)
       })
-    } finally {
-      setToggling(null)
-    }
-  }
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [user?.id, profile])
 
-  const filtered = opps.filter(n =>
-    (cat === 'All' || n.cat === cat) &&
-    (n.name.toLowerCase().includes(q.toLowerCase()) || n.desc.toLowerCase().includes(q.toLowerCase())) &&
-    (!filterNgoId || n.ngoId === filterNgoId)
+  const filtered = opps.filter(
+    (n) =>
+      (cat === 'All' || n.cat === cat) &&
+      (n.title.toLowerCase().includes(q.toLowerCase()) ||
+        n.name.toLowerCase().includes(q.toLowerCase()) ||
+        n.desc.toLowerCase().includes(q.toLowerCase())) &&
+      (!filterNgoId || n.ngoId === filterNgoId)
   )
 
-  return (
-    <>
-      <div className="max-w-5xl mx-auto px-8 py-7">
+  async function toggleSave(opp) {
+    if (!user?.id) return
+    setToggling(opp.id)
+    try {
+      if (savedIds.has(opp.id)) {
+        await unsaveOpportunity(user.id, opp.id)
+        setSavedIds((s) => new Set([...s].filter((id) => id !== opp.id)))
+      } else {
+        await saveOpportunity(user.id, opp.id)
+        setSavedIds((s) => new Set([...s, opp.id]))
+      }
+    } catch (err) {
+      console.error('Save toggle error:', err)
+    }
+    setToggling(null)
+  }
 
+  return (
+    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
+      <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h1 className="text-4xl font-bold text-[#0D183D] mb-2">
-              {isNGO ? 'Your Opportunities' : 'Browse Opportunities'}
-            </h1>
-            <p className="text-[15px] text-[#4B6382]">
-              {isNGO ? 'Manage your posted opportunities and track applicants' : 'Discover volunteer roles that match your skills'}
-            </p>
-          </div>
-          {isNGO && (
-            <button onClick={() => navigate('/opportunities/new')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background:'#FFB703', boxShadow:'0 4px 14px rgba(255,183,3,0.28)' }}>
-              <Plus size={14}/> Post opportunity
-            </button>
-          )}
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold text-[#0D183D] mb-2">Browse Opportunities</h1>
+          <p className="text-[16px] text-[#4B6382]">
+            Discover NGOs looking for your skills
+          </p>
         </div>
 
-        {isNGO ? (
-          /* NGO view — real data from Supabase */
-          loading ? (
-            <div className="flex flex-col gap-3">
-              {[0,1,2].map(i => (
-                <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3.5 w-1/3 rounded-full bg-[rgba(13,24,61,0.07)]"/>
-                      <div className="h-2.5 w-1/4 rounded-full bg-[rgba(13,24,61,0.05)]"/>
-                    </div>
-                    <div className="h-8 w-24 rounded-xl bg-[rgba(13,24,61,0.05)]"/>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : ngoError ? (
-            <div className="text-center py-16">
-              <p className="text-[14px] font-semibold text-[#0D183D] mb-1">Could not load opportunities</p>
-              <p className="text-[12px] text-[#EF4444] mb-4 max-w-sm mx-auto">{ngoError}</p>
-              <button onClick={() => { setNgoError(null); setLoading(true); fetchNgoOpportunities(user.id).then(d => setNgoOpps(d ?? [])).catch(e => setNgoError(e.message)).finally(() => setLoading(false)) }}
-                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
-                style={{ background: '#0D183D' }}>Retry</button>
-            </div>
-          ) : ngoOpps.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: 'rgba(255,183,3,0.1)' }}>
-                <Briefcase size={24} style={{ color: '#FFB703' }}/>
-              </div>
-              <p className="text-[15px] font-extrabold text-[#0D183D] mb-1">No opportunities yet</p>
-              <p className="text-[13px] text-[#4B6382] mb-5">Post your first opportunity to start receiving applications from students.</p>
-              <button onClick={() => navigate('/opportunities/new')}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white mx-auto transition-all hover:opacity-90"
-                style={{ background:'#FFB703', boxShadow:'0 4px 14px rgba(255,183,3,0.28)' }}>
-                <Plus size={14}/> Post your first opportunity
+        {/* Search & Filters */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-[rgba(13,24,61,0.08)] focus-within:ring-2 focus-within:ring-[#FFB703]/50">
+            <Search size={18} className="text-[#4B6382] flex-shrink-0" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by role, NGO, or skills…"
+              className="flex-1 bg-transparent text-[14px] text-[#0D183D] outline-none placeholder-[#4B6382]/50"
+            />
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCat(c)}
+                className={`px-4 py-2 rounded-lg text-[13px] font-semibold whitespace-nowrap transition-all ${
+                  cat === c
+                    ? 'text-white bg-[#0D183D]'
+                    : 'text-[#4B6382] bg-white border border-[rgba(13,24,61,0.08)] hover:border-[#FFB703]'
+                }`}
+              >
+                {c}
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {ngoOpps.map((opp, i) => (
-                <motion.div key={opp.id}
-                  initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-                  transition={{ delay:i*0.05, duration:0.28 }}
-                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 flex items-center gap-5 hover:shadow-[0_4px_20px_rgba(13,24,61,0.07)] transition-all">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <p className="font-bold text-[14px] text-[#0D183D] truncate">{opp.title}</p>
-                      <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        opp.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                        opp.status === 'draft'  ? 'bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.1)]' :
-                        opp.status === 'paused' ? 'bg-amber-100 text-amber-700' :
-                        'bg-[#F8F9FB] text-[#4B6382]'
-                      }`}>{opp.status ?? 'draft'}</span>
-                    </div>
-                    <p className="text-[12px] text-[#4B6382]">
-                      {opp.category ? `${opp.category} · ` : ''}
-                      {opp.location ? `${opp.location} · ` : ''}
-                      {opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
-                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => navigate('/applicants')}
-                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                      style={{ background:'#0D183D' }}>
-                      Applicants
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )
-        ) : (
-          /* Student view */
-          <>
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-              <div className="flex items-center gap-2 flex-1 px-4 py-3 rounded-2xl bg-white border border-[rgba(13,24,61,0.08)]">
-                <Search size={14} className="text-[#4B6382] shrink-0"/>
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search NGOs by name or skill…"
-                  className="flex-1 bg-transparent text-[13px] text-[#0D183D] outline-none placeholder-[#4B6382]/50"/>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {CATEGORIES.map(c => (
-                  <button key={c} onClick={() => setCat(c)}
-                    className={`px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all ${
-                      cat===c ? 'text-white' : 'text-[#4B6382] bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB]'
-                    }`}
-                    style={cat===c ? { background:'#0D183D' } : {}}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            {loading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[0,1,2,3,4,5].map(i => (
-                  <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 animate-pulse">
-                    <div className="flex gap-4 mb-4">
-                      <div className="w-14 h-14 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-3/4 rounded-lg bg-[rgba(13,24,61,0.06)]"/>
-                        <div className="h-3 w-1/2 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      </div>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="h-3 w-1/3 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-3 w-full rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-3 w-5/6 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                    </div>
-                    <div className="flex gap-2 mb-4">
-                      <div className="h-6 w-16 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-6 w-20 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                    </div>
-                    <div className="h-10 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+        {/* Opportunities Grid */}
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 animate-pulse"
+              >
+                <div className="flex gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-lg bg-[rgba(13,24,61,0.06)]" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 rounded-lg bg-[rgba(13,24,61,0.06)]" />
+                    <div className="h-3 w-1/2 rounded-lg bg-[rgba(13,24,61,0.04)]" />
                   </div>
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-24">
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(255,183,3,0.1)' }}>
-                  <Briefcase size={32} className="text-[#FFB703]" />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#0D183D] mb-2">No opportunities found</h3>
-                <p className="text-[14px] text-[#4B6382] mb-8">Try adjusting your filters or search terms to find more opportunities</p>
-                <button onClick={() => { setQ(''); setCat('All') }}
-                  className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: '#0D183D' }}>
-                  Clear filters
-                </button>
+                <div className="space-y-3">
+                  <div className="h-3 w-full rounded-lg bg-[rgba(13,24,61,0.04)]" />
+                  <div className="h-3 w-5/6 rounded-lg bg-[rgba(13,24,61,0.04)]" />
+                </div>
               </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((ngo, i) => (
-                  <motion.div key={ngo.id}
-                    initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
-                    transition={{ delay:i*0.05, duration:0.3 }}
-                    onClick={() => setViewingOpp(ngo)}
-                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.1)] p-6 flex flex-col gap-4 hover:shadow-[0_12px_40px_rgba(13,24,61,0.1)] hover:border-[rgba(13,24,61,0.15)] transition-all duration-200 cursor-pointer group">
-
-                    {/* Top: Logo + Title + Save */}
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0">
-                        <GradientAvatar name={ngo.name} size={56} radius="0.875rem"/>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[15px] font-bold text-[#0D183D] leading-tight mb-1 line-clamp-2 group-hover:text-[#FFB703] transition-colors">
-                          {ngo.title}
-                        </h3>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
-                          className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
-                          {ngo.name}
-                        </button>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleSave(ngo) }}
-                        disabled={toggling === ngo.id}
-                        className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40">
-                        <BookmarkIcon size={18} className={
-                          savedIds.has(ngo.id) ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'
-                        }/>
-                      </button>
-                    </div>
-
-                    {/* Match + Meta info row */}
-                    <div className="flex items-center flex-wrap gap-2.5">
-                      {ngo.match !== null && (
-                        <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 whitespace-nowrap">
-                          {ngo.match}% match
-                        </span>
-                      )}
-                      <div className="flex items-center gap-3 flex-wrap text-[12px] text-[#4B6382]">
-                        {ngo.loc && (
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <MapPin size={13} className="text-[#FFB703]" />
-                            {ngo.loc}
-                          </span>
-                        )}
-                        {ngo.hours && (
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <Clock size={13} className="text-[#FFB703]" />
-                            {ngo.hours}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    {ngo.desc && (
-                      <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">
-                        {ngo.desc}
-                      </p>
-                    )}
-
-                    {/* Skills - Formatted properly */}
-                    {ngo.skills && ngo.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {ngo.skills.slice(0, 3).map((s, idx) => {
-                          const { name, level } = parseSkill(s)
-                          if (!name) return null
-                          return (
-                            <span key={idx} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.06)]">
-                              {level ? `${name} · ${level}` : name}
-                            </span>
-                          )
-                        })}
-                        {ngo.skills.length > 3 && (
-                          <span className="text-[11px] font-medium px-2.5 py-1.5 text-[#4B6382]">
-                            +{ngo.skills.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Details Button */}
-                    <button onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
-                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-95 mt-2"
-                      style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
-                      View details
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
+              style={{ background: 'rgba(255,183,3,0.1)' }}
+            >
+              <AlertCircle size={32} className="text-[#FFB703]" />
+            </div>
+            <h3 className="text-[18px] font-bold text-[#0D183D] mb-2">No opportunities found</h3>
+            <p className="text-[14px] text-[#4B6382] mb-6">
+              Try adjusting your filters or search terms
+            </p>
+            <button
+              onClick={() => {
+                setQ('')
+                setCat('All')
+              }}
+              className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white bg-[#0D183D] hover:opacity-90 transition-all"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((opp) => (
+              <OpportunityCard
+                key={opp.id}
+                opp={opp}
+                isSaved={savedIds.has(opp.id)}
+                onToggleSave={toggleSave}
+                onViewDetails={setViewingOpp}
+                toggling={toggling}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Detail modal */}
+      {/* Detail Modal */}
       <AnimatePresence>
         {viewingOpp && (
           <OpportunityDetailModal
             key="detail"
             opp={viewingOpp}
             onClose={() => setViewingOpp(null)}
-            onApply={() => { setViewingOpp(null); setApplyingTo(viewingOpp) }}
+            onApply={() => {
+              setViewingOpp(null)
+              setApplyingTo(viewingOpp)
+            }}
+            navigate={navigate}
           />
         )}
       </AnimatePresence>
 
-      {/* Apply modal */}
+      {/* Apply Modal */}
       <AnimatePresence>
         {applyingTo && (
           <ApplyModal
@@ -821,6 +659,6 @@ export default function Opportunities() {
           />
         )}
       </AnimatePresence>
-    </>
+    </main>
   )
 }
