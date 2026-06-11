@@ -206,9 +206,11 @@ function OAuthCallback() {
 
     const dest = !user.role
       ? '/role-selection'
+      : user.role === 'ngo'
+      ? '/dashboard/ngo'
       : !user.onboardingComplete
       ? `/onboarding/${user.role}`
-      : user.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
+      : '/dashboard/student'
 
     console.log('[auth] OAuthCallback → routing to', dest, {
       uid:               user.id,
