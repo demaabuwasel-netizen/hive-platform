@@ -67,19 +67,30 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── Step 1: ensureUserRow (35 s outer cap via withStep) ─────────────────
-      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=35000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 35000)
+      // ── Step 1: ensureUserRow (65 s outer cap via withStep) ─────────────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=65000ms]')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 65000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (35 s outer cap via withStep) ────────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=35000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 35000)
+      // ── Step 2: getUserRow (65 s outer cap via withStep) ────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=65000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 65000)
       log('STEP 2 — AFTER  getUserRow    ',
         userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
       if (!userRow) {
-        warn('STEP 2 — users row missing → applying minimal state')
+        // Try to recover from cache before giving up
+        const cached = localStorage.getItem(`hive_user_${authUser.id}`)
+        if (cached) {
+          try {
+            const cachedUser = JSON.parse(cached)
+            warn('STEP 2 — users row null, but found cached user — recovering from cache')
+            setUserState(cachedUser); userWasSet = true; return
+          } catch (e) {
+            warn('STEP 2 — cached user parse failed:', e.message)
+          }
+        }
+        warn('STEP 2 — users row missing and no cache → applying minimal state')
         setUserState(minimal); userWasSet = true; return
       }
 
@@ -104,6 +115,12 @@ export function AppProvider({ children }) {
         preferredTheme:     userRow.preferred_theme    ?? 'system',
       }
       setUserState(merged); userWasSet = true
+      // Cache user data so we can recover if database times out later
+      try {
+        localStorage.setItem(`hive_user_${authUser.id}`, JSON.stringify(merged))
+      } catch (e) {
+        warn('STEP 2 — failed to cache user:', e.message)
+      }
       log('STEP 2 — user state SET | role:', merged.role,
         '| onboardingComplete:', merged.onboardingComplete,
         '| provider:', merged.provider)
@@ -162,17 +179,17 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 75 s ────────────────────────────────────────────────
-    // Worst case: bail(3 s) + ensureUserRow(30 s) + getUserRow(30 s) = 63 s.
-    // The ceiling at 75 s is a fallback safety net for truly broken Supabase.
-    // (temporary for demo — can optimize database later)
+    // ── Absolute ceiling: 140 s ───────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(60 s) + getUserRow(60 s) = 123 s.
+    // The ceiling at 140 s is a fallback safety net for truly broken Supabase.
+    // (temporary for demo — Supabase database is slow, will optimize after)
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 75 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 140 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 75000)
+    }, 140000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
