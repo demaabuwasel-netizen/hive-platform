@@ -33,113 +33,129 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.6)', backdropFilter:'blur(12px)' }}
+      style={{ background:'rgba(10,18,48,0.7)', backdropFilter:'blur(12px)' }}
       onClick={onClose}>
       <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
         exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 24px 120px rgba(10,18,48,0.35)', maxHeight:'95vh' }}
+        className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col"
+        style={{ boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight:'90vh' }}
         onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4 shrink-0 border-b border-[rgba(13,24,61,0.08)]">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
-              <X size={14}/>
-            </button>
-            <Link to={`/ngo/${opp.ngoId}`}
-              className="px-4 py-2 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[#F8F9FB] transition-colors"
-              style={{ borderColor:'rgba(13,24,61,0.1)' }}>
-              View NGO profile
-            </Link>
+        {/* Header Section */}
+        <div className="sticky top-0 bg-white border-b border-[rgba(13,24,61,0.08)] px-8 py-7 flex items-start justify-between gap-6">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl font-bold text-[#0D183D] mb-2 leading-tight">{opp.title}</h1>
+            <div className="flex items-center gap-4">
+              <GradientAvatar name={opp.orgName} size={40} radius="0.625rem"/>
+              <div>
+                <p className="text-[14px] font-semibold text-[#0D183D]">{opp.orgName}</p>
+                {opp.category && <p className="text-[12px] text-[#4B6382]">{opp.category}</p>}
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 className="text-[1.5rem] font-extrabold text-[#0D183D] mb-2">{opp.title}</h2>
-            <p className="text-[14px] text-[#4B6382] font-medium">{opp.orgName}</p>
+          <div className="flex items-start gap-3 flex-shrink-0">
+            <Link to={`/ngo-profile/${opp.ngoId}`}
+              className="px-4 py-2 rounded-lg text-[12px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors whitespace-nowrap">
+              View NGO
+            </Link>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
+              <X size={20}/>
+            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6">
+        <div className="flex-1 overflow-y-auto px-8 py-8">
+          <div className="space-y-8">
 
-          {/* Key Details */}
-          <div className="grid grid-cols-2 gap-4">
-            {opp.location && (
+            {/* Quick Info Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {opp.workMode && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Work Mode</p>
+                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.workMode}</p>
+                </div>
+              )}
+              {opp.location && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Location</p>
+                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.location}</p>
+                </div>
+              )}
+              {opp.weeklyHours && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Hours/Week</p>
+                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.weeklyHours}</p>
+                </div>
+              )}
+              {opp.duration && (
+                <div className="bg-[#F8F9FB] rounded-xl p-4">
+                  <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1.5">Duration</p>
+                  <p className="text-[14px] font-semibold text-[#0D183D]">{opp.duration}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            {opp.description && (
               <div>
-                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Location</p>
-                <p className="text-[13px] text-[#0D183D]">{opp.location}</p>
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">About this opportunity</h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
               </div>
             )}
-            {opp.workMode && (
+
+            {/* Mission Impact */}
+            {opp.missionImpact && (
               <div>
-                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Work Mode</p>
-                <p className="text-[13px] text-[#0D183D]">{opp.workMode}</p>
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Mission & impact</h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
               </div>
             )}
-            {opp.weeklyHours && (
+
+            {/* Skills */}
+            {opp.skills?.length > 0 && (
               <div>
-                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Hours/Week</p>
-                <p className="text-[13px] text-[#0D183D]">{opp.weeklyHours}</p>
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
+                <div className="flex flex-wrap gap-2">
+                  {opp.skills.map((s, i) => {
+                    const skillName = typeof s === 'string' ? s : s.name
+                    const skillLevel = typeof s === 'object' && s.level ? s.level : ''
+                    return (
+                      <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
+                        {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
+                      </span>
+                    )
+                  })}
+                </div>
               </div>
             )}
-            {opp.duration && (
+
+            {/* Languages */}
+            {opp.languages?.length > 0 && (
               <div>
-                <p className="text-[11px] font-bold uppercase text-[#4B6382] mb-1">Duration</p>
-                <p className="text-[13px] text-[#0D183D]">{opp.duration}</p>
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Languages</h2>
+                <div className="flex flex-wrap gap-2">
+                  {opp.languages.map((lang, i) => (
+                    <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/20">
+                      {lang}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-
-          {/* Full Description */}
-          {opp.description && (
-            <div>
-              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">About this role</h3>
-              <p className="text-[13px] text-[#4B6382] leading-relaxed whitespace-pre-wrap">{opp.description}</p>
-            </div>
-          )}
-
-          {/* Mission Impact */}
-          {opp.missionImpact && (
-            <div>
-              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Mission Impact</h3>
-              <p className="text-[13px] text-[#4B6382] leading-relaxed whitespace-pre-wrap">{opp.missionImpact}</p>
-            </div>
-          )}
-
-          {/* Skills */}
-          {opp.skills?.length > 0 && (
-            <div>
-              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Required Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {opp.skills.map((s, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
-                    {typeof s === 'string' ? s : s.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {opp.languages?.length > 0 && (
-            <div>
-              <h3 className="text-[13px] font-bold uppercase text-[#0D183D] mb-3">Languages</h3>
-              <p className="text-[13px] text-[#4B6382]">{opp.languages.join(', ')}</p>
-            </div>
-          )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-[rgba(13,24,61,0.08)] px-6 py-4 flex gap-3 shrink-0 bg-[#F8F9FB]">
+        {/* Footer - Sticky */}
+        <div className="sticky bottom-0 border-t border-[rgba(13,24,61,0.08)] bg-white px-8 py-6 flex gap-3">
           <button onClick={onClose}
-            className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-white transition-colors"
-            style={{ borderColor:'rgba(13,24,61,0.12)' }}>
+            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
             Cancel
           </button>
           <button onClick={onApply}
-            className="flex-1 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-            style={{ background:'#FFB703' }}>
-            Apply now →
+            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
+            style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
+            Apply now
           </button>
         </div>
       </motion.div>
@@ -391,13 +407,13 @@ export default function Opportunities() {
       <div className="max-w-5xl mx-auto px-8 py-7">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">
+            <h1 className="text-4xl font-bold text-[#0D183D] mb-2">
               {isNGO ? 'Your Opportunities' : 'Browse Opportunities'}
             </h1>
-            <p className="text-[13px] text-[#4B6382] mt-0.5">
-              {isNGO ? 'Manage your posted opportunities and track applicants' : 'Discover NGOs looking for your skills'}
+            <p className="text-[15px] text-[#4B6382]">
+              {isNGO ? 'Manage your posted opportunities and track applicants' : 'Discover volunteer roles that match your skills'}
             </p>
           </div>
           {isNGO && (
@@ -510,97 +526,131 @@ export default function Opportunities() {
             </div>
 
             {loading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[0,1,2,3,4,5].map(i => (
-                  <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 animate-pulse">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3 w-2/3 rounded-full bg-[rgba(13,24,61,0.06)]"/>
-                        <div className="h-2.5 w-1/2 rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                  <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 animate-pulse">
+                    <div className="flex gap-4 mb-4">
+                      <div className="w-14 h-14 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-3/4 rounded-lg bg-[rgba(13,24,61,0.06)]"/>
+                        <div className="h-3 w-1/2 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
                       </div>
                     </div>
-                    <div className="space-y-1.5 mb-3">
-                      <div className="h-2.5 w-full rounded-full bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-2.5 w-4/5 rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                    <div className="space-y-2 mb-4">
+                      <div className="h-3 w-1/3 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-3 w-full rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-3 w-5/6 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
                     </div>
-                    <div className="h-8 rounded-xl bg-[rgba(13,24,61,0.04)]"/>
+                    <div className="flex gap-2 mb-4">
+                      <div className="h-6 w-16 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+                      <div className="h-6 w-20 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+                    </div>
+                    <div className="h-10 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
                   </div>
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-[14px] font-semibold text-[#0D183D] mb-1">No opportunities found</p>
-                <p className="text-[13px] text-[#4B6382]">Try a different category or search term</p>
+              <div className="text-center py-24">
+                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(255,183,3,0.1)' }}>
+                  <Briefcase size={32} className="text-[#FFB703]" />
+                </div>
+                <h3 className="text-[18px] font-bold text-[#0D183D] mb-2">No opportunities found</h3>
+                <p className="text-[14px] text-[#4B6382] mb-8">Try adjusting your filters or search terms to find more opportunities</p>
+                <button onClick={() => { setQ(''); setCat('All') }}
+                  className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: '#0D183D' }}>
+                  Clear filters
+                </button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((ngo, i) => (
                   <motion.div key={ngo.id}
                     initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
                     transition={{ delay:i*0.05, duration:0.3 }}
                     onClick={() => setViewingOpp(ngo)}
-                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex flex-col gap-4 hover:shadow-[0_8px_32px_rgba(13,24,61,0.12)] hover:-translate-y-1 transition-all duration-200 cursor-pointer group">
+                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.1)] p-6 flex flex-col gap-4 hover:shadow-[0_12px_40px_rgba(13,24,61,0.1)] hover:border-[rgba(13,24,61,0.15)] transition-all duration-200 cursor-pointer group">
 
-                    {/* Header with logo and save button */}
-                    <div className="flex items-start justify-between gap-3">
-                      <GradientAvatar name={ngo.name} size={48} radius="0.75rem"/>
+                    {/* Top: Logo + Title + Save */}
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        <GradientAvatar name={ngo.name} size={56} radius="0.875rem"/>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[15px] font-bold text-[#0D183D] leading-tight mb-1 line-clamp-2 group-hover:text-[#FFB703] transition-colors">
+                          {ngo.title}
+                        </h3>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
+                          className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
+                          {ngo.name}
+                        </button>
+                      </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSave(ngo) }}
                         disabled={toggling === ngo.id}
                         className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40">
-                        <BookmarkIcon size={16} className={
+                        <BookmarkIcon size={18} className={
                           savedIds.has(ngo.id) ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'
                         }/>
                       </button>
                     </div>
 
-                    {/* Title and organization */}
-                    <div>
-                      <h3 className="text-[14px] font-extrabold text-[#0D183D] leading-snug mb-1 group-hover:text-[#FFB703] transition-colors line-clamp-2">
-                        {ngo.title}
-                      </h3>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
-                        className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
-                        {ngo.name}
-                      </button>
-                    </div>
-
-                    {/* Key info */}
-                    <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                    {/* Match + Meta info row */}
+                    <div className="flex items-center flex-wrap gap-2.5">
                       {ngo.match !== null && (
-                        <span className="font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                        <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 whitespace-nowrap">
                           {ngo.match}% match
                         </span>
                       )}
-                      {ngo.loc && <span className="text-[#4B6382] flex items-center gap-1"><MapPin size={10}/>{ngo.loc}</span>}
-                      {ngo.hours && <span className="text-[#4B6382] flex items-center gap-1"><Clock size={10}/>{ngo.hours}</span>}
+                      <div className="flex items-center gap-3 flex-wrap text-[12px] text-[#4B6382]">
+                        {ngo.loc && (
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <MapPin size={13} className="text-[#FFB703]" />
+                            {ngo.loc}
+                          </span>
+                        )}
+                        {ngo.hours && (
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <Clock size={13} className="text-[#FFB703]" />
+                            {ngo.hours}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Description */}
-                    <p className="text-[13px] text-[#4B6382] leading-relaxed flex-1 line-clamp-3">{ngo.desc}</p>
+                    {ngo.desc && (
+                      <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">
+                        {ngo.desc}
+                      </p>
+                    )}
 
-                    {/* Skills */}
+                    {/* Skills - Formatted properly */}
                     {ngo.skills && ngo.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {ngo.skills.slice(0, 2).map((s, idx) => (
-                          <span key={idx} className="text-[11px] font-semibold px-2 py-1 rounded-lg border border-[rgba(13,24,61,0.08)]"
-                            style={{ background:'#F8F9FB', color:'#4B6382' }}>
-                            {typeof s === 'string' ? s : s.name}
+                        {ngo.skills.slice(0, 3).map((s, idx) => {
+                          const skillName = typeof s === 'string' ? s : s.name
+                          const skillLevel = typeof s === 'object' && s.level ? s.level : ''
+                          return (
+                            <span key={idx} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.06)]">
+                              {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
+                            </span>
+                          )
+                        })}
+                        {ngo.skills.length > 3 && (
+                          <span className="text-[11px] font-medium px-2.5 py-1.5 text-[#4B6382]">
+                            +{ngo.skills.length - 3} more
                           </span>
-                        ))}
-                        {ngo.skills.length > 2 && (
-                          <span className="text-[11px] text-[#4B6382] px-2 py-1">+{ngo.skills.length - 2} more</span>
                         )}
                       </div>
                     )}
 
-                    {/* Button */}
+                    {/* View Details Button */}
                     <button onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
-                      className="w-full py-3 rounded-xl text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
-                      style={{ background:'#FFB703', boxShadow: '0 4px 12px rgba(255,183,3,0.2)' }}>
-                      View details →
+                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-95 mt-2"
+                      style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
+                      View details
                     </button>
                   </motion.div>
                 ))}
