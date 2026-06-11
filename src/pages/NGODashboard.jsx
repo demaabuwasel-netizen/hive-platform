@@ -65,8 +65,8 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
 // ─── Hive Visualization ───────────────────────────────────────────────────────
 
 function HiveVisualization({ opportunities, applicants, navigate }) {
-  const R = 18
-  const CX = 160, CY = 110
+  const R = 12
+  const CX = 110, CY = 75
   const d = Math.sqrt(3) * R
 
   function hexPoints(cx, cy, r = R) {
@@ -158,23 +158,23 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl p-6 border mb-6"
+      className="rounded-xl p-4 border mb-6"
       style={{ background: 'white', borderColor: 'rgba(13,24,61,0.08)' }}>
 
-      <div style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
-        <p style={{ fontSize: 12, color: '#4B6382', margin: '3px 0 0' }}>
-          {opportunities.length} active · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
+      <div style={{ marginBottom: 12 }}>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
+        <p style={{ fontSize: 11, color: '#4B6382', margin: '2px 0 0' }}>
+          {opportunities.length} active · {applicants.length} app{applicants.length !== 1 ? 's' : ''}
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-        <svg viewBox="80 20 240 200" style={{ flex: 1, minWidth: 280, maxWidth: '100%' }} xmlns="http://www.w3.org/2000/svg">
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <svg viewBox="40 10 160 140" style={{ flex: 1, minWidth: 180, maxWidth: '100%' }} xmlns="http://www.w3.org/2000/svg">
           {hexes.slice(1, 7).map((h, i) =>
             h.type === 'opp' ? (
               <line key={`cl-${i}`}
                 x1={hexes[0].x} y1={hexes[0].y} x2={h.x} y2={h.y}
-                stroke="#D1D5DB" strokeWidth="1.5" strokeDasharray="3 3"
+                stroke="#D1D5DB" strokeWidth="1" strokeDasharray="2 2"
               />
             ) : null
           )}
@@ -195,7 +195,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   points={hexPoints(h.x, h.y)}
                   fill={hexFill(h)}
                   stroke={hexStroke(h)}
-                  strokeWidth="1.5"
+                  strokeWidth="1"
                 />
                 {h.type === 'center' && (
                   <text x={h.x} y={h.y + 4} textAnchor="middle" fill="#FFB84D"
@@ -219,22 +219,22 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
           })}
         </svg>
 
-        <div style={{ flex: 0.65, minWidth: 160 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 0.6, minWidth: 130 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {[
               { color: '#FFB84D', stroke: '#E8A038', label: 'Active' },
               { color: '#FFF8E8', stroke: '#FDE68A', label: 'No apps' },
               { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending' },
               { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted' },
-              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Completed' },
+              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Done' },
               { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open' },
             ].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{
-                  width: 12, height: 12, borderRadius: 2,
-                  background: l.color, border: `1px solid ${l.stroke}`, flexShrink: 0
+                  width: 10, height: 10, borderRadius: 1.5,
+                  background: l.color, border: `0.5px solid ${l.stroke}`, flexShrink: 0
                 }} />
-                <span style={{ fontSize: 11, color: '#4B6382', lineHeight: 1.2 }}>{l.label}</span>
+                <span style={{ fontSize: 10, color: '#4B6382', lineHeight: 1.1 }}>{l.label}</span>
               </div>
             ))}
           </div>
