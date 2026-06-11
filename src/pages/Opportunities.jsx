@@ -78,8 +78,8 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
       onClick={onClose}>
       <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
         exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight:'90vh' }}
+        className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col"
+        style={{ boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight:'92vh' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header Section */}
@@ -121,90 +121,88 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 className="px-4 py-2.5 rounded-xl text-[12px] font-semibold bg-[#FFB703] text-white hover:opacity-90 transition-all whitespace-nowrap">
                 View NGO Profile
               </Link>
-              <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#4B6382]">
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white">
                 <X size={20}/>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="space-y-8">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto bg-[#F8F9FB]">
+          <div className="px-8 py-10 space-y-8 max-w-3xl mx-auto">
 
-            {/* DESCRIPTION - FIRST & PROMINENT */}
+            {/* ━━━━━━━━━━━━━━━━━━ DESCRIPTION (MAIN FOCUS) ━━━━━━━━━━━━━━━━━━ */}
             {opp.description && (
-              <div>
-                <h2 className="text-[18px] font-bold text-[#0D183D] mb-4">About this opportunity</h2>
+              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">About this role</h2>
                 <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
               </div>
             )}
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* ━━━━━━━━━━━━━━━━━━ QUICK INFO CARDS ━━━━━━━━━━━━━━━━━━ */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {opp.location && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Location</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.location}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Location</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.location}</p>
                 </div>
               )}
               {opp.workMode && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Work Mode</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.workMode}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Mode</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.workMode}</p>
                 </div>
               )}
               {opp.weeklyHours && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Hours/Week</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Hours</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
                 </div>
               )}
               {opp.duration && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Duration</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.duration}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Duration</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.duration}</p>
                 </div>
               )}
               {opp.deadline && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Application Deadline</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{new Date(opp.deadline).toLocaleDateString()}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Deadline</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{new Date(opp.deadline).toLocaleDateString()}</p>
                 </div>
               )}
               {opp.field && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Field</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.field}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Field</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.field}</p>
                 </div>
               )}
               {opp.category && (
-                <div className="bg-[#F8F9FB] rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-[#4B6382] uppercase mb-2">Category</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.category}</p>
+                <div className="bg-white rounded-lg p-4 border border-[rgba(13,24,61,0.06)]">
+                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Category</p>
+                  <p className="text-[13px] font-bold text-[#0D183D]">{opp.category}</p>
                 </div>
               )}
             </div>
 
-            {/* Mission Impact */}
+            {/* ━━━━━━━━━━━━━━━━━━ MISSION & IMPACT ━━━━━━━━━━━━━━━━━━ */}
             {opp.missionImpact && (
-              <div>
-                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Mission & impact</h2>
-                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
+              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Mission & impact</h2>
+                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
               </div>
             )}
 
-            {/* Skills */}
-            {opp.skills?.length > 0 && (
-              <div>
-                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
-                <div className="flex flex-wrap gap-2">
+            {/* ━━━━━━━━━━━━━━━━━━ REQUIRED SKILLS ━━━━━━━━━━━━━━━━━━ */}
+            {opp.skills && opp.skills.length > 0 && (
+              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Required skills</h2>
+                <div className="flex flex-wrap gap-3">
                   {opp.skills.map((s, i) => {
                     let skillName = '', skillLevel = ''
 
-                    // Handle different skill formats
                     if (typeof s === 'string') {
-                      // Try to parse if it's JSON string
                       if (s.includes('{')) {
                         try {
                           const parsed = JSON.parse(s)
@@ -223,7 +221,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
                     if (!skillName) return null
                     return (
-                      <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
+                      <span key={i} className="px-4 py-2.5 rounded-full text-[13px] font-semibold bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/30">
                         {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
                       </span>
                     )
@@ -232,30 +230,33 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
               </div>
             )}
 
-            {/* Languages */}
-            {opp.languages?.length > 0 && (
-              <div>
-                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Languages</h2>
-                <div className="flex flex-wrap gap-2">
+            {/* ━━━━━━━━━━━━━━━━━━ LANGUAGES ━━━━━━━━━━━━━━━━━━ */}
+            {opp.languages && opp.languages.length > 0 && (
+              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
+                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Languages</h2>
+                <div className="flex flex-wrap gap-3">
                   {opp.languages.map((lang, i) => (
-                    <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/20">
+                    <span key={i} className="px-4 py-2.5 rounded-full text-[13px] font-semibold bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/30">
                       {lang}
                     </span>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Spacing for scrolled content */}
+            <div className="h-4" />
           </div>
         </div>
 
-        {/* Footer - Sticky */}
-        <div className="sticky bottom-0 border-t border-[rgba(13,24,61,0.08)] bg-white px-8 py-6 flex gap-3">
+        {/* Footer - Sticky with gradient */}
+        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-white/95 border-t border-[rgba(13,24,61,0.08)] px-8 py-6 flex gap-3 shadow-lg">
           <button onClick={onClose}
-            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-colors">
+            className="flex-1 px-6 py-3.5 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-all">
             Cancel
           </button>
           <button onClick={onApply}
-            className="flex-1 px-6 py-3 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
+            className="flex-1 px-6 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
             style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
             Apply now
           </button>
