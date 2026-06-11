@@ -79,7 +79,7 @@ export async function updateOpportunity(id, ngoId, form, status) {
 export async function fetchActiveOpportunities({ category, search } = {}) {
   let query = supabase
     .from('opportunities')
-    .select('*, ngo_profiles(name, image_url, location)')
+    .select('*')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
