@@ -62,6 +62,181 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
   )
 }
 
+// ─── Hive Visualization ───────────────────────────────────────────────────────
+
+function HiveVisualization({ opportunities, applicants, navigate }) {
+  const R = 26
+  const CX = 250, CY = 170
+  const d = Math.sqrt(3) * R
+
+  function hexPoints(cx, cy, r = R) {
+    return Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i
+      return `${(cx + r * Math.sin(a)).toFixed(1)},${(cy - r * Math.cos(a)).toFixed(1)}`
+    }).join(' ')
+  }
+
+  const relPositions = [
+    { x: 0, y: 0 },
+    { x: d, y: 0 }, { x: d / 2, y: d * 0.866 }, { x: -d / 2, y: d * 0.866 },
+    { x: -d, y: 0 }, { x: -d / 2, y: -d * 0.866 }, { x: d / 2, y: -d * 0.866 },
+    { x: 2 * d, y: 0 }, { x: d, y: d * 1.732 }, { x: -d, y: d * 1.732 },
+    { x: -2 * d, y: 0 }, { x: -d, y: -d * 1.732 }, { x: d, y: -d * 1.732 },
+    { x: 1.5 * d, y: d * 0.866 }, { x: 0, y: d * 1.732 }, { x: -1.5 * d, y: d * 0.866 },
+    { x: -1.5 * d, y: -d * 0.866 }, { x: 0, y: -d * 1.732 }, { x: 1.5 * d, y: -d * 0.866 },
+  ]
+
+  const positions = relPositions.map(p => ({ x: CX + p.x, y: CY + p.y }))
+
+  const hexes = positions.map((pos, i) => {
+    if (i === 0) return { ...pos, type: 'center' }
+    if (i <= 6) {
+      const opp = opportunities[i - 1] || null
+      return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
+    }
+    const app = applicants[i - 7] || null
+    return { ...pos, type: app ? 'app' : 'slot-app', app }
+  })
+
+  function hexFill(h) {
+    if (h.type === 'center') return '#1a1f3a'
+    if (h.type === 'slot-opp') return '#EEF2FF'
+    if (h.type === 'slot-app') return '#F8FAFC'
+    if (h.type === 'opp') {
+      return applicants.some(a => a.opportunityId === h.opp.id) ? '#FFB84D' : '#FFF8E8'
+    }
+    if (h.type === 'app') {
+      if (h.app.status === 'accepted') return '#D1FAE5'
+      if (h.app.status === 'completed') return '#DBEAFE'
+      return '#FEF3C7'
+    }
+    return '#F8FAFC'
+  }
+
+  function hexStroke(h) {
+    if (h.type === 'center') return 'none'
+    if (h.type === 'slot-opp') return '#C7D2FE'
+    if (h.type === 'slot-app') return '#E2E8F0'
+    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#E8A038' : '#FDE68A'
+    if (h.type === 'app') {
+      if (h.app.status === 'accepted') return '#6EE7B7'
+      if (h.app.status === 'completed') return '#93C5FD'
+      return '#FCD34D'
+    }
+    return '#E2E8F0'
+  }
+
+  function hexLabel(h) {
+    if (h.type === 'center') return null
+    if (h.type === 'slot-opp') return '+'
+    if (h.type === 'slot-app') return null
+    if (h.type === 'opp') return (h.opp.title || 'O')[0].toUpperCase()
+    if (h.type === 'app') return (h.app.volunteerName || 'V')[0].toUpperCase()
+    return null
+  }
+
+  function hexLabelColor(h) {
+    if (h.type === 'slot-opp') return '#818CF8'
+    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#1a1f3a' : '#92400E'
+    if (h.type === 'app') {
+      if (h.app.status === 'accepted') return '#065F46'
+      if (h.app.status === 'completed') return '#1E40AF'
+      return '#92400E'
+    }
+    return '#94A3B8'
+  }
+
+  function hexTooltip(h) {
+    if (h.type === 'opp') return h.opp.title
+    if (h.type === 'app') return `${h.app.volunteerName} · ${h.app.status}`
+    return null
+  }
+
+  return (
+    <div style={{ marginBottom: 48 }}>
+      <div style={{ marginBottom: 20 }}>
+        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
+        <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
+          {opportunities.length} active opportunity{opportunities.length !== 1 ? 'ies' : ''} · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 32 }}>
+        <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
+          {hexes.slice(1, 7).map((h, i) =>
+            h.type === 'opp' ? (
+              <line key={`cl-${i}`}
+                x1={hexes[0].x} y1={hexes[0].y} x2={h.x} y2={h.y}
+                stroke="#D1D5DB" strokeWidth="1.5" strokeDasharray="3 3"
+              />
+            ) : null
+          )}
+
+          {hexes.map((h, i) => {
+            const tip = hexTooltip(h)
+            const clickable = h.type === 'opp' || h.type === 'slot-opp' || h.type === 'app'
+            return (
+              <g key={i}
+                style={{ cursor: clickable ? 'pointer' : 'default' }}
+                onClick={() => {
+                  if (h.type === 'opp' || h.type === 'slot-opp') navigate('/opportunities')
+                  if (h.type === 'app') navigate('/applicants')
+                }}
+              >
+                {tip && <title>{tip}</title>}
+                <polygon
+                  points={hexPoints(h.x, h.y)}
+                  fill={hexFill(h)}
+                  stroke={hexStroke(h)}
+                  strokeWidth="1.5"
+                />
+                {h.type === 'center' && (
+                  <text x={h.x} y={h.y + 5} textAnchor="middle" fill="#FFB84D"
+                    fontSize="11" fontWeight="900" fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                    style={{ pointerEvents: 'none' }}>
+                    hive
+                  </text>
+                )}
+                {hexLabel(h) && (
+                  <text x={h.x} y={h.y + 5} textAnchor="middle"
+                    fill={hexLabelColor(h)}
+                    fontSize={h.type === 'slot-opp' ? '16' : '12'}
+                    fontWeight={h.type === 'slot-opp' ? '300' : '800'}
+                    fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                    style={{ pointerEvents: 'none' }}>
+                    {hexLabel(h)}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+
+        <div style={{ flex: 0.8, minWidth: 200 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { color: '#FFB84D', stroke: '#E8A038', label: 'Active with applications' },
+              { color: '#FFF8E8', stroke: '#FDE68A', label: 'No applications yet' },
+              { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending review' },
+              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted volunteer' },
+              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Completed' },
+              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: 3,
+                  background: l.color, border: `1.5px solid ${l.stroke}`
+                }} />
+                <span style={{ fontSize: 12, color: '#4B6382' }}>{l.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const AI_QUESTIONS = []
 
 const NAV_ITEMS = [
@@ -552,7 +727,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, ngoStats, loadingData }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, ngoStats, loadingData, navigate }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -601,6 +776,9 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
               </motion.div>
             ))}
           </div>
+
+          {/* ── Hive Visualization ── */}
+          <HiveVisualization opportunities={[]} applicants={applicants} navigate={navigate} />
 
           {/* ── Body ── */}
           <div className="grid lg:grid-cols-[1fr_264px] gap-5">
@@ -744,6 +922,7 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
 
 export default function NGODashboard() {
   const { user, profile } = useApp()
+  const navigate = useNavigate()
   const [activeStudent,  setActiveStudent]  = useState(null)
   const [applicants,     setApplicants]     = useState([])
   const [oppCount,       setOppCount]       = useState(0)
@@ -781,6 +960,7 @@ export default function NGODashboard() {
         applicants={applicants}
         ngoStats={ngoStats}
         loadingData={loadingData}
+        navigate={navigate}
       />
       <AnimatePresence>
         {activeStudent && (
