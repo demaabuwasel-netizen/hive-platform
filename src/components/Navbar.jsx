@@ -43,7 +43,7 @@ export default function Navbar({ minimal = false }) {
 
         {/* Logo */}
         <Link to="/" aria-label="Hive home" className="shrink-0">
-          <img src={logo} alt="Hive logo" style={{ height: '100px', width: 'auto', marginTop: '30px', marginLeft: '-12px', display: 'block' }} />
+          <img src={logo} alt="Hive logo" style={{ height: '70px', width: 'auto', marginTop: '20px', marginLeft: '-6px', display: 'block' }} />
         </Link>
 
         {/* Centre nav — shown when NOT logged in, desktop only */}
