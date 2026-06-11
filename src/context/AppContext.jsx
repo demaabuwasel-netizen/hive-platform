@@ -83,12 +83,20 @@ export function AppProvider({ children }) {
         setUserState(minimal); userWasSet = true; return
       }
 
+      // PROTECTION: if role is null/missing but we have a user with a role already,
+      // keep the existing role (don't let it be overwritten to null)
+      let roleToUse = userRow.role
+      if (!roleToUse && user?.role) {
+        warn(`STEP 2 — PROTECTION: role is null but user already has role=${user.role} — keeping existing role`)
+        roleToUse = user.role
+      }
+
       const merged = {
         id:                 authUser.id,
         email:              authUser.email,
         name:               userRow.name,
         avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
-        role:               userRow.role,
+        role:               roleToUse,
         onboardingComplete: userRow.onboarding_complete,
         onboardingStep:     userRow.onboarding_step ?? 0,
         provider:           userRow.provider,
@@ -327,7 +335,14 @@ export function AppProvider({ children }) {
   }
 
   function patchUser(updates) {
-    setUserState(prev => prev ? { ...prev, ...updates } : prev)
+    // PROTECTION: prevent accidental role changes
+    if (updates.role !== undefined && updates.role !== null) {
+      console.warn('[AppContext.patchUser] ⚠️ BLOCKED attempt to change role to:', updates.role)
+      const { role, ...safeUpdates } = updates
+      setUserState(prev => prev ? { ...prev, ...safeUpdates } : prev)
+    } else {
+      setUserState(prev => prev ? { ...prev, ...updates } : prev)
+    }
   }
 
   async function logout() {
