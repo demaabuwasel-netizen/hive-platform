@@ -132,6 +132,14 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="space-y-8">
 
+            {/* DESCRIPTION - FIRST & PROMINENT */}
+            {opp.description && (
+              <div>
+                <h2 className="text-[18px] font-bold text-[#0D183D] mb-4">About this opportunity</h2>
+                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
+              </div>
+            )}
+
             {/* Details Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {opp.location && (
@@ -178,14 +186,6 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
               )}
             </div>
 
-            {/* Description */}
-            {opp.description && (
-              <div>
-                <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">About this opportunity</h2>
-                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.description}</p>
-              </div>
-            )}
-
             {/* Mission Impact */}
             {opp.missionImpact && (
               <div>
@@ -200,11 +200,31 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 <h2 className="text-[16px] font-bold text-[#0D183D] mb-3">Required skills</h2>
                 <div className="flex flex-wrap gap-2">
                   {opp.skills.map((s, i) => {
-                    const { name, level } = parseSkill(s)
-                    if (!name) return null
+                    let skillName = '', skillLevel = ''
+
+                    // Handle different skill formats
+                    if (typeof s === 'string') {
+                      // Try to parse if it's JSON string
+                      if (s.includes('{')) {
+                        try {
+                          const parsed = JSON.parse(s)
+                          skillName = parsed.name || s
+                          skillLevel = parsed.level || ''
+                        } catch (e) {
+                          skillName = s
+                        }
+                      } else {
+                        skillName = s
+                      }
+                    } else if (s && typeof s === 'object') {
+                      skillName = s.name || ''
+                      skillLevel = s.level || ''
+                    }
+
+                    if (!skillName) return null
                     return (
                       <span key={i} className="px-3 py-2 rounded-lg text-[13px] font-medium bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
-                        {level ? `${name} · ${level}` : name}
+                        {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
                       </span>
                     )
                   })}
