@@ -679,8 +679,22 @@ export default function Opportunities() {
                     {ngo.skills && ngo.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {ngo.skills.slice(0, 3).map((s, idx) => {
-                          const skillName = typeof s === 'string' ? s : s.name
-                          const skillLevel = typeof s === 'object' && s.level ? s.level : ''
+                          // Handle string, object, or anything else
+                          let skillName = ''
+                          let skillLevel = ''
+
+                          if (typeof s === 'string') {
+                            skillName = s
+                          } else if (typeof s === 'object' && s !== null) {
+                            skillName = s.name || ''
+                            skillLevel = s.level || ''
+                          }
+
+                          // If still empty, convert to string as fallback
+                          if (!skillName && s) {
+                            skillName = String(s).replace(/^{/, '').replace(/}$/, '')
+                          }
+
                           return (
                             <span key={idx} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.06)]">
                               {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
