@@ -43,18 +43,19 @@ export default function NGOProfile() {
     try {
       console.log(`[NGOProfile] Saving ${field}:`, editValues[field])
       const updated = { ...profile, [field]: editValues[field] }
-      console.log('[NGOProfile] Updated profile:', updated)
+      console.log('[NGOProfile] Updated profile object:', JSON.stringify(updated, null, 2))
 
       // WAIT for save to complete
       await updateProfile(updated)
-      console.log('[NGOProfile] Save successful!')
+      console.log('[NGOProfile] Save successful! Data persisted.')
 
       // Only close AFTER save succeeds
       setEditingField(null)
       setEditValues({})
+      alert(`✓ ${field} saved successfully!`)
     } catch (err) {
       console.error('[NGOProfile] Save failed:', err.message, err)
-      alert(`Save failed: ${err.message}`)
+      alert(`Save failed: ${err.message}. Check console for details.`)
     } finally {
       setSaving(false)
     }
@@ -409,7 +410,7 @@ export default function NGOProfile() {
                   <TopicPicker
                     value={editValues.preferred_skills || []}
                     onChange={(newSkills) => setEditValues({preferred_skills: newSkills})}
-                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research', 'Writing', 'Graphic Design', 'Video Production', 'Public Speaking', 'Social Media', 'Fundraising', 'Mentoring', 'Curriculum Development', 'Data Visualization', 'Web Development', 'Mobile Development', 'Business Analysis', 'Grant Writing', 'Copywriting', 'SEO', 'Content Strategy', 'User Experience', 'Strategic Planning', 'Community Engagement']}
+                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research', 'Writing', 'Graphic Design', 'Video Production', 'Public Speaking', 'Social Media', 'Fundraising', 'Mentoring', 'Curriculum Development', 'Data Visualization', 'Web Development', 'Mobile Development', 'Business Analysis', 'Grant Writing', 'Copywriting', 'SEO', 'Content Strategy', 'User Experience', 'Strategic Planning', 'Community Engagement', 'Accounting', 'Legal Expertise', 'HR Management', 'Event Management', 'Public Relations', 'Advocacy', 'Nonprofit Management', 'Impact Measurement', 'Finance', 'Operations', 'Volunteer Coordination', 'Diversity & Inclusion', 'Sustainability', 'Education', 'Healthcare', 'Youth Development', 'Emergency Response', 'Technology Support', 'Cybersecurity', 'Network Administration', 'IT Infrastructure', 'DevOps', 'AI/Machine Learning', 'Cloud Computing']}
                     placeholder="Search or add preferred skills…"
                   />
                   <div className="flex gap-2">
@@ -460,7 +461,7 @@ export default function NGOProfile() {
                   <TopicPicker
                     value={editValues.project_types || []}
                     onChange={(newTypes) => setEditValues({project_types: newTypes})}
-                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting', 'Marketing Campaign', 'Social Media Strategy', 'Grant Writing', 'Policy Brief', 'Video Production', 'Podcast', 'Newsletter', 'Database Development', 'Data Analysis', 'Branding', 'Curriculum Design', 'Workshop', 'Mentorship Program', 'Community Survey', 'Annual Report', 'Strategic Plan', 'Budget Analysis', 'Case Study', 'Impact Assessment']}
+                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting', 'Marketing Campaign', 'Social Media Strategy', 'Grant Writing', 'Policy Brief', 'Video Production', 'Podcast', 'Newsletter', 'Database Development', 'Data Analysis', 'Branding', 'Curriculum Design', 'Workshop', 'Mentorship Program', 'Community Survey', 'Annual Report', 'Strategic Plan', 'Budget Analysis', 'Case Study', 'Impact Assessment', 'Advocacy Campaign', 'Volunteer Recruitment', 'Impact Report', 'Dashboard/Analytics', 'Helpline/Hotline', 'Outreach Program', 'Partnership Development', 'Donor Communications', 'Staff Training', 'Policy Change Initiative', 'Community Center', 'Resource Hub', 'Mobile Clinic', 'Emergency Response', 'Scholarship Program', 'Internship Program', 'Fellowship Program', 'Research Study', 'Pilot Program', 'Sustainability Initiative', 'Technology Infrastructure', 'Security Audit', 'Process Improvement']}
                     placeholder="Search or add project types…"
                   />
                   <div className="flex gap-2">
