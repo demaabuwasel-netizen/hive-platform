@@ -44,11 +44,11 @@ function dbToStudent(row) {
 }
 
 function studentToDb(userId, profile) {
-  // skills column is text[] — store as JSON strings to preserve {name,level} info
+  // skills column is text[] — store as JSON strings to preserve {name,level,category} info
   const skillsToSave = (profile.skills ?? [])
     .map(s => {
       if (typeof s === 'string') return s
-      if (s?.name) return JSON.stringify({ name: s.name, level: s.level || '' })
+      if (s?.name) return JSON.stringify({ name: s.name, level: s.level || '', category: s.category || 'Other' })
       return null
     })
     .filter(Boolean)
