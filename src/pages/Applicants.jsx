@@ -8,7 +8,6 @@ import {
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
-import StudentProfileModal from '../components/StudentProfileModal'
 import { fetchNgoApplicants, updateApplicationStatus } from '../services/applications'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -183,7 +182,6 @@ export default function Applicants() {
   const [selected, setSelected] = useState(null)
   const [scheduling, setScheduling] = useState(false)
   const [toast, setToast]       = useState(null)
-  const [viewingStudent, setViewingStudent] = useState(null)
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
@@ -373,7 +371,7 @@ export default function Applicants() {
                   <GradientAvatar name={a.name} size={44} radius="0.65rem"/>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <button onClick={(e) => { e.stopPropagation(); setViewingStudent(a) }}
+                      <button onClick={(e) => { e.stopPropagation(); navigate(`/student-profile/${a.studentId}`) }}
                         className="text-[13px] font-bold text-[#FFB703] hover:text-[#D99E00] truncate transition-colors text-left">
                         {a.name}
                       </button>
@@ -420,7 +418,7 @@ export default function Applicants() {
                       className="ring-[3px] ring-white shadow shrink-0"/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <button onClick={() => setViewingStudent(selected)}
+                        <button onClick={() => navigate(`/student-profile/${selected.studentId}`)}
                           className="text-[15px] font-extrabold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left">
                           {selected.name}
                         </button>
@@ -596,16 +594,6 @@ export default function Applicants() {
             style={{ background:'#0D183D', boxShadow:'0 8px 24px rgba(13,24,61,0.3)' }}>
             <CheckCircle2 size={14}/> {toast}
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Student Profile Modal */}
-      <AnimatePresence>
-        {viewingStudent && (
-          <StudentProfileModal
-            student={viewingStudent}
-            onClose={() => setViewingStudent(null)}
-          />
         )}
       </AnimatePresence>
     </div>
