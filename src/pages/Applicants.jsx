@@ -8,6 +8,7 @@ import {
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
+import StudentProfileModal from '../components/StudentProfileModal'
 import { fetchNgoApplicants, updateApplicationStatus } from '../services/applications'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -182,6 +183,7 @@ export default function Applicants() {
   const [selected, setSelected] = useState(null)
   const [scheduling, setScheduling] = useState(false)
   const [toast, setToast]       = useState(null)
+  const [viewingStudent, setViewingStudent] = useState(null)
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
@@ -371,7 +373,10 @@ export default function Applicants() {
                   <GradientAvatar name={a.name} size={44} radius="0.65rem"/>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-[13px] font-bold text-[#0D183D] truncate">{a.name}</p>
+                      <button onClick={(e) => { e.stopPropagation(); setViewingStudent(a) }}
+                        className="text-[13px] font-bold text-[#FFB703] hover:text-[#D99E00] truncate transition-colors text-left">
+                        {a.name}
+                      </button>
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${st.bg} ${st.color}`}>
                         {st.label}
                       </span>
@@ -415,7 +420,10 @@ export default function Applicants() {
                       className="ring-[3px] ring-white shadow shrink-0"/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <p className="text-[15px] font-extrabold text-[#0D183D]">{selected.name}</p>
+                        <button onClick={() => setViewingStudent(selected)}
+                          className="text-[15px] font-extrabold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left">
+                          {selected.name}
+                        </button>
                         <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${(STATUS_CONFIG[statuses[selected.id]] ?? STATUS_CONFIG.new).bg} ${(STATUS_CONFIG[statuses[selected.id]] ?? STATUS_CONFIG.new).color}`}>
                           {(STATUS_CONFIG[statuses[selected.id]] ?? STATUS_CONFIG.new).label}
                         </span>
@@ -588,6 +596,16 @@ export default function Applicants() {
             style={{ background:'#0D183D', boxShadow:'0 8px 24px rgba(13,24,61,0.3)' }}>
             <CheckCircle2 size={14}/> {toast}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Student Profile Modal */}
+      <AnimatePresence>
+        {viewingStudent && (
+          <StudentProfileModal
+            student={viewingStudent}
+            onClose={() => setViewingStudent(null)}
+          />
         )}
       </AnimatePresence>
     </div>
