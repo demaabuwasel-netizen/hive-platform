@@ -261,7 +261,7 @@ function AppRoutes() {
       {/* ── Dashboard shell — sidebar persists across all child routes ── */}
       <Route element={<ProtectedDashboard />}>
         {/* Profile routes */}
-        <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
+        <Route path="/profile/student"      element={<EditStudentProfile />} />
         <Route path="/profile/student/edit" element={<EditStudentProfile />} />
         <Route path="/profile/ngo"          element={<NGOProfile />} />
         <Route path="/profile/ngo/edit"     element={<EditNGOProfile />} />
