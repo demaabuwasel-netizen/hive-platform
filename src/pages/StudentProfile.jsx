@@ -196,14 +196,20 @@ export default function StudentProfile() {
   }
 
   useEffect(() => {
-    if (Array.isArray(profile?.skillsWithLevel)) {
-      console.log('[useEffect] Syncing skills from profile:', profile.skillsWithLevel.length)
-      setDisplayedSkills(profile.skillsWithLevel)
-    } else if (profile?.skillsWithLevel === undefined || profile?.skillsWithLevel === null) {
-      console.log('[useEffect] No skills in profile yet')
+    if (Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0) {
+      console.log('[useEffect] Syncing skills:', profile.skillsWithLevel)
+      const skillsWithCategories = profile.skillsWithLevel.map(s => ({
+        name: s.name || s,
+        level: s.level || '',
+        category: s.category || 'Other'
+      }))
+      console.log('[useEffect] Skills with categories:', skillsWithCategories)
+      setDisplayedSkills(skillsWithCategories)
+    } else {
+      console.log('[useEffect] No skills in profile')
       setDisplayedSkills([])
     }
-  }, [profile])
+  }, [profile?.skillsWithLevel])
 
   const CATEGORY_ICONS = {
     'Programming': Code,
