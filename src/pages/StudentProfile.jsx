@@ -710,28 +710,62 @@ export default function StudentProfile() {
                   )}
 
                   {displayedSkills.length > 0 && (
-                    <div className="p-4 rounded-xl border border-[rgba(13,24,61,0.08)] bg-[rgba(13,24,61,0.02)]">
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-2">Your Skills</label>
-                      <div className="flex flex-wrap gap-2">
-                        {displayedSkills.map((skill, idx) => {
-                          const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+                    <div className="space-y-4">
+                      {(() => {
+                        const skillsByCategory = {}
+                        displayedSkills.forEach(skill => {
+                          const category = skill?.category || 'Other'
+                          if (!skillsByCategory[category]) skillsByCategory[category] = []
+                          skillsByCategory[category].push({
+                            name: skill?.name || 'Unknown',
+                            level: skill?.level || '',
+                            category: category
+                          })
+                        })
+                        return Object.entries(skillsByCategory).map(([cat, skills]) => {
+                          const catColor = SKILL_CATEGORY_COLORS[cat] || SKILL_CATEGORY_COLORS['Other']
                           return (
-                            <div key={`${skill.name}-${idx}`} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] bg-white group">
-                              <div>
-                                <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                  {skill.level}
-                                </span>
+                            <div key={cat}>
+                              <div className="flex items-center gap-2 mb-2">
+                                {(() => {
+                                  const IconComponent = CATEGORY_ICONS[cat]
+                                  return (
+                                    <span className="px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5"
+                                      style={{ background: `${catColor}20`, color: catColor }}>
+                                      {IconComponent && <IconComponent size={14} strokeWidth={2}/>}
+                                      {cat}
+                                      <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold" style={{ background: catColor, color: 'white' }}>
+                                        {skills.length}
+                                      </span>
+                                    </span>
+                                  )
+                                })()}
                               </div>
-                              <button onClick={() => handleRemoveSkill(idx)}
-                                className="ml-2 p-1 rounded text-red-600 hover:bg-red-100 transition-colors"
-                                title="Delete skill">
-                                <X size={14}/>
-                              </button>
+                              <div className="flex flex-wrap gap-2">
+                                {skills.map((skill, idx) => {
+                                  const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+                                  const skillIndex = displayedSkills.findIndex(s => s.name === skill.name && s.level === skill.level)
+                                  return (
+                                    <div key={`${cat}-${skill.name}-${idx}`} className="relative group">
+                                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[rgba(13,24,61,0.1)]">
+                                        <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
+                                          {skill.level}
+                                        </span>
+                                      </div>
+                                      <button onClick={() => handleRemoveSkill(skillIndex)}
+                                        className="absolute -top-2 -right-2 p-1 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-md transition-all"
+                                        title="Delete skill">
+                                        <X size={12}/>
+                                      </button>
+                                    </div>
+                                  )
+                                })}
+                              </div>
                             </div>
                           )
-                        })}
-                      </div>
+                        })
+                      })()}
                     </div>
                   )}
 
