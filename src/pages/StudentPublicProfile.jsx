@@ -84,7 +84,10 @@ export default function StudentPublicProfile() {
     setLoading(true)
     setError(null)
 
+    console.log('[StudentPublicProfile] Loading student profile:', studentId)
+
     const timeoutId = setTimeout(() => {
+      console.log('[StudentPublicProfile] Timeout after 20s')
       setLoading(false)
       setError('Taking longer than expected. The student profile may be temporarily unavailable.')
     }, 20000)
@@ -92,14 +95,20 @@ export default function StudentPublicProfile() {
     loadStudentProfile(studentId)
       .then(p => {
         clearTimeout(timeoutId)
+        console.log('[StudentPublicProfile] Loaded successfully:', p)
+        if (!p) {
+          setLoading(false)
+          setError('Student profile not found.')
+          return
+        }
         setProfile(p)
         setLoading(false)
       })
       .catch(err => {
         clearTimeout(timeoutId)
-        console.error('Error loading student:', err)
+        console.error('[StudentPublicProfile] Error loading student:', err)
         setLoading(false)
-        setError('Could not load student profile. Please try again.')
+        setError('Could not load student profile: ' + (err?.message || 'Unknown error'))
       })
 
     return () => clearTimeout(timeoutId)
