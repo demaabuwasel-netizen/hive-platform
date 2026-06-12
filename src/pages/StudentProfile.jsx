@@ -335,9 +335,11 @@ export default function StudentProfile() {
     setNewSkillLevel('Intermediate')
 
     setSavingSkills(true)
-    console.log('[handleAddSkill] Starting save...')
+    console.log('[handleAddSkill] Starting save with skills:', updated)
+    console.log('[handleAddSkill] Updated skills WITH CATEGORIES:', updated.map(s => ({name: s.name, level: s.level, category: s.category})))
 
     try {
+      console.log('[handleAddSkill] Calling updateProfile with skillsWithLevel:', updated)
       const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
 
       const timeoutPromise = new Promise((_, reject) =>
