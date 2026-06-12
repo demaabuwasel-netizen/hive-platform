@@ -222,11 +222,22 @@ export default function StudentProfile() {
     'Other': Sparkles,
   }
 
-  const handleSaveLinks = () => {
+  const handleSaveLinks = async () => {
+    await updateProfile({ ...profile, links: linksDraft })
     setEditingLinks(false)
   }
 
-  const handleSaveAvailability = () => {
+  const handleSaveAvailability = async () => {
+    await updateProfile({
+      ...profile,
+      availability: availabilityDraft.availability,
+      workMode: availabilityDraft.workMode,
+      startDate: availabilityDraft.startDate,
+      startMonth: availabilityDraft.startMonth,
+      startYear: availabilityDraft.startYear,
+      startImmediately: availabilityDraft.startImmediately,
+      preferredRoles: availabilityDraft.preferredRoles,
+    })
     setEditingAvailability(false)
   }
 
@@ -275,7 +286,8 @@ export default function StudentProfile() {
     setEditingGoals(false)
   }
 
-  const handleSaveLanguages = () => {
+  const handleSaveLanguages = async () => {
+    await updateProfile({ ...profile, languages: languagesDraft })
     setEditingLanguages(false)
   }
 
@@ -291,7 +303,8 @@ export default function StudentProfile() {
     setLanguagesDraft(languagesDraft.filter((_, i) => i !== index))
   }
 
-  const handleSaveCauses = () => {
+  const handleSaveCauses = async () => {
+    await updateProfile({ ...profile, interests: causesDraft })
     setEditingCauses(false)
   }
 
@@ -314,6 +327,7 @@ export default function StudentProfile() {
   const [editingExpIndex, setEditingExpIndex] = useState(null)
 
   const handleSaveAbout = async () => {
+    await updateProfile({ ...profile, bio: aboutDraft })
     setEditingAbout(false)
   }
 
