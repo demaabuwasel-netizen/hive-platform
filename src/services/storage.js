@@ -3,9 +3,23 @@
 
 import { supabase } from './supabase'
 
-// Normalize skills from DB: could be string[] (old data) or {name,level}[] (new)
+// Normalize skills from DB: could be string, string[], or {name,level} objects
 function normalizeSkills(raw) {
-  return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
+  if (!Array.isArray(raw)) return []
+  return raw.map(s => {
+    if (typeof s === 'string') {
+      // Try to parse as JSON
+      try {
+        const parsed = JSON.parse(s)
+        return parsed
+      } catch (e) {
+        // Plain string skill
+        return { name: s, level: '' }
+      }
+    }
+    // Already an object
+    return s
+  })
 }
 
 // ── Student profiles ──────────────────────────────────────────────────────────
@@ -29,16 +43,20 @@ function dbToStudent(row) {
 }
 
 function studentToDb(userId, profile) {
-  // skills column is text[] — extract name strings from {name,level} objects
-  const skillNames = (profile.skills ?? [])
-    .map(s => (typeof s === 'string' ? s : s?.name))
+  // skills column is text[] — store as JSON strings to preserve {name,level} info
+  const skillsToSave = (profile.skills ?? [])
+    .map(s => {
+      if (typeof s === 'string') return s
+      if (s?.name) return JSON.stringify({ name: s.name, level: s.level || '' })
+      return null
+    })
     .filter(Boolean)
 
   return {
     user_id:      userId,
     field:        profile.field        ?? null,
     university:   profile.university   ?? null,
-    skills:       skillNames,
+    skills:       skillsToSave,
     courses:      profile.courses      ?? [],
     interests:    profile.interests    ?? [],
     experience:   profile.experience?.trim()   || null,
