@@ -325,12 +325,21 @@ export default function StudentProfile() {
     setNewSkillLevel('Intermediate')
 
     setSavingSkills(true)
+    console.log('[handleAddSkill] Starting save...')
+
     try {
-      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+      const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Save timeout - took too long')), 10000)
+      )
+
+      await Promise.race([savePromise, timeoutPromise])
+      console.log('[handleAddSkill] Save completed successfully')
     } catch (err) {
-      console.error('Error adding skill:', err)
+      console.error('[handleAddSkill] Error:', err.message)
       setDisplayedSkills(displayedSkills)
-      alert('Failed to save skill. Please try again.')
+      alert('Failed to save skill: ' + (err.message || 'Unknown error'))
     } finally {
       setSavingSkills(false)
     }
@@ -340,12 +349,21 @@ export default function StudentProfile() {
     const updated = displayedSkills.filter((_, i) => i !== index)
     setDisplayedSkills(updated)
     setSavingSkills(true)
+    console.log('[handleRemoveSkill] Starting save...')
+
     try {
-      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+      const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Save timeout - took too long')), 10000)
+      )
+
+      await Promise.race([savePromise, timeoutPromise])
+      console.log('[handleRemoveSkill] Save completed successfully')
     } catch (err) {
-      console.error('Error removing skill:', err)
+      console.error('[handleRemoveSkill] Error:', err.message)
       setDisplayedSkills(displayedSkills)
-      alert('Failed to remove skill. Please try again.')
+      alert('Failed to remove skill: ' + (err.message || 'Unknown error'))
     } finally {
       setSavingSkills(false)
     }
