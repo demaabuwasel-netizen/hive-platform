@@ -197,9 +197,13 @@ export default function StudentProfile() {
 
   useEffect(() => {
     if (Array.isArray(profile?.skillsWithLevel)) {
+      console.log('[useEffect] Syncing skills from profile:', profile.skillsWithLevel.length)
       setDisplayedSkills(profile.skillsWithLevel)
+    } else if (profile?.skillsWithLevel === undefined || profile?.skillsWithLevel === null) {
+      console.log('[useEffect] No skills in profile yet')
+      setDisplayedSkills([])
     }
-  }, [profile?.skillsWithLevel])
+  }, [profile])
 
   const CATEGORY_ICONS = {
     'Programming': Code,
