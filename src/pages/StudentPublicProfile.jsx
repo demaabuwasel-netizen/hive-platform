@@ -73,6 +73,7 @@ export default function StudentPublicProfile() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!studentId) {
@@ -81,13 +82,27 @@ export default function StudentPublicProfile() {
     }
 
     setLoading(true)
+    setError(null)
+
+    const timeoutId = setTimeout(() => {
+      setLoading(false)
+      setError('Taking longer than expected. The student profile may be temporarily unavailable.')
+    }, 20000)
+
     loadStudentProfile(studentId)
-      .then(p => setProfile(p))
-      .catch(err => {
-        console.error('Error loading student:', err)
-        navigate('/opportunities')
+      .then(p => {
+        clearTimeout(timeoutId)
+        setProfile(p)
+        setLoading(false)
       })
-      .finally(() => setLoading(false))
+      .catch(err => {
+        clearTimeout(timeoutId)
+        console.error('Error loading student:', err)
+        setLoading(false)
+        setError('Could not load student profile. Please try again.')
+      })
+
+    return () => clearTimeout(timeoutId)
   }, [studentId, navigate])
 
   if (loading) {
@@ -103,7 +118,7 @@ export default function StudentPublicProfile() {
     )
   }
 
-  if (!profile) {
+  if (error || !profile) {
     return (
       <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
         <div className="max-w-5xl mx-auto px-8 py-10">
@@ -111,8 +126,12 @@ export default function StudentPublicProfile() {
             <ArrowLeft size={18} />
             Back
           </button>
-          <div className="text-center py-20">
-            <p className="text-[#4B6382]">Student profile not found.</p>
+          <div className="text-center py-20 bg-white rounded-2xl p-8">
+            <p className="text-[#0D183D] font-semibold mb-2">{error ? 'Unable to load profile' : 'Student profile not found'}</p>
+            <p className="text-[#4B6382] mb-6">{error || 'This student profile could not be found.'}</p>
+            <button onClick={() => window.location.reload()} className="px-6 py-2.5 rounded-lg font-semibold text-white" style={{ background: '#FFB703' }}>
+              Try again
+            </button>
           </div>
         </div>
       </main>
