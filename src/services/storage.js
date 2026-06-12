@@ -3,7 +3,7 @@
 
 import { supabase } from './supabase'
 
-// Normalize skills from DB: could be string, string[], or {name,level} objects
+// Normalize skills from DB: could be string, string[], or {name,level,category} objects
 function normalizeSkills(raw) {
   if (!Array.isArray(raw)) return []
   return raw.map(s => {
@@ -11,14 +11,23 @@ function normalizeSkills(raw) {
       // Try to parse as JSON
       try {
         const parsed = JSON.parse(s)
-        return parsed
+        // Ensure all required fields exist
+        return {
+          name: parsed.name || s,
+          level: parsed.level || '',
+          category: parsed.category || 'Other'
+        }
       } catch (e) {
-        // Plain string skill
-        return { name: s, level: '' }
+        // Plain string skill - set default category
+        return { name: s, level: '', category: 'Other' }
       }
     }
-    // Already an object
-    return s
+    // Already an object - ensure it has category
+    return {
+      name: s.name || '',
+      level: s.level || '',
+      category: s.category || 'Other'
+    }
   })
 }
 

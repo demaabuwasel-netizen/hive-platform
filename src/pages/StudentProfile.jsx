@@ -759,11 +759,17 @@ export default function StudentProfile() {
                   {displayedSkills.length > 0 ? (
                     <div className="space-y-4">
                       {(() => {
+                        console.log('[Skills Display] displayedSkills:', displayedSkills)
                         const skillsByCategory = {}
                         displayedSkills.forEach(skill => {
-                          const category = skill.category || 'Other'
+                          const category = skill?.category || 'Other'
+                          console.log('[Skills Display] Skill:', skill.name, 'Category:', category)
                           if (!skillsByCategory[category]) skillsByCategory[category] = []
-                          skillsByCategory[category].push(skill)
+                          skillsByCategory[category].push({
+                            name: skill?.name || 'Unknown',
+                            level: skill?.level || '',
+                            category: category
+                          })
                         })
                         return Object.entries(skillsByCategory).map(([cat, skills]) => {
                           const catColor = SKILL_CATEGORY_COLORS[cat] || SKILL_CATEGORY_COLORS['Other']
