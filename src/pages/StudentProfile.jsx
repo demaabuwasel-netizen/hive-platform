@@ -177,9 +177,9 @@ export default function StudentProfile() {
   const [editingEducation, setEditingEducation] = useState(false)
   const [educations, setEducations] = useState(
     Array.isArray(profile?.educations) ? profile.educations :
-    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '', description: '' }] : []
+    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '', description: '', isCurrent: false }] : []
   )
-  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '', description: '' })
+  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
   const [editingEduIndex, setEditingEduIndex] = useState(null)
 
   const [editingContact, setEditingContact] = useState(false)
@@ -210,6 +210,26 @@ export default function StudentProfile() {
       setDisplayedSkills([])
     }
   }, [profile?.skillsWithLevel])
+
+  useEffect(() => {
+    if (profile?.motivation) {
+      setMotivationDraft(profile.motivation)
+    }
+  }, [profile?.motivation])
+
+  useEffect(() => {
+    if (profile?.availability || profile?.workMode || profile?.startDate || profile?.preferredRoles) {
+      setAvailabilityDraft({
+        availability: profile?.availability || '',
+        workMode: profile?.workMode || '',
+        startDate: profile?.startDate || '',
+        startMonth: profile?.startMonth || '',
+        startYear: profile?.startYear || '',
+        startImmediately: profile?.startImmediately || false,
+        preferredRoles: profile?.preferredRoles || '',
+      })
+    }
+  }, [profile?.availability, profile?.workMode, profile?.startDate, profile?.startMonth, profile?.startYear, profile?.startImmediately, profile?.preferredRoles])
 
   const CATEGORY_ICONS = {
     'Programming': Code,
@@ -1024,7 +1044,7 @@ export default function StudentProfile() {
                   Education
                 </h2>
                 {!editingEducation && (
-                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '' }); setEditingEduIndex(null); setEditingEducation(true) }}
+                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false }); setEditingEduIndex(null); setEditingEducation(true) }}
                     className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
                     {educations.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
                   </button>
@@ -1064,6 +1084,13 @@ export default function StudentProfile() {
                       <option value="Diploma">Diploma</option>
                     </select>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="isCurrent" checked={newEducation.isCurrent || false} onChange={e => setNewEducation({...newEducation, isCurrent: e.target.checked})}
+                      className="w-4 h-4 rounded border border-[rgba(13,24,61,0.1)] cursor-pointer"/>
+                    <label htmlFor="isCurrent" className="text-[11px] font-semibold text-[#0D183D] cursor-pointer">
+                      I'm still pursuing this degree
+                    </label>
+                  </div>
                   <div>
                     <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Description (optional)</label>
                     <textarea value={newEducation.description} onChange={e => setNewEducation({...newEducation, description: e.target.value})}
@@ -1078,7 +1105,7 @@ export default function StudentProfile() {
                       <Check size={12} className="inline mr-1"/>Save
                     </button>
                     <button onClick={() => {
-                      setNewEducation({ field: '', university: '', degreeType: '', description: '' })
+                      setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
                       setEditingEduIndex(null)
                       setEditingEducation(false)
                     }}
@@ -1113,12 +1140,19 @@ export default function StudentProfile() {
                               </button>
                             </div>
                           </div>
-                          {edu.degreeType && (
-                            <p className="text-[11px] text-[#4B6382] flex items-center gap-1 mb-2">
-                              <GraduationCap size={12}/>
-                              {edu.degreeType}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            {edu.degreeType && (
+                              <p className="text-[11px] text-[#4B6382] flex items-center gap-1">
+                                <GraduationCap size={12}/>
+                                {edu.degreeType}
+                              </p>
+                            )}
+                            {edu.isCurrent && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#10B981] bg-opacity-20 text-[#10B981]">
+                                Currently pursuing
+                              </span>
+                            )}
+                          </div>
                           {edu.description && (
                             <p className="text-[12px] text-[#0D183D] leading-relaxed whitespace-pre-wrap">{edu.description}</p>
                           )}
