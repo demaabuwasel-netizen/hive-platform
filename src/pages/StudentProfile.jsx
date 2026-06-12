@@ -243,27 +243,48 @@ export default function StudentProfile() {
   }
 
   const handleSaveLinks = async () => {
-    await updateProfile({ ...profile, links: linksDraft })
-    setEditingLinks(false)
+    console.log('[handleSaveLinks] Saving links:', linksDraft)
+    try {
+      await updateProfile({ ...profile, links: linksDraft })
+      console.log('[handleSaveLinks] Links saved successfully')
+      setEditingLinks(false)
+    } catch (err) {
+      console.error('[handleSaveLinks] Error:', err.message)
+      alert('Error saving links: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleSaveAvailability = async () => {
-    await updateProfile({
-      ...profile,
-      availability: availabilityDraft.availability,
-      workMode: availabilityDraft.workMode,
-      startDate: availabilityDraft.startDate,
-      startMonth: availabilityDraft.startMonth,
-      startYear: availabilityDraft.startYear,
-      startImmediately: availabilityDraft.startImmediately,
-      preferredRoles: availabilityDraft.preferredRoles,
-    })
-    setEditingAvailability(false)
+    console.log('[handleSaveAvailability] Saving availability:', availabilityDraft)
+    try {
+      await updateProfile({
+        ...profile,
+        availability: availabilityDraft.availability,
+        workMode: availabilityDraft.workMode,
+        startDate: availabilityDraft.startDate,
+        startMonth: availabilityDraft.startMonth,
+        startYear: availabilityDraft.startYear,
+        startImmediately: availabilityDraft.startImmediately,
+        preferredRoles: availabilityDraft.preferredRoles,
+      })
+      console.log('[handleSaveAvailability] Availability saved successfully')
+      setEditingAvailability(false)
+    } catch (err) {
+      console.error('[handleSaveAvailability] Error:', err.message)
+      alert('Error saving availability: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleSaveMotivation = async () => {
-    await updateProfile({ ...profile, motivation: motivationDraft })
-    setEditingMotivation(false)
+    console.log('[handleSaveMotivation] Saving motivation:', motivationDraft)
+    try {
+      await updateProfile({ ...profile, motivation: motivationDraft })
+      console.log('[handleSaveMotivation] Motivation saved successfully')
+      setEditingMotivation(false)
+    } catch (err) {
+      console.error('[handleSaveMotivation] Error:', err.message)
+      alert('Error saving motivation: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleSaveEducation = async () => {
@@ -307,8 +328,15 @@ export default function StudentProfile() {
   }
 
   const handleSaveLanguages = async () => {
-    await updateProfile({ ...profile, languages: languagesDraft })
-    setEditingLanguages(false)
+    console.log('[handleSaveLanguages] Saving languages:', languagesDraft)
+    try {
+      await updateProfile({ ...profile, languages: languagesDraft })
+      console.log('[handleSaveLanguages] Languages saved successfully')
+      setEditingLanguages(false)
+    } catch (err) {
+      console.error('[handleSaveLanguages] Error:', err.message)
+      alert('Error saving languages: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleAddLanguage = () => {
@@ -324,8 +352,15 @@ export default function StudentProfile() {
   }
 
   const handleSaveCauses = async () => {
-    await updateProfile({ ...profile, interests: causesDraft })
-    setEditingCauses(false)
+    console.log('[handleSaveCauses] Saving causes/interests:', causesDraft)
+    try {
+      await updateProfile({ ...profile, interests: causesDraft })
+      console.log('[handleSaveCauses] Causes saved successfully')
+      setEditingCauses(false)
+    } catch (err) {
+      console.error('[handleSaveCauses] Error:', err.message)
+      alert('Error saving causes: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleAddCause = (cause) => {
@@ -347,8 +382,15 @@ export default function StudentProfile() {
   const [editingExpIndex, setEditingExpIndex] = useState(null)
 
   const handleSaveAbout = async () => {
-    await updateProfile({ ...profile, bio: aboutDraft })
-    setEditingAbout(false)
+    console.log('[handleSaveAbout] Saving bio:', aboutDraft)
+    try {
+      await updateProfile({ ...profile, bio: aboutDraft })
+      console.log('[handleSaveAbout] Bio saved successfully')
+      setEditingAbout(false)
+    } catch (err) {
+      console.error('[handleSaveAbout] Error:', err.message)
+      alert('Error saving bio: ' + (err.message || 'Unknown error'))
+    }
   }
 
   const handleAddSkill = async () => {
