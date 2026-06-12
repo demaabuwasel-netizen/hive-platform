@@ -27,18 +27,19 @@ function normalizeSkills(raw) {
 function dbToStudent(row) {
   if (!row) return null
   return {
-    field:        row.field,
-    university:   row.university,
-    skills:       normalizeSkills(row.skills),
-    courses:      row.courses      ?? [],
-    interests:    row.interests    ?? [],
-    experience:   row.experience,
-    goals:        row.goals,
-    languages:    row.languages    ?? [],
-    availability: row.availability,
-    links:        row.links        ?? {},
-    bio:          row.bio,
-    phone:        row.phone,
+    field:           row.field,
+    university:      row.university,
+    skills:          normalizeSkills(row.skills),
+    skillsWithLevel: normalizeSkills(row.skills),
+    courses:         row.courses      ?? [],
+    interests:       row.interests    ?? [],
+    experience:      row.experience,
+    goals:           row.goals,
+    languages:       row.languages    ?? [],
+    availability:    row.availability,
+    links:           row.links        ?? {},
+    bio:             row.bio,
+    phone:           row.phone,
   }
 }
 
