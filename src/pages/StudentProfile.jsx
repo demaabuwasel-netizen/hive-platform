@@ -709,6 +709,32 @@ export default function StudentProfile() {
                     </div>
                   )}
 
+                  {displayedSkills.length > 0 && (
+                    <div className="p-4 rounded-xl border border-[rgba(13,24,61,0.08)] bg-[rgba(13,24,61,0.02)]">
+                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-2">Your Skills</label>
+                      <div className="flex flex-wrap gap-2">
+                        {displayedSkills.map((skill, idx) => {
+                          const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+                          return (
+                            <div key={`${skill.name}-${idx}`} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] bg-white group">
+                              <div>
+                                <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
+                                  {skill.level}
+                                </span>
+                              </div>
+                              <button onClick={() => handleRemoveSkill(idx)}
+                                className="ml-2 p-1 rounded text-red-600 hover:bg-red-100 transition-colors"
+                                title="Delete skill">
+                                <X size={14}/>
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="p-4 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white space-y-3">
                     <div>
                       <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Select a skill to add</label>
