@@ -402,16 +402,20 @@ export default function StudentProfile() {
   }
 
   const handleSaveExperience = async () => {
+    let updatedExperiences
     if (editingExpIndex !== null) {
-      const updated = [...experiences]
-      updated[editingExpIndex] = newExp
-      setExperiences(updated)
+      updatedExperiences = [...experiences]
+      updatedExperiences[editingExpIndex] = newExp
       setEditingExpIndex(null)
     } else if (newExp.title || newExp.description) {
-      setExperiences([...experiences, newExp])
+      updatedExperiences = [...experiences, newExp]
+    } else {
+      setEditingExperience(false)
+      return
     }
+    setExperiences(updatedExperiences)
     setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-    await updateProfile({ ...profile, experiences })
+    await updateProfile({ ...profile, experiences: updatedExperiences })
     setEditingExperience(false)
   }
 
