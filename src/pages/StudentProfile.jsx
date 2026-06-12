@@ -86,6 +86,9 @@ export default function StudentProfile() {
   const [editingSkills, setEditingSkills] = useState(false)
   const [newSkillId, setNewSkillId] = useState('')
   const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
+  const [skillsWithLevel, setSkillsWithLevel] = useState(
+    Array.isArray(skillsWithLevel) ? profile.skillsWithLevel : []
+  )
 
   const SKILLS_LIST = {
     'Programming': [
@@ -307,27 +310,35 @@ export default function StudentProfile() {
     const [category, skillName] = newSkillId.split('||')
     if (!skillName || !category) return
 
-    const skillsWithLevel = Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
     if (skillsWithLevel.some(s => s.name === skillName)) {
       alert('This skill is already added!')
       return
     }
 
     const updated = [...skillsWithLevel, { name: skillName, level: newSkillLevel, category }]
+    setSkillsWithLevel(updated)
+
     try {
       await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
       setNewSkillId('')
       setNewSkillLevel('Intermediate')
     } catch (err) {
       console.error('Error adding skill:', err)
+      setSkillsWithLevel(skillsWithLevel)
       alert('Failed to add skill. Please try again.')
     }
   }
 
   const handleRemoveSkill = async (index) => {
-    const skillsWithLevel = Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
     const updated = skillsWithLevel.filter((_, i) => i !== index)
-    await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    setSkillsWithLevel(updated)
+    try {
+      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    } catch (err) {
+      console.error('Error removing skill:', err)
+      setSkillsWithLevel(skillsWithLevel)
+      alert('Failed to remove skill. Please try again.')
+    }
   }
 
   const handleDeleteExperience = async (index) => {
@@ -496,7 +507,7 @@ export default function StudentProfile() {
         <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
           className="grid grid-cols-4 gap-3 mb-6">
           {[
-            { icon: Code, value: Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
+            { icon: Code, value: Array.isArray(skillsWithLevel) ? profile.skillsWithLevel.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
             { icon: Globe, value: languages.length, label: 'Languages', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
             { icon: Heart, value: interests.length, label: 'Top causes', color: '#FFB703', bg: 'rgba(255,183,3,0.1)' },
             { icon: Briefcase, value: experiences.length, label: 'Experiences', color: '#EC4899', bg: 'rgba(236,72,153,0.1)' },
@@ -607,7 +618,7 @@ export default function StudentProfile() {
 
               {editingSkills ? (
                 <div className="space-y-3">
-                  {Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0 && (
+                  {Array.isArray(skillsWithLevel) && profile.skillsWithLevel.length > 0 && (
                     <div className="mb-4 pb-4 border-b border-[rgba(13,24,61,0.06)]">
                       <div className="space-y-3">
                         {(() => {
@@ -710,7 +721,7 @@ export default function StudentProfile() {
                 </div>
               ) : (
                 <>
-                  {Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0 ? (
+                  {Array.isArray(skillsWithLevel) && profile.skillsWithLevel.length > 0 ? (
                     <div className="space-y-4">
                       {(() => {
                         const skillsByCategory = {}
@@ -956,17 +967,17 @@ export default function StudentProfile() {
                       placeholder="e.g., Stanford University"/>
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Year of Study</label>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Degree Type</label>
                     <select value={newEducation.graduationYear} onChange={e => setNewEducation({...newEducation, graduationYear: e.target.value})}
                       className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
                       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                      <option value="">Select year</option>
-                      <option value="1st year">1st year</option>
-                      <option value="2nd year">2nd year</option>
-                      <option value="3rd year">3rd year</option>
-                      <option value="4th year">4th year</option>
-                      <option value="5th year">5th year</option>
-                      <option value="Graduate">Graduate</option>
+                      <option value="">Select degree type</option>
+                      <option value="High School">High School</option>
+                      <option value="Bachelor's">Bachelor's</option>
+                      <option value="Master's">Master's</option>
+                      <option value="PhD">PhD</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Certificate">Certificate</option>
                     </select>
                   </div>
                   <div className="flex gap-2 pt-2">
