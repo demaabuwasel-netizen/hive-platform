@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -194,6 +194,12 @@ export default function StudentProfile() {
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))
   }
+
+  useEffect(() => {
+    if (Array.isArray(profile?.skillsWithLevel)) {
+      setDisplayedSkills(profile.skillsWithLevel)
+    }
+  }, [profile?.skillsWithLevel])
 
   const CATEGORY_ICONS = {
     'Programming': Code,
