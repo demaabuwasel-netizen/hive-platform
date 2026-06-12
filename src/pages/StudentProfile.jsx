@@ -173,9 +173,9 @@ export default function StudentProfile() {
   const [editingEducation, setEditingEducation] = useState(false)
   const [educations, setEducations] = useState(
     Array.isArray(profile?.educations) ? profile.educations :
-    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '' }] : []
+    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '', description: '' }] : []
   )
-  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '' })
+  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '', description: '' })
   const [editingEduIndex, setEditingEduIndex] = useState(null)
 
   const [editingContact, setEditingContact] = useState(false)
@@ -228,7 +228,7 @@ export default function StudentProfile() {
       return
     }
     setEducations(updatedEducations)
-    setNewEducation({ field: '', university: '', degreeType: '' })
+    setNewEducation({ field: '', university: '', degreeType: '', description: '' })
     await updateProfile({
       ...profile,
       educations: updatedEducations,
@@ -912,7 +912,7 @@ export default function StudentProfile() {
                   Education
                 </h2>
                 {!editingEducation && (
-                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '' }); setEditingEduIndex(null); setEditingEducation(true) }}
+                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '' }); setEditingEduIndex(null); setEditingEducation(true) }}
                     className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
                     {educations.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
                   </button>
@@ -952,6 +952,13 @@ export default function StudentProfile() {
                       <option value="Diploma">Diploma</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Description (optional)</label>
+                    <textarea value={newEducation.description} onChange={e => setNewEducation({...newEducation, description: e.target.value})}
+                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
+                      placeholder="e.g., Major achievements, relevant coursework, or details about this education..."
+                      rows={3}/>
+                  </div>
                   <div className="flex gap-2 pt-2">
                     <button onClick={handleSaveEducation}
                       className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
@@ -959,7 +966,7 @@ export default function StudentProfile() {
                       <Check size={12} className="inline mr-1"/>Save
                     </button>
                     <button onClick={() => {
-                      setNewEducation({ field: '', university: '', degreeType: '' })
+                      setNewEducation({ field: '', university: '', degreeType: '', description: '' })
                       setEditingEduIndex(null)
                       setEditingEducation(false)
                     }}
@@ -995,15 +1002,18 @@ export default function StudentProfile() {
                             </div>
                           </div>
                           {edu.degreeType && (
-                            <p className="text-[11px] text-[#4B6382] flex items-center gap-1">
+                            <p className="text-[11px] text-[#4B6382] flex items-center gap-1 mb-2">
                               <GraduationCap size={12}/>
                               {edu.degreeType}
                             </p>
                           )}
+                          {edu.description && (
+                            <p className="text-[12px] text-[#0D183D] leading-relaxed whitespace-pre-wrap">{edu.description}</p>
+                          )}
                         </div>
                       ))}
                       <button onClick={() => {
-                        setNewEducation({ field: '', university: '', degreeType: '' })
+                        setNewEducation({ field: '', university: '', degreeType: '', description: '' })
                         setEditingEduIndex(null)
                         setEditingEducation(true)
                       }} className="w-full mt-2 py-2 rounded-lg text-[12px] font-semibold border border-dashed border-[#6366F1]"
@@ -1016,7 +1026,7 @@ export default function StudentProfile() {
                       <GraduationCap size={32} className="mx-auto mb-3 text-[#6366F1]" style={{ opacity: 0.5 }}/>
                       <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No education added yet</p>
                       <p className="text-[12px] text-[#4B6382] mb-4">Add your degrees and educational background</p>
-                      <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '' }); setEditingEduIndex(null); setEditingEducation(true) }} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
+                      <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '' }); setEditingEduIndex(null); setEditingEducation(true) }} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
                         style={{ background: '#6366F1', color: 'white' }}>
                         <Plus size={14}/>
                         Add Education
