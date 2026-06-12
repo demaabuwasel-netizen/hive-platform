@@ -86,6 +86,9 @@ export default function StudentProfile() {
   const [editingSkills, setEditingSkills] = useState(false)
   const [newSkillId, setNewSkillId] = useState('')
   const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
+  const [displayedSkills, setDisplayedSkills] = useState(
+    Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
+  )
 
   const SKILLS_LIST = {
     'Programming': [
@@ -302,19 +305,37 @@ export default function StudentProfile() {
     const [category, skillName] = newSkillId.split('||')
     if (!skillName || !category) return
 
-    const skillsWithLevel = Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
-    if (skillsWithLevel.some(s => s.name === skillName)) return
+    if (displayedSkills.some(s => s.name === skillName)) {
+      alert('This skill is already added!')
+      return
+    }
 
-    const updated = [...skillsWithLevel, { name: skillName, level: newSkillLevel, category }]
-    await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    const newSkill = { name: skillName, level: newSkillLevel, category }
+    const updated = [...displayedSkills, newSkill]
+
+    setDisplayedSkills(updated)
     setNewSkillId('')
     setNewSkillLevel('Intermediate')
+
+    try {
+      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    } catch (err) {
+      console.error('Error adding skill:', err)
+      setDisplayedSkills(displayedSkills)
+      alert('Failed to save skill. Please try again.')
+    }
   }
 
   const handleRemoveSkill = async (index) => {
-    const skillsWithLevel = Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
-    const updated = skillsWithLevel.filter((_, i) => i !== index)
-    await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    const updated = displayedSkills.filter((_, i) => i !== index)
+    setDisplayedSkills(updated)
+    try {
+      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
+    } catch (err) {
+      console.error('Error removing skill:', err)
+      setDisplayedSkills(displayedSkills)
+      alert('Failed to remove skill. Please try again.')
+    }
   }
 
   const handleDeleteExperience = async (index) => {
@@ -479,7 +500,7 @@ export default function StudentProfile() {
         <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
           className="grid grid-cols-4 gap-3 mb-6">
           {[
-            { icon: Code, value: Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
+            { icon: Code, value: displayedSkills.length > 0 ? displayedSkills.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
             { icon: Globe, value: languages.length, label: 'Languages', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
             { icon: Heart, value: interests.length, label: 'Top causes', color: '#FFB703', bg: 'rgba(255,183,3,0.1)' },
             { icon: Briefcase, value: experiences.length, label: 'Experiences', color: '#EC4899', bg: 'rgba(236,72,153,0.1)' },
@@ -590,12 +611,12 @@ export default function StudentProfile() {
 
               {editingSkills ? (
                 <div className="space-y-3">
-                  {Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0 && (
+                  {displayedSkills.length > 0 && (
                     <div className="mb-4 pb-4 border-b border-[rgba(13,24,61,0.06)]">
                       <div className="space-y-3">
                         {(() => {
                           const skillsByCategory = {}
-                          profile.skillsWithLevel.forEach(skill => {
+                          displayedSkills.forEach(skill => {
                             const category = skill.category || 'Other'
                             if (!skillsByCategory[category]) skillsByCategory[category] = []
                             skillsByCategory[category].push(skill)
@@ -693,11 +714,11 @@ export default function StudentProfile() {
                 </div>
               ) : (
                 <>
-                  {Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0 ? (
+                  {displayedSkills.length > 0 ? (
                     <div className="space-y-4">
                       {(() => {
                         const skillsByCategory = {}
-                        profile.skillsWithLevel.forEach(skill => {
+                        displayedSkills.forEach(skill => {
                           const category = skill.category || 'Other'
                           if (!skillsByCategory[category]) skillsByCategory[category] = []
                           skillsByCategory[category].push(skill)
