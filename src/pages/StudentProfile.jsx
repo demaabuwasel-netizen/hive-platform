@@ -87,7 +87,7 @@ export default function StudentProfile() {
   const [newSkillId, setNewSkillId] = useState('')
   const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
   const [skillsWithLevel, setSkillsWithLevel] = useState(
-    Array.isArray(skillsWithLevel) ? profile.skillsWithLevel : []
+    Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
   )
 
   const SKILLS_LIST = {
