@@ -331,7 +331,7 @@ export default function StudentProfile() {
       const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Save timeout - took too long')), 10000)
+        setTimeout(() => reject(new Error('Save timeout - took too long')), 30000)
       )
 
       await Promise.race([savePromise, timeoutPromise])
@@ -355,7 +355,7 @@ export default function StudentProfile() {
       const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Save timeout - took too long')), 10000)
+        setTimeout(() => reject(new Error('Save timeout - took too long')), 30000)
       )
 
       await Promise.race([savePromise, timeoutPromise])
