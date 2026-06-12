@@ -45,7 +45,12 @@ function dbToStudent(row) {
 
 function studentToDb(userId, profile) {
   // skills column is text[] — store as JSON strings to preserve {name,level,category} info
-  const skillsToSave = (profile.skills ?? [])
+  // Use skillsWithLevel if available (has full objects), otherwise use skills
+  const skillsToProcess = Array.isArray(profile.skillsWithLevel) && profile.skillsWithLevel.length > 0
+    ? profile.skillsWithLevel
+    : (profile.skills ?? [])
+
+  const skillsToSave = skillsToProcess
     .map(s => {
       if (typeof s === 'string') return s
       if (s?.name) return JSON.stringify({ name: s.name, level: s.level || '', category: s.category || 'Other' })
