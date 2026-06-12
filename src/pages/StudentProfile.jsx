@@ -171,11 +171,12 @@ export default function StudentProfile() {
   const [motivationDraft, setMotivationDraft] = useState(profile?.motivation || '')
 
   const [editingEducation, setEditingEducation] = useState(false)
-  const [educationDraft, setEducationDraft] = useState({
-    field: profile?.field || '',
-    university: profile?.university || '',
-    graduationYear: profile?.graduation_year || '',
-  })
+  const [educations, setEducations] = useState(
+    Array.isArray(profile?.educations) ? profile.educations :
+    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '' }] : []
+  )
+  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '' })
+  const [editingEduIndex, setEditingEduIndex] = useState(null)
 
   const [editingContact, setEditingContact] = useState(false)
   const [contactDraft, setContactDraft] = useState({
@@ -215,8 +216,33 @@ export default function StudentProfile() {
   }
 
   const handleSaveEducation = async () => {
-    await updateProfile({ ...profile, field: educationDraft.field, university: educationDraft.university, graduation_year: educationDraft.graduationYear })
+    let updatedEducations
+    if (editingEduIndex !== null) {
+      updatedEducations = [...educations]
+      updatedEducations[editingEduIndex] = newEducation
+      setEditingEduIndex(null)
+    } else if (newEducation.field || newEducation.university) {
+      updatedEducations = [...educations, newEducation]
+    } else {
+      setEditingEducation(false)
+      return
+    }
+    setEducations(updatedEducations)
+    setNewEducation({ field: '', university: '', degreeType: '' })
+    await updateProfile({
+      ...profile,
+      educations: updatedEducations,
+      field: updatedEducations[0]?.field || profile?.field,
+      university: updatedEducations[0]?.university || profile?.university,
+      graduation_year: updatedEducations[0]?.degreeType || profile?.graduation_year
+    })
     setEditingEducation(false)
+  }
+
+  const handleDeleteEducation = async (index) => {
+    const updated = educations.filter((_, i) => i !== index)
+    setEducations(updated)
+    await updateProfile({ ...profile, educations: updated })
   }
 
   const handleSaveContact = async () => {
@@ -886,39 +912,44 @@ export default function StudentProfile() {
                   Education
                 </h2>
                 {!editingEducation && (
-                  <button onClick={() => setEditingEducation(true)}
+                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '' }); setEditingEduIndex(null); setEditingEducation(true) }}
                     className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {educationDraft.field || educationDraft.university ? 'Edit' : 'Add'} <Edit3 size={12}/>
+                    {educations.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
                   </button>
                 )}
               </div>
 
               {editingEducation ? (
                 <div className="space-y-3">
+                  {editingEduIndex !== null && (
+                    <div className="p-2 rounded-lg bg-blue-50 text-[11px] text-blue-600 mb-2">
+                      Editing: {educations[editingEduIndex]?.field || 'Education'}
+                    </div>
+                  )}
                   <div>
                     <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Field of Study</label>
-                    <input type="text" value={educationDraft.field} onChange={e => setEducationDraft({...educationDraft, field: e.target.value})}
+                    <input type="text" value={newEducation.field} onChange={e => setNewEducation({...newEducation, field: e.target.value})}
                       className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
                       placeholder="e.g., Computer Science"/>
                   </div>
                   <div>
                     <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">University / School</label>
-                    <input type="text" value={educationDraft.university} onChange={e => setEducationDraft({...educationDraft, university: e.target.value})}
+                    <input type="text" value={newEducation.university} onChange={e => setNewEducation({...newEducation, university: e.target.value})}
                       className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
                       placeholder="e.g., Stanford University"/>
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Year of Study</label>
-                    <select value={educationDraft.graduationYear} onChange={e => setEducationDraft({...educationDraft, graduationYear: e.target.value})}
+                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Degree Type</label>
+                    <select value={newEducation.degreeType} onChange={e => setNewEducation({...newEducation, degreeType: e.target.value})}
                       className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
                       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                      <option value="">Select year</option>
-                      <option value="1st year">1st year</option>
-                      <option value="2nd year">2nd year</option>
-                      <option value="3rd year">3rd year</option>
-                      <option value="4th year">4th year</option>
-                      <option value="5th year">5th year</option>
-                      <option value="Graduate">Graduate</option>
+                      <option value="">Select degree type</option>
+                      <option value="High School">High School</option>
+                      <option value="Certificate">Certificate</option>
+                      <option value="Bachelor's">Bachelor's</option>
+                      <option value="Master's">Master's</option>
+                      <option value="PhD">PhD</option>
+                      <option value="Diploma">Diploma</option>
                     </select>
                   </div>
                   <div className="flex gap-2 pt-2">
@@ -928,7 +959,8 @@ export default function StudentProfile() {
                       <Check size={12} className="inline mr-1"/>Save
                     </button>
                     <button onClick={() => {
-                      setEducationDraft({ field: profile?.field || '', university: profile?.university || '', graduationYear: profile?.graduation_year || '' })
+                      setNewEducation({ field: '', university: '', degreeType: '' })
+                      setEditingEduIndex(null)
                       setEditingEducation(false)
                     }}
                       className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
@@ -937,20 +969,61 @@ export default function StudentProfile() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2 text-[12px]">
-                  {educationDraft.field && (
-                    <p className="text-[#0D183D]"><strong>Field:</strong> {educationDraft.field}</p>
+                <>
+                  {educations.length > 0 ? (
+                    <div className="space-y-3">
+                      {educations.map((edu, idx) => (
+                        <div key={idx} className="border border-[rgba(13,24,61,0.07)] rounded-lg p-4 hover:shadow-md transition-shadow group">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1">
+                              <h4 className="text-[13px] font-bold text-[#0D183D]">{edu.field}</h4>
+                              <p className="text-[12px] font-semibold text-[#4B6382]">{edu.university}</p>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => {
+                                setNewEducation(edu)
+                                setEditingEduIndex(idx)
+                                setEditingEducation(true)
+                              }} className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-600"
+                                title="Edit">
+                                <Edit3 size={14}/>
+                              </button>
+                              <button onClick={() => handleDeleteEducation(idx)} className="p-1.5 hover:bg-red-100 rounded-lg text-red-600"
+                                title="Delete">
+                                <X size={14}/>
+                              </button>
+                            </div>
+                          </div>
+                          {edu.degreeType && (
+                            <p className="text-[11px] text-[#4B6382] flex items-center gap-1">
+                              <GraduationCap size={12}/>
+                              {edu.degreeType}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      <button onClick={() => {
+                        setNewEducation({ field: '', university: '', degreeType: '' })
+                        setEditingEduIndex(null)
+                        setEditingEducation(true)
+                      }} className="w-full mt-2 py-2 rounded-lg text-[12px] font-semibold border border-dashed border-[#6366F1]"
+                        style={{ color: '#6366F1' }}>
+                        Add Education
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <GraduationCap size={32} className="mx-auto mb-3 text-[#6366F1]" style={{ opacity: 0.5 }}/>
+                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No education added yet</p>
+                      <p className="text-[12px] text-[#4B6382] mb-4">Add your degrees and educational background</p>
+                      <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '' }); setEditingEduIndex(null); setEditingEducation(true) }} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
+                        style={{ background: '#6366F1', color: 'white' }}>
+                        <Plus size={14}/>
+                        Add Education
+                      </button>
+                    </div>
                   )}
-                  {educationDraft.university && (
-                    <p className="text-[#0D183D]"><strong>School:</strong> {educationDraft.university}</p>
-                  )}
-                  {educationDraft.graduationYear && (
-                    <p className="text-[#0D183D]"><strong>Year:</strong> {educationDraft.graduationYear}</p>
-                  )}
-                  {!educationDraft.field && !educationDraft.university && !educationDraft.graduationYear && (
-                    <p className="text-[#4B6382]">Add your education details</p>
-                  )}
-                </div>
+                </>
               )}
             </motion.div>
 
