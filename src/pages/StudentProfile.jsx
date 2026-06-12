@@ -89,6 +89,7 @@ export default function StudentProfile() {
   const [displayedSkills, setDisplayedSkills] = useState(
     Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
   )
+  const [savingSkills, setSavingSkills] = useState(false)
 
   const SKILLS_LIST = {
     'Programming': [
@@ -317,24 +318,30 @@ export default function StudentProfile() {
     setNewSkillId('')
     setNewSkillLevel('Intermediate')
 
+    setSavingSkills(true)
     try {
       await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
     } catch (err) {
       console.error('Error adding skill:', err)
       setDisplayedSkills(displayedSkills)
       alert('Failed to save skill. Please try again.')
+    } finally {
+      setSavingSkills(false)
     }
   }
 
   const handleRemoveSkill = async (index) => {
     const updated = displayedSkills.filter((_, i) => i !== index)
     setDisplayedSkills(updated)
+    setSavingSkills(true)
     try {
       await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
     } catch (err) {
       console.error('Error removing skill:', err)
       setDisplayedSkills(displayedSkills)
       alert('Failed to remove skill. Please try again.')
+    } finally {
+      setSavingSkills(false)
     }
   }
 
@@ -706,9 +713,10 @@ export default function StudentProfile() {
 
                   <div className="flex gap-2 pt-2">
                     <button onClick={() => setEditingSkills(false)}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                      disabled={savingSkills}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ background: '#0D183D', color: 'white' }}>
-                      Done
+                      {savingSkills ? 'Saving...' : 'Done'}
                     </button>
                   </div>
                 </div>
