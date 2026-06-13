@@ -143,9 +143,14 @@ export default function OpportunityDetail() {
               <h2 className="text-2xl font-extrabold text-[#0D183D] mb-4">Required Skills</h2>
               <div className="flex flex-wrap gap-3">
                 {opp.skills.map((s, i) => (
-                  <span key={i} className="px-4 py-2 rounded-xl text-sm font-medium bg-[#FFB703]/10 text-[#92610a]">
-                    {typeof s === 'string' ? s : s.name}
-                  </span>
+                  <div key={i} className="px-4 py-2 rounded-xl bg-[#FFB703]/10 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[#92610a]">{s.name}</span>
+                    {s.level && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#FFB703]/20 text-[#92610a]">
+                        {s.level}
+                      </span>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

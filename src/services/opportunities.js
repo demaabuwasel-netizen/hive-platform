@@ -1,7 +1,23 @@
 import { supabase } from './supabase'
 
 function normalizeSkills(raw) {
-  return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
+  return (raw ?? []).map(s => {
+    if (typeof s === 'string') {
+      // Try to parse as JSON first
+      try {
+        const parsed = JSON.parse(s)
+        return {
+          name: parsed.name || s,
+          level: parsed.level || '',
+        }
+      } catch (e) {
+        // Plain string skill
+        return { name: s, level: '' }
+      }
+    }
+    // Already an object
+    return { name: s.name || '', level: s.level || '' }
+  })
 }
 
 function dbToOpp(row) {
