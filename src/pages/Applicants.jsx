@@ -138,22 +138,39 @@ export default function Applicants() {
     <div className="max-w-7xl mx-auto px-8 py-7">
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Applicants</h1>
-        <p className="text-[13px] text-[#4B6382] mt-0.5">
-          {rolesLoading ? 'Loading…' : `${totalApplicants} student${totalApplicants !== 1 ? 's' : ''} applied to your opportunities`}
-        </p>
+      <div className="mb-7">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-2xl font-extrabold text-[#0D183D] mb-1">👥 Applicants</h1>
+          <p className="text-[13px] text-[#4B6382] font-medium">
+            {rolesLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block w-1.5 h-1.5 bg-[#FFB703] rounded-full animate-pulse"></span>
+                Loading opportunities…
+              </span>
+            ) : (
+              <span>
+                <span className="font-bold text-[#0D183D]">{totalApplicants}</span> student{totalApplicants !== 1 ? 's' : ''} applied to your opportunities
+              </span>
+            )}
+          </p>
+        </motion.div>
       </div>
 
       {/* Error */}
-      {error && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 text-sm text-red-600 bg-red-50 border border-red-200">
-          <AlertCircle size={15} className="shrink-0"/>
-          {error}
-          <button onClick={() => setError(null)}
-            className="ml-auto font-semibold underline underline-offset-2">Dismiss</button>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 px-5 py-4 rounded-xl mb-6 text-sm text-red-700 bg-red-50 border border-red-200"
+            style={{ boxShadow: '0 2px 8px rgba(220,38,38,0.08)' }}>
+            <AlertCircle size={18} className="shrink-0 flex-shrink-0"/>
+            <span className="font-medium flex-1">{error}</span>
+            <button onClick={() => setError(null)}
+              className="ml-auto font-semibold text-red-600 hover:text-red-700 transition-colors text-[12px] uppercase tracking-wide">
+              Dismiss
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main layout */}
       {rolesLoading ? (
