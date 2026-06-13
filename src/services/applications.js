@@ -217,3 +217,138 @@ export async function hasApplied(studentId, opportunityId) {
     .single()
   return !!data
 }
+
+// ────────────────────────────────────────────────────────────────────────────────
+// PHASE 1 DATA LAYER: Role-based applicant management
+// ────────────────────────────────────────────────────────────────────────────────
+
+// NGO: fetch all opportunities posted by this NGO with applicant count summaries
+export async function fetchNgoOpportunitiesWithApplicantCounts(ngoId) {
+  const { data: opps, error: oppError } = await supabase
+    .from('opportunities')
+    .select('id, title, location, work_mode, weekly_hours, status')
+    .eq('ngo_id', ngoId)
+    .order('created_at', { ascending: false })
+
+  if (oppError) throw new Error(oppError.message)
+  if (!opps?.length) return []
+
+  // Get applicant counts and statuses for each opportunity
+  const { data: appCounts, error: countError } = await supabase
+    .from('applications')
+    .select('opportunity_id, status')
+    .in('opportunity_id', opps.map(o => o.id))
+
+  if (countError) throw new Error(countError.message)
+
+  // Build a map of opportunity_id -> { total, new, shortlisted, interview, rejected }
+  const statMap = {}
+  (appCounts ?? []).forEach(app => {
+    if (!statMap[app.opportunity_id]) {
+      statMap[app.opportunity_id] = { total: 0, new: 0, shortlisted: 0, interview: 0, rejected: 0 }
+    }
+    statMap[app.opportunity_id].total++
+
+    const uiStatus = app.status === 'submitted' || app.status === 'under_review' ? 'new' : app.status
+    if (statMap[app.opportunity_id][uiStatus] !== undefined) {
+      statMap[app.opportunity_id][uiStatus]++
+    }
+  })
+
+  // Merge opportunity data with stats
+  return opps.map(opp => ({
+    id: opp.id,
+    title: opp.title,
+    location: opp.location,
+    workMode: opp.work_mode,
+    weeklyHours: opp.weekly_hours,
+    status: opp.status,
+    stats: statMap[opp.id] ?? { total: 0, new: 0, shortlisted: 0, interview: 0, rejected: 0 },
+  }))
+}
+
+// NGO: fetch applicants for a specific opportunity with full profile + match scores
+export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId) {
+  const { data: apps, error } = await supabase
+    .from('applications')
+    .select(`
+      *,
+      opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field)
+    `)
+    .eq('opportunity_id', opportunityId)
+    .eq('ngo_id', ngoId)
+    .order('submitted_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  if (!apps?.length) return []
+
+  const studentIds = [...new Set(apps.map(a => a.student_id))]
+
+  const [{ data: userData }, { data: profileData }] = await Promise.all([
+    supabase.from('users').select('id, name, email').in('id', studentIds),
+    supabase.from('student_profiles')
+      .select('user_id, field, university, skills, languages, availability, bio, interests, links, experience, goals')
+      .in('user_id', studentIds),
+  ])
+
+  const userMap    = Object.fromEntries((userData    ?? []).map(u => [u.id,      u]))
+  const profileMap = Object.fromEntries((profileData ?? []).map(p => [p.user_id, p]))
+
+  // Same applicant building logic as fetchNgoApplicants but filtered per opportunity
+  return apps.map(app => {
+    const user = userMap[app.student_id]    ?? {}
+    const prof = profileMap[app.student_id] ?? {}
+
+    const opp = {
+      skills:       app.opportunities?.skills        ?? [],
+      category:     app.opportunities?.category      ?? '',
+      title:        app.opportunities?.title         ?? '',
+      description:  app.opportunities?.description   ?? '',
+      missionImpact:app.opportunities?.mission_impact ?? '',
+      workMode:     app.opportunities?.work_mode     ?? '',
+      weeklyHours:  app.opportunities?.weekly_hours  ?? null,
+      languages:    app.opportunities?.languages     ?? [],
+      field:        app.opportunities?.field         ?? '',
+      location:     app.opportunities?.location      ?? '',
+    }
+
+    const matchResult = computeMatch(prof, opp)
+    const languages   = (prof.languages ?? []).map(l =>
+      typeof l === 'string' ? l : `${l.lang}${l.level ? ` (${l.level})` : ''}`)
+
+    return {
+      id:               app.id,
+      studentId:        app.student_id,
+      name:             user.name       ?? 'Applicant',
+      email:            user.email      ?? '',
+      field:            prof.field      ?? '',
+      uni:              prof.university ?? '',
+      skills:           toSkillObjects(prof.skills),
+      languages,
+      availability:     prof.availability ?? '',
+      bio:              prof.bio        ?? '',
+      interests:        prof.interests  ?? [],
+      links:            prof.links      ?? {},
+      opportunityTitle: app.opportunities?.title ?? '',
+      opportunityId:    app.opportunity_id,
+      status:           app.status,
+      statusLabel:      STATUS_LABEL[app.status] ?? app.status,
+      submittedAt:      app.submitted_at,
+      match:            matchResult.score,
+      matchReasons:     matchResult.strengths.slice(0, 3),
+      breakdown:        matchResult.breakdown,
+      location:         app.opportunities?.location ?? '',
+    }
+  })
+}
+
+// Helper: Compute stats from applicants array
+export function computeRoleStats(applicants) {
+  return {
+    total:       applicants.length,
+    new:         applicants.filter(a => a.status === 'submitted' || a.status === 'under_review').length,
+    shortlisted: applicants.filter(a => a.status === 'shortlisted').length,
+    interview:   applicants.filter(a => a.status === 'interview').length,
+    rejected:    applicants.filter(a => a.status === 'rejected').length,
+  }
+}

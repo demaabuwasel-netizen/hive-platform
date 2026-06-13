@@ -1,0 +1,234 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import {
+  MapPin, Globe, Clock, Star, Calendar, MessageCircle, XCircle,
+  CheckCircle2, Sparkles, Users
+} from 'lucide-react'
+import GradientAvatar from './GradientAvatar'
+import CategorizedSkillTags from './CategorizedSkillTags'
+import InterviewScheduler from './InterviewScheduler'
+
+function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
+function MatchRing({ score }) {
+  const r = 22, circ = 2 * Math.PI * r
+  const color = score >= 90 ? '#10B981' : score >= 80 ? '#FFB703' : '#6366F1'
+  const trackColor = score >= 90 ? '#D1FAE5' : score >= 80 ? '#FEF3C7' : '#EEF2FF'
+  return (
+    <svg width="52" height="52" viewBox="0 0 52 52" aria-label={`${score}% match`}>
+      <circle cx="26" cy="26" r={r} fill="none" stroke={trackColor} strokeWidth="4.5"/>
+      <motion.circle cx="26" cy="26" r={r} fill="none"
+        stroke={color} strokeWidth="4.5" strokeDasharray={circ}
+        strokeLinecap="round" transform="rotate(-90 26 26)"
+        initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: circ * (1 - score / 100) }}
+        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}/>
+      <text x="26" y="26" textAnchor="middle" dominantBaseline="central"
+        fontSize="10" fontWeight="800" fill="#0D183D">{score}%</text>
+    </svg>
+  )
+}
+
+const STATUS_CONFIG = {
+  new:         { label: 'New',         color: 'text-indigo-600',  bg: 'bg-indigo-50'   },
+  shortlisted: { label: 'Shortlisted', color: 'text-[#D99E00]',   bg: 'bg-amber-50'    },
+  interview:   { label: 'Interview',   color: 'text-emerald-700', bg: 'bg-emerald-50'  },
+  accepted:    { label: 'Accepted',    color: 'text-emerald-700', bg: 'bg-emerald-50'  },
+  rejected:    { label: 'Rejected',    color: 'text-red-500',     bg: 'bg-red-50'      },
+}
+
+export default function ApplicantDetail({ applicant, status, onStatusChange }) {
+  const navigate = useNavigate()
+  const [scheduling, setScheduling] = useState(false)
+
+  if (!applicant) {
+    return (
+      <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] flex flex-col sticky top-6 overflow-hidden"
+        style={{ maxHeight: 'calc(100vh - 120px)', width: '380px' }}>
+        <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background:'rgba(255,183,3,0.08)' }}>
+            <Users size={22} style={{ color:'#FFB703' }}/>
+          </div>
+          <p className="text-[13px] font-bold text-[#0D183D] mb-1">Select an applicant</p>
+          <p className="text-[12px] text-[#4B6382] max-w-[200px] leading-relaxed">
+            Click any card to review their profile and AI compatibility
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
+
+  return (
+    <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] flex flex-col sticky top-6 overflow-hidden"
+      style={{ maxHeight: 'calc(100vh - 120px)', width: '380px' }}>
+
+      {/* Header */}
+      <div className="px-6 pt-5 pb-4 shrink-0"
+        style={{ background:'linear-gradient(160deg, #FFF7E6 0%, #F0EEFF 100%)', borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
+        <div className="flex items-start gap-4">
+          <GradientAvatar name={applicant.name} size={52} radius="0.85rem"
+            className="ring-[3px] ring-white shadow shrink-0"/>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <button onClick={() => navigate(`/student-profile/${applicant.studentId}`)}
+                className="text-[15px] font-extrabold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left">
+                {applicant.name}
+              </button>
+              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${st.bg} ${st.color}`}>
+                {st.label}
+              </span>
+            </div>
+            <p className="text-[12px] text-[#4B6382] mb-2">
+              {applicant.field}{applicant.uni ? ` · ${applicant.uni}` : ''}
+              {applicant.opportunityTitle && (
+                <span className="ml-1 text-[#FFB703] font-semibold">· {applicant.opportunityTitle}</span>
+              )}
+            </p>
+            <div className="flex items-center gap-3">
+              <MatchRing score={applicant.match}/>
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-[#4B6382]">
+                  Applied {formatDate(applicant.submittedAt)}
+                </span>
+                {applicant.availability && (
+                  <span className="text-[11px] text-[#4B6382] flex items-center gap-1">
+                    <Clock size={10}/> {applicant.availability}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+        {scheduling ? (
+          <InterviewScheduler
+            applicant={applicant}
+            onSchedule={() => {
+              onStatusChange('interview')
+              setScheduling(false)
+            }}
+            onCancel={() => setScheduling(false)}
+          />
+        ) : (
+          <>
+            {/* Bio */}
+            {applicant.bio && (
+              <p className="text-[12px] text-[#4B6382] leading-relaxed">{applicant.bio}</p>
+            )}
+
+            {/* Meta */}
+            <div className="flex flex-wrap gap-3 text-[11px]">
+              {applicant.location && (
+                <span className="flex items-center gap-1.5 text-[#4B6382]"><MapPin size={11}/>{applicant.location}</span>
+              )}
+              {applicant.languages?.length > 0 && (
+                <span className="flex items-center gap-1.5 text-[#4B6382]">
+                  <Globe size={11}/>{applicant.languages.join(', ')}
+                </span>
+              )}
+            </div>
+
+            {/* Skills */}
+            {applicant.skills?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">Skills</p>
+                <CategorizedSkillTags skills={applicant.skills} showLevel />
+              </div>
+            )}
+
+            {/* Application message */}
+            {applicant.message && (
+              <>
+                <div className="h-px" style={{ background:'rgba(13,24,61,0.07)' }}/>
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">Application message</p>
+                  <p className="text-[12px] text-[#4B6382] leading-relaxed whitespace-pre-line line-clamp-6">
+                    {applicant.message}
+                  </p>
+                </div>
+              </>
+            )}
+
+            <div className="h-px" style={{ background:'rgba(13,24,61,0.07)' }}/>
+
+            {/* AI compatibility */}
+            {applicant.matchReasons?.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                    style={{ background:'#FFB703' }}>
+                    <Sparkles size={11} strokeWidth={2.5} className="text-white"/>
+                  </div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#0D183D]">
+                    AI compatibility
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {applicant.matchReasons.map((r, i) => (
+                    <motion.div key={i}
+                      initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }}
+                      transition={{ delay: 0.05 + i*0.06 }}
+                      className="flex items-start gap-2.5 rounded-xl p-3 text-[11px] text-[#4B6382] leading-relaxed"
+                      style={{ background:'rgba(255,183,3,0.05)', border:'1px solid rgba(255,183,3,0.14)' }}>
+                      <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color:'#FFB703' }}/>
+                      {r}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Footer actions */}
+      {!scheduling && (
+        <div className="shrink-0 px-6 py-4 border-t flex flex-col gap-2"
+          style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onStatusChange(status === 'shortlisted' ? 'new' : 'shortlisted')}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold transition-all hover:opacity-90"
+              style={status === 'shortlisted'
+                ? { background:'rgba(255,183,3,0.12)', color:'#D99E00', border:'1.5px solid rgba(255,183,3,0.3)' }
+                : { background:'#FFB703', color:'white', boxShadow:'0 2px 10px rgba(255,183,3,0.28)' }}>
+              <Star size={12}/> {status === 'shortlisted' ? 'Shortlisted ✓' : 'Shortlist'}
+            </button>
+            <button
+              onClick={() => setScheduling(true)}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background:'#0D183D' }}>
+              <Calendar size={12}/> Schedule
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => navigate('/messages')}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[rgba(13,24,61,0.03)] transition-colors">
+              <MessageCircle size={12}/> Message
+            </button>
+            <button
+              onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold transition-colors ${
+                status === 'rejected'
+                  ? 'text-[#4B6382] border border-[rgba(13,24,61,0.1)] hover:bg-[rgba(13,24,61,0.03)]'
+                  : 'text-red-500 border border-red-100 hover:bg-red-50'
+              }`}>
+              <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Pass'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
