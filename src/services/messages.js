@@ -17,7 +17,15 @@ export async function sendInterviewMessage(studentId, ngoId, message) {
     .select()
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.message.includes('messages') || error.message.includes('table')) {
+      throw new Error(
+        'Messages table not set up. Please run the setup SQL in Supabase. ' +
+        'Check the create_messages_table.sql file in the project root.'
+      )
+    }
+    throw new Error(error.message)
+  }
   return data
 }
 
