@@ -16,15 +16,19 @@ function formatDate(iso) {
 
 function formatMatchReason(reason) {
   if (!reason) return ''
-  // If it's JSON, try to parse and extract a readable message
-  if (typeof reason === 'string' && reason.startsWith('{')) {
+
+  // Try to extract JSON from the string (e.g., "1 skill matched: {...}")
+  const jsonMatch = reason.match(/\{[^}]+\}/)
+  if (jsonMatch) {
     try {
-      const obj = JSON.parse(reason)
+      const obj = JSON.parse(jsonMatch[0])
       return `Matched: ${obj.name}${obj.level ? ` (${obj.level})` : ''}`
     } catch (e) {
-      return reason
+      // If JSON parse fails, just remove the JSON and return the text part
+      return reason.replace(/\s*\{[^}]+\}/, '').trim()
     }
   }
+
   return reason
 }
 
