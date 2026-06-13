@@ -48,18 +48,10 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
   if (!applicant) {
     return (
       <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] flex flex-col sticky top-6 overflow-hidden"
-        style={{ maxHeight: 'calc(100vh - 120px)', width: '380px', boxShadow: '0 1px 3px rgba(13,24,61,0.06)' }}>
-        <div className="flex-1 flex flex-col items-center justify-center py-20 px-6 text-center"
-          style={{ background: 'linear-gradient(135deg, rgba(13,24,61,0.01) 0%, rgba(255,183,3,0.01) 100%)' }}>
-          <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-            style={{ background:'rgba(255,183,3,0.12)' }}>
-            <span className="text-3xl">👤</span>
-          </motion.div>
-          <p className="text-[14px] font-bold text-[#0D183D] mb-2">Select an applicant</p>
-          <p className="text-[12px] text-[#4B6382] leading-relaxed">
-            Click any card to review their profile, skills, and AI match compatibility.
-          </p>
+        style={{ maxHeight: 'calc(100vh - 120px)', width: '380px' }}>
+        <div className="flex-1 flex flex-col items-center justify-center py-16 px-6 text-center">
+          <p className="text-[14px] font-semibold text-[#0D183D] mb-1">Select a role to see applicants</p>
+          <p className="text-[12px] text-[#4B6382]">Click on a role in the left panel and then select an applicant.</p>
         </div>
       </div>
     )
@@ -72,40 +64,36 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
       style={{ maxHeight: 'calc(100vh - 120px)', width: '380px' }}>
 
       {/* Header */}
-      <div className="px-6 pt-6 pb-5 shrink-0"
-        style={{ background:'linear-gradient(135deg, rgba(255,183,3,0.04) 0%, rgba(13,24,61,0.02) 100%)', borderBottom:'1px solid rgba(13,24,61,0.08)' }}>
+      <div className="px-6 pt-5 pb-4 shrink-0 border-b border-[rgba(13,24,61,0.08)]"
+        style={{ background: 'linear-gradient(160deg, #FFF7E6 0%, #F0EEFF 100%)' }}>
         <div className="flex items-start gap-4">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1 }}>
-            <GradientAvatar name={applicant.name} size={56} radius="0.85rem"
-              className="ring-[3px] ring-white shadow-lg shrink-0"/>
-          </motion.div>
+          <GradientAvatar name={applicant.name} size={52} radius="0.85rem"
+            className="ring-[3px] ring-white shadow shrink-0"/>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-1">
-              <div>
-                <button onClick={() => navigate(`/student-profile/${applicant.studentId}`)}
-                  className="text-[15px] font-extrabold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left leading-tight">
-                  {applicant.name}
-                </button>
-              </div>
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${st.bg} ${st.color}`}>
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <button onClick={() => navigate(`/student-profile/${applicant.studentId}`)}
+                className="text-[15px] font-bold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left">
+                {applicant.name}
+              </button>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${st.bg} ${st.color}`}>
                 {st.label}
               </span>
             </div>
-            <p className="text-[12px] text-[#4B6382] mb-3 leading-relaxed">
+            <p className="text-[12px] text-[#4B6382] mb-2">
               {applicant.field}{applicant.uni ? ` · ${applicant.uni}` : ''}
               {applicant.opportunityTitle && (
-                <span className="block text-[#FFB703] font-semibold mt-1">📍 {applicant.opportunityTitle}</span>
+                <span className="ml-1 text-[#FFB703] font-semibold">· {applicant.opportunityTitle}</span>
               )}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <MatchRing score={applicant.match}/>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 <span className="text-[11px] font-semibold text-[#4B6382]">
-                  ✓ Applied {formatDate(applicant.submittedAt)}
+                  Applied {formatDate(applicant.submittedAt)}
                 </span>
                 {applicant.availability && (
-                  <span className="text-[11px] text-[#4B6382] flex items-center gap-1.5">
-                    <Clock size={11} className="text-[#FFB703]"/> {applicant.availability}
+                  <span className="text-[11px] text-[#4B6382] flex items-center gap-1">
+                    <Clock size={10}/> {applicant.availability}
                   </span>
                 )}
               </div>
