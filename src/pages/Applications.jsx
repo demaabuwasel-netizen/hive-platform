@@ -147,6 +147,7 @@ export default function Applications() {
                     </p>
                     {a.status !== 'rejected' && (
                       <Link to="/messages"
+                        onClick={(e) => e.stopPropagation()}
                         className="text-[12px] font-semibold flex items-center gap-1.5 transition-colors hover:text-[#FFB703]"
                         style={{ color: '#FFB703' }}>
                         Message
