@@ -143,6 +143,7 @@ export default function StudentPublicProfile() {
           return
         }
         setProfile(p)
+        document.title = `${p.name} - Hive`
         setLoading(false)
       } catch (err) {
         clearTimeout(timeoutId)
