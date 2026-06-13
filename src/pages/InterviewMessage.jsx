@@ -3,15 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader, RotateCcw, Send } from 'lucide-react'
 import { loadStudentProfile } from '../services/storage'
+import { sendInterviewMessage } from '../services/messages'
+import { useApp } from '../context/AppContext'
 
 export default function InterviewMessage() {
   const { studentId } = useParams()
   const navigate = useNavigate()
+  const { user } = useApp()
   const [profile, setProfile] = useState(null)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!studentId) return
@@ -29,14 +33,17 @@ export default function InterviewMessage() {
     })()
   }, [studentId])
 
-  async function generateMessage(prof) {
+  function generateMessage(prof) {
+    if (!prof) return
     setGenerating(true)
-    try {
-      // For now, create a professional template message
-      // In the future, this would call an AI endpoint
-      const generated = `Hi ${prof.name?.split(' ')[0] || 'there'},
 
-We're excited about your application for our internship program! Your background in ${prof.field || 'development'} and demonstrated skills make you a strong fit for our team.
+    try {
+      const firstName = prof.name?.split(' ')[0] || 'there'
+      const field = prof.field || 'development'
+
+      const generated = `Hi ${firstName},
+
+We're excited about your application for our internship program! Your background in ${field} and demonstrated skills make you a strong fit for our team.
 
 We'd like to move forward with the next step: a brief interview. This will be a great opportunity for us to discuss your experience and learn more about your career goals.
 
@@ -57,19 +64,25 @@ Best regards`
 
   async function handleSendMessage() {
     if (!message.trim()) {
-      alert('Please write a message before sending')
+      setError('Please write a message before sending')
+      return
+    }
+
+    if (!user?.id) {
+      setError('You must be logged in to send a message')
       return
     }
 
     setSending(true)
+    setError(null)
+
     try {
-      // TODO: Implement actual message sending via API
-      // For now, just show success
-      alert('Message sent to ' + (profile?.name || 'applicant'))
+      await sendInterviewMessage(studentId, user.id, message)
+      alert('Interview invitation sent to ' + (profile?.name || 'applicant'))
       navigate(-1)
     } catch (err) {
       console.error('Error sending message:', err)
-      alert('Failed to send message. Please try again.')
+      setError('Failed to send message: ' + (err?.message || 'Unknown error'))
     } finally {
       setSending(false)
     }
@@ -108,13 +121,27 @@ Best regards`
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-[28px] font-bold text-[#0D183D] mb-2">
-            Interview Invitation Message
+          <h1 className="text-[32px] font-bold text-[#0D183D] mb-1">
+            {profile?.name || 'Applicant'}
           </h1>
-          <p className="text-[14px] text-[#4B6382]">
-            Send an interview invitation to {profile?.name || 'this applicant'}
+          <p className="text-[14px] text-[#FFB703] font-semibold mb-4">
+            Interview Invitation Message
+          </p>
+          <p className="text-[13px] text-[#4B6382]">
+            Compose and send an interview invitation to this applicant
           </p>
         </motion.div>
+
+        {/* Error Alert */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[12px]"
+          >
+            {error}
+          </motion.div>
+        )}
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -142,14 +169,16 @@ Best regards`
 
             {/* Regenerate Button */}
             <motion.button
-              onClick={() => generateMessage(profile)}
-              disabled={generating}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#0D183D] font-semibold text-[12px] hover:bg-[rgba(13,24,61,0.02)] transition-all disabled:opacity-50"
+              onClick={() => {
+                if (profile) generateMessage(profile)
+              }}
+              disabled={generating || !profile}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#0D183D] font-semibold text-[12px] hover:bg-[rgba(13,24,61,0.02)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? (
                 <>
                   <Loader size={14} className="animate-spin" />
-                  Generating...
+                  Regenerating...
                 </>
               ) : (
                 <>
