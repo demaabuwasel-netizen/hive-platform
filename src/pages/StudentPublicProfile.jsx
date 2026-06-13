@@ -387,16 +387,10 @@ export default function StudentPublicProfile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="space-y-2.5"
+              className="space-y-3"
             >
-              <button className="w-full py-3 px-4 rounded-xl bg-[#FFB703] hover:bg-[#D99E00] text-white font-semibold text-[13px] transition-all">
-                ★ Shortlist
-              </button>
-              <button className="w-full py-3 px-4 rounded-xl bg-[#0D183D] hover:opacity-90 text-white font-semibold text-[13px] transition-all">
-                📅 Schedule Interview
-              </button>
-              <button className="w-full py-3 px-4 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#0D183D] font-semibold text-[13px] hover:bg-[rgba(13,24,61,0.02)] transition-all">
-                💬 Message
+              <button className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-semibold text-[13px] transition-all">
+                ✓ Accept & Interview
               </button>
               <button className="w-full py-3 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-all">
                 ✕ Reject
