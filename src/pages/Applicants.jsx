@@ -27,7 +27,6 @@ export default function Applicants() {
 
   // Roles sidebar
   const [roles, setRoles]               = useState([])
-  const [roleSearch, setRoleSearch]     = useState('')
   const [selectedRoleId, setSelectedRoleId] = useState(null)
   const [rolesLoading, setRolesLoading] = useState(true)
 
@@ -171,8 +170,6 @@ export default function Applicants() {
             selectedRoleId={selectedRoleId}
             onSelectRole={setSelectedRoleId}
             loading={rolesLoading}
-            q={roleSearch}
-            onSearchChange={setRoleSearch}
           />
 
           {/* Center: Applicants list */}

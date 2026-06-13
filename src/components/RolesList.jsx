@@ -1,21 +1,14 @@
-import { Search, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function RolesList({ roles, selectedRoleId, onSelectRole, loading, q, onSearchChange }) {
-  const filtered = roles.filter(r => r.title.toLowerCase().includes(q.toLowerCase()))
-
+export default function RolesList({ roles, selectedRoleId, onSelectRole, loading }) {
   return (
     <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] flex flex-col sticky top-6 overflow-hidden"
       style={{ maxHeight: 'calc(100vh - 120px)', width: '280px' }}>
 
       {/* Header */}
       <div className="shrink-0 px-5 py-4 border-b border-[rgba(13,24,61,0.08)]">
-        <p className="text-[12px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-3">Opportunities</p>
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#F8F9FB] border border-[rgba(13,24,61,0.08)]">
-          <Search size={13} className="text-[#4B6382] shrink-0"/>
-          <input value={q} onChange={e => onSearchChange(e.target.value)} placeholder="Search roles…"
-            className="flex-1 bg-transparent text-[12px] outline-none text-[#0D183D] placeholder-[#4B6382]/50"/>
-        </div>
+        <p className="text-[12px] font-extrabold uppercase tracking-widest text-[#4B6382]">Opportunities</p>
       </div>
 
       {/* Roles list */}
@@ -26,14 +19,14 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
               <div key={i} className="px-3 py-3 rounded-lg bg-[rgba(13,24,61,0.04)] animate-pulse" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : roles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <Search size={24} className="text-[#4B6382] mb-2 opacity-30"/>
-            <p className="text-[12px] font-semibold text-[#0D183D]">No roles found</p>
+            <p className="text-[12px] font-semibold text-[#0D183D] mb-1">No opportunities yet</p>
+            <p className="text-[11px] text-[#4B6382]">Create an opportunity to see applicants.</p>
           </div>
         ) : (
           <div className="px-3 py-3 space-y-2">
-            {filtered.map((role, i) => {
+            {roles.map((role, i) => {
               const isActive = selectedRoleId === role.id
               const total = role.stats.total
               const newCount = role.stats.new
