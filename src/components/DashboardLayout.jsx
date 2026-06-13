@@ -18,7 +18,7 @@ const STUDENT_NAV = [
   { icon: FileText,        label: 'Applications', to: '/applications'                   },
   { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'                     },
   { icon: Bookmark,        label: 'Saved',        to: '/saved'                          },
-  { icon: MessageCircle,   label: 'Messages',     to: '/messages',   badge: '3'         },
+  { icon: MessageCircle,   label: 'Messages',     to: '/messages'                      },
   { icon: Settings,        label: 'Settings',     to: '/settings'                       },
 ]
 
@@ -29,7 +29,7 @@ const NGO_NAV = [
   { icon: Zap,             label: 'Matches',       to: '/matches'                       },
   { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'                    },
   { icon: BarChart2,       label: 'Analytics',     to: '/analytics'                     },
-  { icon: MessageCircle,   label: 'Messages',      to: '/messages',    badge: '2'       },
+  { icon: MessageCircle,   label: 'Messages',      to: '/messages'                     },
   { icon: Settings,        label: 'Settings',      to: '/settings'                      },
 ]
 
