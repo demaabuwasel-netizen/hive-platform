@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { computeMatch } from './matching'
+import { parseSkillString } from './opportunities'
 
 const STATUS_LABEL = {
   submitted:    'Application sent',
@@ -130,7 +131,7 @@ export async function updateApplicationStatus(applicationId, status) {
 // ── Skill helpers ─────────────────────────────────────────────────────────────
 
 function toSkillObjects(raw) {
-  return (raw ?? []).map(s => typeof s === 'string' ? { name: s, level: '' } : s)
+  return (raw ?? []).map(parseSkillString)
 }
 
 // NGO: rich applicant list — joins applications, users, student_profiles, opportunities
