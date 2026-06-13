@@ -389,7 +389,10 @@ export default function StudentPublicProfile() {
               transition={{ delay: 0.05 }}
               className="space-y-3"
             >
-              <button className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-semibold text-[13px] transition-all">
+              <button
+                onClick={() => navigate(`/interview-message/${studentId}`)}
+                className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-semibold text-[13px] transition-all"
+              >
                 ✓ Accept & Interview
               </button>
               <button className="w-full py-3 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-all">
