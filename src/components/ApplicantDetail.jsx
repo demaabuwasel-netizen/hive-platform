@@ -190,7 +190,10 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
       <div className="shrink-0 px-6 py-4 border-t flex flex-col gap-3"
         style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
         <button
-          onClick={() => navigate(`/interview-message/${applicant.studentId}`)}
+          onClick={() => {
+            onStatusChange('interview')
+            setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
+          }}
           className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
           style={{ background:'#10B981' }}>
           ✓ Accept & Interview

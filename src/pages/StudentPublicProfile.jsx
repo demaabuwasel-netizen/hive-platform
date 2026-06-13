@@ -390,7 +390,7 @@ export default function StudentPublicProfile() {
               className="space-y-3"
             >
               <button
-                onClick={() => navigate(`/interview-message/${studentId}`)}
+                onClick={() => navigate(`/interview-message/${studentId}`, { state: { fromProfile: true } })}
                 className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-semibold text-[13px] transition-all"
               >
                 ✓ Accept & Interview
