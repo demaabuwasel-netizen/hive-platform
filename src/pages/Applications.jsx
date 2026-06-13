@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Clock, CheckCircle2, XCircle, Calendar, ChevronRight, MapPin, Send,
 } from 'lucide-react'
@@ -20,6 +20,7 @@ const STATUS_CFG = {
 
 export default function Applications() {
   const { user } = useApp()
+  const navigate = useNavigate()
   const [apps, setApps]       = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab]         = useState('All')
@@ -141,13 +142,13 @@ export default function Applications() {
                       Applied {new Date(a.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}
                     </p>
                     {a.status !== 'rejected' && (
-                      <Link to="/messages"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[12px] font-semibold flex items-center gap-1.5 transition-colors hover:text-[#FFB703]"
+                      <button
+                        onClick={() => navigate('/messages')}
+                        className="text-[12px] font-semibold flex items-center gap-1.5 transition-colors hover:text-[#FFB703] bg-none border-none cursor-pointer p-0"
                         style={{ color: '#FFB703' }}>
                         Message
                         <ChevronRight size={13} />
-                      </Link>
+                      </button>
                     )}
                   </div>
                 </div>
