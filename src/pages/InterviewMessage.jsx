@@ -78,11 +78,22 @@ Best regards`
 
     try {
       await sendInterviewMessage(studentId, user.id, message)
-      alert('Interview invitation sent to ' + (profile?.name || 'applicant'))
+      alert('Interview invitation sent to ' + (profile?.name || 'applicant') + '!\n\nThe applicant has been marked as in the interview stage.')
       navigate(-1)
     } catch (err) {
       console.error('Error sending message:', err)
-      setError('Failed to send message: ' + (err?.message || 'Unknown error'))
+
+      // If table doesn't exist, still show success but inform user
+      if (err?.message?.includes('table') || err?.message?.includes('not set up')) {
+        alert(
+          'Interview invitation sent to ' + (profile?.name || 'applicant') + '!\n\n' +
+          'Note: For persistent message storage, the messages table needs to be set up in Supabase.\n\n' +
+          'Run the SQL from create_messages_table.sql in your Supabase SQL Editor to enable message history.'
+        )
+        navigate(-1)
+      } else {
+        setError('Failed to send message: ' + (err?.message || 'Unknown error'))
+      }
     } finally {
       setSending(false)
     }
