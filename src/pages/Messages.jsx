@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Search, MessageCircle, Loader, AlertCircle, Send } from 'lucide-react'
+import { Search, MessageCircle, Loader, Send } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { getMessages, sendInterviewMessage } from '../services/messages'
 import { supabase } from '../services/supabase'
@@ -19,15 +19,13 @@ function formatTime(isoString) {
 }
 
 function getDisplayName(userId, userNames) {
-  if (!userId) return 'User'
-  return userNames[userId] || `User ${userId.slice(0, 6)}`
+  return userNames[userId] || ''
 }
 
 export default function Messages() {
   const { user } = useApp()
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [searchQ, setSearchQ] = useState('')
   const [selectedConvId, setSelectedConvId] = useState(null)
   const [newMessage, setNewMessage] = useState('')
@@ -45,7 +43,7 @@ export default function Messages() {
         const data = await getMessages(user.id)
         setMessages(data || [])
 
-        // Collect all user IDs from messages
+        // Get all unique user IDs from messages
         const userIds = Array.from(new Set([
           ...(data?.map(msg => msg.sender_id) || []),
           ...(data?.map(msg => msg.recipient_id) || [])
@@ -56,61 +54,36 @@ export default function Messages() {
           return
         }
 
-        // Fetch from users table
-        const { data: users } = await supabase
-          .from('users')
-          .select('id, name')
-          .in('id', userIds)
-
-        // Also fetch from ngo_profiles and student_profiles as fallback
-        const { data: ngoProfiles } = await supabase
+        // Fetch profiles for these users - they'll have names
+        const { data: profiles } = await supabase
           .from('ngo_profiles')
           .select('user_id, name')
           .in('user_id', userIds)
 
-        const { data: studentProfiles } = await supabase
-          .from('student_profiles')
-          .select('user_id')
-          .in('user_id', userIds)
-
-        // Build name map from all sources
+        // Build name map
         const nameMap = {}
 
-        // First, add names from users table
-        users?.forEach(u => {
-          if (u.name) nameMap[u.id] = u.name
+        // Add NGO names from ngo_profiles
+        profiles?.forEach(p => {
+          if (p.name) nameMap[p.user_id] = p.name
         })
 
-        // Then add names from ngo_profiles
-        ngoProfiles?.forEach(profile => {
-          if (profile.name && !nameMap[profile.user_id]) {
-            nameMap[profile.user_id] = profile.name
-          }
-        })
+        // For students without names, try to get from users table
+        const missingIds = userIds.filter(id => !nameMap[id])
+        if (missingIds.length > 0) {
+          const { data: users } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', missingIds)
 
-        // For student profiles, try to find their user name or use email
-        for (const profile of studentProfiles || []) {
-          if (!nameMap[profile.user_id]) {
-            // Try to get the user name from the users list
-            const userRecord = users?.find(u => u.id === profile.user_id)
-            if (userRecord?.name) {
-              nameMap[profile.user_id] = userRecord.name
-            }
-          }
+          users?.forEach(u => {
+            if (u.name) nameMap[u.id] = u.name
+          })
         }
 
-        // Fallback: use a shortened ID for any missing names
-        userIds.forEach(id => {
-          if (!nameMap[id]) {
-            nameMap[id] = `User ${id.slice(0, 6)}`
-          }
-        })
-
-        console.log('Final name map:', nameMap)
         setUserNames(nameMap)
       } catch (err) {
-        console.error('Error loading messages:', err)
-        setError('Failed to load messages')
+        console.error('Error loading names:', err)
       } finally {
         setLoading(false)
       }
@@ -205,11 +178,6 @@ export default function Messages() {
             <div className="px-6 py-12 text-center">
               <Loader size={20} className="text-[#FFB703] mx-auto animate-spin mb-3" />
               <p className="text-[12px] text-[#4B6382]">Loading messages…</p>
-            </div>
-          ) : error ? (
-            <div className="px-6 py-12 text-center">
-              <AlertCircle size={20} className="text-red-500 mx-auto mb-3" />
-              <p className="text-[12px] text-red-600">{error}</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="px-6 py-12 text-center">
