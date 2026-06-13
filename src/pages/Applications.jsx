@@ -124,7 +124,7 @@ export default function Applications() {
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-semibold text-[#0D183D]">{a.ngoName || 'NGO'}</p>
                       <div className="flex items-center gap-4 mt-2 text-[13px] text-[#4B6382] flex-wrap">
-                        <span>{a.role || 'Opportunity'}</span>
+                        <span>{a.role ? a.role : <span className="italic opacity-75">Applied to organization</span>}</span>
                         {a.location && (
                           <>
                             <span className="text-[rgba(13,24,61,0.2)]">•</span>
