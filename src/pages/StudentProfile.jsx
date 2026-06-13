@@ -231,6 +231,20 @@ export default function StudentProfile() {
     }
   }, [profile?.availability, profile?.workMode, profile?.startDate, profile?.startMonth, profile?.startYear, profile?.startImmediately, profile?.preferredRoles])
 
+  useEffect(() => {
+    if (Array.isArray(profile?.educations) && profile.educations.length > 0) {
+      console.log('[useEffect] Syncing educations:', profile.educations)
+      setEducations(profile.educations)
+    }
+  }, [profile?.educations])
+
+  useEffect(() => {
+    if (Array.isArray(profile?.experiences) && profile.experiences.length > 0) {
+      console.log('[useEffect] Syncing experiences:', profile.experiences)
+      setExperiences(profile.experiences)
+    }
+  }, [profile?.experiences])
+
   const CATEGORY_ICONS = {
     'Programming': Code,
     'Data & AI': BarChart2,
