@@ -613,41 +613,71 @@ export default function Opportunities() {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-4">
               {ngoOpps.map((opp, i) => (
                 <motion.div key={opp.id}
                   initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
                   transition={{ delay:i*0.05, duration:0.28 }}
-                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-4 flex items-center gap-5 hover:shadow-[0_4px_20px_rgba(13,24,61,0.07)] transition-all">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <p className="font-bold text-[14px] text-[#0D183D] truncate">{opp.title}</p>
-                      <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        opp.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                        opp.status === 'draft'  ? 'bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.1)]' :
-                        opp.status === 'paused' ? 'bg-amber-100 text-amber-700' :
-                        'bg-[#F8F9FB] text-[#4B6382]'
-                      }`}>{opp.status ?? 'draft'}</span>
+                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-6 py-5 hover:shadow-[0_8px_24px_rgba(13,24,61,0.1)] hover:border-[rgba(13,24,61,0.12)] transition-all cursor-pointer group"
+                  onClick={() => navigate('/applicants')}>
+                  <div className="flex items-start justify-between gap-6 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-bold text-[15px] text-[#0D183D] group-hover:text-[#FFB703] transition-colors truncate">{opp.title}</p>
+                        <span className={`shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                          opp.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                          opp.status === 'draft'  ? 'bg-[#F8F9FB] text-[#4B6382] border border-[rgba(13,24,61,0.1)]' :
+                          opp.status === 'paused' ? 'bg-amber-100 text-amber-700' :
+                          'bg-[#F8F9FB] text-[#4B6382]'
+                        }`}>{opp.status ?? 'draft'}</span>
+                      </div>
+                      <p className="text-[12px] text-[#4B6382] flex flex-wrap gap-3">
+                        {opp.category && <span>{opp.category}</span>}
+                        {opp.location && <span>{opp.location}</span>}
+                        <span className="font-semibold text-[#FFB703]">{opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}</span>
+                      </p>
                     </div>
-                    <p className="text-[12px] text-[#4B6382]">
-                      {opp.category ? `${opp.category} · ` : ''}
-                      {opp.location ? `${opp.location} · ` : ''}
-                      {opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}
-                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/opportunities/new?edit=${opp.id}`)
+                        }}
+                        className="px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate('/applicants')
+                        }}
+                        className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+                        style={{ background:'#0D183D' }}>
+                        View applicants
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
-                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => navigate('/applicants')}
-                      className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                      style={{ background:'#0D183D' }}>
-                      Applicants
-                    </button>
-                  </div>
+
+                  {/* Applicant Status Breakdown */}
+                  {opp.applicantCount > 0 && (
+                    <div className="flex gap-3 flex-wrap pt-3 border-t border-[rgba(13,24,61,0.05)]">
+                      <div className="text-[11px] font-semibold text-[#4B6382]">Applicant stages:</div>
+                      <div className="flex gap-4 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                          <span className="text-[11px] text-[#4B6382]">New</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <span className="text-[11px] text-[#4B6382]">Interview</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#FFB703]"></span>
+                          <span className="text-[11px] text-[#4B6382]">Accepted</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
