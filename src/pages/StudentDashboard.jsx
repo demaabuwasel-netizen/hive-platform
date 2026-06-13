@@ -123,64 +123,7 @@ function computeCompletion(profile) {
   return { items, done, total: items.length, pct }
 }
 
-// Sidebar widget — always visible in the right column
-function ProfileCompletionWidget({ profile, navigate }) {
-  const { items, pct } = computeCompletion(profile)
-  const incomplete = items.filter(i => !i.done)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.22, duration: 0.4 }}
-      className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card p-5">
-
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#0D183D]">Profile</p>
-        <span className="text-sm font-extrabold" style={{ color: pct === 100 ? '#10B981' : '#FFB703' }}>
-          {pct}%
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div className="w-full rounded-full h-1.5 mb-4" style={{ background: 'rgba(13,24,61,0.07)' }}>
-        <motion.div
-          className="h-1.5 rounded-full"
-          style={{ background: pct === 100 ? '#10B981' : '#FFB703' }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ delay: 0.45, duration: 0.9, ease: 'easeOut' }}/>
-      </div>
-
-      {/* Items */}
-      <div className="flex flex-col gap-1.5 mb-4">
-        {items.map(item => (
-          <div key={item.key} className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-              item.done ? 'bg-emerald-500' : 'border border-[rgba(13,24,61,0.20)]'
-            }`}>
-              {item.done && <Check size={9} strokeWidth={3} className="text-white"/>}
-            </div>
-            <span className={`text-[11px] leading-tight ${item.done ? 'text-[#4B6382] line-through' : 'text-[#0D183D]'}`}>
-              {item.label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {incomplete.length > 0 ? (
-        <button onClick={() => navigate('/settings')}
-          className="w-full py-2 rounded-xl text-[11px] font-semibold text-white transition-all hover:opacity-90"
-          style={{ background: '#0D183D' }}>
-          Complete profile →
-        </button>
-      ) : (
-        <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold text-emerald-700 bg-emerald-50">
-          <Check size={12} strokeWidth={2.5}/> Profile complete!
-        </div>
-      )}
-    </motion.div>
-  )
-}
+// (ProfileCompletionWidget removed — merged into ImpactWidget below)
 
 // Left-column card shown when there are no matches yet
 function NextActionCard({ completion, navigate }) {
@@ -219,46 +162,35 @@ function NextActionCard({ completion, navigate }) {
       </div>
 
       {/* Body */}
-      <div className="bg-white px-6 py-5">
+      <div className="bg-white px-5 py-4">
 
-        {/* Inline progress */}
-        <div className="mb-5">
-          <div className="flex justify-between text-[11px] mb-1.5">
-            <span className="text-[#4B6382] font-semibold">Profile completion</span>
-            <span className="font-extrabold" style={{ color: '#FFB703' }}>{pct}%</span>
-          </div>
-          <div className="w-full rounded-full h-2" style={{ background: 'rgba(13,24,61,0.07)' }}>
-            <motion.div className="h-2 rounded-full" style={{ background: '#FFB703' }}
-              initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-              transition={{ delay: 0.4, duration: 0.9, ease: 'easeOut' }}/>
-          </div>
-        </div>
-
-        {/* Missing fields */}
+        {/* Missing fields as compact chips */}
         {missing.length > 0 && (
-          <div className="mb-5 rounded-xl p-4" style={{ background: '#F8F9FB', border: '1px solid rgba(13,24,61,0.07)' }}>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2.5">
-              Add these to unlock matches:
+          <div className="mb-4">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">
+              Complete {missing.length} more field{missing.length > 1 ? 's' : ''} to unlock stronger matches:
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {missing.map(item => (
-                <div key={item.key} className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#FFB703' }}/>
-                  <span className="text-[12px] text-[#0D183D]">{item.label}</span>
-                </div>
+                <span key={item.key}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                  style={{ background: '#F8F9FB', color: '#0D183D', border: '1px solid rgba(13,24,61,0.10)' }}>
+                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: '#FFB703' }}/>
+                  {item.label}
+                </span>
               ))}
             </div>
           </div>
         )}
 
         <button onClick={() => navigate('/settings')}
-          className="w-full py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+          className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
           style={{ background: '#0D183D', boxShadow: '0 4px 14px rgba(13,24,61,0.18)' }}>
           Complete my profile →
         </button>
 
         <Link to="/opportunities"
-          className="flex items-center justify-center gap-1 mt-3 text-[11px] text-[#4B6382] hover:text-[#0D183D] transition-colors">
+          className="flex items-center justify-center gap-1 mt-2.5 text-[11px] text-[#4B6382] hover:text-[#0D183D] transition-colors">
           Or browse all open opportunities <ArrowRight size={11}/>
         </Link>
       </div>
@@ -266,51 +198,87 @@ function NextActionCard({ completion, navigate }) {
   )
 }
 
-// Sidebar impact widget — shows only real data; 0 for new users
-function ImpactWidget({ appCount, interviewCount, navigate }) {
-  const isNew = appCount === 0 && interviewCount === 0
+// Sidebar: unified Impact + Journey card — illustration kept, completion merged in
+function ImpactWidget({ profile, appCount, interviewCount, matchCount, navigate }) {
+  const { pct } = computeCompletion(profile)
+  const isNew   = appCount === 0
+
+  const microcopy = pct < 60
+    ? 'Every profile improvement helps us find better opportunities.'
+    : appCount === 0
+    ? 'Your hive is ready. Send your first application.'
+    : 'Every step you take helps someone grow.'
+
+  const ctaLabel = pct < 100
+    ? 'Complete my profile →'
+    : isNew
+    ? 'Find your first opportunity →'
+    : 'See all your matches →'
+
+  const ctaDest = pct < 100 ? '/settings' : isNew ? '/opportunities' : '/matches'
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.32, duration: 0.4 }}
-      className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card p-5 flex flex-col gap-4">
+      transition={{ delay: 0.22, duration: 0.4 }}
+      className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card p-5 flex flex-col gap-3">
 
-      <div>
-        <p className="text-[10px] font-extrabold text-[#FFB703] uppercase tracking-widest mb-0.5">
-          Your Impact
-        </p>
-        <p className="text-[11px] text-[#4B6382] leading-relaxed">
-          {isNew ? 'Start your impact journey today.' : 'Every step you take helps someone grow.'}
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-extrabold text-[#FFB703] uppercase tracking-widest">Your Impact</p>
+        <span className="text-[10px] text-[#4B6382]">
+          {isNew ? 'Start your journey' : 'Keep growing'}
+        </span>
       </div>
 
+      {/* Illustration — kept for Hive visual continuity */}
       <div className="rounded-xl overflow-hidden bg-honey-50 border border-honey-100">
         <img src={img3} alt="Students making an impact"
-          className="w-full object-contain object-top" style={{ maxHeight: 110 }}
+          className="w-full object-contain object-top" style={{ maxHeight: 100 }}
           draggable={false}/>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl p-3 text-center" style={{ background: '#F8F9FB', border: '1px solid rgba(13,24,61,0.07)' }}>
-          <p className="text-2xl font-extrabold text-[#0D183D] leading-none">{appCount}</p>
-          <p className="text-[10px] text-[#4B6382] mt-1">Applications</p>
+      {/* Profile completion bar */}
+      <div>
+        <div className="flex justify-between text-[10px] mb-1">
+          <span className="text-[#4B6382] font-semibold">Profile</span>
+          <span className="font-extrabold" style={{ color: pct === 100 ? '#10B981' : '#FFB703' }}>{pct}%</span>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: '#F8F9FB', border: '1px solid rgba(13,24,61,0.07)' }}>
-          <p className="text-2xl font-extrabold text-[#0D183D] leading-none">{interviewCount}</p>
-          <p className="text-[10px] text-[#4B6382] mt-1">Interviews</p>
+        <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(13,24,61,0.07)' }}>
+          <motion.div
+            className="h-1.5 rounded-full"
+            style={{ background: pct === 100 ? '#10B981' : '#FFB703' }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ delay: 0.5, duration: 0.9, ease: 'easeOut' }}/>
         </div>
       </div>
 
-      {isNew && (
-        <p className="text-[10px] text-[#4B6382]/70 text-center leading-relaxed italic">
-          "Every great volunteer started with one application."
-        </p>
-      )}
+      {/* 4-stat journey grid */}
+      <div className="grid grid-cols-2 gap-1.5">
+        {[
+          { value: matchCount,      label: 'Matches'      },
+          { value: appCount,        label: 'Applications' },
+          { value: interviewCount,  label: 'Interviews'   },
+          { value: `${pct}%`,       label: 'Profile done' },
+        ].map(s => (
+          <div key={s.label} className="rounded-xl p-2.5 text-center"
+            style={{ background: '#F8F9FB', border: '1px solid rgba(13,24,61,0.07)' }}>
+            <p className="text-[18px] font-extrabold text-[#0D183D] leading-none">{s.value}</p>
+            <p className="text-[9px] text-[#4B6382] mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
 
-      <button onClick={() => navigate(isNew ? '/opportunities' : '/matches')}
+      {/* Contextual microcopy */}
+      <p className="text-[10px] text-[#4B6382]/70 text-center leading-relaxed italic">
+        {microcopy}
+      </p>
+
+      {/* CTA */}
+      <button onClick={() => navigate(ctaDest)}
         className="btn-navy text-xs py-2.5 w-full">
-        {isNew ? 'Find your first opportunity →' : 'See all your matches →'}
+        {ctaLabel}
       </button>
     </motion.div>
   )
@@ -642,13 +610,22 @@ export default function StudentDashboard() {
                 transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
                 className="text-xl select-none">🐝</motion.span>
             </h1>
-            <p className="text-[#4B6382] text-sm">
-              {completion.pct < 60
-                ? 'Complete your profile to unlock your first matches.'
-                : completion.pct < 100
-                ? 'Your hive is growing — a few more details will strengthen your matches.'
-                : 'Your hive is ready. Discover opportunities and make an impact.'}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[#4B6382] text-sm">
+                {completion.pct < 60
+                  ? 'Complete your profile to unlock your first matches.'
+                  : completion.pct < 100
+                  ? 'Your hive is growing — a few more details will strengthen your matches.'
+                  : 'Your hive is ready. Discover opportunities and make an impact.'}
+              </p>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0"
+                style={{
+                  background: completion.pct === 100 ? 'rgba(16,185,129,0.10)' : 'rgba(255,183,3,0.12)',
+                  color:      completion.pct === 100 ? '#059669' : '#B37D00',
+                }}>
+                {completion.pct}% complete
+              </span>
+            </div>
           </div>
           <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.25 }}
@@ -757,9 +734,14 @@ export default function StudentDashboard() {
           </div>
 
           {/* ── Right: Sidebar ── */}
-          <div className="flex flex-col gap-4">
-            <ProfileCompletionWidget profile={profile} navigate={navigate}/>
-            <ImpactWidget appCount={appCount} interviewCount={interviewCount} navigate={navigate}/>
+          <div>
+            <ImpactWidget
+              profile={profile}
+              appCount={appCount}
+              interviewCount={interviewCount}
+              matchCount={matchCount}
+              navigate={navigate}
+            />
           </div>
         </div>
       </div>
