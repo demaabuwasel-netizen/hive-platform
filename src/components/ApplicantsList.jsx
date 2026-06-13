@@ -129,10 +129,14 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => onSelectApplicant(a)}
-                className={`w-full text-left bg-white rounded-2xl border px-5 py-4 flex items-center gap-4 cursor-pointer transition-all ${
+                className={`w-full text-left rounded-2xl border px-5 py-4 flex items-center gap-4 cursor-pointer transition-all ${
                   isActive
                     ? 'border-[#FFB703] shadow-[0_0_0_3px_rgba(255,183,3,0.1)]'
-                    : 'border-[rgba(13,24,61,0.08)] hover:shadow-[0_2px_8px_rgba(13,24,61,0.06)]'
+                    : 'hover:shadow-[0_2px_8px_rgba(13,24,61,0.06)]'
+                } ${
+                  toUiStatus(a.status) === 'interview'
+                    ? 'bg-emerald-50 border-emerald-200'
+                    : 'bg-white border-[rgba(13,24,61,0.08)]'
                 }`}>
                 <GradientAvatar name={a.name} size={44} radius="0.65rem"/>
                 <div className="flex-1 min-w-0">

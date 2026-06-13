@@ -391,9 +391,9 @@ export default function StudentPublicProfile() {
             >
               <button
                 onClick={() => navigate(`/interview-message/${studentId}`, { state: { fromProfile: true } })}
-                className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-semibold text-[13px] transition-all"
+                className="w-full py-3 px-4 rounded-xl bg-[#0D183D] hover:opacity-90 text-white font-semibold text-[13px] transition-all"
               >
-                ✓ Accept & Interview
+                📅 Interview
               </button>
               <button className="w-full py-3 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-all">
                 ✕ Reject

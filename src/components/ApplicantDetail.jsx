@@ -189,24 +189,46 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
       {/* Footer actions */}
       <div className="shrink-0 px-6 py-4 border-t flex flex-col gap-3"
         style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
-        <button
-          onClick={() => {
-            onStatusChange('interview')
-            setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
-          }}
-          className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-          style={{ background:'#10B981' }}>
-          ✓ Accept & Interview
-        </button>
-        <button
-          onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-          className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold transition-colors ${
-            status === 'rejected'
-              ? 'text-[#4B6382] border border-[rgba(13,24,61,0.1)] hover:bg-[rgba(13,24,61,0.03)]'
-              : 'text-red-500 border border-red-100 hover:bg-red-50'
-          }`}>
-          <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Reject'}
-        </button>
+        {status === 'interview' ? (
+          <>
+            <button
+              onClick={() => onStatusChange('accepted')}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background:'#10B981' }}>
+              ✓ Accept
+            </button>
+            <button
+              onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold transition-colors ${
+                status === 'rejected'
+                  ? 'text-[#4B6382] border border-[rgba(13,24,61,0.1)] hover:bg-[rgba(13,24,61,0.03)]'
+                  : 'text-red-500 border border-red-100 hover:bg-red-50'
+              }`}>
+              <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Reject'}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => {
+                onStatusChange('interview')
+                setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
+              }}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background:'#0D183D' }}>
+              📅 Interview
+            </button>
+            <button
+              onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-semibold transition-colors ${
+                status === 'rejected'
+                  ? 'text-[#4B6382] border border-[rgba(13,24,61,0.1)] hover:bg-[rgba(13,24,61,0.03)]'
+                  : 'text-red-500 border border-red-100 hover:bg-red-50'
+              }`}>
+              <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Reject'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
