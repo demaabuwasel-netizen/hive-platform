@@ -305,8 +305,8 @@ export default function MatchResults() {
         <DashboardEmptyState
           icon={Sparkles}
           label="Profile incomplete"
-          title="Complete your profile to see matches"
-          description="Our AI matches you with NGOs based on your skills, field of study, and interests. Fill in your profile to unlock personalised matches."
+          title="Your match hive is waiting"
+          description="Our AI reads the meaning behind your profile — not just keywords. Add your skills, field of study, and interests to unlock your first matches."
           cta={{ label: 'Complete my profile', href: '/settings' }}
           tip="Most students get their first match within minutes of completing their profile."
         />
@@ -393,8 +393,8 @@ export default function MatchResults() {
           <DashboardEmptyState
             compact
             icon={Zap}
-            title="No matches found yet"
-            description="Add more skills, interests, and experience to your profile so we can find the right NGOs for you."
+            title="No matches in your hive yet"
+            description="Strengthen your profile with more skills, interests, and experience. The more context you give, the stronger your matches become."
             cta={{ label: 'Update profile', href: '/settings' }}
           />
         ) : (

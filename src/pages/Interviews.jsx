@@ -54,10 +54,9 @@ function StudentView() {
           <DashboardEmptyState
             compact
             icon={Calendar}
-            title="No interviews scheduled yet"
-            description="When an NGO reviews your application and invites you to interview, it will show up here. Keep applying to increase your chances."
+            title="No interviews in your hive yet"
+            description="When an NGO reviews your application and invites you to interview, it will appear here automatically. Keep applying to increase your chances."
             cta={{ label: 'Browse opportunities', href: '/opportunities' }}
-            secondary={{ label: 'Check my matches', href: '/matches' }}
           />
         )}
         <div className="flex flex-col gap-3">
@@ -229,9 +228,9 @@ function NGOView() {
         <DashboardEmptyState
           icon={Calendar}
           title="No interviews scheduled yet"
-          description="Once you review applicants and invite someone to interview, it will appear here. You can also suggest questions tailored to each candidate."
+          description="Review your applicants and invite the strongest candidates to interview. Hive generates tailored interview questions for each candidate automatically."
           cta={{ label: 'View applicants', href: '/applicants' }}
-          tip="Interviews are added automatically when you invite an applicant from your Applicants page."
+          tip="AI-generated interview questions appear the moment you schedule a meeting."
         />
       )}
       <div className="flex flex-col gap-4">

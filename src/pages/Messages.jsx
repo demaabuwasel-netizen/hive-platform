@@ -127,11 +127,10 @@ export default function Messages() {
         <div className="flex-1 flex items-center justify-center px-8 py-12" style={{ background: '#F8F9FB' }}>
           <DashboardEmptyState
             icon={MessageCircle}
-            title="No conversations yet"
-            description="Conversations open automatically when you apply to an opportunity or when an NGO reaches out after a match. Apply to get the conversation started."
+            title="Your message hive is quiet"
+            description="Conversations open the moment you apply to an opportunity or an NGO reaches out after a match. Send your first application to start a conversation."
             cta={{ label: 'Browse opportunities', href: '/opportunities' }}
-            secondary={{ label: 'View my matches', href: '/matches' }}
-            tip="NGOs can also message you first — keep your profile complete to stand out."
+            tip="NGOs can message you first too — a complete profile makes you more discoverable."
           />
         </div>
       ) : conv ? (
