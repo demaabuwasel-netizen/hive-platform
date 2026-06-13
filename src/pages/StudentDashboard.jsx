@@ -31,9 +31,11 @@ const CARD_GRADIENTS = [
 ]
 
 function timeGreeting() {
+  // Use local browser time — for Israeli users this is Asia/Jerusalem.
+  // Evening spans 18:00–04:59 so midnight correctly shows "Good evening".
   const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
+  if (h >= 5 && h < 12) return 'Good morning'
+  if (h >= 12 && h < 18) return 'Good afternoon'
   return 'Good evening'
 }
 
