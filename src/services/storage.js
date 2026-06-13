@@ -36,6 +36,7 @@ function normalizeSkills(raw) {
 function dbToStudent(row) {
   if (!row) return null
   return {
+    name:              row.users?.name ?? row.name ?? null,
     field:             row.field,
     university:        row.university,
     skills:            normalizeSkills(row.skills),
@@ -134,7 +135,7 @@ export async function saveStudentProfile(userId, profile) {
 }
 
 export async function loadStudentProfile(userId, { signal } = {}) {
-  let q = supabase.from('student_profiles').select('*').eq('user_id', userId).maybeSingle()
+  let q = supabase.from('student_profiles').select('*, users(id, name)').eq('user_id', userId).maybeSingle()
   if (signal) q = q.abortSignal(signal)
   const { data, error } = await q
   if (error) { console.error('[loadStudentProfile] error:', error.message); return null }
