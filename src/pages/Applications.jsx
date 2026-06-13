@@ -114,8 +114,10 @@ export default function Applications() {
             return (
               <motion.div key={a.id}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex items-center gap-5 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all">
+                transition={{ delay: i * 0.06 }}>
+                <Link to={`/opportunities/${a.opportunityId || a.id}`}
+                  className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 flex items-center gap-5 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] hover:border-[rgba(13,24,61,0.12)] transition-all block"
+                  style={{ textDecoration: 'none', color: 'inherit' }}>
                 <GradientAvatar name={a.ngoName || 'NGO'} size={52} radius="0.85rem" className="shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-6 mb-3">
@@ -153,6 +155,7 @@ export default function Applications() {
                     )}
                   </div>
                 </div>
+                </Link>
               </motion.div>
             )
           })}
