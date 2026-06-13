@@ -48,16 +48,18 @@ export default function Messages() {
         })
 
         if (userIds.size > 0) {
-          const { data: users } = await supabase
+          const { data: users, error: usersError } = await supabase
             .from('users')
             .select('id, name')
             .in('id', Array.from(userIds))
 
-          const nameMap = {}
-          users?.forEach(u => {
-            nameMap[u.id] = u.name
-          })
-          setUserNames(nameMap)
+          if (!usersError && users) {
+            const nameMap = {}
+            users.forEach(u => {
+              if (u.name) nameMap[u.id] = u.name
+            })
+            setUserNames(nameMap)
+          }
         }
       } catch (err) {
         console.error('Error loading messages:', err)
@@ -172,7 +174,7 @@ export default function Messages() {
             </div>
           ) : (
             filtered.map((conv) => {
-              const otherUserName = userNames[conv.otherId] || 'User'
+              const otherUserName = userNames[conv.otherId] || 'Loading...'
               return (
                 <motion.button
                   key={conv.id}
@@ -224,9 +226,9 @@ export default function Messages() {
           <>
             {/* Message Thread Header */}
             <div className="px-6 py-4 border-b border-[rgba(13,24,61,0.08)] flex items-center gap-3">
-              <GradientAvatar name={userNames[selected?.otherId] || 'User'} size={36} radius="0.5rem" />
+              <GradientAvatar name={userNames[selected?.otherId] || 'Loading...'} size={36} radius="0.5rem" />
               <div>
-                <p className="text-[13px] font-semibold text-[#0D183D]">{userNames[selected?.otherId] || 'User'}</p>
+                <p className="text-[13px] font-semibold text-[#0D183D]">{userNames[selected?.otherId] || 'Loading...'}</p>
                 <p className="text-[11px] text-[#4B6382]">
                   {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
                 </p>
