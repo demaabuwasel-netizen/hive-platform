@@ -116,6 +116,8 @@ function GuestOnly({ children }) {
   if (user) {
     if (user.onboardingComplete)
       return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
+    if (user.role)
+      return <Navigate to={`/onboarding/${user.role}`} replace />
     return <Navigate to="/role-selection" replace />
   }
   return children
@@ -128,12 +130,24 @@ function RequireAuth({ children }) {
   return children
 }
 
-function OnboardingGuard({ children }) {
+// Guards /role-selection — redirects completed users straight to their dashboard.
+function RoleSelectionGuard({ children }) {
   const { user, loading } = useApp()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/auth" replace />
   if (user.onboardingComplete)
-    return <Navigate to={user.role === 'student' ? '/profile/student' : '/profile/ngo'} replace />
+    return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
+  return children
+}
+
+function OnboardingGuard({ children }) {
+  const { user, loading } = useApp()
+  if (loading) return <LoadingScreen />
+  if (!user) return <Navigate to="/auth" replace />
+  // No role yet — shouldn't be in onboarding, send back to role-selection
+  if (!user.role) return <Navigate to="/role-selection" replace />
+  if (user.onboardingComplete)
+    return <Navigate to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'} replace />
   return children
 }
 
@@ -172,13 +186,13 @@ function OAuthCallback() {
   const { user, loading } = useApp()
   const navigate    = useNavigate()
   const location    = useLocation()
-  const needsRoute  = useRef(false)
+  // useState (not useRef) so that setting needsRoute=true triggers the routing effect
+  // even when user/loading haven't changed (e.g. INITIAL_SESSION for a stored session).
+  const [needsRoute, setNeedsRoute] = useState(false)
   const locationRef = useRef(location.pathname)
 
-  // Keep locationRef current without re-subscribing to auth events on every navigation
   useEffect(() => { locationRef.current = location.pathname }, [location.pathname])
 
-  // Subscribe once — set needsRoute flag when an OAuth sign-in is detected
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session?.user) return
@@ -188,21 +202,19 @@ function OAuthCallback() {
       console.log('[auth] OAuthCallback —', event, '| provider:', provider, '| uid:', session.user.id)
 
       if (event === 'SIGNED_IN') {
-        // Fresh OAuth sign-in — always need to route
-        needsRoute.current = true
+        setNeedsRoute(true)
       } else if (event === 'INITIAL_SESSION' && OAUTH_PUBLIC_PATHS.has(locationRef.current)) {
-        // Component mounted after SIGNED_IN already fired (loading cleared quickly).
-        // If still on a public page we know the OAuth redirect hasn't routed yet.
-        needsRoute.current = true
+        // Catches the case where SIGNED_IN fired while AppContext was still loading
+        // (optimistic-cache path) — INITIAL_SESSION fires on subscription and routes.
+        setNeedsRoute(true)
       }
     })
     return () => subscription.unsubscribe()
   }, [])
 
-  // Perform the route once AppContext has hydrated the user (loading=false, user set)
   useEffect(() => {
-    if (!needsRoute.current || loading || !user) return
-    needsRoute.current = false
+    if (!needsRoute || loading || !user) return
+    setNeedsRoute(false)
 
     const dest = !user.role
       ? '/role-selection'
@@ -211,13 +223,13 @@ function OAuthCallback() {
       : user.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
 
     console.log('[auth] OAuthCallback → routing to', dest, {
-      uid:               user.id,
-      provider:          user.provider,
-      role:              user.role,
+      uid:                user.id,
+      provider:           user.provider,
+      role:               user.role,
       onboardingComplete: user.onboardingComplete,
     })
     navigate(dest, { replace: true })
-  }, [loading, user, navigate])
+  }, [loading, user, navigate, needsRoute])
 
   return null
 }
@@ -243,7 +255,7 @@ function AppRoutes() {
       <Route path="/match/:id" element={<MatchExplanation />} />
 
       {/* ── Onboarding ── */}
-      <Route path="/role-selection"     element={<RequireAuth><RoleSelection /></RequireAuth>} />
+      <Route path="/role-selection"     element={<RoleSelectionGuard><RoleSelection /></RoleSelectionGuard>} />
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 

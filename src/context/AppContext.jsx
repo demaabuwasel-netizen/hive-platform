@@ -6,6 +6,38 @@ import i18n from '../i18n/index'
 
 const AppContext = createContext(null)
 
+// ── Profile localStorage cache ─────────────────────────────────────────────────
+// Stores role + onboarding status so the app can restore instantly on refresh
+// without waiting for DB calls. Written after every successful hydrateUser.
+// Cleared on logout. Falls back gracefully if localStorage is unavailable.
+const PROFILE_CACHE_KEY = 'hive_profile_cache'
+
+function readProfileCache(uid) {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed?.uid === uid ? parsed : null
+  } catch { return null }
+}
+
+function writeProfileCache(merged) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
+      uid:               merged.id,
+      role:              merged.role,
+      onboardingComplete: merged.onboardingComplete,
+      name:              merged.name,
+      avatar:            merged.avatar,
+      provider:          merged.provider,
+    }))
+  } catch {}
+}
+
+function clearProfileCache() {
+  try { localStorage.removeItem(PROFILE_CACHE_KEY) } catch {}
+}
+
 // ── Promise.race timeout helper ────────────────────────────────────────────────
 // Uses JS-level timers, NOT AbortSignal — PostgREST-js v2 can swallow AbortError
 // and leave the Promise pending even after signal.abort() fires (known issue).
@@ -112,6 +144,7 @@ export function AppProvider({ children }) {
         preferredTheme:     userRow?.preferred_theme    ?? 'system',
       }
       setUserState(merged); userWasSet = true
+      writeProfileCache(merged)
       log('STEP 2.5 — user state SET | role:', merged.role,
         '| onboardingComplete:', merged.onboardingComplete,
         '| source:', profileRow?.role ? 'profiles' : 'users')
@@ -170,16 +203,17 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 9 s ────────────────────────────────────────────────
-    // Worst case: bail(3 s) + ensureUserRow(2 s) + getUserRow(2 s) = 7 s.
-    // The ceiling at 9 s gives a 2 s buffer and should NEVER fire in practice.
+    // ── Absolute ceiling: 12 s ───────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(2 s) + getUserRow(2 s)
+    //             + getProfileRow(2 s) = 9 s. 12 s gives a 3 s buffer.
+    // In practice the optimistic-cache path clears loading immediately.
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 9 s ceiling fired — forcing loading=false')
+        console.error('[AppContext] 12 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 9000)
+    }, 12000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
@@ -199,6 +233,29 @@ export function AppProvider({ children }) {
       console.warn('[AppContext] localStorage read error:', e.message)
     }
 
+    // ── Optimistic restore ────────────────────────────────────────────────────
+    // If we have a valid localStorage cache entry for this user, apply it
+    // immediately so route guards see role + onboardingComplete without
+    // waiting for any network call. The DB validation below will refresh it.
+    if (storedUser) {
+      const cached = readProfileCache(storedUser.id)
+      if (cached) {
+        console.log('[AppContext] cache HIT — restoring immediately uid:', storedUser.id,
+          'role:', cached.role, 'onboarding:', cached.onboardingComplete)
+        setUserState({
+          id:                 storedUser.id,
+          email:              storedUser.email,
+          name:               cached.name   ?? storedUser.user_metadata?.full_name ?? storedUser.email?.split('@')[0] ?? 'User',
+          avatar:             cached.avatar ?? storedUser.user_metadata?.avatar_url ?? null,
+          role:               cached.role,
+          onboardingComplete: cached.onboardingComplete,
+          onboardingStep:     0,
+          provider:           cached.provider ?? storedUser.app_metadata?.provider ?? 'email',
+        })
+        finish()  // loading=false instantly — route guards use cache
+      }
+    }
+
     // ── Step 2: no stored session → clear loading immediately ─────────────────
     if (!storedUser) {
       finish()
@@ -207,7 +264,7 @@ export function AppProvider({ children }) {
         async (event, session) => {
           console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
           if (event === 'SIGNED_OUT') {
-            setUserState(null); setProfileState(null)
+            clearProfileCache(); setUserState(null); setProfileState(null)
           } else if (session?.user) {
             try { await hydrateUser(session.user) }
             catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
@@ -239,7 +296,7 @@ export function AppProvider({ children }) {
         catch (e) { console.error('[AppContext] hydrateUser error:', e.message) }
       } else {
         console.log('[AppContext] getSession returned null — session expired')
-        setUserState(null); setProfileState(null)
+        setUserState(null); setProfileState(null); clearProfileCache()
       }
       finish()
     }).catch(async err => {
@@ -257,6 +314,7 @@ export function AppProvider({ children }) {
         console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
 
         if (event === 'SIGNED_OUT') {
+          clearProfileCache()
           setUserState(null); setProfileState(null); setLoading(false)
           return
         }
@@ -281,9 +339,12 @@ export function AppProvider({ children }) {
   async function updateRole(role) {
     if (!user) return
     await updateUserRow(user.id, { role })
-    // Write to profiles table so hydrateUser picks it up on next sign-in
     upsertProfileRow(user.id, { role })
-    setUserState(prev => prev ? { ...prev, role } : prev)
+    setUserState(prev => {
+      const next = prev ? { ...prev, role } : prev
+      if (next) writeProfileCache(next)
+      return next
+    })
   }
 
   async function completeOnboarding(profileData) {
@@ -328,7 +389,11 @@ export function AppProvider({ children }) {
     // Without this, user.onboardingComplete remains false until the next full
     // hydrateUser cycle, causing OnboardingGuard to bounce the user back.
     setProfileState(profileData)
-    setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
+    setUserState(prev => {
+      const next = prev ? { ...prev, onboardingComplete: true } : prev
+      if (next) writeProfileCache(next)
+      return next
+    })
     console.log(`[onboarding ${elapsed()}] complete ✓`)
   }
 
@@ -352,6 +417,7 @@ export function AppProvider({ children }) {
 
   async function logout() {
     await authLogOut()
+    clearProfileCache()
     setUserState(null); setProfileState(null)
   }
 
