@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MapPin, BookOpen, Briefcase, Globe, Code2, Link2Icon, Heart, Target, CheckCircle2, ExternalLink, Star, Zap, Calendar, User } from 'lucide-react'
-import GradientAvatar from '../components/GradientAvatar'
+import { ArrowLeft, MapPin, BookOpen, Briefcase, Globe, Heart, Target, CheckCircle2, ExternalLink, Calendar } from 'lucide-react'
 import { loadStudentProfile } from '../services/storage'
 
 function parseSkill(s) {
@@ -12,7 +11,7 @@ function parseSkill(s) {
       try {
         const parsed = JSON.parse(s)
         return { name: parsed.name || s, level: parsed.level || '' }
-      } catch (e) {
+      } catch {
         return { name: s, level: '' }
       }
     }
@@ -86,17 +85,23 @@ export default function StudentPublicProfile() {
       return
     }
 
-    setLoading(true)
-    setError(null)
+    let mounted = true
 
-    const timeoutId = setTimeout(() => {
-      setLoading(false)
-      setError('Taking longer than expected. The student profile may be temporarily unavailable.')
-    }, 20000)
+    ;(async () => {
+      setLoading(true)
+      setError(null)
 
-    loadStudentProfile(studentId)
-      .then(p => {
+      const timeoutId = setTimeout(() => {
+        if (mounted) {
+          setLoading(false)
+          setError('Taking longer than expected. The student profile may be temporarily unavailable.')
+        }
+      }, 20000)
+
+      try {
+        const p = await loadStudentProfile(studentId)
         clearTimeout(timeoutId)
+        if (!mounted) return
         if (!p) {
           setLoading(false)
           setError('Student profile not found.')
@@ -104,14 +109,18 @@ export default function StudentPublicProfile() {
         }
         setProfile(p)
         setLoading(false)
-      })
-      .catch(err => {
+      } catch (err) {
         clearTimeout(timeoutId)
-        setLoading(false)
-        setError('Could not load student profile: ' + (err?.message || 'Unknown error'))
-      })
+        if (mounted) {
+          setLoading(false)
+          setError('Could not load student profile: ' + (err?.message || 'Unknown error'))
+        }
+      }
+    })()
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      mounted = false
+    }
   }, [studentId, navigate])
 
   if (loading) {
@@ -168,58 +177,64 @@ export default function StudentPublicProfile() {
           Back
         </motion.button>
 
-        {/* COMPACT HEADER */}
+        {/* NAME - TOP AND PROMINENT */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6"
+          className="mb-8"
         >
-          <div className="flex items-start gap-5">
-            <GradientAvatar name={profile.name || 'Student'} size={56} radius="0.75rem" />
-            <div className="flex-1">
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <div>
-                  <h1 className="text-[22px] font-bold text-[#0D183D]">{profile.name}</h1>
-                  <p className="text-[13px] text-[#FFB703] font-semibold mt-0.5">{profile.field || 'Student'}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3 mt-3 text-[12px]">
-                {profile.university && (
-                  <span className="flex items-center gap-1 text-[#4B6382]">
-                    <BookOpen size={12} />
-                    {profile.university}
-                  </span>
-                )}
-                {profile.city && (
-                  <span className="flex items-center gap-1 text-[#4B6382]">
-                    <MapPin size={12} />
-                    {profile.city}
-                  </span>
-                )}
-                {profile.availability && (
-                  <span className="flex items-center gap-1 text-[#4B6382]">
-                    <Calendar size={12} />
-                    {profile.availability}
-                  </span>
-                )}
-              </div>
+          <h1 className="text-[36px] font-bold text-[#0D183D] mb-2">{profile.name}</h1>
+          <p className="text-[15px] text-[#FFB703] font-semibold">{profile.field || 'Student'}</p>
+        </motion.div>
+
+        {/* Quick Info Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-5 mb-8 flex flex-wrap gap-6"
+        >
+          {profile.university && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <BookOpen size={14} className="text-[#FFB703]" />
+              <span className="text-[#4B6382]">{profile.university}</span>
             </div>
-          </div>
+          )}
+          {profile.city && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <MapPin size={14} className="text-[#FFB703]" />
+              <span className="text-[#4B6382]">{profile.city}</span>
+            </div>
+          )}
+          {profile.availability && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <Calendar size={14} className="text-[#FFB703]" />
+              <span className="text-[#4B6382]">{profile.availability}</span>
+            </div>
+          )}
+          {formattedLanguages.length > 0 && (
+            <div className="flex items-center gap-2 text-[13px]">
+              <Globe size={14} className="text-[#FFB703]" />
+              <span className="text-[#4B6382]">
+                {formattedLanguages.map(l => typeof l === 'string' ? l : `${l.name}`).join(', ')}
+              </span>
+            </div>
+          )}
         </motion.div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* ═══ LEFT COLUMN: Student's Story ═══ */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-2 space-y-6">
 
             {/* About the Student */}
             {hasContent(profile.bio) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-6"
               >
                 <h2 className="text-[14px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
                   <Heart size={15} className="text-[#FFB703]" />
@@ -229,18 +244,15 @@ export default function StudentPublicProfile() {
               </motion.div>
             )}
 
-            {/* Application Message - IMPORTANT */}
+            {/* Application Message */}
             {hasContent(profile.motivation) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-[#FFB703]/30 p-6 bg-[#FFF9F0]/40"
+                transition={{ delay: 0.15 }}
+                className="bg-white rounded-xl border border-[#FFB703]/30 p-6 bg-[#FFF9F0]/40"
               >
-                <h2 className="text-[14px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
-                  <User size={15} className="text-[#FFB703]" />
-                  Why They Applied
-                </h2>
+                <h2 className="text-[14px] font-bold text-[#0D183D] mb-3">Why They Applied</h2>
                 <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile.motivation}</p>
               </motion.div>
             )}
@@ -250,8 +262,8 @@ export default function StudentPublicProfile() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-6"
               >
                 <h2 className="text-[14px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
                   <Target size={15} className="text-[#FFB703]" />
@@ -266,8 +278,8 @@ export default function StudentPublicProfile() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+                transition={{ delay: 0.25 }}
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-6"
               >
                 <h2 className="text-[14px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
                   <Briefcase size={15} className="text-[#FFB703]" />
@@ -278,61 +290,56 @@ export default function StudentPublicProfile() {
             )}
           </div>
 
-          {/* ═══ RIGHT COLUMN: Quick Review Panel ═══ */}
-          <div className="space-y-5">
+          {/* ═══ RIGHT COLUMN: Compact Review Panel ═══ */}
+          <div className="space-y-6">
 
-            {/* Match Summary Card - PROMINENT */}
+            {/* Match Summary - Sticky */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 rounded-2xl border border-[#FFB703]/30 p-6 sticky top-8"
+              className="bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 rounded-xl border border-[#FFB703]/30 p-6 sticky top-8"
             >
-              <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-4">Match Summary</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-[11px] text-[#4B6382] uppercase tracking-widest mb-2">Overall Match</p>
-                  <p className="text-[28px] font-bold text-[#FFB703]">–</p>
-                  <p className="text-[11px] text-[#4B6382] mt-1">Match data pending</p>
+              <p className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Match Summary</p>
+              <p className="text-[24px] font-bold text-[#FFB703] mb-4">–</p>
+              <div className="space-y-2 text-[12px]">
+                <div className="flex items-start gap-2 text-[#4B6382]">
+                  <CheckCircle2 size={13} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                  Motivated applicant
                 </div>
-                <div className="space-y-2 pt-4 border-t border-[#FFB703]/20">
-                  <p className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest">Why They Fit</p>
-                  <ul className="space-y-1.5 text-[12px]">
-                    <li className="flex items-start gap-2 text-[#4B6382]">
-                      <CheckCircle2 size={12} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
-                      Motivated and detail-oriented
-                    </li>
-                    <li className="flex items-start gap-2 text-[#4B6382]">
-                      <CheckCircle2 size={12} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
-                      Relevant technical skills
-                    </li>
-                    <li className="flex items-start gap-2 text-[#4B6382]">
-                      <CheckCircle2 size={12} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
-                      Good availability match
-                    </li>
-                  </ul>
+                <div className="flex items-start gap-2 text-[#4B6382]">
+                  <CheckCircle2 size={13} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                  Relevant skills
+                </div>
+                <div className="flex items-start gap-2 text-[#4B6382]">
+                  <CheckCircle2 size={13} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                  Good availability
                 </div>
               </div>
             </motion.div>
 
-            {/* Actions */}
+            {/* Actions - Two Column */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-4 space-y-2"
+              className="space-y-2"
             >
-              <button className="w-full py-2.5 px-4 rounded-xl bg-[#FFB703] text-white text-[12px] font-semibold hover:opacity-90 transition-opacity">
-                ⭐ Shortlist
-              </button>
-              <button className="w-full py-2.5 px-4 rounded-xl bg-[#0D183D] text-white text-[12px] font-semibold hover:opacity-90 transition-opacity">
-                📅 Schedule Interview
-              </button>
-              <button className="w-full py-2.5 px-4 rounded-xl border border-[rgba(13,24,61,0.1)] text-[#0D183D] text-[12px] font-semibold hover:bg-[rgba(13,24,61,0.02)] transition-colors">
-                💬 Message
-              </button>
-              <button className="w-full py-2.5 px-4 rounded-xl border border-red-200 text-red-600 text-[12px] font-semibold hover:bg-red-50 transition-colors">
-                ✕ Pass
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="py-2.5 px-3 rounded-lg bg-[#FFB703] text-white text-[12px] font-semibold hover:opacity-90 transition-opacity">
+                  Shortlist
+                </button>
+                <button className="py-2.5 px-3 rounded-lg bg-[#0D183D] text-white text-[12px] font-semibold hover:opacity-90 transition-opacity">
+                  Schedule
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="py-2.5 px-3 rounded-lg border border-[rgba(13,24,61,0.1)] text-[#0D183D] text-[12px] font-semibold hover:bg-[rgba(13,24,61,0.02)] transition-colors">
+                  Message
+                </button>
+                <button className="py-2.5 px-3 rounded-lg border border-red-200 text-red-600 text-[12px] font-semibold hover:bg-red-50 transition-colors">
+                  Pass
+                </button>
+              </div>
             </motion.div>
 
             {/* Skills */}
@@ -341,18 +348,18 @@ export default function StudentPublicProfile() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+                className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-6"
               >
-                <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-4">Skills</h3>
-                <div className="space-y-4">
+                <p className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-4">Skills</p>
+                <div className="space-y-3">
                   {Object.entries(grouped).map(([category, skills]) => (
                     skills.length > 0 && (
                       <div key={category}>
-                        <p className="text-[11px] font-semibold text-[#4B6382] uppercase tracking-widest mb-2">{category}</p>
+                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-widest mb-2">{category}</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {skills.map(({ name, level }, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#E8F4F8] text-[#0D183D] border border-[rgba(13,24,61,0.1)]">
-                              {level ? `${name} · ${level}` : name}
+                          {skills.slice(0, 3).map(({ name, level }, i) => (
+                            <span key={i} className="px-2 py-1 rounded text-[10px] font-medium bg-[#E8F4F8] text-[#0D183D] border border-[rgba(13,24,61,0.1)]">
+                              {level ? `${name}` : name}
                             </span>
                           ))}
                         </div>
@@ -368,94 +375,48 @@ export default function StudentPublicProfile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-6"
             >
-              <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <BookOpen size={13} className="text-[#FFB703]" />
-                Education
-              </h3>
+              <p className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Education</p>
               {profile.university && (
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <p className="text-[13px] font-semibold text-[#0D183D]">{profile.university}</p>
-                  <p className="text-[12px] text-[#4B6382]">{profile.field || 'Field of study'}</p>
-                  {profile.graduation_year && (
-                    <p className="text-[11px] text-[#4B6382] mt-2">2022 – Present</p>
+                  {profile.field && (
+                    <p className="text-[12px] text-[#4B6382]">{profile.field}</p>
                   )}
                 </div>
               )}
             </motion.div>
 
-            {/* Languages */}
-            {formattedLanguages.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <Globe size={13} className="text-[#FFB703]" />
-                  Languages
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {formattedLanguages.map((lang, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#E8F4F8] text-[#0D183D] border border-[rgba(13,24,61,0.1)]">
-                      {typeof lang === 'string' ? lang : `${lang.name}${lang.level ? ` · ${lang.level}` : ''}`}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Availability */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-            >
-              <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Zap size={13} className="text-[#FFB703]" />
-                Availability
-              </h3>
-              <p className="text-[13px] font-semibold text-[#0D183D]">{profile.availability || 'Not specified'}</p>
-            </motion.div>
-
-            {/* Links */}
+            {/* Links - Horizontal */}
             {(profile.links?.linkedin || profile.links?.github || profile.links?.portfolio) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+                transition={{ delay: 0.2 }}
+                className="space-y-2"
               >
-                <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <Link2Icon size={13} className="text-[#FFB703]" />
-                  Links
-                </h3>
-                <div className="space-y-2">
-                  {profile.links?.linkedin && (
-                    <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#F0F5F9] hover:bg-[#E8F1F7] text-[12px] font-semibold text-[#0D183D] transition-colors">
-                      <span>LinkedIn</span>
-                      <ExternalLink size={11} />
-                    </a>
-                  )}
-                  {profile.links?.github && (
-                    <a href={profile.links.github} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#F0F5F9] hover:bg-[#E8F1F7] text-[12px] font-semibold text-[#0D183D] transition-colors">
-                      <span>GitHub</span>
-                      <ExternalLink size={11} />
-                    </a>
-                  )}
-                  {profile.links?.portfolio && (
-                    <a href={profile.links.portfolio} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#F0F5F9] hover:bg-[#E8F1F7] text-[12px] font-semibold text-[#0D183D] transition-colors">
-                      <span>Portfolio</span>
-                      <ExternalLink size={11} />
-                    </a>
-                  )}
-                </div>
+                {profile.links?.linkedin && (
+                  <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB] text-[12px] font-semibold text-[#0D183D] transition-colors">
+                    <span>LinkedIn</span>
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+                {profile.links?.github && (
+                  <a href={profile.links.github} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB] text-[12px] font-semibold text-[#0D183D] transition-colors">
+                    <span>GitHub</span>
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+                {profile.links?.portfolio && (
+                  <a href={profile.links.portfolio} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB] text-[12px] font-semibold text-[#0D183D] transition-colors">
+                    <span>Portfolio</span>
+                    <ExternalLink size={11} />
+                  </a>
+                )}
               </motion.div>
             )}
           </div>
