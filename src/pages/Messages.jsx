@@ -18,6 +18,10 @@ function formatTime(isoString) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function getDisplayName(userId, userNames) {
+  return userNames[userId] || 'Connecting...'
+}
+
 export default function Messages() {
   const { user } = useApp()
   const [messages, setMessages] = useState([])
@@ -41,23 +45,31 @@ export default function Messages() {
         setMessages(data || [])
 
         // Fetch user names for all senders and recipients
-        const userIds = new Set()
-        data?.forEach(msg => {
-          userIds.add(msg.sender_id)
-          userIds.add(msg.recipient_id)
-        })
+        const userIds = Array.from(new Set([
+          ...(data?.map(msg => msg.sender_id) || []),
+          ...(data?.map(msg => msg.recipient_id) || [])
+        ]))
 
-        if (userIds.size > 0) {
+        if (userIds.length > 0) {
+          console.log('Fetching names for user IDs:', userIds)
+
           const { data: users, error: usersError } = await supabase
             .from('users')
             .select('id, name')
-            .in('id', Array.from(userIds))
+            .in('id', userIds)
 
-          if (!usersError && users) {
+          console.log('Users fetched:', users, 'Error:', usersError)
+
+          if (usersError) {
+            console.error('Error fetching user names:', usersError)
+          }
+
+          if (users && users.length > 0) {
             const nameMap = {}
             users.forEach(u => {
-              if (u.name) nameMap[u.id] = u.name
+              nameMap[u.id] = u.name || `User ${u.id.slice(0, 8)}`
             })
+            console.log('Name map:', nameMap)
             setUserNames(nameMap)
           }
         }
@@ -174,7 +186,7 @@ export default function Messages() {
             </div>
           ) : (
             filtered.map((conv) => {
-              const otherUserName = userNames[conv.otherId] || 'Loading...'
+              const otherUserName = getDisplayName(conv.otherId, userNames)
               return (
                 <motion.button
                   key={conv.id}
@@ -226,9 +238,9 @@ export default function Messages() {
           <>
             {/* Message Thread Header */}
             <div className="px-6 py-4 border-b border-[rgba(13,24,61,0.08)] flex items-center gap-3">
-              <GradientAvatar name={userNames[selected?.otherId] || 'Loading...'} size={36} radius="0.5rem" />
+              <GradientAvatar name={getDisplayName(selected?.otherId, userNames)} size={36} radius="0.5rem" />
               <div>
-                <p className="text-[13px] font-semibold text-[#0D183D]">{userNames[selected?.otherId] || 'Loading...'}</p>
+                <p className="text-[13px] font-semibold text-[#0D183D]">{getDisplayName(selected?.otherId, userNames)}</p>
                 <p className="text-[11px] text-[#4B6382]">
                   {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
                 </p>
