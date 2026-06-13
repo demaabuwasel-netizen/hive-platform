@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-
+import DashboardEmptyState from '../components/DashboardEmptyState'
 import { fetchStudentApplications } from '../services/applications'
 
 const STATUS_CFG = {
@@ -44,7 +44,7 @@ export default function Applications() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-7">
+    <div className="max-w-[1100px] mx-auto px-10 py-12">
       <div className="mb-6">
         <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">My Applications</h1>
         <p className="text-[13px] text-[#4B6382] mt-0.5">Track all your applications in one place</p>
@@ -76,20 +76,15 @@ export default function Applications() {
         </div>
       )}
 
-      {/* Empty state */}
       {!loading && filtered.length === 0 && (
-        <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-8 py-12 text-center">
-          <p className="text-2xl mb-3">📄</p>
-          <p className="font-extrabold text-[#0D183D] mb-1">No applications yet</p>
-          <p className="text-[13px] text-[#4B6382] mb-4">
-            Browse opportunities and apply to NGOs that match your skills.
-          </p>
-          <Link to="/opportunities"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
-            style={{ background: '#FFB703' }}>
-            Browse opportunities →
-          </Link>
-        </div>
+        <DashboardEmptyState
+          icon={Briefcase}
+          title="No applications yet"
+          description="Find NGOs that match your skills and interests, then send your first application. Tracking starts the moment you apply."
+          cta={{ label: 'Browse opportunities', href: '/opportunities' }}
+          secondary={{ label: 'View my matches', href: '/matches' }}
+          tip="Applications are tracked here in real time — from submitted to interview."
+        />
       )}
 
       {/* Timeline */}

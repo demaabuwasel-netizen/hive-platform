@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle2, Sparkles, MessageCircle, Send } from 'lucide-react'
+import { X, CheckCircle2, Sparkles, MessageCircle, Send, Zap } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
-import EmptyState from '../components/EmptyState'
+import DashboardEmptyState from '../components/DashboardEmptyState'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchActiveOpportunities } from '../services/opportunities'
 import { computeMatch } from '../services/matching'
@@ -301,10 +301,15 @@ export default function MatchResults() {
 
   if (user && !user.onboardingComplete) {
     return (
-      <div className="max-w-2xl mx-auto px-8 py-10">
-        <EmptyState emoji="🔍" title="No matches yet"
-          description="Complete your profile so our AI can find NGOs that match your skills and values."
-          actionLabel="Complete my profile" actionHref="/role-selection" />
+      <div className="max-w-[1100px] mx-auto px-10 py-12">
+        <DashboardEmptyState
+          icon={Sparkles}
+          label="Profile incomplete"
+          title="Complete your profile to see matches"
+          description="Our AI matches you with NGOs based on your skills, field of study, and interests. Fill in your profile to unlock personalised matches."
+          cta={{ label: 'Complete my profile', href: '/settings' }}
+          tip="Most students get their first match within minutes of completing their profile."
+        />
       </div>
     )
   }
@@ -313,7 +318,7 @@ export default function MatchResults() {
 
   return (
     <>
-    <div className="max-w-4xl mx-auto px-8 py-7">
+    <div className="max-w-[1100px] mx-auto px-10 py-12">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -385,9 +390,13 @@ export default function MatchResults() {
             ))}
           </div>
         ) : matchesToShow.length === 0 ? (
-          <EmptyState compact emoji="🔍" title="No matches yet"
-            description="Add more skills, interests, and experience to your profile for stronger matches."
-            actionLabel="Update profile" actionHref="/settings" />
+          <DashboardEmptyState
+            compact
+            icon={Zap}
+            title="No matches found yet"
+            description="Add more skills, interests, and experience to your profile so we can find the right NGOs for you."
+            cta={{ label: 'Update profile', href: '/settings' }}
+          />
         ) : (
           <div className="flex flex-col gap-5" role="list" aria-label="Match results">
             {matchesToShow.map((match, i) => (

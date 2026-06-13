@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Bookmark, MapPin, Trash2, AlertCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import EmptyState from '../components/EmptyState'
+import DashboardEmptyState from '../components/DashboardEmptyState'
 import { fetchSavedOpportunities, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 
@@ -49,7 +49,7 @@ export default function Saved() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-7">
+    <div className="max-w-[1100px] mx-auto px-10 py-12">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Saved</h1>
@@ -95,14 +95,14 @@ export default function Saved() {
         </div>
       )}
 
-      {/* Empty state — card-wrapped to match Applications page */}
       {!loading && !error && items.length === 0 && (
-        <EmptyState
-          emoji="🔖"
+        <DashboardEmptyState
+          icon={Bookmark}
           title="No saved opportunities yet"
-          description="Browse opportunities and tap the bookmark icon to save them here."
-          actionLabel="Browse opportunities"
-          actionHref="/opportunities"
+          description="Browse open opportunities and tap the bookmark icon on any listing to save it here for later."
+          cta={{ label: 'Browse opportunities', href: '/opportunities' }}
+          secondary={{ label: 'View my matches', href: '/matches' }}
+          tip="Saved opportunities make it easy to compare and apply at your own pace."
         />
       )}
 

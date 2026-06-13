@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X } from 'lucide-react'
+import { Search, Send, MoreHorizontal, Paperclip, Sparkles, RefreshCw, Calendar, X, MessageCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import EmptyState from '../components/EmptyState'
+import DashboardEmptyState from '../components/DashboardEmptyState'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -85,11 +85,14 @@ export default function Messages() {
 
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 && (
-            <div className="px-4 py-8 text-center">
-              <p className="text-2xl mb-2">💬</p>
-              <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No conversations yet</p>
-              <p className="text-[11px] text-[#4B6382] leading-relaxed">
-                Start a conversation with a matched NGO or student.
+            <div className="px-4 py-8 flex flex-col items-center text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: 'rgba(255,183,3,0.10)', border: '1px solid rgba(255,183,3,0.20)' }}>
+                <MessageCircle size={18} strokeWidth={1.7} style={{ color: '#0D183D' }}/>
+              </div>
+              <p className="text-[12px] font-bold text-[#0D183D] mb-1">No conversations yet</p>
+              <p className="text-[11px] text-[#4B6382] leading-relaxed max-w-[190px]">
+                Conversations appear here after you apply or get matched.
               </p>
             </div>
           )}
@@ -120,7 +123,18 @@ export default function Messages() {
       </div>
 
       {/* ── Chat panel ── */}
-      {conv ? (
+      {CONVERSATIONS.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center px-8 py-12" style={{ background: '#F8F9FB' }}>
+          <DashboardEmptyState
+            icon={MessageCircle}
+            title="No conversations yet"
+            description="Conversations open automatically when you apply to an opportunity or when an NGO reaches out after a match. Apply to get the conversation started."
+            cta={{ label: 'Browse opportunities', href: '/opportunities' }}
+            secondary={{ label: 'View my matches', href: '/matches' }}
+            tip="NGOs can also message you first — keep your profile complete to stand out."
+          />
+        </div>
+      ) : conv ? (
         <div className="flex-1 flex flex-col min-w-0">
 
           {/* Chat header */}
@@ -259,17 +273,7 @@ export default function Messages() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <EmptyState
-            emoji="💬"
-            title="No messages yet"
-            description="Start a conversation with a matched NGO or student."
-            actionLabel="View matches"
-            actionHref="/matches"
-          />
-        </div>
-      )}
+      ) : null}
     </div>
   )
 }

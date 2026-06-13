@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import EmptyState from '../components/EmptyState'
+import DashboardEmptyState from '../components/DashboardEmptyState'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -51,12 +51,13 @@ function StudentView() {
       <section className="mb-8">
         <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-3">Upcoming interviews</h2>
         {STUDENT_UPCOMING.length === 0 && (
-          <EmptyState
-            emoji="📅"
-            title="No interviews scheduled"
-            description="When an NGO invites you to interview, it will appear here."
-            actionLabel="View matches"
-            actionHref="/matches"
+          <DashboardEmptyState
+            compact
+            icon={Calendar}
+            title="No interviews scheduled yet"
+            description="When an NGO reviews your application and invites you to interview, it will show up here. Keep applying to increase your chances."
+            cta={{ label: 'Browse opportunities', href: '/opportunities' }}
+            secondary={{ label: 'Check my matches', href: '/matches' }}
           />
         )}
         <div className="flex flex-col gap-3">
@@ -225,12 +226,12 @@ function NGOView() {
       </div>
 
       {NGO_INTERVIEWS.length === 0 && (
-        <EmptyState
-          emoji="🗓️"
-          title="No interviews scheduled"
-          description="When you schedule interviews with applicants, they'll appear here."
-          actionLabel="View applicants"
-          actionHref="/applicants"
+        <DashboardEmptyState
+          icon={Calendar}
+          title="No interviews scheduled yet"
+          description="Once you review applicants and invite someone to interview, it will appear here. You can also suggest questions tailored to each candidate."
+          cta={{ label: 'View applicants', href: '/applicants' }}
+          tip="Interviews are added automatically when you invite an applicant from your Applicants page."
         />
       )}
       <div className="flex flex-col gap-4">
@@ -345,7 +346,7 @@ export default function Interviews() {
   const isNGO = user?.role === 'ngo'
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-7">
+    <div className="max-w-[1100px] mx-auto px-10 py-12">
       <div className="mb-6">
         <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Interviews</h1>
         <p className="text-[13px] text-[#4B6382] mt-0.5">
