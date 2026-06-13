@@ -222,11 +222,12 @@ function OAuthCallback() {
       ? `/onboarding/${user.role}`
       : user.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'
 
-    console.log('[auth] OAuthCallback → routing to', dest, {
+    console.log('[OAuthCallback] ROUTING DECISION', {
       uid:                user.id,
       provider:           user.provider,
       role:               user.role,
       onboardingComplete: user.onboardingComplete,
+      decision:           dest,
     })
     navigate(dest, { replace: true })
   }, [loading, user, navigate, needsRoute])

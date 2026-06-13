@@ -99,45 +99,77 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── Step 1: ensureUserRow (2 s outer cap via withStep) ─────────────────
-      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=2000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 2000)
+      // ── Step 1: ensureUserRow (3 s cap — SELECT + possible INSERT) ─────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=3000ms]')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 3000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (2 s outer cap via withStep) ────────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=2000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 2000)
-      log('STEP 2 — AFTER  getUserRow    ',
-        userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
+      // ── Step 2: getUserRow (3 s cap) ───────────────────────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=3000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 3000)
+      log('STEP 2 — AFTER  getUserRow',
+        userRow
+          ? `role=${userRow.role} onboarding_complete=${userRow.onboarding_complete}`
+          : 'null (row missing or RLS denied)')
 
       // ── Step 2.5: getProfileRow — authoritative role + onboarding_completed ─
-      // Reads from the profiles table, which takes precedence over the users table.
-      // Best-effort: if the table is missing or the query fails, fall back to userRow.
-      log('STEP 2.5 — BEFORE getProfileRow [withStep cap=2000ms]')
+      // profiles table takes priority. If missing/empty, falls back to userRow.
+      log('STEP 2.5 — BEFORE getProfileRow [withStep cap=3000ms]')
       let profileRow = null
       try {
-        profileRow = await withStep(getProfileRow(authUser.id), 'getProfileRow', 2000)
+        profileRow = await withStep(getProfileRow(authUser.id), 'getProfileRow', 3000)
         log('STEP 2.5 — AFTER  getProfileRow',
           profileRow
-            ? `role=${profileRow.role} onboarding=${profileRow.onboarding_completed}`
-            : 'null — falling back to users table')
+            ? `role=${profileRow.role} onboarding_completed=${profileRow.onboarding_completed}`
+            : 'null (no profiles row — will fall back to users table)')
       } catch (e) {
-        warn('STEP 2.5 — getProfileRow skip:', e.message)
+        warn('STEP 2.5 — getProfileRow timed out:', e.message, '— continuing with users table')
       }
+
+      // Determine effective role + onboarding from whichever source has data.
+      // Priority: profiles.role > users.role (profiles is the new authoritative source).
+      // Both may be null for a brand-new user — that is expected and correct.
+      const effectiveRole      = profileRow?.role              ?? userRow?.role              ?? null
+      const effectiveOnboarded = profileRow?.onboarding_completed ?? userRow?.onboarding_complete ?? false
+
+      log('STEP 2.5 — RESOLVED',
+        `effectiveRole=${effectiveRole}`,
+        `effectiveOnboarded=${effectiveOnboarded}`,
+        `source: profiles=${!!profileRow?.role} | users=${!!userRow?.role}`)
 
       if (!userRow && !profileRow) {
-        warn('STEP 2 — no users row AND no profiles row → applying minimal state')
-        setUserState(minimal); userWasSet = true; return
+        // Both DB queries returned nothing. Use the localStorage cache if available
+        // so a Supabase timeout doesn't flash a completed user back to role-selection.
+        const cached = readProfileCache(authUser.id)
+        if (cached?.role) {
+          warn('STEP 2.5 — Both DB queries empty, using cache fallback role:', cached.role)
+          setUserState({
+            id:                 authUser.id,
+            email:              authUser.email,
+            name:               cached.name   ?? minimal.name,
+            avatar:             cached.avatar ?? minimal.avatar,
+            role:               cached.role,
+            onboardingComplete: cached.onboardingComplete ?? false,
+            onboardingStep:     0,
+            provider:           cached.provider ?? minimal.provider,
+            preferredLanguage:  'en',
+            preferredTheme:     'system',
+          })
+          userWasSet = true
+        } else {
+          warn('STEP 2.5 — Both DB queries empty, no cache → minimal state (new user)')
+          setUserState(minimal); userWasSet = true
+        }
+        return
       }
 
-      // profiles.role and profiles.onboarding_completed take priority when present
       const merged = {
         id:                 authUser.id,
         email:              authUser.email,
         name:               userRow?.name ?? minimal.name,
         avatar:             userRow?.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
-        role:               profileRow?.role              ?? userRow?.role              ?? null,
-        onboardingComplete: profileRow?.onboarding_completed ?? userRow?.onboarding_complete ?? false,
+        role:               effectiveRole,
+        onboardingComplete: effectiveOnboarded,
         onboardingStep:     userRow?.onboarding_step ?? 0,
         provider:           userRow?.provider ?? minimal.provider,
         preferredLanguage:  userRow?.preferred_language ?? 'en',
@@ -145,9 +177,8 @@ export function AppProvider({ children }) {
       }
       setUserState(merged); userWasSet = true
       writeProfileCache(merged)
-      log('STEP 2.5 — user state SET | role:', merged.role,
-        '| onboardingComplete:', merged.onboardingComplete,
-        '| source:', profileRow?.role ? 'profiles' : 'users')
+      log('STEP 2.5 — user state COMMITTED | role:', merged.role,
+        '| onboardingComplete:', merged.onboardingComplete)
 
       // Apply stored language / theme preferences
       const pLang  = userRow?.preferred_language
@@ -169,24 +200,44 @@ export function AppProvider({ children }) {
 
       // ── Step 3: profile — fire-and-forget (never blocks loading) ──────────
       if (merged.role === 'student') {
-        log('STEP 3 — BEFORE loadStudentProfile (background, cap=4000ms)')
+        log('STEP 3 — loadStudentProfile (background)')
         withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
-          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadStudentProfile', p ? 'loaded' : 'null') })
+          .then(p => { setProfileState(p); log('STEP 3 — loadStudentProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadStudentProfile ERROR:', e.message))
       } else if (merged.role === 'ngo') {
-        log('STEP 3 — BEFORE loadNgoProfile (background, cap=4000ms)')
+        log('STEP 3 — loadNgoProfile (background)')
         withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
-          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadNgoProfile', p ? 'loaded' : 'null') })
+          .then(p => { setProfileState(p); log('STEP 3 — loadNgoProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadNgoProfile ERROR:', e.message))
       } else {
-        log('STEP 3 — skipped (role=null)')
+        log('STEP 3 — skipped (effectiveRole=null — new user)')
       }
 
     } catch (catchErr) {
       err('CAUGHT at step:', catchErr.message)
       if (!userWasSet) {
-        warn('applying minimal fallback state')
-        setUserState(minimal)
+        // DB calls failed. Use the localStorage cache before falling back to
+        // minimal state — prevents a Supabase timeout from bouncing completed users
+        // to role-selection.
+        const cached = readProfileCache(authUser.id)
+        if (cached?.role) {
+          warn('DB error — using profile cache as recovery, role:', cached.role)
+          setUserState({
+            id:                 authUser.id,
+            email:              authUser.email,
+            name:               cached.name   ?? minimal.name,
+            avatar:             cached.avatar ?? minimal.avatar,
+            role:               cached.role,
+            onboardingComplete: cached.onboardingComplete ?? false,
+            onboardingStep:     0,
+            provider:           cached.provider ?? minimal.provider,
+            preferredLanguage:  'en',
+            preferredTheme:     'system',
+          })
+        } else {
+          warn('DB error, no cache → minimal fallback (new user or cleared cache)')
+          setUserState(minimal)
+        }
       }
     }
 
