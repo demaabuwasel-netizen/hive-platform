@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Search, MessageCircle, Loader, AlertCircle } from 'lucide-react'
+import { Search, MessageCircle, Loader, AlertCircle, Send } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { getMessages } from '../services/messages'
+import { getMessages, sendInterviewMessage } from '../services/messages'
+import { supabase } from '../services/supabase'
 import GradientAvatar from '../components/GradientAvatar'
 
 function formatTime(isoString) {
@@ -24,7 +25,11 @@ export default function Messages() {
   const [error, setError] = useState(null)
   const [searchQ, setSearchQ] = useState('')
   const [selectedConvId, setSelectedConvId] = useState(null)
+  const [newMessage, setNewMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [userNames, setUserNames] = useState({})
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     if (!user?.id) return
@@ -34,6 +39,26 @@ export default function Messages() {
         setLoading(true)
         const data = await getMessages(user.id)
         setMessages(data || [])
+
+        // Fetch user names for all senders and recipients
+        const userIds = new Set()
+        data?.forEach(msg => {
+          userIds.add(msg.sender_id)
+          userIds.add(msg.recipient_id)
+        })
+
+        if (userIds.size > 0) {
+          const { data: users } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', Array.from(userIds))
+
+          const nameMap = {}
+          users?.forEach(u => {
+            nameMap[u.id] = u.name
+          })
+          setUserNames(nameMap)
+        }
       } catch (err) {
         console.error('Error loading messages:', err)
         setError('Failed to load messages')
@@ -46,6 +71,34 @@ export default function Messages() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [selectedConvId, messages.length])
+
+  async function handleSendMessage() {
+    if (!newMessage.trim() || !selected || !user?.id || sending) return
+
+    setSending(true)
+    try {
+      await sendInterviewMessage(selected.otherId, user.id, newMessage)
+
+      // Add message to local state
+      const timestamp = new Date().toISOString()
+      const newMsg = {
+        id: `temp-${timestamp}`,
+        sender_id: user.id,
+        recipient_id: selected.otherId,
+        message_body: newMessage,
+        message_type: 'general',
+        created_at: timestamp,
+      }
+      setMessages([...messages, newMsg])
+      setNewMessage('')
+      inputRef.current?.focus()
+    } catch (err) {
+      console.error('Error sending message:', err)
+      alert('Failed to send message')
+    } finally {
+      setSending(false)
+    }
+  }
 
   // Group messages by conversation (sender + recipient)
   const conversations = messages.reduce((acc, msg) => {
@@ -118,30 +171,33 @@ export default function Messages() {
               </p>
             </div>
           ) : (
-            filtered.map((conv) => (
-              <motion.button
-                key={conv.id}
-                onClick={() => setSelectedConvId(conv.id)}
-                className={`w-full text-left px-4 py-3.5 border-b border-[rgba(13,24,61,0.04)] transition-all hover:bg-[#F8F9FB] ${
-                  selectedConvId === conv.id ? 'bg-[#FFF9F0] border-l-4 border-l-[#FFB703]' : ''
-                }`}
-              >
-                <div className="flex gap-3 items-start">
-                  <GradientAvatar name={conv.otherName} size={40} radius="0.6rem" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-[#0D183D] truncate">
-                      {conv.otherName}
-                    </p>
-                    <p className="text-[11px] text-[#4B6382] truncate line-clamp-1">
-                      {conv.lastMessage.message_body}
-                    </p>
-                    <p className="text-[10px] text-[#4B6382]/60 mt-1">
-                      {formatTime(conv.lastMessage.created_at)}
-                    </p>
+            filtered.map((conv) => {
+              const otherUserName = userNames[conv.otherId] || 'User'
+              return (
+                <motion.button
+                  key={conv.id}
+                  onClick={() => setSelectedConvId(conv.id)}
+                  className={`w-full text-left px-4 py-3.5 border-b border-[rgba(13,24,61,0.04)] transition-all hover:bg-[#F8F9FB] ${
+                    selectedConvId === conv.id ? 'bg-[#FFF9F0] border-l-4 border-l-[#FFB703]' : ''
+                  }`}
+                >
+                  <div className="flex gap-3 items-start">
+                    <GradientAvatar name={otherUserName} size={40} radius="0.6rem" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-[#0D183D] truncate">
+                        {otherUserName}
+                      </p>
+                      <p className="text-[11px] text-[#4B6382] truncate line-clamp-1">
+                        {conv.lastMessage.message_body}
+                      </p>
+                      <p className="text-[10px] text-[#4B6382]/60 mt-1">
+                        {formatTime(conv.lastMessage.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.button>
-            ))
+                </motion.button>
+              )
+            })
           )}
         </div>
       </motion.div>
@@ -168,9 +224,9 @@ export default function Messages() {
           <>
             {/* Message Thread Header */}
             <div className="px-6 py-4 border-b border-[rgba(13,24,61,0.08)] flex items-center gap-3">
-              <GradientAvatar name={selected?.otherName} size={36} radius="0.5rem" />
+              <GradientAvatar name={userNames[selected?.otherId] || 'User'} size={36} radius="0.5rem" />
               <div>
-                <p className="text-[13px] font-semibold text-[#0D183D]">{selected?.otherName}</p>
+                <p className="text-[13px] font-semibold text-[#0D183D]">{userNames[selected?.otherId] || 'User'}</p>
                 <p className="text-[11px] text-[#4B6382]">
                   {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
                 </p>
@@ -211,6 +267,31 @@ export default function Messages() {
                 ))
               )}
               <div ref={bottomRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="px-6 py-4 border-t border-[rgba(13,24,61,0.08)] flex gap-2">
+              <input
+                ref={inputRef}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+                placeholder="Type a message…"
+                disabled={sending}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[rgba(13,24,61,0.1)] text-[12px] text-[#0D183D] placeholder-[#4B6382]/50 focus:outline-none focus:border-[#FFB703] disabled:opacity-50"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || sending}
+                className="px-4 py-2.5 rounded-xl bg-[#FFB703] text-white font-semibold text-[12px] hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sending ? <Loader size={14} className="animate-spin" /> : <Send size={14} />}
+              </button>
             </div>
           </>
         )}
