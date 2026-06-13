@@ -56,7 +56,8 @@ export async function fetchStudentApplications(studentId) {
     .from('applications')
     .select(`
       *,
-      opportunities (id, title, org_name, category, location, ngo_id)
+      opportunities (id, title, category, location, ngo_id),
+      ngo_profiles (id, name, location)
     `)
     .eq('student_id', studentId)
     .order('submitted_at', { ascending: false })
