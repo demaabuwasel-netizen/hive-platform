@@ -56,13 +56,31 @@ export async function fetchStudentApplications(studentId) {
     .from('applications')
     .select(`
       *,
-      opportunities (id, title, category, location, ngo_id),
-      ngo_profiles (id, name, location)
+      opportunities (id, title, category, location, ngo_id)
     `)
     .eq('student_id', studentId)
     .order('submitted_at', { ascending: false })
   if (error) throw new Error(error.message)
-  return (data ?? []).map(dbToApp)
+
+  // Fetch NGO names separately
+  const ngoIds = [...new Set((data ?? []).map(a => a.ngo_id).filter(Boolean))]
+  let ngoMap = {}
+  if (ngoIds.length > 0) {
+    const { data: ngos } = await supabase
+      .from('ngo_profiles')
+      .select('id, user_id, name')
+      .in('user_id', ngoIds)
+    ngoMap = Object.fromEntries((ngos ?? []).map(n => [n.user_id, n.name]))
+  }
+
+  return (data ?? []).map(row => {
+    const app = dbToApp(row)
+    // Add NGO name from the map if not already there
+    if (!app.ngoName && row.ngo_id) {
+      app.ngoName = ngoMap[row.ngo_id] || 'NGO'
+    }
+    return app
+  })
 }
 
 // NGO: fetch all applications to a specific opportunity
