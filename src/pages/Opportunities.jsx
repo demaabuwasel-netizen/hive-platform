@@ -284,7 +284,7 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
     try {
       await submitApplication({
         studentId:     studentId,
-        opportunityId: ngo.opportunityId ?? null,
+        opportunityId: ngo.id,
         ngoId:         ngo.ngoId ?? String(ngo.id),
         message,
         availability:  avail,
