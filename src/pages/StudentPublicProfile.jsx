@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MapPin, BookOpen, Briefcase, Globe, Code2, Link2Icon, Award, Zap, Heart, Target } from 'lucide-react'
+import { ArrowLeft, MapPin, BookOpen, Briefcase, Globe, Code2, Link2Icon, Heart, Target, Mail, Calendar, ExternalLink } from 'lucide-react'
 import GradientAvatar from '../components/GradientAvatar'
 import { loadStudentProfile } from '../services/storage'
 
@@ -68,6 +68,15 @@ function categorizeSkills(skills) {
   return grouped
 }
 
+function formatLanguages(languages) {
+  if (!Array.isArray(languages)) return []
+  return languages.map(lang => {
+    if (typeof lang === 'string') return lang
+    if (typeof lang === 'object' && lang.lang) return `${lang.lang}${lang.level ? ` · ${lang.level}` : ''}`
+    return ''
+  }).filter(Boolean)
+}
+
 export default function StudentPublicProfile() {
   const { studentId } = useParams()
   const navigate = useNavigate()
@@ -117,10 +126,10 @@ export default function StudentPublicProfile() {
   if (loading) {
     return (
       <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10">
-          <div className="animate-pulse space-y-6">
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          <div className="animate-pulse space-y-4">
             <div className="w-20 h-6 bg-gray-300 rounded" />
-            <div className="w-32 h-10 bg-gray-300 rounded" />
+            <div className="h-48 bg-gray-300 rounded-lg" />
           </div>
         </div>
       </main>
@@ -130,11 +139,16 @@ export default function StudentPublicProfile() {
   if (error || !profile) {
     return (
       <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8">
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8 transition-colors"
+          >
             <ArrowLeft size={18} />
             Back
-          </button>
+          </motion.button>
           <div className="text-center py-20 bg-white rounded-2xl p-8">
             <p className="text-[#0D183D] font-semibold mb-2">{error ? 'Unable to load profile' : 'Student profile not found'}</p>
             <p className="text-[#4B6382] mb-6">{error || 'This student profile could not be found.'}</p>
@@ -148,201 +162,266 @@ export default function StudentPublicProfile() {
   }
 
   const grouped = categorizeSkills(profile.skills)
+  const formattedLanguages = formatLanguages(profile.languages)
   const hasContent = (obj) => obj && (typeof obj === 'string' ? obj.trim().length > 0 : Array.isArray(obj) ? obj.length > 0 : false)
 
   return (
     <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-8 py-10">
+      <div className="max-w-7xl mx-auto px-8 py-10">
         {/* Back Button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-10 transition-colors"
+          className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8 transition-colors"
         >
           <ArrowLeft size={18} />
           Back
         </motion.button>
 
-        {/* ━━━━━━━━ HERO HEADER ━━━━━━━━ */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-[#0D183D] to-[#1a2952] rounded-3xl px-8 py-12 mb-12 text-white"
-        >
-          <div className="flex items-start gap-8 mb-8">
-            <GradientAvatar name={profile.name || 'Student'} size={100} radius="1.5rem" />
-            <div className="flex-1">
-              <h1 className="text-[40px] font-bold mb-2">{profile.name}</h1>
-              {profile.field && (
-                <p className="text-[18px] text-blue-100 font-semibold mb-6">{profile.field}</p>
-              )}
-              <div className="flex flex-wrap gap-3">
-                {profile.university && (
-                  <div className="px-4 py-2.5 rounded-lg bg-white/15 text-white text-[13px] font-semibold border border-white/25 flex items-center gap-2">
-                    <BookOpen size={15} />
-                    {profile.university}
+        {/* Main Grid: Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* ═══ LEFT COLUMN: Main Content ═══ */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Profile Header - Compact */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 shadow-sm"
+            >
+              <div className="flex items-start gap-5">
+                <GradientAvatar name={profile.name || 'Student'} size={64} radius="0.85rem" />
+                <div className="flex-1">
+                  <h1 className="text-[24px] font-bold text-[#0D183D] mb-1">{profile.name}</h1>
+                  {profile.field && (
+                    <p className="text-[14px] font-semibold text-[#FFB703] mb-3">{profile.field}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {profile.university && (
+                      <span className="flex items-center gap-1.5 text-[12px] text-[#4B6382]">
+                        <BookOpen size={13} />
+                        {profile.university}
+                      </span>
+                    )}
+                    {profile.city && (
+                      <span className="flex items-center gap-1.5 text-[12px] text-[#4B6382]">
+                        <MapPin size={13} />
+                        {profile.city}
+                      </span>
+                    )}
                   </div>
-                )}
-                {profile.availability && (
-                  <div className="px-4 py-2.5 rounded-lg bg-emerald-500/25 text-emerald-100 text-[13px] font-semibold border border-emerald-400/40">
-                    Available: {profile.availability}
-                  </div>
-                )}
-                {profile.languages?.length > 0 && (
-                  <div className="px-4 py-2.5 rounded-lg bg-white/15 text-white text-[13px] font-semibold border border-white/25 flex items-center gap-2">
-                    <Globe size={15} />
-                    {profile.languages.join(', ')}
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
+            </motion.div>
+
+            {/* About / Bio */}
+            {hasContent(profile.bio) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-4">About</h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {profile.bio}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Career Goals */}
+            {hasContent(profile.goals) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-4 flex items-center gap-2">
+                  <Target size={16} className="text-[#FFB703]" />
+                  Career Goals
+                </h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {profile.goals}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Experience */}
+            {hasContent(profile.experience) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-4 flex items-center gap-2">
+                  <Briefcase size={16} className="text-[#FFB703]" />
+                  Experience
+                </h2>
+                <p className="text-[14px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+                  {profile.experience}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Skills - Categorized */}
+            {profile.skills && profile.skills.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h2 className="text-[16px] font-bold text-[#0D183D] mb-5 flex items-center gap-2">
+                  <Code2 size={16} className="text-[#FFB703]" />
+                  Skills & Expertise
+                </h2>
+                <div className="space-y-6">
+                  {Object.entries(grouped).map(([category, skills]) => (
+                    skills.length > 0 && (
+                      <div key={category}>
+                        <h3 className="text-[12px] font-bold text-[#0D183D] uppercase tracking-widest mb-3 text-[#4B6382]">
+                          {category}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {skills.map(({ name, level }, i) => (
+                            <span key={i} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/25">
+                              {level ? `${name} · ${level}` : name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
-        </motion.div>
 
-        {/* ━━━━━━━━ CONTENT GRID ━━━━━━━━ */}
-        <div className="space-y-8">
+          {/* ═══ RIGHT COLUMN: Sidebar ═══ */}
+          <div className="space-y-6">
 
-          {/* ─── WHO THEY ARE ─── */}
-          {hasContent(profile.bio) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-5 flex items-center gap-3">
-                <Heart size={20} className="text-[#FFB703]" />
-                Who They Are
-              </h2>
-              <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
-                {profile.bio}
-              </p>
-            </motion.div>
-          )}
+            {/* Profile Snapshot */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 sticky top-10"
+            >
+              <h3 className="text-[14px] font-bold text-[#0D183D] mb-4 uppercase tracking-widest text-[#4B6382]">Profile Info</h3>
+              <div className="space-y-4 text-[13px]">
+                {profile.university && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen size={14} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[#4B6382] text-[12px] uppercase tracking-widest">University</p>
+                      <p className="text-[#0D183D] font-semibold mt-1">{profile.university}</p>
+                    </div>
+                  </div>
+                )}
 
-          {/* ─── CAREER GOALS ─── */}
-          {hasContent(profile.goals) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-5 flex items-center gap-3">
-                <Target size={20} className="text-[#FFB703]" />
-                Career Goals
-              </h2>
-              <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
-                {profile.goals}
-              </p>
-            </motion.div>
-          )}
+                {profile.field && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen size={14} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[#4B6382] text-[12px] uppercase tracking-widest">Field</p>
+                      <p className="text-[#0D183D] font-semibold mt-1">{profile.field}</p>
+                    </div>
+                  </div>
+                )}
 
-          {/* ─── BEST EXPERIENCE / ACCOMPLISHMENTS ─── */}
-          {hasContent(profile.experience) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-5 flex items-center gap-3">
-                <Briefcase size={20} className="text-[#FFB703]" />
-                Experience & Accomplishments
-              </h2>
-              <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
-                {profile.experience}
-              </p>
-            </motion.div>
-          )}
+                {profile.city && (
+                  <div className="flex items-start gap-3">
+                    <MapPin size={14} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[#4B6382] text-[12px] uppercase tracking-widest">Location</p>
+                      <p className="text-[#0D183D] font-semibold mt-1">{profile.city}</p>
+                    </div>
+                  </div>
+                )}
 
-          {/* ─── ALL SKILLS (CATEGORIZED) ─── */}
-          {profile.skills && profile.skills.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-6 flex items-center gap-3">
-                <Code2 size={20} className="text-[#FFB703]" />
-                Skills & Expertise ({profile.skills.length} total)
-              </h2>
-              <div className="space-y-8">
-                {Object.entries(grouped).map(([category, skills]) => (
-                  skills.length > 0 && (
-                    <div key={category}>
-                      <h3 className="text-[14px] font-bold text-[#0D183D] uppercase tracking-widest mb-4 pb-3 border-b-2 border-[#FFB703]">
-                        {category} ({skills.length})
-                      </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {skills.map(({ name, level }, i) => (
-                          <span key={i} className="px-4 py-2.5 rounded-lg text-[13px] font-semibold bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/25">
-                            {level ? `${name} · ${level}` : name}
-                          </span>
+                {profile.availability && (
+                  <div className="flex items-start gap-3">
+                    <Calendar size={14} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[#4B6382] text-[12px] uppercase tracking-widest">Availability</p>
+                      <p className="text-[#0D183D] font-semibold mt-1">{profile.availability}</p>
+                    </div>
+                  </div>
+                )}
+
+                {formattedLanguages.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <Globe size={14} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[#4B6382] text-[12px] uppercase tracking-widest">Languages</p>
+                      <div className="mt-2 space-y-1">
+                        {formattedLanguages.map((lang, i) => (
+                          <p key={i} className="text-[#0D183D] font-semibold">{lang}</p>
                         ))}
                       </div>
                     </div>
-                  )
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─── COURSES & LEARNING ─── */}
-          {profile.courses && profile.courses.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-6 flex items-center gap-3">
-                <Award size={20} className="text-[#FFB703]" />
-                Courses & Learning ({profile.courses.length})
-              </h2>
-              <div className="space-y-3">
-                {profile.courses.map((course, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-[#F8F9FB] border border-[rgba(13,24,61,0.06)] hover:border-[#FFB703]/30 transition-colors">
-                    <p className="text-[14px] font-semibold text-[#0D183D]">{course}</p>
                   </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─── INTERESTS ─── */}
-          {profile.interests && profile.interests.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-5 flex items-center gap-3">
-                Interests & Passions
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest, i) => (
-                  <span key={i} className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/25">
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─── LINKS & PROFILES ─── */}
-          {(profile.links?.linkedin || profile.links?.github || profile.links?.portfolio) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-              <h2 className="text-[20px] font-bold text-[#0D183D] mb-6 flex items-center gap-3">
-                Links & Profiles
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {profile.links?.linkedin && (
-                  <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-xl bg-[#0A66C2]/10 text-[#0A66C2] border border-[#0A66C2]/25 text-[13px] font-bold flex items-center gap-2 hover:bg-[#0A66C2]/20 transition-all">
-                    <Link2Icon size={15} />
-                    LinkedIn Profile →
-                  </a>
-                )}
-                {profile.links?.github && (
-                  <a href={profile.links.github} target="_blank" rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-xl bg-[#0D183D]/10 text-[#0D183D] border border-[#0D183D]/25 text-[13px] font-bold flex items-center gap-2 hover:bg-[#0D183D]/20 transition-all">
-                    <Code2 size={15} />
-                    GitHub Profile →
-                  </a>
-                )}
-                {profile.links?.portfolio && (
-                  <a href={profile.links.portfolio} target="_blank" rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-xl bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/25 text-[13px] font-bold flex items-center gap-2 hover:bg-[#FFB703]/20 transition-all">
-                    <Globe size={15} />
-                    Portfolio →
-                  </a>
                 )}
               </div>
             </motion.div>
-          )}
 
-          <div className="h-12" />
+            {/* Interests */}
+            {profile.interests && profile.interests.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h3 className="text-[14px] font-bold text-[#0D183D] mb-4 uppercase tracking-widest text-[#4B6382]">Interests</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.interests.map((interest, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/25">
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Links */}
+            {(profile.links?.linkedin || profile.links?.github || profile.links?.portfolio) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
+              >
+                <h3 className="text-[14px] font-bold text-[#0D183D] mb-4 uppercase tracking-widest text-[#4B6382]">Links</h3>
+                <div className="space-y-2">
+                  {profile.links?.linkedin && (
+                    <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0A66C2]/10 text-[#0A66C2] border border-[#0A66C2]/25 text-[12px] font-semibold hover:bg-[#0A66C2]/20 transition-all">
+                      <span>LinkedIn</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                  {profile.links?.github && (
+                    <a href={profile.links.github} target="_blank" rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0D183D]/10 text-[#0D183D] border border-[#0D183D]/25 text-[12px] font-semibold hover:bg-[#0D183D]/20 transition-all">
+                      <span>GitHub</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                  {profile.links?.portfolio && (
+                    <a href={profile.links.portfolio} target="_blank" rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/25 text-[12px] font-semibold hover:bg-[#FFB703]/20 transition-all">
+                      <span>Portfolio</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </main>
