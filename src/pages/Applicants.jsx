@@ -6,9 +6,9 @@ import RolesList from '../components/RolesList'
 import ApplicantsList from '../components/ApplicantsList'
 import ApplicantDetail from '../components/ApplicantDetail'
 import {
-  fetchNgoApplicants, fetchNgoOpportunitiesWithApplicantCounts,
-  fetchOpportunityApplicantsWithMatches, updateApplicationStatus
+  fetchNgoApplicants, fetchOpportunityApplicantsWithMatches, updateApplicationStatus
 } from '../services/applications'
+import { fetchNgoOpportunities } from '../services/opportunities'
 
 function toUiStatus(dbStatus) {
   if (dbStatus === 'submitted' || dbStatus === 'under_review') return 'new'
@@ -50,9 +50,19 @@ export default function Applicants() {
     if (!user?.id) return
     setRolesLoading(true)
     setError(null)
-    fetchNgoOpportunitiesWithApplicantCounts(user.id)
-      .then(data => setRoles(data))
-      .catch(() => setError('Could not load opportunities. Please try again.'))
+    fetchNgoOpportunities(user.id)
+      .then(opps => {
+        // Map to match the expected format with stats
+        const mapped = opps.map(opp => ({
+          ...opp,
+          stats: { total: 0, new: 0, shortlisted: 0, interview: 0, rejected: 0 }
+        }))
+        setRoles(mapped)
+      })
+      .catch(err => {
+        console.error('Error loading opportunities:', err)
+        setError('Could not load opportunities. Please try again.')
+      })
       .finally(() => setRolesLoading(false))
   }, [user?.id])
 

@@ -230,8 +230,14 @@ export async function fetchNgoOpportunitiesWithApplicantCounts(ngoId) {
     .eq('ngo_id', ngoId)
     .order('created_at', { ascending: false })
 
-  if (oppError) throw new Error(oppError.message)
-  if (!opps?.length) return []
+  if (oppError) {
+    console.error('Opportunities fetch error:', oppError)
+    throw new Error(oppError.message)
+  }
+  if (!opps?.length) {
+    console.log('No opportunities found for ngoId:', ngoId)
+    return []
+  }
 
   // Get applicant counts and statuses for each opportunity
   const { data: appCounts, error: countError } = await supabase

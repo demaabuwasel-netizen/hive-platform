@@ -22,14 +22,6 @@ const STATUS_CONFIG = {
   rejected:    { label: 'Rejected',    color: 'text-red-500',     bg: 'bg-red-50'      },
 }
 
-const STATUS_CONFIG = {
-  new:         { label: 'New',         color: 'text-indigo-600',  bg: 'bg-indigo-50'   },
-  shortlisted: { label: 'Shortlisted', color: 'text-[#D99E00]',   bg: 'bg-amber-50'    },
-  interview:   { label: 'Interview',   color: 'text-emerald-700', bg: 'bg-emerald-50'  },
-  accepted:    { label: 'Accepted',    color: 'text-emerald-700', bg: 'bg-emerald-50'  },
-  rejected:    { label: 'Rejected',    color: 'text-red-500',     bg: 'bg-red-50'      },
-}
-
 export default function ApplicantsList({ applicants, selectedId, onSelectApplicant, statuses, loading, searchQuery, selectedRoleTitle }) {
   const [localQ, setLocalQ] = useState('')
   const [filter, setFilter] = useState('all')
