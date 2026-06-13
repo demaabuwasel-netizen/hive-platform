@@ -75,6 +75,8 @@ function getLevelColor(level) {
 }
 
 function AvatarInitials({ name, size = 64 }) {
+  if (!name) return null
+
   const initials = name
     .split(' ')
     .map(n => n[0])
