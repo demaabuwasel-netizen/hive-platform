@@ -19,7 +19,8 @@ function formatTime(isoString) {
 }
 
 function getDisplayName(userId, userNames) {
-  return userNames[userId] || 'Connecting...'
+  if (!userId) return 'User'
+  return userNames[userId] || `User ${userId.slice(0, 6)}`
 }
 
 export default function Messages() {
@@ -44,35 +45,69 @@ export default function Messages() {
         const data = await getMessages(user.id)
         setMessages(data || [])
 
-        // Fetch user names for all senders and recipients
+        // Collect all user IDs from messages
         const userIds = Array.from(new Set([
           ...(data?.map(msg => msg.sender_id) || []),
           ...(data?.map(msg => msg.recipient_id) || [])
         ]))
 
-        if (userIds.length > 0) {
-          console.log('Fetching names for user IDs:', userIds)
+        if (userIds.length === 0) {
+          setLoading(false)
+          return
+        }
 
-          const { data: users, error: usersError } = await supabase
-            .from('users')
-            .select('id, name')
-            .in('id', userIds)
+        // Fetch from users table
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, name')
+          .in('id', userIds)
 
-          console.log('Users fetched:', users, 'Error:', usersError)
+        // Also fetch from ngo_profiles and student_profiles as fallback
+        const { data: ngoProfiles } = await supabase
+          .from('ngo_profiles')
+          .select('user_id, name')
+          .in('user_id', userIds)
 
-          if (usersError) {
-            console.error('Error fetching user names:', usersError)
+        const { data: studentProfiles } = await supabase
+          .from('student_profiles')
+          .select('user_id')
+          .in('user_id', userIds)
+
+        // Build name map from all sources
+        const nameMap = {}
+
+        // First, add names from users table
+        users?.forEach(u => {
+          if (u.name) nameMap[u.id] = u.name
+        })
+
+        // Then add names from ngo_profiles
+        ngoProfiles?.forEach(profile => {
+          if (profile.name && !nameMap[profile.user_id]) {
+            nameMap[profile.user_id] = profile.name
           }
+        })
 
-          if (users && users.length > 0) {
-            const nameMap = {}
-            users.forEach(u => {
-              nameMap[u.id] = u.name || `User ${u.id.slice(0, 8)}`
-            })
-            console.log('Name map:', nameMap)
-            setUserNames(nameMap)
+        // For student profiles, try to find their user name or use email
+        for (const profile of studentProfiles || []) {
+          if (!nameMap[profile.user_id]) {
+            // Try to get the user name from the users list
+            const userRecord = users?.find(u => u.id === profile.user_id)
+            if (userRecord?.name) {
+              nameMap[profile.user_id] = userRecord.name
+            }
           }
         }
+
+        // Fallback: use a shortened ID for any missing names
+        userIds.forEach(id => {
+          if (!nameMap[id]) {
+            nameMap[id] = `User ${id.slice(0, 6)}`
+          }
+        })
+
+        console.log('Final name map:', nameMap)
+        setUserNames(nameMap)
       } catch (err) {
         console.error('Error loading messages:', err)
         setError('Failed to load messages')
