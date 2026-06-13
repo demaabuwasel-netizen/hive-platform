@@ -62,6 +62,8 @@ export async function fetchStudentApplications(studentId) {
     .order('submitted_at', { ascending: false })
   if (error) throw new Error(error.message)
 
+  console.log('[fetchStudentApplications] Raw data:', JSON.stringify((data ?? [])[0], null, 2))
+
   // Fetch NGO names separately
   const ngoIds = [...new Set((data ?? []).map(a => a.ngo_id).filter(Boolean))]
   let ngoMap = {}
@@ -79,7 +81,7 @@ export async function fetchStudentApplications(studentId) {
     if (!app.ngoName && row.ngo_id) {
       app.ngoName = ngoMap[row.ngo_id] || 'NGO'
     }
-    console.log('[fetchStudentApplications] Application:', app.ngoName, '→', app.role || 'NO ROLE')
+    console.log('[fetchStudentApplications] Application:', app.ngoName, '→', app.role || 'NO ROLE', '(OpptyId:', row.opportunity_id, ')')
     return app
   })
 }
