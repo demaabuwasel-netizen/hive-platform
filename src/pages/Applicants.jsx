@@ -9,6 +9,7 @@ import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
 import { fetchNgoApplicants, updateApplicationStatus } from '../services/applications'
+import { parseSkillString } from '../services/opportunities'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,10 @@ function toDbStatus(uiStatus) {
   return uiStatus
 }
 
-function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
+function skillDisplay(s) {
+  const parsed = parseSkillString(s)
+  return parsed.level ? `${parsed.name} [${parsed.level}]` : parsed.name
+}
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -384,11 +388,11 @@ export default function Applicants() {
                     </p>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {a.skills.slice(0,3).map(s => {
-                        const name = skillName(s)
+                        const display = skillDisplay(s)
                         return (
-                          <span key={name} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
+                          <span key={display} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
                             style={{ background:'#F8F9FB', color:'#4B6382', borderColor:'rgba(13,24,61,0.08)' }}>
-                            {name}
+                            {display}
                           </span>
                         )
                       })}
