@@ -1,23 +1,34 @@
 import { supabase } from './supabase'
 
-function normalizeSkills(raw) {
-  return (raw ?? []).map(s => {
-    if (typeof s === 'string') {
-      // Try to parse as JSON first
+export function parseSkillString(s) {
+  if (typeof s !== 'string') {
+    return { name: s.name || '', level: s.level || '' }
+  }
+
+  try {
+    let parsed = JSON.parse(s)
+
+    // Handle double-escaped JSON
+    if (typeof parsed.name === 'string' && parsed.name.startsWith('{')) {
       try {
-        const parsed = JSON.parse(s)
-        return {
-          name: parsed.name || s,
-          level: parsed.level || '',
-        }
+        parsed = JSON.parse(parsed.name)
       } catch (e) {
-        // Plain string skill
-        return { name: s, level: '' }
+        // Not double-escaped, keep original parse
       }
     }
-    // Already an object
-    return { name: s.name || '', level: s.level || '' }
-  })
+
+    return {
+      name: parsed.name || '',
+      level: parsed.level || '',
+    }
+  } catch (e) {
+    // Plain string skill
+    return { name: s, level: '' }
+  }
+}
+
+function normalizeSkills(raw) {
+  return (raw ?? []).map(parseSkillString)
 }
 
 function dbToOpp(row) {
