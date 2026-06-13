@@ -302,27 +302,42 @@ export default function StudentProfile() {
   }
 
   const handleSaveEducation = async () => {
+    console.log('[handleSaveEducation] Starting save...')
     let updatedEducations
     if (editingEduIndex !== null) {
       updatedEducations = [...educations]
       updatedEducations[editingEduIndex] = newEducation
       setEditingEduIndex(null)
+      console.log('[handleSaveEducation] Updating education at index:', editingEduIndex, 'New data:', newEducation)
     } else if (newEducation.field || newEducation.university) {
       updatedEducations = [...educations, newEducation]
+      console.log('[handleSaveEducation] Adding new education:', newEducation)
     } else {
+      console.log('[handleSaveEducation] No data to save, closing edit mode')
       setEditingEducation(false)
       return
     }
+
+    console.log('[handleSaveEducation] Updated educations array:', updatedEducations)
     setEducations(updatedEducations)
-    setNewEducation({ field: '', university: '', degreeType: '', description: '' })
-    await updateProfile({
-      ...profile,
-      educations: updatedEducations,
-      field: updatedEducations[0]?.field || profile?.field,
-      university: updatedEducations[0]?.university || profile?.university,
-      graduation_year: updatedEducations[0]?.degreeType || profile?.graduation_year
-    })
-    setEditingEducation(false)
+    setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
+
+    try {
+      console.log('[handleSaveEducation] Calling updateProfile...')
+      await updateProfile({
+        ...profile,
+        educations: updatedEducations,
+        field: updatedEducations[0]?.field || profile?.field,
+        university: updatedEducations[0]?.university || profile?.university,
+        graduation_year: updatedEducations[0]?.degreeType || profile?.graduation_year
+      })
+      console.log('[handleSaveEducation] Education saved successfully!')
+      setEditingEducation(false)
+    } catch (err) {
+      console.error('[handleSaveEducation] Error saving education:', err.message)
+      alert('Error saving education: ' + (err.message || 'Unknown error'))
+      setEducations(educations)
+    }
   }
 
   const handleDeleteEducation = async (index) => {
