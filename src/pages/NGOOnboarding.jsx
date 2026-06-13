@@ -89,6 +89,8 @@ export default function NGOOnboarding() {
   const [showAISummary, setShowAISummary] = useState(false)
   const [errors, setErrors]         = useState({})
   const [done, setDone]             = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [saveStatus, setSaveStatus] = useState('idle')
   const [welcomeBack, setWelcomeBack] = useState(false)
 
@@ -218,6 +220,32 @@ export default function NGOOnboarding() {
       setDirection(-1)
       setStep(s => s - 1)
       setErrors({})
+    }
+  }
+
+  // Finish early — validates only the required field (org name),
+  // saves all current data as-is, marks onboarding complete, goes to dashboard.
+  async function finishEarly() {
+    if (!data.name?.trim()) {
+      setErrors({ name: 'Organization name is required to finish setup.' })
+      if (step !== 0) { setDirection(-1); setStep(0); setShowAISummary(false) }
+      return
+    }
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const profileData = {
+        ...data,
+        summary: generateSummary(data),
+        links: { website: data.website, instagram: data.instagram, twitter: data.twitter },
+        tags: [],
+      }
+      await completeOnboarding(profileData)
+      try { localStorage.removeItem(LS_KEY_NGO(user.id)) } catch {}
+      navigate('/dashboard/ngo')
+    } catch (err) {
+      setSubmitError(err.message || 'Something went wrong. Please try again.')
+      setSubmitting(false)
     }
   }
 
@@ -419,16 +447,38 @@ export default function NGOOnboarding() {
           )}
         </AnimatePresence>
 
+        {submitError && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+            className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2"
+          >
+            {submitError}
+          </motion.p>
+        )}
+
         <div className="flex justify-between items-center">
           <button
             onClick={back}
-            disabled={step === 0 && !showAISummary}
+            disabled={(step === 0 && !showAISummary) || submitting}
             className="btn-secondary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
-          <button onClick={next} className="btn-navy text-sm py-2.5 px-6">
-            {step === STEPS.length - 1 && !showAISummary
+          <button
+            onClick={next}
+            disabled={submitting}
+            className="btn-navy text-sm py-2.5 px-6 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                  className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full"
+                />
+                Saving…
+              </span>
+            ) : step === STEPS.length - 1 && !showAISummary
               ? 'Create profile →'
               : showAISummary
               ? 'Looks good, continue →'
@@ -441,6 +491,23 @@ export default function NGOOnboarding() {
             ? 'Review the summary above before continuing'
             : `Step ${step + 1} of ${STEPS.length} — you can always update this later`}
         </p>
+
+        {/* Finish early — hidden on the last step and the AI summary screen */}
+        {!showAISummary && step < STEPS.length - 1 && (
+          <div className="mt-5 flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={finishEarly}
+              disabled={submitting}
+              className="text-sm text-[#4B6382] hover:text-[#0D183D] font-medium hover:underline underline-offset-2 transition-colors disabled:opacity-40"
+            >
+              Finish setup now
+            </button>
+            <p className="text-[11px] text-[#4B6382]/60">
+              You can add goals, links, and extra details later.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

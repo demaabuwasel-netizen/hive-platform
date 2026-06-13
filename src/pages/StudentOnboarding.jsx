@@ -446,6 +446,45 @@ export default function StudentOnboarding() {
     }
   }
 
+  // Finish early — validates only the globally required field (field of study),
+  // saves all current data as-is, marks onboarding complete, goes to dashboard.
+  async function finishEarly() {
+    if (!data.field?.trim()) {
+      setErrors({ field: 'Your field of study is required to finish setup.' })
+      if (step !== 0) { setDirection(-1); setStep(0) }
+      return
+    }
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const skills    = Array.isArray(data.skills)    ? data.skills    : []
+      const courses   = Array.isArray(data.courses)   ? data.courses   : []
+      const interests = Array.isArray(data.interests) ? data.interests : []
+      const profilePayload = {
+        ...data,
+        skills,
+        courses,
+        interests,
+        phone:     data.phone?.trim()     || null,
+        linkedin:  data.linkedin?.trim()  || null,
+        github:    data.github?.trim()    || null,
+        portfolio: data.portfolio?.trim() || null,
+        links: {
+          linkedin:  data.linkedin?.trim()  || null,
+          github:    data.github?.trim()    || null,
+          portfolio: data.portfolio?.trim() || null,
+        },
+        summary: `${data.field} student passionate about ${interests.join(', ') || 'social impact'}. Experienced in ${skills.map(s => s.name).filter(Boolean).join(', ') || 'various areas'}.`.trim(),
+      }
+      await completeOnboarding(profilePayload)
+      try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
+      navigate('/dashboard/student')
+    } catch (err) {
+      setSubmitError(err.message || 'Something went wrong. Please try again.')
+      setSubmitting(false)
+    }
+  }
+
   if (done) {
     return (
       <div className="min-h-screen bg-[#FFF7E6] flex items-center justify-center px-6">
@@ -674,6 +713,23 @@ export default function StudentOnboarding() {
         <p className="text-center text-xs text-navy-400 mt-4">
           Step {step + 1} of {STEPS.length} — you can always edit your profile later
         </p>
+
+        {/* Finish early — hidden on the last step where Continue already completes */}
+        {step < STEPS.length - 1 && (
+          <div className="mt-5 flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={finishEarly}
+              disabled={submitting}
+              className="text-sm text-[#4B6382] hover:text-[#0D183D] font-medium hover:underline underline-offset-2 transition-colors disabled:opacity-40"
+            >
+              Finish setup now
+            </button>
+            <p className="text-[11px] text-[#4B6382]/60">
+              You can add goals, links, and extra details later.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
