@@ -79,6 +79,7 @@ export async function fetchStudentApplications(studentId) {
     if (!app.ngoName && row.ngo_id) {
       app.ngoName = ngoMap[row.ngo_id] || 'NGO'
     }
+    console.log('[fetchStudentApplications] Application:', app.ngoName, '→', app.role || 'NO ROLE')
     return app
   })
 }
