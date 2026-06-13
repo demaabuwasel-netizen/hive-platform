@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../services/supabase'
-import { ensureUserRow, getUserRow, updateUserRow, logOut as authLogOut } from '../services/auth'
+import { ensureUserRow, getUserRow, updateUserRow, getProfileRow, upsertProfileRow, logOut as authLogOut } from '../services/auth'
 import { loadStudentProfile, loadNgoProfile, saveProfile } from '../services/storage'
 import i18n from '../i18n/index'
 
@@ -78,31 +78,47 @@ export function AppProvider({ children }) {
       log('STEP 2 — AFTER  getUserRow    ',
         userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
 
-      if (!userRow) {
-        warn('STEP 2 — users row missing → applying minimal state')
+      // ── Step 2.5: getProfileRow — authoritative role + onboarding_completed ─
+      // Reads from the profiles table, which takes precedence over the users table.
+      // Best-effort: if the table is missing or the query fails, fall back to userRow.
+      log('STEP 2.5 — BEFORE getProfileRow [withStep cap=2000ms]')
+      let profileRow = null
+      try {
+        profileRow = await withStep(getProfileRow(authUser.id), 'getProfileRow', 2000)
+        log('STEP 2.5 — AFTER  getProfileRow',
+          profileRow
+            ? `role=${profileRow.role} onboarding=${profileRow.onboarding_completed}`
+            : 'null — falling back to users table')
+      } catch (e) {
+        warn('STEP 2.5 — getProfileRow skip:', e.message)
+      }
+
+      if (!userRow && !profileRow) {
+        warn('STEP 2 — no users row AND no profiles row → applying minimal state')
         setUserState(minimal); userWasSet = true; return
       }
 
+      // profiles.role and profiles.onboarding_completed take priority when present
       const merged = {
         id:                 authUser.id,
         email:              authUser.email,
-        name:               userRow.name,
-        avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
-        role:               userRow.role,
-        onboardingComplete: userRow.onboarding_complete,
-        onboardingStep:     userRow.onboarding_step ?? 0,
-        provider:           userRow.provider,
-        preferredLanguage:  userRow.preferred_language ?? 'en',
-        preferredTheme:     userRow.preferred_theme    ?? 'system',
+        name:               userRow?.name ?? minimal.name,
+        avatar:             userRow?.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
+        role:               profileRow?.role              ?? userRow?.role              ?? null,
+        onboardingComplete: profileRow?.onboarding_completed ?? userRow?.onboarding_complete ?? false,
+        onboardingStep:     userRow?.onboarding_step ?? 0,
+        provider:           userRow?.provider ?? minimal.provider,
+        preferredLanguage:  userRow?.preferred_language ?? 'en',
+        preferredTheme:     userRow?.preferred_theme    ?? 'system',
       }
       setUserState(merged); userWasSet = true
-      log('STEP 2 — user state SET | role:', merged.role,
+      log('STEP 2.5 — user state SET | role:', merged.role,
         '| onboardingComplete:', merged.onboardingComplete,
-        '| provider:', merged.provider)
+        '| source:', profileRow?.role ? 'profiles' : 'users')
 
       // Apply stored language / theme preferences
-      const pLang  = userRow.preferred_language
-      const pTheme = userRow.preferred_theme
+      const pLang  = userRow?.preferred_language
+      const pTheme = userRow?.preferred_theme
       if (pLang && pLang !== i18n.language) {
         i18n.changeLanguage(pLang)
         localStorage.setItem('hive_lang', pLang)
@@ -119,12 +135,12 @@ export function AppProvider({ children }) {
       }
 
       // ── Step 3: profile — fire-and-forget (never blocks loading) ──────────
-      if (userRow.role === 'student') {
+      if (merged.role === 'student') {
         log('STEP 3 — BEFORE loadStudentProfile (background, cap=4000ms)')
         withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
           .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadStudentProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadStudentProfile ERROR:', e.message))
-      } else if (userRow.role === 'ngo') {
+      } else if (merged.role === 'ngo') {
         log('STEP 3 — BEFORE loadNgoProfile (background, cap=4000ms)')
         withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
           .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadNgoProfile', p ? 'loaded' : 'null') })
@@ -265,6 +281,8 @@ export function AppProvider({ children }) {
   async function updateRole(role) {
     if (!user) return
     await updateUserRow(user.id, { role })
+    // Write to profiles table so hydrateUser picks it up on next sign-in
+    upsertProfileRow(user.id, { role })
     setUserState(prev => prev ? { ...prev, role } : prev)
   }
 
@@ -302,6 +320,9 @@ export function AppProvider({ children }) {
     clearTimeout(abort2)
     if (userErr) throw new Error(`User update failed: ${userErr.message}`)
     console.log(`[onboarding ${elapsed()}] step 2 — done`)
+
+    // Write onboarding_completed to profiles table — best-effort, never blocks
+    upsertProfileRow(user.id, { onboarding_completed: true })
 
     // Update local state so route guards immediately see onboarding as complete.
     // Without this, user.onboardingComplete remains false until the next full

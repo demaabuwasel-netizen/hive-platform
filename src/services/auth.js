@@ -77,6 +77,45 @@ export async function updateUserRow(userId, updates) {
   if (error) throw new Error(error.message)
 }
 
+// ── profiles table helpers ────────────────────────────────────────────────────
+// Reads role + onboarding_completed from the profiles table.
+// Returns null if the table doesn't exist, the row isn't found, or any error.
+export async function getProfileRow(userId) {
+  const t = Date.now()
+  const ms = () => `+${Date.now() - t}ms`
+  console.log('[getProfileRow] SELECT — uid:', userId)
+  try {
+    const { data, error } = await withQueryTimeout(
+      supabase.from('profiles').select('role, onboarding_completed').eq('id', userId).maybeSingle(),
+      4000, 'getProfileRow SELECT'
+    )
+    if (error) {
+      console.warn(`[getProfileRow] ${ms()}:`, error.message)
+      return null
+    }
+    console.log(`[getProfileRow] done ${ms()} —`, data
+      ? `role=${data.role} onboarding=${data.onboarding_completed}`
+      : 'null')
+    return data
+  } catch (err) {
+    console.warn(`[getProfileRow] threw ${ms()}:`, err.message)
+    return null
+  }
+}
+
+// Upserts role and/or onboarding_completed into profiles table.
+// Best-effort: logs a warning on failure, never throws.
+export async function upsertProfileRow(userId, updates) {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: userId, ...updates }, { onConflict: 'id' })
+    if (error) console.warn('[upsertProfileRow]', error.message)
+  } catch (err) {
+    console.warn('[upsertProfileRow] error:', err.message)
+  }
+}
+
 // ── Password reset ────────────────────────────────────────────────────────────
 
 export async function requestPasswordReset(email) {
