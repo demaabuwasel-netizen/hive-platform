@@ -14,6 +14,20 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
+function formatMatchReason(reason) {
+  if (!reason) return ''
+  // If it's JSON, try to parse and extract a readable message
+  if (typeof reason === 'string' && reason.startsWith('{')) {
+    try {
+      const obj = JSON.parse(reason)
+      return `Matched: ${obj.name}${obj.level ? ` (${obj.level})` : ''}`
+    } catch (e) {
+      return reason
+    }
+  }
+  return reason
+}
+
 function MatchRing({ score }) {
   const r = 22, circ = 2 * Math.PI * r
   const color = score >= 90 ? '#10B981' : score >= 80 ? '#FFB703' : '#6366F1'
@@ -172,10 +186,10 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
                     <motion.div key={i}
                       initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }}
                       transition={{ delay: 0.05 + i*0.06 }}
-                      className="flex items-start gap-2.5 rounded-xl p-3 text-[11px] text-[#4B6382] leading-relaxed"
+                      className="flex items-start gap-2.5 rounded-lg p-3 text-[11px] text-[#4B6382] leading-relaxed"
                       style={{ background:'rgba(255,183,3,0.05)', border:'1px solid rgba(255,183,3,0.14)' }}>
                       <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color:'#FFB703' }}/>
-                      {r}
+                      <span>{formatMatchReason(r)}</span>
                     </motion.div>
                   ))}
                 </div>
