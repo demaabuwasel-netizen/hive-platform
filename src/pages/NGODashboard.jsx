@@ -94,17 +94,43 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
   })
 
+  function getOppState(opp) {
+    if (!opp) return 'empty'
+    if (opp.status === 'active' && applicants.some(a => a.opportunityId === opp.id && (a.status === 'accepted' || a.status === 'interview'))) {
+      return 'working'
+    }
+    if (opp.status === 'draft' || opp.status === 'deploying') {
+      return 'deploying'
+    }
+    if (applicants.some(a => a.opportunityId === opp.id && a.status === 'under_review')) {
+      return 'new-applicants'
+    }
+    return 'active'
+  }
+
   function hexFill(h) {
     if (h.type === 'center') return '#1a1f3a'
     if (h.type === 'slot-opp') return '#EEF2FF'
-    if (h.type === 'opp') return '#FFB84D'
+    if (h.type === 'opp') {
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#D1FAE5'
+      if (state === 'deploying') return '#DBEAFE'
+      if (state === 'new-applicants') return '#FEF3C7'
+      return '#FFB84D'
+    }
     return '#F8FAFC'
   }
 
   function hexStroke(h) {
     if (h.type === 'center') return 'none'
     if (h.type === 'slot-opp') return '#C7D2FE'
-    if (h.type === 'opp') return '#E8A038'
+    if (h.type === 'opp') {
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#6EE7B7'
+      if (state === 'deploying') return '#93C5FD'
+      if (state === 'new-applicants') return '#FCD34D'
+      return '#E8A038'
+    }
     return '#E2E8F0'
   }
 
@@ -117,7 +143,13 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
 
   function hexLabelColor(h) {
     if (h.type === 'slot-opp') return '#818CF8'
-    if (h.type === 'opp') return '#1a1f3a'
+    if (h.type === 'opp') {
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#065F46'
+      if (state === 'deploying') return '#1E40AF'
+      if (state === 'new-applicants') return '#92400E'
+      return '#1a1f3a'
+    }
     return '#94A3B8'
   }
 
@@ -188,7 +220,10 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
         <div style={{ flex: 0.8, minWidth: 200 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
+              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Someone working' },
+              { color: '#FEF3C7', stroke: '#FCD34D', label: 'New applicants' },
               { color: '#FFB84D', stroke: '#E8A038', label: 'Active role' },
+              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Deploying' },
               { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
