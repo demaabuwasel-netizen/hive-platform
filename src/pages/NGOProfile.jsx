@@ -66,22 +66,19 @@ export default function NGOProfile() {
       <div className="max-w-4xl mx-auto px-6 py-8">
 
         {/* ═══════════════════════════════════════════════════════════
-            HERO SECTION - Premium Profile Header
+            HERO SECTION - Premium Profile Header with Dark Gradient
         ═══════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
           className="mb-12">
-          <div className="relative bg-gradient-to-br from-white to-[#FAFBFC] rounded-3xl border border-[rgba(13,24,61,0.08)] p-8 overflow-hidden">
+          <div className="relative bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl p-8 overflow-hidden">
 
-            <div className="absolute inset-0 opacity-[0.01] pointer-events-none"
-              style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat' }}/>
-
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.03] blur-3xl pointer-events-none"
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.08] blur-3xl pointer-events-none"
               style={{ background: '#FFB703' }}/>
 
             <div className="relative flex items-start gap-8">
               {/* Logo */}
               <div className="flex-shrink-0">
-                <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-[#FFB703]/10 to-[#FFB703]/5 flex items-center justify-center border border-[rgba(255,183,3,0.15)]">
+                <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center border border-[rgba(255,255,255,0.2)]">
                   {profile?.imageUrl ? (
                     <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
@@ -116,14 +113,14 @@ export default function NGOProfile() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
-                    <h1 className="text-4xl font-bold text-[#0D183D] mb-2">{displayName}</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2">{displayName}</h1>
                     {profile?.summary && (
-                      <p className="text-[15px] text-[#4B6382] font-medium">{profile.summary}</p>
+                      <p className="text-[15px] text-white/80 font-medium">{profile.summary}</p>
                     )}
                   </div>
                   <button
                     onClick={() => navigate('/profile/ngo/edit')}
-                    className="flex-shrink-0 px-4 py-2 rounded-xl bg-[#FFB703] text-white text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm">
+                    className="flex-shrink-0 px-4 py-2 rounded-xl bg-[#FFB703] text-[#0D183D] text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm">
                     <Edit2 size={14} />
                     Edit
                   </button>
@@ -132,19 +129,19 @@ export default function NGOProfile() {
                 {/* Meta info: location, size */}
                 <div className="flex flex-wrap items-center gap-6 mt-4 text-[14px]">
                   {profile?.location && (
-                    <div className="flex items-center gap-2 text-[#4B6382]">
+                    <div className="flex items-center gap-2 text-white/80">
                       <MapPin size={16} className="text-[#FFB703]" />
                       {profile.location}
                     </div>
                   )}
                   {profile?.orgSize && (
-                    <div className="flex items-center gap-2 text-[#4B6382]">
+                    <div className="flex items-center gap-2 text-white/80">
                       <Building2 size={16} className="text-[#FFB703]" />
                       {profile.orgSize} employees
                     </div>
                   )}
                   {user?.email && (
-                    <div className="flex items-center gap-2 text-[#4B6382]">
+                    <div className="flex items-center gap-2 text-white/80">
                       <Mail size={16} className="text-[#FFB703]" />
                       {user.email}
                     </div>
