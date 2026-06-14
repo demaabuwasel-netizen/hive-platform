@@ -222,14 +222,14 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} textAnchor="middle" dominantBaseline="middle"
+                  <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y} textAnchor="middle" dominantBaseline="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '7'}
-                    fontWeight={h.type === 'slot-opp' ? '300' : '700'}
+                    fontSize={h.type === 'slot-opp' ? '20' : '7'}
+                    fontWeight={h.type === 'slot-opp' ? '500' : '700'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
                     style={{ pointerEvents: 'none' }}>
                     {h.type === 'slot-opp' ? (
-                      <tspan x={h.x} dy="0">{hexLabel(h)}</tspan>
+                      hexLabel(h)
                     ) : (
                       wrapText(hexLabel(h), 11).map((line, idx) => {
                         const lines = wrapText(hexLabel(h), 11)
