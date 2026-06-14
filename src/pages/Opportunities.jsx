@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
   MessageCircle, Settings, Briefcase, Users, BarChart2, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight,
+  X, CheckCircle2, Clock, ChevronRight, Check, TrendingUp,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -15,6 +15,208 @@ import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/s
 import { computeMatch } from '../services/matching'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
+
+// ─── Honeycomb watermark ──────────────────────────────────────────────────────
+
+function HexBg({ opacity = 0.13 }) {
+  return (
+    <svg aria-hidden="true" className="absolute inset-0 w-full h-full"
+      preserveAspectRatio="xMidYMid slice" style={{ opacity }}>
+      <defs>
+        <pattern id="opp-hex" x="0" y="0" width="28" height="49" patternUnits="userSpaceOnUse">
+          <path d="M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z"
+            fill="#FFB703"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#opp-hex)"/>
+    </svg>
+  )
+}
+
+// ─── NGO empty-state onboarding ───────────────────────────────────────────────
+
+function NGOOnboardingEmptyState({ navigate }) {
+  const CHECKLIST = [
+    { done: true,  current: false, label: 'Organization profile completed' },
+    { done: false, current: true,  label: 'Create first opportunity'       },
+    { done: false, current: false, label: 'Receive first application'      },
+    { done: false, current: false, label: 'Schedule first interview'       },
+    { done: false, current: false, label: 'Welcome your first student'     },
+  ]
+
+  const STATS = [
+    { value: '4×',     label: 'More profile visits',  Icon: TrendingUp },
+    { value: 'More',   label: 'Student matches',      Icon: Users      },
+    { value: 'Faster', label: 'Student onboarding',   Icon: Zap        },
+  ]
+
+  return (
+    <div className="grid lg:grid-cols-[1fr_268px] gap-5">
+
+      {/* ── Main onboarding card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="rounded-2xl overflow-hidden border border-[rgba(13,24,61,0.08)]"
+        style={{ boxShadow: '0 2px 16px rgba(13,24,61,0.07)' }}>
+
+        {/* Dark header with honeycomb pattern */}
+        <div className="relative overflow-hidden px-7 py-7" style={{ background: '#0D183D', minHeight: 152 }}>
+          <HexBg />
+          {/* Decorative hex cluster */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" style={{ opacity: 0.18 }}>
+            <svg width="96" height="108" viewBox="0 0 96 108" fill="none">
+              <polygon points="48,6 84,27 84,69 48,90 12,69 12,27" stroke="#FFB703" strokeWidth="1.5"/>
+              <polygon points="48,20 74,35 74,65 48,80 22,65 22,35" fill="#FFB703" fillOpacity="0.25" stroke="#FFB703" strokeWidth="1"/>
+              <polygon points="48,33 63,42 63,60 48,69 33,60 33,42" fill="#FFB703" fillOpacity="0.5"/>
+            </svg>
+          </div>
+          <div className="relative z-10 max-w-md">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest mb-3" style={{ color: '#FFB703' }}>
+              ✦ Your hive is ready
+            </p>
+            <h2 className="text-[1.22rem] font-extrabold text-white leading-snug mb-2">
+              Your organization is ready to create its first opportunity
+            </h2>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Posting an opportunity is the first step to connecting with talented students who can support your mission.
+            </p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="bg-white px-7 py-6">
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-4">
+            Before receiving applicants:
+          </p>
+
+          <div className="flex flex-col gap-2 mb-6">
+            {CHECKLIST.map((step, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.12 + i * 0.07 }}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
+                style={step.current
+                  ? { border: '2px solid #FFB703', background: 'rgba(255,183,3,0.05)' }
+                  : { border: '1px solid rgba(13,24,61,0.08)', background: step.done ? 'transparent' : '#FAFAFA' }}>
+
+                {/* Indicator */}
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                  step.done
+                    ? 'bg-emerald-500'
+                    : step.current
+                    ? 'border-2 border-[#FFB703]'
+                    : 'border border-[rgba(13,24,61,0.18)]'
+                }`}>
+                  {step.done    && <Check size={10} strokeWidth={3} className="text-white"/>}
+                  {step.current && <div className="w-2 h-2 rounded-full" style={{ background: '#FFB703' }}/>}
+                </div>
+
+                <span className={`text-[12px] font-semibold leading-snug flex-1 ${
+                  step.done ? 'text-[#4B6382] line-through' : step.current ? 'text-[#0D183D]' : 'text-[#4B6382]'
+                }`}>
+                  {step.label}
+                </span>
+
+                {step.current && (
+                  <span className="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full text-[#0D183D]"
+                    style={{ background: '#FFB703' }}>
+                    Next
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div className="flex flex-col gap-2.5">
+            <button onClick={() => navigate('/opportunities/new')}
+              className="w-full py-3 rounded-xl text-[13px] font-semibold text-[#0D183D] transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: '#FFB703', boxShadow: '0 4px 14px rgba(255,183,3,0.28)' }}>
+              Post your first opportunity →
+            </button>
+            <button onClick={() => navigate('/how-it-works')}
+              className="w-full py-2.5 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors"
+              style={{ borderColor: 'rgba(13,24,61,0.12)' }}>
+              Learn how Hive works
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── Stats sidebar ── */}
+      <aside className="flex flex-col gap-4">
+
+        {/* Impact stats — dark card */}
+        <motion.div
+          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.35 }}
+          className="rounded-2xl p-5 flex flex-col gap-4"
+          style={{ background: '#0D183D' }}>
+
+          <div>
+            <p className="text-[10px] font-extrabold text-[#FFB703] uppercase tracking-widest mb-1">
+              Hive Impact
+            </p>
+            <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              Organizations with opportunities receive:
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {STATS.map((stat, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.28 + i * 0.08 }}
+                className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(255,183,3,0.15)' }}>
+                  <stat.Icon size={15} style={{ color: '#FFB703' }}/>
+                </div>
+                <div>
+                  <p className="text-[17px] font-extrabold text-white leading-none">{stat.value}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{stat.label}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="rounded-xl p-3.5"
+            style={{ background: 'rgba(255,183,3,0.08)', border: '1px solid rgba(255,183,3,0.15)' }}>
+            <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              "Our first opportunity brought in 12 applications within a week."
+            </p>
+            <p className="text-[10px] font-semibold mt-1.5" style={{ color: '#FFB703' }}>
+              — Hive NGO partner
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Quick tips — light card */}
+        <motion.div
+          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.32, duration: 0.35 }}
+          className="bg-white rounded-2xl p-5 border flex flex-col gap-3"
+          style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+
+          <p className="text-[10px] font-extrabold text-[#0D183D] uppercase tracking-widest">
+            Writing tips
+          </p>
+          {[
+            'Be specific about the skills you need',
+            'Clearly state weekly time commitment',
+            'Describe the impact students will create',
+          ].map((tip, i) => (
+            <div key={i} className="flex items-start gap-2.5 text-[11px] text-[#4B6382] leading-snug">
+              <span className="mt-[4px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#FFB703' }}/>
+              {tip}
+            </div>
+          ))}
+        </motion.div>
+      </aside>
+    </div>
+  )
+}
 
 function generateAppMessage(user, ngo) {
   const name = user?.name || 'I'
@@ -310,19 +512,7 @@ export default function Opportunities() {
                 style={{ background: '#0D183D' }}>Retry</button>
             </div>
           ) : ngoOpps.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: 'rgba(255,183,3,0.1)' }}>
-                <Briefcase size={24} style={{ color: '#FFB703' }}/>
-              </div>
-              <p className="text-[15px] font-extrabold text-[#0D183D] mb-1">No opportunities yet</p>
-              <p className="text-[13px] text-[#4B6382] mb-5">Post your first opportunity to start receiving applications from students.</p>
-              <button onClick={() => navigate('/opportunities/new')}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white mx-auto transition-all hover:opacity-90"
-                style={{ background:'#FFB703', boxShadow:'0 4px 14px rgba(255,183,3,0.28)' }}>
-                <Plus size={14}/> Post your first opportunity
-              </button>
-            </div>
+            <NGOOnboardingEmptyState navigate={navigate} />
           ) : (
             <div className="flex flex-col gap-3">
               {ngoOpps.map((opp, i) => (

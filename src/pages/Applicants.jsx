@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Star, Calendar, X, CheckCircle2, XCircle,
   MapPin, Clock, Globe, Sparkles, MessageCircle, Users, AlertCircle,
+  Check,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -47,6 +48,239 @@ const INTERVIEW_TYPES = [
   { id: 'phone',  emoji: '📞', label: 'Phone'    },
   { id: 'onsite', emoji: '🤝', label: 'In-person'},
 ]
+
+// ─── Honeycomb watermark ──────────────────────────────────────────────────────
+
+function HexBg({ opacity = 0.13 }) {
+  return (
+    <svg aria-hidden="true" className="absolute inset-0 w-full h-full"
+      preserveAspectRatio="xMidYMid slice" style={{ opacity }}>
+      <defs>
+        <pattern id="app-hex" x="0" y="0" width="28" height="49" patternUnits="userSpaceOnUse">
+          <path d="M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.49L26 15v14.98l-13.02 7.5L0 29.99V15z"
+            fill="#FFB703"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#app-hex)"/>
+    </svg>
+  )
+}
+
+// ─── Applicants empty-state onboarding ───────────────────────────────────────
+
+function ApplicantEmptyState({ navigate }) {
+  const CHECKLIST = [
+    { done: true,  current: false, label: 'Organization profile completed' },
+    { done: false, current: true,  label: 'First opportunity published'    },
+    { done: false, current: false, label: 'First application received'     },
+    { done: false, current: false, label: 'First interview scheduled'      },
+    { done: false, current: false, label: 'First volunteer accepted'       },
+  ]
+
+  const WHY_ITEMS = [
+    { Icon: Star,         text: 'Review student profiles in detail'  },
+    { Icon: Sparkles,     text: 'See AI match explanations'          },
+    { Icon: Calendar,     text: 'Schedule interviews in one click'   },
+    { Icon: CheckCircle2, text: 'Track application progress'         },
+  ]
+
+  const PIPELINE_STEPS = [
+    'Post opportunity',
+    'Receive applications',
+    'Review candidates',
+    'Schedule interviews',
+    'Welcome volunteers',
+  ]
+
+  return (
+    <div className="grid lg:grid-cols-[1fr_268px] gap-5">
+
+      {/* ── Main onboarding card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="rounded-2xl overflow-hidden border border-[rgba(13,24,61,0.08)]"
+        style={{ boxShadow: '0 2px 16px rgba(13,24,61,0.07)' }}>
+
+        {/* Dark header with honeycomb */}
+        <div className="relative overflow-hidden px-7 py-7" style={{ background: '#0D183D', minHeight: 148 }}>
+          <HexBg />
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" style={{ opacity: 0.18 }}>
+            <svg width="96" height="108" viewBox="0 0 96 108" fill="none">
+              <polygon points="48,6 84,27 84,69 48,90 12,69 12,27" stroke="#FFB703" strokeWidth="1.5"/>
+              <polygon points="48,20 74,35 74,65 48,80 22,65 22,35" fill="#FFB703" fillOpacity="0.25" stroke="#FFB703" strokeWidth="1"/>
+              <polygon points="48,33 63,42 63,60 48,69 33,60 33,42" fill="#FFB703" fillOpacity="0.5"/>
+            </svg>
+          </div>
+          <div className="relative z-10 max-w-md">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest mb-2.5" style={{ color: '#FFB703' }}>
+              ✦ Pipeline ready
+            </p>
+            <h2 className="text-[1.22rem] font-extrabold text-white leading-snug mb-2">
+              Your applicant pipeline is ready
+            </h2>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Students who apply to your opportunities will appear here automatically.
+            </p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="bg-white px-7 py-6">
+
+          {/* Visual hiring flow */}
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-3">
+            Hiring flow:
+          </p>
+          <div className="flex items-start gap-0 mb-6 overflow-x-auto pb-1">
+            {PIPELINE_STEPS.map((step, i, arr) => (
+              <div key={i} className="flex items-center shrink-0">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center border-2"
+                    style={{ borderColor: 'rgba(13,24,61,0.14)', background: '#F8F9FB' }}>
+                    <span className="text-[9px] font-extrabold text-[#4B6382]">{i + 1}</span>
+                  </div>
+                  <span className="text-[9px] text-[#4B6382] text-center leading-tight"
+                    style={{ maxWidth: 56 }}>
+                    {step}
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="w-7 h-px mb-4 shrink-0" style={{ background: 'rgba(13,24,61,0.13)' }}/>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="h-px mb-5" style={{ background: 'rgba(13,24,61,0.07)' }}/>
+
+          {/* Checklist */}
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-3">
+            Before receiving applicants:
+          </p>
+          <div className="flex flex-col gap-2 mb-6">
+            {CHECKLIST.map((step, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.12 + i * 0.07 }}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
+                style={step.current
+                  ? { border: '2px solid #FFB703', background: 'rgba(255,183,3,0.05)' }
+                  : { border: '1px solid rgba(13,24,61,0.08)', background: step.done ? 'transparent' : '#FAFAFA' }}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                  step.done ? 'bg-emerald-500' : step.current ? 'border-2 border-[#FFB703]' : 'border border-[rgba(13,24,61,0.18)]'
+                }`}>
+                  {step.done    && <Check size={10} strokeWidth={3} className="text-white"/>}
+                  {step.current && <div className="w-2 h-2 rounded-full" style={{ background: '#FFB703' }}/>}
+                </div>
+                <span className={`text-[12px] font-semibold leading-snug flex-1 ${
+                  step.done ? 'text-[#4B6382] line-through' : step.current ? 'text-[#0D183D]' : 'text-[#4B6382]'
+                }`}>
+                  {step.label}
+                </span>
+                {step.current && (
+                  <span className="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full text-[#0D183D]"
+                    style={{ background: '#FFB703' }}>
+                    Next
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div className="flex flex-col gap-2.5">
+            <button onClick={() => navigate('/opportunities/new')}
+              className="w-full py-3 rounded-xl text-[13px] font-semibold text-[#0D183D] transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: '#FFB703', boxShadow: '0 4px 14px rgba(255,183,3,0.28)' }}>
+              Post an opportunity →
+            </button>
+            <button onClick={() => navigate('/how-it-works')}
+              className="w-full py-2.5 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors"
+              style={{ borderColor: 'rgba(13,24,61,0.12)' }}>
+              Learn how applicant management works
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── Right insight panel ── */}
+      <aside className="flex flex-col gap-4">
+
+        {/* Why applicants matter */}
+        <motion.div
+          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.35 }}
+          className="rounded-2xl p-5 flex flex-col gap-4"
+          style={{ background: '#0D183D' }}>
+
+          <p className="text-[10px] font-extrabold text-[#FFB703] uppercase tracking-widest">
+            Why applicants matter
+          </p>
+
+          <div className="flex flex-col gap-3">
+            {WHY_ITEMS.map((item, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.28 + i * 0.08 }}
+                className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(255,183,3,0.15)' }}>
+                  <item.Icon size={13} style={{ color: '#FFB703' }}/>
+                </div>
+                <span className="text-[11px] leading-snug"
+                  style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  {item.text}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Pipeline setup progress */}
+        <motion.div
+          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.32, duration: 0.35 }}
+          className="bg-white rounded-2xl p-5 border flex flex-col gap-3"
+          style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-extrabold text-[#0D183D] uppercase tracking-widest">
+              Pipeline Setup
+            </p>
+            <span className="text-[11px] font-extrabold" style={{ color: '#FFB703' }}>20%</span>
+          </div>
+
+          <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(13,24,61,0.07)' }}>
+            <motion.div className="h-1.5 rounded-full" style={{ background: '#FFB703' }}
+              initial={{ width: 0 }} animate={{ width: '20%' }}
+              transition={{ delay: 0.5, duration: 0.9, ease: 'easeOut' }}/>
+          </div>
+
+          <div className="flex flex-col gap-2 mt-1">
+            {[
+              { label: 'Organization profile', done: true  },
+              { label: 'First opportunity',    done: false },
+              { label: 'First applicant',      done: false },
+              { label: 'First interview',      done: false },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+                  item.done ? 'bg-emerald-500' : 'border border-[rgba(13,24,61,0.18)]'
+                }`}>
+                  {item.done && <Check size={8} strokeWidth={3} className="text-white"/>}
+                </div>
+                <span className={`text-[10px] leading-tight ${
+                  item.done ? 'text-[#4B6382] line-through' : 'text-[#4B6382]'
+                }`}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </aside>
+    </div>
+  )
+}
 
 // ─── Match ring ───────────────────────────────────────────────────────────────
 
@@ -261,17 +495,34 @@ export default function Applicants() {
         </div>
         {!loading && !error && (
           <div className="flex items-center gap-2 flex-wrap">
-            {[
-              { label:'New',         count: statusCounts.new,         color:'#6366F1' },
-              { label:'Shortlisted', count: statusCounts.shortlisted, color:'#D99E00' },
-              { label:'Interview',   count: statusCounts.interview,   color:'#10B981' },
-            ].map(({ label, count, color }) => (
-              <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border"
-                style={{ borderColor:`${color}30`, background:`${color}12`, color }}>
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }}/>
-                {count} {label}
+            {applicants.length === 0 ? (
+              <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl border"
+                style={{ borderColor: 'rgba(255,183,3,0.25)', background: 'rgba(255,183,3,0.06)' }}>
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-wide mb-1" style={{ color: '#B37D00' }}>
+                    Pipeline Setup
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-1.5 rounded-full" style={{ background: 'rgba(13,24,61,0.1)' }}>
+                      <div className="w-1/5 h-full rounded-full" style={{ background: '#FFB703' }}/>
+                    </div>
+                    <span className="text-[10px] font-bold" style={{ color: '#B37D00' }}>20%</span>
+                  </div>
+                </div>
               </div>
-            ))}
+            ) : (
+              [
+                { label:'New',         count: statusCounts.new,         color:'#6366F1' },
+                { label:'Shortlisted', count: statusCounts.shortlisted, color:'#D99E00' },
+                { label:'Interview',   count: statusCounts.interview,   color:'#10B981' },
+              ].map(({ label, count, color }) => (
+                <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border"
+                  style={{ borderColor:`${color}30`, background:`${color}12`, color }}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }}/>
+                  {count} {label}
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>
@@ -332,16 +583,7 @@ export default function Applicants() {
 
       {/* Empty state — no applicants at all */}
       {!loading && !error && applicants.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background:'rgba(255,183,3,0.08)' }}>
-            <Users size={22} style={{ color:'#FFB703' }}/>
-          </div>
-          <p className="text-[14px] font-bold text-[#0D183D] mb-1">No applicants yet</p>
-          <p className="text-[12px] text-[#4B6382] max-w-xs leading-relaxed">
-            Students will appear here once they apply to your opportunities.
-          </p>
-        </div>
+        <ApplicantEmptyState navigate={navigate} />
       )}
 
       {/* Main grid */}
