@@ -1084,10 +1084,16 @@ export default function NGODashboard() {
           .from('student_profiles')
           .select('user_id, field, skills, languages, availability, interests, experience, goals, users(id, name)')
 
-        console.log('Fetched students:', students?.length || 0, 'Error:', error)
+        console.log('🔍 Fetched students:', students?.length || 0)
+        console.log('📋 Opportunities:', opportunities.length)
+        console.log('❌ Error:', error)
 
-        if (error || !students) {
-          console.error('Student fetch failed:', error)
+        if (error) {
+          console.error('Student fetch error:', error)
+        }
+
+        if (!students || students.length === 0) {
+          console.warn('No students found in database')
           setSuggestedMatches([])
           return
         }
@@ -1107,18 +1113,23 @@ export default function NGODashboard() {
           let bestScore = 0
 
           students.forEach(student => {
-            const result = computeMatch(student, opp)
-            const score = result?.score ?? 0
-            if (score > bestScore) {
-              bestScore = score
-              bestMatch = student
+            try {
+              const result = computeMatch(student, opp)
+              const score = typeof result === 'object' && result !== null ? (result.score ?? 0) : 0
+
+              if (score > bestScore) {
+                bestScore = score
+                bestMatch = student
+              }
+            } catch (e) {
+              console.error(`Error matching student ${student.user_id} to opportunity ${opp.id}:`, e)
             }
           })
 
           const studentName = bestMatch?.users?.name || 'Unknown'
-          console.log(`Opportunity "${opp.title}": best match = ${studentName} (${bestScore}%)`)
+          console.log(`✓ "${opp.title}": ${studentName} (${Math.round(bestScore)}%)`)
 
-          if (bestMatch && bestScore > 0) {
+          if (bestMatch) {
             matches.push({
               opportunity: opp,
               student: { ...bestMatch, id: bestMatch.user_id, name: bestMatch.users?.name, match: Math.round(bestScore) },
@@ -1128,10 +1139,10 @@ export default function NGODashboard() {
           }
         })
 
-        console.log('Total matches found:', matches.length)
+        console.log('✅ Total matches:', matches.length)
         setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
       } catch (err) {
-        console.error('Error computing matches:', err)
+        console.error('💥 Error computing matches:', err)
         setSuggestedMatches([])
       }
     }
