@@ -13,6 +13,7 @@ import GradientAvatar from '../components/GradientAvatar'
 import { fetchActiveOpportunities, fetchNgoOpportunities } from '../services/opportunities'
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
+import img3 from '../assets/img3.png'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
@@ -215,6 +216,167 @@ function NGOOnboardingEmptyState({ navigate }) {
         </motion.div>
       </aside>
     </div>
+  )
+}
+
+// ─── Student profile completion ───────────────────────────────────────────────
+
+function computeStudentCompletion(profile) {
+  const items = [
+    { key: 'field',     done: !!profile?.field                              },
+    { key: 'skills',    done: (profile?.skills?.length    ?? 0) >= 3        },
+    { key: 'interests', done: (profile?.interests?.length ?? 0) >= 1        },
+    { key: 'bio',       done: !!profile?.bio                                },
+  ]
+  const done = items.filter(i => i.done).length
+  return { done, total: items.length, pct: Math.round((done / items.length) * 100) }
+}
+
+// ─── Student opportunities empty state ────────────────────────────────────────
+
+function StudentOpportunitiesEmptyState({ profile, navigate }) {
+  const { pct } = computeStudentCompletion(profile)
+
+  const HOW_STEPS = [
+    {
+      Icon: Check,
+      title: 'Complete your profile',
+      desc: 'Add your field, university, and experience so NGOs know who you are.',
+    },
+    {
+      Icon: Sparkles,
+      title: 'Add skills & interests',
+      desc: 'The more specific you are, the better our AI can match you with the right cause.',
+    },
+    {
+      Icon: Zap,
+      title: 'Get matched with NGOs',
+      desc: "Hive surfaces opportunities that fit your background and goals — not just any listing.",
+    },
+  ]
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* Main card */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="rounded-2xl overflow-hidden border border-[rgba(13,24,61,0.08)]"
+        style={{ boxShadow: '0 2px 16px rgba(13,24,61,0.07)' }}>
+
+        {/* Dark header with honeycomb */}
+        <div className="relative overflow-hidden px-8 py-8" style={{ background: '#0D183D', minHeight: 152 }}>
+          <HexBg opacity={0.14}/>
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none" style={{ opacity: 0.18 }}>
+            <svg width="96" height="108" viewBox="0 0 96 108" fill="none">
+              <polygon points="48,6 84,27 84,69 48,90 12,69 12,27" stroke="#FFB703" strokeWidth="1.5"/>
+              <polygon points="48,20 74,35 74,65 48,80 22,65 22,35" fill="#FFB703" fillOpacity="0.25" stroke="#FFB703" strokeWidth="1"/>
+              <polygon points="48,33 63,42 63,60 48,69 33,60 33,42" fill="#FFB703" fillOpacity="0.5"/>
+            </svg>
+          </div>
+          <div className="relative z-10 max-w-xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest mb-3" style={{ color: '#FFB703' }}>
+              ✦ Hive is matching for you
+            </p>
+            <h2 className="text-[1.35rem] font-extrabold text-white leading-snug mb-2">
+              No opportunities yet
+            </h2>
+            <p className="text-[13px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              We're preparing opportunities that match your profile and interests.
+            </p>
+          </div>
+        </div>
+
+        {/* White body */}
+        <div className="bg-white px-8 py-6 flex items-start gap-8">
+          <div className="flex-1">
+            {pct < 100 && (
+              <div className="mb-5">
+                <div className="flex justify-between text-[12px] mb-2">
+                  <span className="font-semibold text-[#0D183D]">Profile completion</span>
+                  <span className="font-extrabold" style={{ color: '#FFB703' }}>{pct}%</span>
+                </div>
+                <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(13,24,61,0.07)' }}>
+                  <motion.div className="h-1.5 rounded-full" style={{ background: '#FFB703' }}
+                    initial={{ width: 0 }} animate={{ width: `${pct || 4}%` }}
+                    transition={{ delay: 0.3, duration: 0.9, ease: 'easeOut' }}/>
+                </div>
+                <p className="text-[11px] text-[#4B6382] mt-2 leading-relaxed">
+                  A complete profile helps Hive surface better matches for you.
+                </p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button onClick={() => navigate('/settings')}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-[#0D183D] transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: '#FFB703', boxShadow: '0 4px 14px rgba(255,183,3,0.28)' }}>
+                Complete my profile →
+              </button>
+              <button onClick={() => navigate('/profile/student/edit')}
+                className="flex-1 py-2.5 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors"
+                style={{ borderColor: 'rgba(13,24,61,0.12)' }}>
+                Update my skills
+              </button>
+            </div>
+          </div>
+
+          {/* Illustration */}
+          <div className="hidden sm:block shrink-0 rounded-xl overflow-hidden border"
+            style={{ width: 118, background: 'rgba(255,183,3,0.05)', borderColor: 'rgba(255,183,3,0.14)' }}>
+            <img src={img3} alt="" className="w-full object-contain object-top"
+              style={{ maxHeight: 110 }} draggable={false}/>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* How matching works */}
+      <div>
+        <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-3">
+          How matching works
+        </p>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {HOW_STEPS.map((step, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.22 + i * 0.09 }}
+              className="bg-white rounded-2xl p-5 border border-[rgba(13,24,61,0.08)] flex flex-col gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(255,183,3,0.1)' }}>
+                <step.Icon size={15} style={{ color: '#FFB703' }}/>
+              </div>
+              <p className="text-[12px] font-extrabold text-[#0D183D]">{step.title}</p>
+              <p className="text-[11px] text-[#4B6382] leading-relaxed">{step.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Filter empty state (search / category with no results) ───────────────────
+
+function FilterEmptyState({ onClear }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] flex flex-col items-center text-center px-8 py-14">
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+        style={{ background: 'rgba(13,24,61,0.05)' }}>
+        <Search size={20} className="text-[#4B6382] opacity-60"/>
+      </div>
+      <p className="text-[14px] font-bold text-[#0D183D] mb-1.5">No matches for this filter</p>
+      <p className="text-[12px] text-[#4B6382] mb-5 max-w-xs leading-relaxed">
+        Try a different category or clear your search to see all available opportunities.
+      </p>
+      <button onClick={onClear}
+        className="px-6 py-2.5 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
+        style={{ background: '#0D183D' }}>
+        Clear filters
+      </button>
+    </motion.div>
   )
 }
 
@@ -595,10 +757,9 @@ export default function Opportunities() {
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-[14px] font-semibold text-[#0D183D] mb-1">No opportunities found</p>
-                <p className="text-[13px] text-[#4B6382]">Try a different category or search term</p>
-              </div>
+              (q === '' && cat === 'All')
+                ? <StudentOpportunitiesEmptyState profile={profile} navigate={navigate}/>
+                : <FilterEmptyState onClear={() => { setQ(''); setCat('All') }}/>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((ngo, i) => (
