@@ -213,73 +213,118 @@ function CommunityImpactWidget({ profile, oppCount, applicants, navigate }) {
   )
 }
 
+// ─── Unified sidebar card (new NGOs — merges profile + impact into one) ──────
+
+function UnifiedProgressCard({ completion, navigate }) {
+  const { pct } = completion
+
+  const MILESTONES = [
+    { label: 'Complete organization profile', done: pct === 100,  },
+    { label: 'Post your first opportunity',   done: false         },
+    { label: 'Receive your first applicant',  done: false         },
+    { label: 'Welcome your first student',    done: false         },
+  ]
+
+  const completedCount = MILESTONES.filter(m => m.done).length
+  const progressPct    = Math.round((completedCount / MILESTONES.length) * 100)
+  const ctaDest        = pct < 100 ? '/settings' : '/opportunities/new'
+  const ctaLabel       = pct < 100 ? 'Complete your profile →' : 'Post your first opportunity →'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.2, duration: 0.35 }}
+      className="bg-white rounded-2xl p-5 flex flex-col gap-3.5 border"
+      style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+
+      {/* Illustration */}
+      <div className="rounded-xl overflow-hidden border"
+        style={{ background: 'rgba(255,183,3,0.05)', borderColor: 'rgba(255,183,3,0.14)' }}>
+        <img src={img3} alt="Community impact"
+          className="w-full object-contain object-top"
+          style={{ maxHeight: 80 }} draggable={false}/>
+      </div>
+
+      {/* Label + progress bar */}
+      <div>
+        <div className="flex justify-between items-center mb-1.5">
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#0D183D]">Your journey</p>
+          <span className="text-[10px] font-extrabold" style={{ color: progressPct === 100 ? '#10B981' : '#FFB703' }}>
+            {completedCount}/{MILESTONES.length}
+          </span>
+        </div>
+        <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(13,24,61,0.07)' }}>
+          <motion.div className="h-1.5 rounded-full"
+            style={{ background: progressPct === 100 ? '#10B981' : '#FFB703' }}
+            initial={{ width: 0 }} animate={{ width: `${progressPct || 8}%` }}
+            transition={{ delay: 0.45, duration: 0.9, ease: 'easeOut' }}/>
+        </div>
+      </div>
+
+      {/* Milestones */}
+      <div className="flex flex-col gap-1.5">
+        {MILESTONES.map((m, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+              m.done ? 'bg-emerald-500' : 'border border-[rgba(13,24,61,0.2)]'
+            }`}>
+              {m.done && <Check size={8} strokeWidth={3} className="text-white"/>}
+            </div>
+            <span className={`text-[10px] leading-tight ${
+              m.done ? 'text-white/35 line-through text-[#4B6382]' : 'text-[#4B6382]'
+            }`}>
+              {m.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Mission note */}
+      <p className="text-[10px] text-[#4B6382]/70 leading-relaxed italic">
+        Every student on Hive is looking for real impact — not just a line on a CV.
+      </p>
+
+      <button onClick={() => navigate(ctaDest)}
+        className="btn-navy text-xs py-2.5 w-full">
+        {ctaLabel}
+      </button>
+    </motion.div>
+  )
+}
+
 // ─── Next action card (empty applicants state) ────────────────────────────────
 
-function NGONextActionCard({ completion, oppCount, navigate }) {
-  const missing  = completion.items.filter(i => !i.done)
-  const { pct }  = completion
-  const noOpps   = oppCount === 0
-
+function NGONextActionCard({ navigate }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.18, duration: 0.4 }}
-      className="rounded-2xl overflow-hidden border border-[rgba(13,24,61,0.08)] shadow-card">
+      className="rounded-2xl overflow-hidden border border-[rgba(13,24,61,0.08)]"
+      style={{ boxShadow: '0 2px 12px rgba(13,24,61,0.06)' }}>
 
       {/* Dark header */}
-      <div className="relative overflow-hidden px-5 py-4" style={{ background: '#0D183D', minHeight: 88 }}>
+      <div className="relative overflow-hidden px-5 py-5" style={{ background: '#0D183D', minHeight: 80 }}>
         <HexBg />
         <div className="relative z-10">
           <p className="text-[10px] font-extrabold uppercase tracking-widest mb-1.5" style={{ color: '#FFB703' }}>
-            ✦ Your hive is ready to welcome students
+            ✦ Your hive is ready
           </p>
-          <h3 className="text-[16px] font-extrabold text-white leading-snug mb-0.5">
-            {noOpps ? 'Post your first opportunity' : 'Attract stronger applicants'}
+          <h3 className="text-[15px] font-extrabold text-white leading-snug">
+            Connect your mission with students who care
           </h3>
-          <p className="text-[11px] text-white/50">
-            {missing.length > 0
-              ? `Complete ${missing.length} more field${missing.length > 1 ? 's' : ''} to improve your visibility`
-              : 'Your profile is ready — post an opportunity to get started'}
-          </p>
         </div>
       </div>
 
       {/* Body */}
       <div className="bg-white px-5 py-4">
-
-        {missing.length > 0 && (
-          <div className="mb-4">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">
-              Complete these to attract better applicants:
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {missing.map(item => (
-                <span key={item.key}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                  style={{ background: '#F8F9FB', color: '#0D183D', border: '1px solid rgba(13,24,61,0.10)' }}>
-                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: '#FFB703' }}/>
-                  {item.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Primary CTA: Post opportunity */}
+        <p className="text-[12px] text-[#4B6382] leading-relaxed mb-4">
+          Students are looking for real-world experience with organizations that matter. Your first opportunity opens that door.
+        </p>
         <button onClick={() => navigate('/opportunities/new')}
           className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-[#0D183D] transition-all hover:opacity-90 active:scale-[0.98]"
           style={{ background: '#FFB703', boxShadow: '0 4px 14px rgba(255,183,3,0.28)' }}>
           Post your first opportunity →
         </button>
-
-        {/* Secondary CTA: Complete profile */}
-        {missing.length > 0 && (
-          <button onClick={() => navigate('/settings')}
-            className="w-full mt-2.5 py-2 rounded-xl text-[12px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors"
-            style={{ borderColor: 'rgba(13,24,61,0.12)' }}>
-            Complete organization profile
-          </button>
-        )}
       </div>
     </motion.div>
   )
@@ -663,6 +708,7 @@ export default function NGODashboard() {
   const orgName    = profile?.name || user?.name || 'Your NGO'
   const avatarSrc  = profile?.imageUrl || profile?.avatar || user?.avatar || null
   const completion = computeNgoCompletion(profile)
+  const isNew      = !loadingData && oppCount === 0 && applicants.length === 0
 
   useEffect(() => {
     if (!user?.id) return
@@ -736,25 +782,59 @@ export default function NGODashboard() {
             </motion.div>
           </motion.div>
 
-          {/* ── Stats ── */}
+          {/* ── Stats / Milestone strip ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {STATS.map((s, i) => (
-              <motion.div key={s.label}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.28 }}
-                className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 border transition-shadow hover:shadow-[0_4px_20px_rgba(13,24,61,0.06)]"
-                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
-                  <s.icon size={15} className={s.color} strokeWidth={2}/>
-                </div>
-                <div>
-                  <p className="text-[20px] font-extrabold text-[#0D183D] leading-none tracking-tight">
-                    {loadingData ? '—' : s.value}
-                  </p>
-                  <p className="text-[10px] text-[#4B6382] mt-0.5 leading-snug">{s.label}</p>
-                </div>
-              </motion.div>
-            ))}
+            {isNew ? (
+              // Milestone steps — more meaningful than four zeros
+              [
+                { num: '1', label: 'Complete profile',  done: completion.pct === 100, active: completion.pct < 100 },
+                { num: '2', label: 'Post opportunity',  done: oppCount > 0,           active: completion.pct === 100 },
+                { num: '3', label: 'First applicant',   done: applicants.length > 0,  active: false },
+                { num: '4', label: 'Welcome student',   done: false,                  active: false },
+              ].map((step, i) => (
+                <motion.div key={i}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.28 }}
+                  className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 border transition-shadow"
+                  style={{ borderColor: step.active ? '#FFB703' : 'rgba(13,24,61,0.08)',
+                    boxShadow: step.active ? '0 0 0 3px rgba(255,183,3,0.1)' : 'none' }}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    step.done ? 'bg-emerald-50' : step.active ? 'bg-amber-50' : 'bg-[#F8F9FB]'
+                  }`}>
+                    {step.done
+                      ? <Check size={15} className="text-emerald-500" strokeWidth={2.5}/>
+                      : <span className="text-[13px] font-extrabold"
+                          style={{ color: step.active ? '#D99E00' : '#4B6382' }}>{step.num}</span>
+                    }
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#0D183D] leading-tight">{step.label}</p>
+                    <p className="text-[9px] mt-0.5" style={{ color: step.done ? '#10B981' : step.active ? '#D99E00' : '#4B6382' }}>
+                      {step.done ? 'Done ✓' : step.active ? 'Up next' : 'Upcoming'}
+                    </p>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              // Real stat cards once data exists
+              STATS.map((s, i) => (
+                <motion.div key={s.label}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.28 }}
+                  className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 border transition-shadow hover:shadow-[0_4px_20px_rgba(13,24,61,0.06)]"
+                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
+                    <s.icon size={15} className={s.color} strokeWidth={2}/>
+                  </div>
+                  <div>
+                    <p className="text-[20px] font-extrabold text-[#0D183D] leading-none tracking-tight">
+                      {loadingData ? '—' : s.value}
+                    </p>
+                    <p className="text-[10px] text-[#4B6382] mt-0.5 leading-snug">{s.label}</p>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
 
           {/* ── Body ── */}
@@ -764,8 +844,14 @@ export default function NGODashboard() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Recent Applicants</h2>
-                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who applied to your opportunities</p>
+                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">
+                    {applicants.length === 0 ? 'Getting Started' : 'Recent Applicants'}
+                  </h2>
+                  <p className="text-[11px] text-[#4B6382] mt-0.5">
+                    {applicants.length === 0
+                      ? 'Your first steps toward connecting with students'
+                      : 'Students who applied to your opportunities'}
+                  </p>
                 </div>
                 {applicants.length > 0 && (
                   <Link to="/applicants"
@@ -784,7 +870,7 @@ export default function NGODashboard() {
                   ))}
                 </div>
               ) : applicants.length === 0 ? (
-                <NGONextActionCard completion={completion} oppCount={oppCount} navigate={navigate}/>
+                <NGONextActionCard navigate={navigate}/>
               ) : (
                 <div className="flex flex-col gap-2">
                   {applicants.slice(0, 5).map((s, i) => (
@@ -796,13 +882,19 @@ export default function NGODashboard() {
 
             {/* ── Right: Sidebar ── */}
             <aside className="flex flex-col gap-4">
-              <OrgReadinessCard completion={completion} navigate={navigate}/>
-              <CommunityImpactWidget
-                profile={profile}
-                oppCount={oppCount}
-                applicants={applicants}
-                navigate={navigate}
-              />
+              {isNew ? (
+                <UnifiedProgressCard completion={completion} navigate={navigate}/>
+              ) : (
+                <>
+                  <OrgReadinessCard completion={completion} navigate={navigate}/>
+                  <CommunityImpactWidget
+                    profile={profile}
+                    oppCount={oppCount}
+                    applicants={applicants}
+                    navigate={navigate}
+                  />
+                </>
+              )}
             </aside>
           </div>
         </div>
