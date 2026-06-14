@@ -230,39 +230,27 @@ function HiveVisualization({ opportunities, applicants, navigate, suggestedMatch
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <>
-                    <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y - 5} textAnchor="middle" dominantBaseline="middle"
-                      fill={hexLabelColor(h)}
-                      fontSize={h.type === 'slot-opp' ? '20' : '6.5'}
-                      fontWeight={h.type === 'slot-opp' ? '500' : '700'}
-                      fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                      style={{ pointerEvents: 'none' }}>
-                      {h.type === 'slot-opp' ? (
-                        hexLabel(h)
-                      ) : (
-                        wrapText(hexLabel(h), 11).map((line, idx) => {
-                          const lines = wrapText(hexLabel(h), 11)
-                          const totalLines = lines.length
-                          const offsetY = h.y - 5 + (idx - (totalLines - 1) / 2) * 5.5
-                          return (
-                            <tspan key={idx} x={h.x} y={offsetY}>
-                              {line}
-                            </tspan>
-                          )
-                        })
-                      )}
-                    </text>
-                    {h.type === 'opp' && oppToStudent[h.opp.id] && (
-                      <text x={h.x} y={h.y + 6} textAnchor="middle" dominantBaseline="middle"
-                        fill={hexLabelColor(h)}
-                        fontSize="5.5"
-                        fontWeight="600"
-                        fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                        style={{ pointerEvents: 'none', opacity: 0.8 }}>
-                        {oppToStudent[h.opp.id].name.split(' ')[0]}
-                      </text>
+                  <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y} textAnchor="middle" dominantBaseline="middle"
+                    fill={hexLabelColor(h)}
+                    fontSize={h.type === 'slot-opp' ? '20' : '7'}
+                    fontWeight={h.type === 'slot-opp' ? '500' : '700'}
+                    fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                    style={{ pointerEvents: 'none' }}>
+                    {h.type === 'slot-opp' ? (
+                      hexLabel(h)
+                    ) : (
+                      wrapText(hexLabel(h), 11).map((line, idx) => {
+                        const lines = wrapText(hexLabel(h), 11)
+                        const totalLines = lines.length
+                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 7
+                        return (
+                          <tspan key={idx} x={h.x} y={offsetY}>
+                            {line}
+                          </tspan>
+                        )
+                      })
                     )}
-                  </>
+                  </text>
                 )}
               </g>
             )
