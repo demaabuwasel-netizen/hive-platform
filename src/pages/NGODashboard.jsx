@@ -1104,7 +1104,8 @@ export default function NGODashboard() {
           let bestScore = 0
 
           students.forEach(student => {
-            const score = computeMatch(student, opp)
+            const result = computeMatch(student, opp)
+            const score = result?.score ?? 0
             if (score > bestScore) {
               bestScore = score
               bestMatch = student
