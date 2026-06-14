@@ -94,12 +94,13 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     if (opp) {
       return { ...pos, type: 'opp', opp }
     }
-    // Only show one open slot - the first empty position
+    // Show one open slot - the first empty position
     if (i - 1 === opportunities.length) {
       return { ...pos, type: 'slot-opp' }
     }
-    return null
-  }).filter(h => h !== null)
+    // Show other empty positions as greyed out
+    return { ...pos, type: 'empty' }
+  })
 
   function getOppState(opp) {
     if (!opp) return 'empty'
@@ -112,6 +113,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   function hexFill(h) {
     if (h.type === 'center') return '#1a1f3a'
     if (h.type === 'slot-opp') return '#EEF2FF'
+    if (h.type === 'empty') return '#F3F4F6'
     if (h.type === 'opp') {
       const state = getOppState(h.opp)
       if (state === 'working') return '#D1FAE5'
@@ -123,6 +125,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   function hexStroke(h) {
     if (h.type === 'center') return 'none'
     if (h.type === 'slot-opp') return '#C7D2FE'
+    if (h.type === 'empty') return '#D1D5DB'
     if (h.type === 'opp') {
       const state = getOppState(h.opp)
       if (state === 'working') return '#6EE7B7'
