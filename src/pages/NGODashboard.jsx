@@ -96,14 +96,8 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
 
   function getOppState(opp) {
     if (!opp) return 'empty'
-    if (opp.status === 'active' && applicants.some(a => a.opportunityId === opp.id && (a.status === 'accepted' || a.status === 'interview'))) {
+    if (applicants.some(a => a.opportunityId === opp.id && (a.status === 'accepted' || a.status === 'interview'))) {
       return 'working'
-    }
-    if (opp.status === 'draft' || opp.status === 'deploying') {
-      return 'deploying'
-    }
-    if (applicants.some(a => a.opportunityId === opp.id && a.status === 'under_review')) {
-      return 'new-applicants'
     }
     return 'active'
   }
@@ -114,8 +108,6 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     if (h.type === 'opp') {
       const state = getOppState(h.opp)
       if (state === 'working') return '#D1FAE5'
-      if (state === 'deploying') return '#DBEAFE'
-      if (state === 'new-applicants') return '#FEF3C7'
       return '#FFB84D'
     }
     return '#F8FAFC'
@@ -127,8 +119,6 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     if (h.type === 'opp') {
       const state = getOppState(h.opp)
       if (state === 'working') return '#6EE7B7'
-      if (state === 'deploying') return '#93C5FD'
-      if (state === 'new-applicants') return '#FCD34D'
       return '#E8A038'
     }
     return '#E2E8F0'
@@ -149,8 +139,6 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     if (h.type === 'opp') {
       const state = getOppState(h.opp)
       if (state === 'working') return '#065F46'
-      if (state === 'deploying') return '#1E40AF'
-      if (state === 'new-applicants') return '#92400E'
       return '#1a1f3a'
     }
     return '#94A3B8'
@@ -224,10 +212,8 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Someone working' },
-              { color: '#FEF3C7', stroke: '#FCD34D', label: 'New applicants' },
               { color: '#FFB84D', stroke: '#E8A038', label: 'Active role' },
-              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Deploying' },
-              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
+              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Add new role' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
