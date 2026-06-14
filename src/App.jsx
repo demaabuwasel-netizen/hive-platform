@@ -260,10 +260,8 @@ function AppRoutes() {
       <Route path="/onboarding/student" element={<OnboardingGuard><StudentOnboarding /></OnboardingGuard>} />
       <Route path="/onboarding/ngo"     element={<OnboardingGuard><NGOOnboarding /></OnboardingGuard>} />
 
-      {/* ── Profile ── */}
-      <Route path="/profile/student"      element={<Navigate to="/settings" replace />} />
+      {/* ── Profile edit pages (full-page, no sidebar) ── */}
       <Route path="/profile/student/edit" element={<RequireAuth><EditStudentProfile /></RequireAuth>} />
-      <Route path="/profile/ngo"          element={<RequireAuth><NGOProfile /></RequireAuth>} />
       <Route path="/profile/ngo/edit"     element={<RequireAuth><EditNGOProfile /></RequireAuth>} />
 
       {/* ── Create opportunity (full-page, no sidebar) ── */}
@@ -282,6 +280,8 @@ function AppRoutes() {
         <Route path="/applications"      element={<Applications />} />
         <Route path="/saved"             element={<Saved />} />
         <Route path="/matches"           element={<MatchResults />} />
+        <Route path="/profile/student"   element={<StudentProfile />} />
+        <Route path="/profile/ngo"       element={<NGOProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

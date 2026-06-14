@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import {
   LogOut, LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  MessageCircle, Settings, Briefcase, Users, BarChart2, TrendingUp,
+  MessageCircle, Settings, Briefcase, Users, BarChart2, TrendingUp, UserCircle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import HiveLogo from './HiveLogo'
@@ -19,6 +19,7 @@ const STUDENT_NAV = [
   { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'                     },
   { icon: Bookmark,        label: 'Saved',        to: '/saved'                          },
   { icon: MessageCircle,   label: 'Messages',     to: '/messages'                      },
+  { icon: UserCircle,      label: 'My Profile',   to: '/profile/student'                },
   { icon: Settings,        label: 'Settings',     to: '/settings'                       },
 ]
 
@@ -30,6 +31,7 @@ const NGO_NAV = [
   { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'                    },
   { icon: BarChart2,       label: 'Analytics',     to: '/analytics'                     },
   { icon: MessageCircle,   label: 'Messages',      to: '/messages'                     },
+  { icon: UserCircle,      label: 'My Profile',    to: '/profile/ngo'                   },
   { icon: Settings,        label: 'Settings',      to: '/settings'                      },
 ]
 
@@ -67,6 +69,7 @@ export default function DashboardLayout() {
     'Settings':      'nav.settings',
     'Applicants':    'nav.applicants',
     'Analytics':     'nav.analytics',
+    'My Profile':    'nav.myProfile',
   }
 
   return (
