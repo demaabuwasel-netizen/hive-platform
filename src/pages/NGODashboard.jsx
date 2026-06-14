@@ -1079,12 +1079,15 @@ export default function NGODashboard() {
 
     const computeMatches = async () => {
       try {
-        // Fetch all student profiles
+        // Fetch all student profiles with user info (for names)
         const { data: students, error } = await supabase
           .from('student_profiles')
-          .select('id, name, field, skills, languages, availability, interests, causes, campus, year, experience, goals')
+          .select('user_id, field, skills, languages, availability, interests, experience, goals, users(id, name)')
+
+        console.log('Fetched students:', students?.length || 0, 'Error:', error)
 
         if (error || !students) {
+          console.error('Student fetch failed:', error)
           setSuggestedMatches([])
           return
         }
@@ -1112,16 +1115,20 @@ export default function NGODashboard() {
             }
           })
 
+          const studentName = bestMatch?.users?.name || 'Unknown'
+          console.log(`Opportunity "${opp.title}": best match = ${studentName} (${bestScore}%)`)
+
           if (bestMatch && bestScore > 0) {
             matches.push({
               opportunity: opp,
-              student: { ...bestMatch, match: Math.round(bestScore) },
+              student: { ...bestMatch, id: bestMatch.user_id, name: bestMatch.users?.name, match: Math.round(bestScore) },
               score: Math.round(bestScore),
               colors: colorPalettes[idx % colorPalettes.length],
             })
           }
         })
 
+        console.log('Total matches found:', matches.length)
         setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
       } catch (err) {
         console.error('Error computing matches:', err)
