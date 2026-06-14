@@ -138,11 +138,27 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
     if (h.type === 'center') return null
     if (h.type === 'slot-opp') return '+'
     if (h.type === 'opp') {
-      const title = h.opp.title || 'Role'
-      // Limit to 15 characters for better fitting
-      return title.length > 15 ? title.slice(0, 12) + '...' : title
+      return h.opp.title || 'Role'
     }
     return null
+  }
+
+  function wrapText(text, maxCharsPerLine = 10) {
+    const words = text.split(' ')
+    const lines = []
+    let currentLine = ''
+
+    words.forEach(word => {
+      if ((currentLine + word).length <= maxCharsPerLine) {
+        currentLine += (currentLine ? ' ' : '') + word
+      } else {
+        if (currentLine) lines.push(currentLine)
+        currentLine = word
+      }
+    })
+    if (currentLine) lines.push(currentLine)
+
+    return lines
   }
 
   function hexLabelColor(h) {
@@ -206,13 +222,26 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} y={h.y + 3} textAnchor="middle" dominantBaseline="middle"
+                  <text x={h.x} textAnchor="middle" dominantBaseline="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '7.5'}
+                    fontSize={h.type === 'slot-opp' ? '16' : '7'}
                     fontWeight={h.type === 'slot-opp' ? '300' : '700'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none', overflow: 'hidden', letterSpacing: '-0.5px' }}>
-                    {hexLabel(h)}
+                    style={{ pointerEvents: 'none' }}>
+                    {h.type === 'slot-opp' ? (
+                      <tspan x={h.x} dy="0">{hexLabel(h)}</tspan>
+                    ) : (
+                      wrapText(hexLabel(h), 11).map((line, idx) => {
+                        const lines = wrapText(hexLabel(h), 11)
+                        const totalLines = lines.length
+                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 5
+                        return (
+                          <tspan key={idx} x={h.x} y={offsetY}>
+                            {line}
+                          </tspan>
+                        )
+                      })
+                    )}
                   </text>
                 )}
               </g>
