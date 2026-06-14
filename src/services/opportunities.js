@@ -194,3 +194,12 @@ export async function setOpportunityStatus(id, ngoId, status) {
     .eq('ngo_id', ngoId)
   if (error) throw new Error(error.message)
 }
+
+export async function deleteOpportunity(id, ngoId) {
+  const { error } = await supabase
+    .from('opportunities')
+    .delete()
+    .eq('id', id)
+    .eq('ngo_id', ngoId)
+  if (error) throw new Error(error.message)
+}
