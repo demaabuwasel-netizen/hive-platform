@@ -122,7 +122,7 @@ export default function StudentPublicProfile() {
     if (backTo === 'applicants' && opportunityId) {
       navigate(`/applicants?opportunity=${opportunityId}`)
     } else {
-      handleBack()
+      navigate(-1)
     }
   }
 
