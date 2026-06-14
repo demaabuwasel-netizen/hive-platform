@@ -1,10 +1,42 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../services/supabase'
-import { ensureUserRow, getUserRow, updateUserRow, logOut as authLogOut } from '../services/auth'
+import { ensureUserRow, getUserRow, updateUserRow, getProfileRow, upsertProfileRow, logOut as authLogOut } from '../services/auth'
 import { loadStudentProfile, loadNgoProfile, saveProfile } from '../services/storage'
 import i18n from '../i18n/index'
 
 const AppContext = createContext(null)
+
+// ── Profile localStorage cache ─────────────────────────────────────────────────
+// Stores role + onboarding status so the app can restore instantly on refresh
+// without waiting for DB calls. Written after every successful hydrateUser.
+// Cleared on logout. Falls back gracefully if localStorage is unavailable.
+const PROFILE_CACHE_KEY = 'hive_profile_cache'
+
+function readProfileCache(uid) {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed?.uid === uid ? parsed : null
+  } catch { return null }
+}
+
+function writeProfileCache(merged) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
+      uid:               merged.id,
+      role:              merged.role,
+      onboardingComplete: merged.onboardingComplete,
+      name:              merged.name,
+      avatar:            merged.avatar,
+      provider:          merged.provider,
+    }))
+  } catch {}
+}
+
+function clearProfileCache() {
+  try { localStorage.removeItem(PROFILE_CACHE_KEY) } catch {}
+}
 
 // ── Promise.race timeout helper ────────────────────────────────────────────────
 // Uses JS-level timers, NOT AbortSignal — PostgREST-js v2 can swallow AbortError
@@ -67,67 +99,90 @@ export function AppProvider({ children }) {
     let userWasSet = false
 
     try {
-      // ── Step 1: ensureUserRow (300 s outer cap via withStep) ─────────────────
-      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=300000ms]')
-      await withStep(ensureUserRow(authUser), 'ensureUserRow', 1800000)
+      // ── Step 1: ensureUserRow (3 s cap — SELECT + possible INSERT) ─────────
+      log('STEP 1 — BEFORE ensureUserRow  [withStep cap=3000ms]')
+      await withStep(ensureUserRow(authUser), 'ensureUserRow', 3000)
       log('STEP 1 — AFTER  ensureUserRow  OK')
 
-      // ── Step 2: getUserRow (300 s outer cap via withStep) ───────────────────
-      log('STEP 2 — BEFORE getUserRow     [withStep cap=300000ms]')
-      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 1800000)
-      log('STEP 2 — AFTER  getUserRow    ',
-        userRow ? `role=${userRow.role} onboarding=${userRow.onboarding_complete}` : 'null')
+      // ── Step 2: getUserRow (3 s cap) ───────────────────────────────────────
+      log('STEP 2 — BEFORE getUserRow     [withStep cap=3000ms]')
+      const userRow = await withStep(getUserRow(authUser.id), 'getUserRow', 3000)
+      log('STEP 2 — AFTER  getUserRow',
+        userRow
+          ? `role=${userRow.role} onboarding_complete=${userRow.onboarding_complete}`
+          : 'null (row missing or RLS denied)')
 
-      if (!userRow) {
-        // Try to recover from cache before giving up
-        const cached = localStorage.getItem(`hive_user_${authUser.id}`)
-        if (cached) {
-          try {
-            const cachedUser = JSON.parse(cached)
-            warn('STEP 2 — users row null, but found cached user — recovering from cache')
-            setUserState(cachedUser); userWasSet = true; return
-          } catch (e) {
-            warn('STEP 2 — cached user parse failed:', e.message)
-          }
-        }
-        warn('STEP 2 — users row missing and no cache → applying minimal state')
-        setUserState(minimal); userWasSet = true; return
+      // ── Step 2.5: getProfileRow — authoritative role + onboarding_completed ─
+      // profiles table takes priority. If missing/empty, falls back to userRow.
+      log('STEP 2.5 — BEFORE getProfileRow [withStep cap=3000ms]')
+      let profileRow = null
+      try {
+        profileRow = await withStep(getProfileRow(authUser.id), 'getProfileRow', 3000)
+        log('STEP 2.5 — AFTER  getProfileRow',
+          profileRow
+            ? `role=${profileRow.role} onboarding_completed=${profileRow.onboarding_completed}`
+            : 'null (no profiles row — will fall back to users table)')
+      } catch (e) {
+        warn('STEP 2.5 — getProfileRow timed out:', e.message, '— continuing with users table')
       }
 
-      // PROTECTION: if role is null/missing but we have a user with a role already,
-      // keep the existing role (don't let it be overwritten to null)
-      let roleToUse = userRow.role
-      if (!roleToUse && user?.role) {
-        warn(`STEP 2 — PROTECTION: role is null but user already has role=${user.role} — keeping existing role`)
-        roleToUse = user.role
+      // Determine effective role + onboarding from whichever source has data.
+      // Priority: profiles.role > users.role (profiles is the new authoritative source).
+      // Both may be null for a brand-new user — that is expected and correct.
+      const effectiveRole      = profileRow?.role              ?? userRow?.role              ?? null
+      const effectiveOnboarded = profileRow?.onboarding_completed ?? userRow?.onboarding_complete ?? false
+
+      log('STEP 2.5 — RESOLVED',
+        `effectiveRole=${effectiveRole}`,
+        `effectiveOnboarded=${effectiveOnboarded}`,
+        `source: profiles=${!!profileRow?.role} | users=${!!userRow?.role}`)
+
+      if (!userRow && !profileRow) {
+        // Both DB queries returned nothing. Use the localStorage cache if available
+        // so a Supabase timeout doesn't flash a completed user back to role-selection.
+        const cached = readProfileCache(authUser.id)
+        if (cached?.role) {
+          warn('STEP 2.5 — Both DB queries empty, using cache fallback role:', cached.role)
+          setUserState({
+            id:                 authUser.id,
+            email:              authUser.email,
+            name:               cached.name   ?? minimal.name,
+            avatar:             cached.avatar ?? minimal.avatar,
+            role:               cached.role,
+            onboardingComplete: cached.onboardingComplete ?? false,
+            onboardingStep:     0,
+            provider:           cached.provider ?? minimal.provider,
+            preferredLanguage:  'en',
+            preferredTheme:     'system',
+          })
+          userWasSet = true
+        } else {
+          warn('STEP 2.5 — Both DB queries empty, no cache → minimal state (new user)')
+          setUserState(minimal); userWasSet = true
+        }
+        return
       }
 
       const merged = {
         id:                 authUser.id,
         email:              authUser.email,
-        name:               userRow.name,
-        avatar:             userRow.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
-        role:               roleToUse,
-        onboardingComplete: userRow.onboarding_complete,
-        onboardingStep:     userRow.onboarding_step ?? 0,
-        provider:           userRow.provider,
-        preferredLanguage:  userRow.preferred_language ?? 'en',
-        preferredTheme:     userRow.preferred_theme    ?? 'system',
+        name:               userRow?.name ?? minimal.name,
+        avatar:             userRow?.avatar_url ?? authUser.user_metadata?.avatar_url ?? null,
+        role:               effectiveRole,
+        onboardingComplete: effectiveOnboarded,
+        onboardingStep:     userRow?.onboarding_step ?? 0,
+        provider:           userRow?.provider ?? minimal.provider,
+        preferredLanguage:  userRow?.preferred_language ?? 'en',
+        preferredTheme:     userRow?.preferred_theme    ?? 'system',
       }
       setUserState(merged); userWasSet = true
-      // Cache user data so we can recover if database times out later
-      try {
-        localStorage.setItem(`hive_user_${authUser.id}`, JSON.stringify(merged))
-      } catch (e) {
-        warn('STEP 2 — failed to cache user:', e.message)
-      }
-      log('STEP 2 — user state SET | role:', merged.role,
-        '| onboardingComplete:', merged.onboardingComplete,
-        '| provider:', merged.provider)
+      writeProfileCache(merged)
+      log('STEP 2.5 — user state COMMITTED | role:', merged.role,
+        '| onboardingComplete:', merged.onboardingComplete)
 
       // Apply stored language / theme preferences
-      const pLang  = userRow.preferred_language
-      const pTheme = userRow.preferred_theme
+      const pLang  = userRow?.preferred_language
+      const pTheme = userRow?.preferred_theme
       if (pLang && pLang !== i18n.language) {
         i18n.changeLanguage(pLang)
         localStorage.setItem('hive_lang', pLang)
@@ -144,25 +199,45 @@ export function AppProvider({ children }) {
       }
 
       // ── Step 3: profile — fire-and-forget (never blocks loading) ──────────
-      if (userRow.role === 'student') {
-        log('STEP 3 — BEFORE loadStudentProfile (background, cap=4000ms)')
+      if (merged.role === 'student') {
+        log('STEP 3 — loadStudentProfile (background)')
         withStep(loadStudentProfile(authUser.id), 'loadStudentProfile', 4000)
-          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadStudentProfile', p ? 'loaded' : 'null') })
+          .then(p => { setProfileState(p); log('STEP 3 — loadStudentProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadStudentProfile ERROR:', e.message))
-      } else if (userRow.role === 'ngo') {
-        log('STEP 3 — BEFORE loadNgoProfile (background, cap=4000ms)')
+      } else if (merged.role === 'ngo') {
+        log('STEP 3 — loadNgoProfile (background)')
         withStep(loadNgoProfile(authUser.id), 'loadNgoProfile', 4000)
-          .then(p => { setProfileState(p); log('STEP 3 — AFTER  loadNgoProfile', p ? 'loaded' : 'null') })
+          .then(p => { setProfileState(p); log('STEP 3 — loadNgoProfile', p ? 'loaded' : 'null') })
           .catch(e => warn('STEP 3 — loadNgoProfile ERROR:', e.message))
       } else {
-        log('STEP 3 — skipped (role=null)')
+        log('STEP 3 — skipped (effectiveRole=null — new user)')
       }
 
     } catch (catchErr) {
       err('CAUGHT at step:', catchErr.message)
       if (!userWasSet) {
-        warn('applying minimal fallback state')
-        setUserState(minimal)
+        // DB calls failed. Use the localStorage cache before falling back to
+        // minimal state — prevents a Supabase timeout from bouncing completed users
+        // to role-selection.
+        const cached = readProfileCache(authUser.id)
+        if (cached?.role) {
+          warn('DB error — using profile cache as recovery, role:', cached.role)
+          setUserState({
+            id:                 authUser.id,
+            email:              authUser.email,
+            name:               cached.name   ?? minimal.name,
+            avatar:             cached.avatar ?? minimal.avatar,
+            role:               cached.role,
+            onboardingComplete: cached.onboardingComplete ?? false,
+            onboardingStep:     0,
+            provider:           cached.provider ?? minimal.provider,
+            preferredLanguage:  'en',
+            preferredTheme:     'system',
+          })
+        } else {
+          warn('DB error, no cache → minimal fallback (new user or cleared cache)')
+          setUserState(minimal)
+        }
       }
     }
 
@@ -179,16 +254,17 @@ export function AppProvider({ children }) {
       if (!disposed) { clearTimeout(ceiling); setLoading(false) }
     }
 
-    // ── Absolute ceiling: 30 minutes ──────────────────────────────────────────
-    // The ceiling at 30 min is a fallback safety net for very slow Supabase.
-    // (temporary for demo — Supabase database is slow, will optimize after)
+    // ── Absolute ceiling: 12 s ───────────────────────────────────────────────
+    // Worst case: bail(3 s) + ensureUserRow(2 s) + getUserRow(2 s)
+    //             + getProfileRow(2 s) = 9 s. 12 s gives a 3 s buffer.
+    // In practice the optimistic-cache path clears loading immediately.
     const ceiling = setTimeout(() => {
       if (!disposed) {
-        console.error('[AppContext] 30 min ceiling fired — forcing loading=false')
+        console.error('[AppContext] 12 s ceiling fired — forcing loading=false')
         setLoading(false)
         setTimedOut(true)
       }
-    }, 1800000)
+    }, 12000)
 
     // ── Step 1: read localStorage synchronously ───────────────────────────────
     let storedUser = null
@@ -208,6 +284,29 @@ export function AppProvider({ children }) {
       console.warn('[AppContext] localStorage read error:', e.message)
     }
 
+    // ── Optimistic restore ────────────────────────────────────────────────────
+    // If we have a valid localStorage cache entry for this user, apply it
+    // immediately so route guards see role + onboardingComplete without
+    // waiting for any network call. The DB validation below will refresh it.
+    if (storedUser) {
+      const cached = readProfileCache(storedUser.id)
+      if (cached) {
+        console.log('[AppContext] cache HIT — restoring immediately uid:', storedUser.id,
+          'role:', cached.role, 'onboarding:', cached.onboardingComplete)
+        setUserState({
+          id:                 storedUser.id,
+          email:              storedUser.email,
+          name:               cached.name   ?? storedUser.user_metadata?.full_name ?? storedUser.email?.split('@')[0] ?? 'User',
+          avatar:             cached.avatar ?? storedUser.user_metadata?.avatar_url ?? null,
+          role:               cached.role,
+          onboardingComplete: cached.onboardingComplete,
+          onboardingStep:     0,
+          provider:           cached.provider ?? storedUser.app_metadata?.provider ?? 'email',
+        })
+        finish()  // loading=false instantly — route guards use cache
+      }
+    }
+
     // ── Step 2: no stored session → clear loading immediately ─────────────────
     if (!storedUser) {
       finish()
@@ -216,7 +315,7 @@ export function AppProvider({ children }) {
         async (event, session) => {
           console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
           if (event === 'SIGNED_OUT') {
-            setUserState(null); setProfileState(null)
+            clearProfileCache(); setUserState(null); setProfileState(null)
           } else if (session?.user) {
             try { await hydrateUser(session.user) }
             catch (err) { console.error('[AppContext]', event, 'hydrateUser error:', err) }
@@ -248,7 +347,7 @@ export function AppProvider({ children }) {
         catch (e) { console.error('[AppContext] hydrateUser error:', e.message) }
       } else {
         console.log('[AppContext] getSession returned null — session expired')
-        setUserState(null); setProfileState(null)
+        setUserState(null); setProfileState(null); clearProfileCache()
       }
       finish()
     }).catch(async err => {
@@ -266,6 +365,7 @@ export function AppProvider({ children }) {
         console.log('[AppContext] auth event:', event, 'uid:', session?.user?.id ?? 'none')
 
         if (event === 'SIGNED_OUT') {
+          clearProfileCache()
           setUserState(null); setProfileState(null); setLoading(false)
           return
         }
@@ -290,7 +390,12 @@ export function AppProvider({ children }) {
   async function updateRole(role) {
     if (!user) return
     await updateUserRow(user.id, { role })
-    setUserState(prev => prev ? { ...prev, role } : prev)
+    upsertProfileRow(user.id, { role })
+    setUserState(prev => {
+      const next = prev ? { ...prev, role } : prev
+      if (next) writeProfileCache(next)
+      return next
+    })
   }
 
   async function completeOnboarding(profileData) {
@@ -328,11 +433,18 @@ export function AppProvider({ children }) {
     if (userErr) throw new Error(`User update failed: ${userErr.message}`)
     console.log(`[onboarding ${elapsed()}] step 2 — done`)
 
+    // Write onboarding_completed to profiles table — best-effort, never blocks
+    upsertProfileRow(user.id, { onboarding_completed: true })
+
     // Update local state so route guards immediately see onboarding as complete.
     // Without this, user.onboardingComplete remains false until the next full
     // hydrateUser cycle, causing OnboardingGuard to bounce the user back.
     setProfileState(profileData)
-    setUserState(prev => prev ? { ...prev, onboardingComplete: true } : prev)
+    setUserState(prev => {
+      const next = prev ? { ...prev, onboardingComplete: true } : prev
+      if (next) writeProfileCache(next)
+      return next
+    })
     console.log(`[onboarding ${elapsed()}] complete ✓`)
   }
 
@@ -351,18 +463,12 @@ export function AppProvider({ children }) {
   }
 
   function patchUser(updates) {
-    // PROTECTION: prevent accidental role changes
-    if (updates.role !== undefined && updates.role !== null) {
-      console.warn('[AppContext.patchUser] ⚠️ BLOCKED attempt to change role to:', updates.role)
-      const { role, ...safeUpdates } = updates
-      setUserState(prev => prev ? { ...prev, ...safeUpdates } : prev)
-    } else {
-      setUserState(prev => prev ? { ...prev, ...updates } : prev)
-    }
+    setUserState(prev => prev ? { ...prev, ...updates } : prev)
   }
 
   async function logout() {
     await authLogOut()
+    clearProfileCache()
     setUserState(null); setProfileState(null)
   }
 

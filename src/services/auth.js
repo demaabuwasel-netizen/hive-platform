@@ -55,7 +55,7 @@ export async function getUserRow(userId, { signal } = {}) {
   try {
     let q = supabase.from('users').select('*').eq('id', userId).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 1800000, 'getUserRow SELECT')
+    const { data, error } = await withQueryTimeout(q, 4000, 'getUserRow SELECT')
     if (error) {
       console.error(`[getUserRow] Supabase error ${ms()}:`, error.message, '(code:', error.code, ')')
       return null
@@ -75,6 +75,45 @@ export async function updateUserRow(userId, updates) {
     .update(updates)
     .eq('id', userId)
   if (error) throw new Error(error.message)
+}
+
+// ── profiles table helpers ────────────────────────────────────────────────────
+// Reads role + onboarding_completed from the profiles table.
+// Returns null if the table doesn't exist, the row isn't found, or any error.
+export async function getProfileRow(userId) {
+  const t = Date.now()
+  const ms = () => `+${Date.now() - t}ms`
+  console.log('[getProfileRow] SELECT — uid:', userId)
+  try {
+    const { data, error } = await withQueryTimeout(
+      supabase.from('profiles').select('role, onboarding_completed').eq('id', userId).maybeSingle(),
+      4000, 'getProfileRow SELECT'
+    )
+    if (error) {
+      console.warn(`[getProfileRow] ${ms()}:`, error.message)
+      return null
+    }
+    console.log(`[getProfileRow] done ${ms()} —`, data
+      ? `role=${data.role} onboarding=${data.onboarding_completed}`
+      : 'null')
+    return data
+  } catch (err) {
+    console.warn(`[getProfileRow] threw ${ms()}:`, err.message)
+    return null
+  }
+}
+
+// Upserts role and/or onboarding_completed into profiles table.
+// Best-effort: logs a warning on failure, never throws.
+export async function upsertProfileRow(userId, updates) {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: userId, ...updates }, { onConflict: 'id' })
+    if (error) console.warn('[upsertProfileRow]', error.message)
+  } catch (err) {
+    console.warn('[upsertProfileRow] error:', err.message)
+  }
 }
 
 // ── Password reset ────────────────────────────────────────────────────────────
@@ -191,7 +230,7 @@ export async function ensureUserRow(authUser, { signal } = {}) {
   try {
     let q = supabase.from('users').select('id').eq('id', uid).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 1800000, 'ensureUserRow SELECT')
+    const { data, error } = await withQueryTimeout(q, 4000, 'ensureUserRow SELECT')
     console.log(`[ensureUserRow] SELECT end ${ms()} — data:`, data, 'error:', error?.message ?? null)
     if (error) console.warn('[ensureUserRow] SELECT error (non-fatal):', error.message, 'code:', error.code)
     existing = data
@@ -231,7 +270,7 @@ export async function ensureUserRow(authUser, { signal } = {}) {
       provider:            authUser.app_metadata?.provider || 'email',
     })
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 1800000, 'ensureUserRow INSERT')
+    const { data, error } = await withQueryTimeout(q, 4000, 'ensureUserRow INSERT')
     if (error && error.code !== '23505') {
       console.error(`[ensureUserRow] INSERT error ${ms()}:`, error.message, '(code:', error.code, ')')
     } else if (error?.code === '23505') {
