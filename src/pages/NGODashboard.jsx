@@ -10,6 +10,8 @@ import {
 import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
+import { supabase } from '../services/supabase'
+import { computeMatch } from '../services/matching'
 import HiveLogo from '../components/HiveLogo'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
 import { AvatarDisplay } from '../components/Avatar'
@@ -761,7 +763,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate, suggestedMatches }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -813,6 +815,77 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
 
           {/* ── Hive Visualization ── */}
           <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} />
+
+          {/* ── Suggested Student Matches ── */}
+          {opportunities.length > 0 && suggestedMatches.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Suggested Matches</h2>
+                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who fit your opportunities</p>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                {suggestedMatches.map((match, i) => (
+                  <motion.div
+                    key={`${match.opportunity.id}-${match.student.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.05 }}
+                    className="bg-white rounded-2xl border p-5"
+                    style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+
+                    {/* Opportunity title */}
+                    <p className="text-[10px] font-bold text-[#FFB703] uppercase tracking-widest mb-3">
+                      {match.opportunity.title}
+                    </p>
+
+                    {/* Match card */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${match.colors[0]}, ${match.colors[1]})`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '14px'
+                          }}>
+                          {match.student.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-bold text-[#0D183D] truncate">{match.student.name}</p>
+                          <p className="text-[11px] text-[#4B6382]">{match.student.field}</p>
+                        </div>
+                      </div>
+
+                      {/* Match percentage and message button */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-center">
+                          <p className="text-[14px] font-extrabold text-[#0D183D]">{match.score}%</p>
+                          <p className="text-[9px] text-[#4B6382]">match</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setActiveStudent(match.student)
+                          }}
+                          className="px-3 py-2 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                          style={{ background: '#FFB703' }}>
+                          Message
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* ── Body ── */}
           <div className="grid lg:grid-cols-[1fr_264px] gap-5">
@@ -957,11 +1030,12 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
 export default function NGODashboard() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
-  const [activeStudent,  setActiveStudent]  = useState(null)
-  const [applicants,     setApplicants]     = useState([])
-  const [opportunities,  setOpportunities]  = useState([])
-  const [oppCount,       setOppCount]       = useState(0)
-  const [loadingData,    setLoadingData]    = useState(true)
+  const [activeStudent,     setActiveStudent]     = useState(null)
+  const [applicants,        setApplicants]        = useState([])
+  const [opportunities,     setOpportunities]     = useState([])
+  const [oppCount,          setOppCount]          = useState(0)
+  const [loadingData,       setLoadingData]       = useState(true)
+  const [suggestedMatches,  setSuggestedMatches]  = useState([])
 
   const orgName = profile?.name || user?.name || 'Your NGO'
 
@@ -977,6 +1051,67 @@ export default function NGODashboard() {
       setOppCount(opps.length)
     }).finally(() => setLoadingData(false))
   }, [user?.id])
+
+  // Compute suggested matches for each opportunity
+  useEffect(() => {
+    if (opportunities.length === 0) {
+      setSuggestedMatches([])
+      return
+    }
+
+    const computeMatches = async () => {
+      try {
+        // Fetch all student profiles
+        const { data: students, error } = await supabase
+          .from('student_profiles')
+          .select('id, name, field, skills, languages, availability, interests, causes, campus, year, experience, goals')
+
+        if (error || !students) {
+          setSuggestedMatches([])
+          return
+        }
+
+        // For each opportunity, find the best matching student
+        const matches = []
+        const colorPalettes = [
+          ['#7C3AED', '#A78BFA'],
+          ['#0EA5E9', '#38BDF8'],
+          ['#EC4899', '#F472B6'],
+          ['#14B8A6', '#2DD4BF'],
+          ['#F59E0B', '#FBBF24'],
+        ]
+
+        opportunities.forEach((opp, idx) => {
+          let bestMatch = null
+          let bestScore = 0
+
+          students.forEach(student => {
+            const score = computeMatch(student, opp)
+            if (score > bestScore) {
+              bestScore = score
+              bestMatch = student
+            }
+          })
+
+          if (bestMatch && bestScore > 0) {
+            matches.push({
+              opportunity: opp,
+              student: { ...bestMatch, match: Math.round(bestScore) },
+              score: Math.round(bestScore),
+              colors: colorPalettes[idx % colorPalettes.length],
+            })
+          }
+        })
+
+        setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
+      } catch (err) {
+        console.error('Error computing matches:', err)
+        setSuggestedMatches([])
+      }
+    }
+
+    computeMatches()
+  }, [opportunities])
 
   // Build stat cards from real data
   const ngoStats = [
@@ -998,6 +1133,7 @@ export default function NGODashboard() {
         ngoStats={ngoStats}
         loadingData={loadingData}
         navigate={navigate}
+        suggestedMatches={suggestedMatches}
       />
       <AnimatePresence>
         {activeStudent && (
