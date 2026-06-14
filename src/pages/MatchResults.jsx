@@ -5,11 +5,9 @@ import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
 import EmptyState from '../components/EmptyState'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchActiveOpportunities, fetchNgoOpportunities } from '../services/opportunities'
+import { fetchActiveOpportunities } from '../services/opportunities'
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
-import { supabase } from '../services/supabase'
-import { fetchNgoApplicants } from '../services/applications'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
 
@@ -288,70 +286,19 @@ export default function MatchResults() {
 
   const userName = profile?.name || user?.name || 'You'
   const userField = profile?.field || ''
-  const isNgo = user?.role === 'ngo' || profile?.orgName || !profile?.field
 
   useEffect(() => {
-    if (!profile || !user?.id) { setLoading(false); return }
-
-    if (isNgo) {
-      // NGO view: show students matched to their opportunities
-      Promise.all([
-        withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunities'),
-        supabase.from('student_profiles').select('user_id, field, skills, languages, availability, interests, experience, goals, users(id, name)')
-      ])
-        .then(([opps, { data: students }]) => {
-          if (!opps || !students) {
-            setMatches([])
-            return
-          }
-
-          const oppMatches = []
-          opps.forEach(opp => {
-            let bestStudent = null
-            let bestScore = 0
-
-            students.forEach(student => {
-              const result = computeMatch(student, opp)
-              const score = result?.score ?? 0
-              if (score > bestScore) {
-                bestScore = score
-                bestStudent = student
-              }
-            })
-
-            if (bestStudent) {
-              oppMatches.push({
-                id: `match_${opp.id}`,
-                opportunityId: opp.id,
-                score: Math.round(bestScore),
-                ngo: { name: profile.name, location: profile.location, description: profile.description },
-                ngoId: user.id,
-                studentName: bestStudent.users?.name || 'Student',
-                studentField: bestStudent.field || '',
-                headline: `${bestStudent.users?.name} is a ${Math.round(bestScore)}% match for ${opp.title}`,
-                opp: opp,
-                student: bestStudent
-              })
-            }
-          })
-
-          setMatches(oppMatches.sort((a, b) => b.score - a.score))
-        })
-        .catch(err => console.error('Failed to fetch NGO matches:', err))
-        .finally(() => setLoading(false))
-    } else {
-      // Student view: show opportunities matched to their profile
-      withTimeout(fetchActiveOpportunities(), 10000, 'fetchActiveOpportunities')
-        .then(opps => {
-          const scored = opps
-            .map(opp => ({ opp, result: computeMatch(profile, opp) }))
-            .sort((a, b) => b.result.score - a.result.score)
-          setMatches(scored.map(({ opp, result }) => oppToCard(opp, result, userName, userField)))
-        })
-        .catch(err => console.error('Failed to fetch matches:', err.message))
-        .finally(() => setLoading(false))
-    }
-  }, [user?.id, isNgo])
+    if (!profile) { setLoading(false); return }
+    withTimeout(fetchActiveOpportunities(), 10000, 'fetchActiveOpportunities')
+      .then(opps => {
+        const scored = opps
+          .map(opp => ({ opp, result: computeMatch(profile, opp) }))
+          .sort((a, b) => b.result.score - a.result.score)
+        setMatches(scored.map(({ opp, result }) => oppToCard(opp, result, userName, userField)))
+      })
+      .catch(err => console.error('Failed to fetch matches:', err.message))
+      .finally(() => setLoading(false))
+  }, [user?.id])
 
   if (user && !user.onboardingComplete) {
     return (
@@ -384,9 +331,7 @@ export default function MatchResults() {
             </h1>
           </div>
           <p className="text-[#4B6382] text-sm">
-            {isNgo
-              ? 'Student matches ranked by compatibility with your opportunities'
-              : 'Ranked by compatibility — skills, experience, language, and mission alignment.'}
+            Ranked by compatibility — skills, experience, language, and mission alignment.
           </p>
         </motion.div>
 
