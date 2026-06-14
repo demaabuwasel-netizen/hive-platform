@@ -187,7 +187,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
               <g key={i}
                 style={{ cursor: clickable ? 'pointer' : 'default' }}
                 onClick={() => {
-                  if (h.type === 'opp') navigate('/opportunities')
+                  if (h.type === 'opp') navigate(`/opportunities?opportunity=${h.opp.id}`)
                   if (h.type === 'slot-opp') navigate('/opportunities/new')
                 }}
               >
