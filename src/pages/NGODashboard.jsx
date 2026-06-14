@@ -169,7 +169,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 32 }}>
+      <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
         <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
           {hexes.slice(1).map((h, i) =>
             h.type === 'opp' ? (
