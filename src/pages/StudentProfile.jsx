@@ -569,46 +569,6 @@ export default function StudentProfile() {
           </div>
         </motion.div>
 
-        {/* ABOUT SECTION */}
-        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-          viewport={{ once:true }}
-          className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
-                <Users size={14} style={{ color: '#6366F1' }}/>
-              </span>
-              About
-            </h2>
-            {!editingAbout && (
-              <button onClick={() => setEditingAbout(true)}
-                className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                {profile?.bio ? 'Edit' : 'Add'} <Edit3 size={12}/>
-              </button>
-            )}
-          </div>
-
-          {editingAbout ? (
-            <div className="space-y-2">
-              <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-[13px] border border-[#FFB703] outline-none resize-none"
-                rows={3}/>
-              <div className="flex gap-2">
-                <button onClick={handleSaveAbout} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{ background: '#0D183D', color: 'white' }}>
-                  <Check size={13} className="inline mr-1"/>Save
-                </button>
-                <button onClick={() => setEditingAbout(false)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-[13px] leading-relaxed text-[#0D183D]">
-              {profile?.bio || 'No bio added yet.'}
-            </p>
-          )}
-        </motion.div>
-
         {/* ══════════════════════════════════════════════════════
             STAT CARDS ROW
         ══════════════════════════════════════════════════════ */}
