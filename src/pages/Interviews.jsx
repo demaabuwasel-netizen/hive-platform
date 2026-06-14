@@ -1,365 +1,486 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Calendar, Clock, Sparkles, RefreshCw, BookOpen, Mic,
-  CheckCircle2, Video, Phone, Users, ChevronDown, ChevronUp,
-  MapPin, X, Check, Search, Lightbulb, HelpCircle, Clock as ClockIcon,
+  Calendar, Clock, Sparkles, CheckCircle2, Mic, BookOpen,
+  AlertCircle, Lightbulb, Briefcase, ArrowRight, Loader,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import EmptyState from '../components/EmptyState'
+import { fetchStudentApplications } from '../services/applications'
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const STUDENT_UPCOMING = []
-
-const NGO_INTERVIEWS = []
-
-const STUDENT_QUESTIONS = [
-  { id: 1, q: 'Tell me about a project where you had to learn a new skill quickly. How did you approach it?', cat: 'Adaptability', done: true },
-  { id: 2, q: 'Describe a time you worked on a team with conflicting priorities. How did you resolve it?', cat: 'Teamwork', done: true },
-  { id: 3, q: 'How would you explain a complex technical concept to a non-technical stakeholder?', cat: 'Communication', done: false },
-  { id: 4, q: 'What does meaningful impact mean to you, and how does this role align with that?', cat: 'Motivation', done: false },
-  { id: 5, q: 'Walk me through your strongest project. What were the biggest challenges?', cat: 'Technical', done: false },
-]
-
-const TIPS = [
-  { icon: Search, title: 'Research the NGO',        desc: 'Read their annual report and recent news before the call.' },
-  { icon: Lightbulb, title: 'Prepare STAR stories',     desc: 'Situation, Task, Action, Result for each answer.'        },
-  { icon: HelpCircle, title: 'Prepare your own questions', desc: 'Ask about team culture, impact measurement, day-to-day.'  },
-  { icon: Clock, title: 'Join 5 minutes early',     desc: 'Test your camera and mic before the interview starts.'   },
-]
-
-const TYPE_ICON = { video: Video, phone: Phone, onsite: MapPin }
-const STATUS_STYLE = {
-  confirmed: { label: 'Confirmed', color: 'text-emerald-700', bg: 'bg-emerald-50' },
-  pending:   { label: 'Pending',   color: 'text-[#D99E00]',   bg: 'bg-amber-50'   },
-  cancelled: { label: 'Cancelled', color: 'text-red-500',     bg: 'bg-red-50'     },
-  completed: { label: 'Completed', color: 'text-[#4B6382]',   bg: 'bg-[#F8F9FB]'  },
+// Student interview prep categories and content
+const PREP_CATEGORIES = {
+  prepare: {
+    label: 'Prepare',
+    icon: Sparkles,
+    tips: [
+      'Research the NGO thoroughly - read their mission, annual reports, and recent news',
+      'Prepare STAR stories (Situation, Task, Action, Result) for 3-5 key accomplishments',
+      'Review the job description and align your experience with key responsibilities',
+      'Prepare thoughtful questions about team culture, impact measurement, and growth',
+      'Practice your elevator pitch - concise summary of who you are and why you\'re interested',
+    ],
+  },
+  expect: {
+    label: 'Expect',
+    icon: Clock,
+    tips: [
+      'Expect 30-60 minute interviews with multiple questions about past experiences',
+      'They may ask situational questions about how you\'d handle specific scenarios',
+      'Be prepared to discuss your technical skills and how they apply to the role',
+      'They will likely ask about your motivation for working in the nonprofit sector',
+      'You may be given a brief technical challenge or case study to solve',
+    ],
+  },
+  avoid: {
+    label: 'Avoid',
+    icon: AlertCircle,
+    tips: [
+      'Don\'t speak negatively about previous employers or team members',
+      'Avoid generic answers - be specific with examples and metrics when possible',
+      'Don\'t oversell your skills - be honest about what you know and don\'t know',
+      'Avoid checking your phone or appearing distracted during the interview',
+      'Don\'t ask only about salary/benefits in initial interviews',
+    ],
+  },
+  tips: {
+    label: 'Tips',
+    icon: Lightbulb,
+    tips: [
+      'Join 5 minutes early to test your camera, microphone, and internet connection',
+      'Dress professionally - even for virtual interviews, first impressions matter',
+      'Speak clearly and at a measured pace - interviewers need to understand you',
+      'Ask follow-up questions to show genuine interest and engagement',
+      'Send a thank-you email within 24 hours referencing specific discussion points',
+    ],
+  },
 }
 
-// ─── Student view ─────────────────────────────────────────────────────────────
+// Interview prep guides for NGOs
+const INTERVIEW_GUIDES = {
+  'Web Developer': {
+    questions: [
+      'Tell me about your most complex web project. What were the main technical challenges?',
+      'How do you approach debugging performance issues in web applications?',
+      'Describe your experience with responsive design and cross-browser compatibility.',
+      'Tell me about a time you had to learn a new framework or technology quickly.',
+      'How do you stay updated with web development trends and best practices?',
+    ],
+    lookFor: [
+      'Strong problem-solving approach with clear explanation of technical decisions',
+      'Hands-on experience with modern frameworks and development tools',
+      'Understanding of web performance, accessibility, and user experience',
+      'Ability to communicate technical concepts to non-technical stakeholders',
+      'Passion for continuous learning in a rapidly evolving field',
+    ],
+    redFlags: [
+      'Cannot explain their own code decisions or technical choices',
+      'Limited awareness of web accessibility standards (WCAG)',
+      'No experience with version control or collaborative development',
+      'Dismissive of testing, documentation, or code quality',
+      'Unable to discuss trade-offs between different technical approaches',
+    ],
+  },
+  'Designer': {
+    questions: [
+      'Walk me through your design process for a recent project.',
+      'How do you approach user research and feedback in your design work?',
+      'Tell me about a time you had to simplify a complex interface.',
+      'How do you balance aesthetics with functionality and user needs?',
+      'Describe your experience with design systems and component libraries.',
+    ],
+    lookFor: [
+      'User-centered design thinking and empathy for end users',
+      'Clear communication of design rationale and decision-making',
+      'Experience with modern design tools and prototyping',
+      'Understanding of accessibility and inclusive design principles',
+      'Ability to iterate based on feedback and user testing',
+    ],
+    redFlags: [
+      'Defensive about design choices without solid reasoning',
+      'No consideration for accessibility or inclusive design',
+      'Inability to explain design decisions to non-designers',
+      'No experience with user research or user testing',
+      'Treating design as purely aesthetic rather than functional',
+    ],
+  },
+  'Content Lead': {
+    questions: [
+      'Describe your approach to developing content strategy for an organization.',
+      'How do you measure content effectiveness and ROI?',
+      'Tell me about a content campaign you led. What made it successful?',
+      'How do you stay current with content trends and platform algorithms?',
+      'How do you balance creative vision with data-driven decisions?',
+    ],
+    lookFor: [
+      'Strategic thinking about audience, messaging, and goals',
+      'Strong writing and communication skills across formats',
+      'Experience with content management systems and analytics',
+      'Ability to lead and collaborate with creative teams',
+      'Understanding of SEO and content optimization',
+    ],
+    redFlags: [
+      'No experience with content analytics or measuring impact',
+      'Poor writing quality or communication skills',
+      'Unable to articulate content strategy or vision',
+      'No experience managing content teams or projects',
+      'Resistant to data-driven decision making',
+    ],
+  },
+}
 
 function StudentView() {
-  const [done, setDone]         = useState(new Set(STUDENT_QUESTIONS.filter(q => q.done).map(q => q.id)))
-  const [expanded, setExpanded] = useState(null)
-  const progress = Math.round((done.size / STUDENT_QUESTIONS.length) * 100)
+  const { user } = useApp()
+  const [apps, setApps] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedAppId, setSelectedAppId] = useState(null)
+  const [selectedTab, setSelectedTab] = useState('prepare')
+
+  useEffect(() => {
+    if (!user?.id) return
+    setLoading(true)
+    fetchStudentApplications(user.id)
+      .then(apps => {
+        setApps(apps)
+        if (apps.length > 0) setSelectedAppId(apps[0].id)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [user?.id])
+
+  const selectedApp = apps.find(a => a.id === selectedAppId)
+  const tabCategory = PREP_CATEGORIES[selectedTab]
+  const TabIcon = tabCategory?.icon || Sparkles
 
   return (
-    <>
-      {/* Upcoming interviews */}
-      <section className="mb-8">
-        <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-3">Upcoming interviews</h2>
-        {STUDENT_UPCOMING.length === 0 && (
-          <EmptyState
-            emoji="📅"
-            title="No interviews scheduled"
-            description="When an NGO invites you to interview, it will appear here."
-            actionLabel="View matches"
-            actionHref="/matches"
-          />
-        )}
-        <div className="flex flex-col gap-3">
-          {STUDENT_UPCOMING.map((u, i) => {
-            const TypeIcon = TYPE_ICON[u.type] || Video
-            const st = STATUS_STYLE[u.status]
-            return (
-              <motion.div key={u.id}
-                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                transition={{ delay:i*0.07 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-5 py-4 flex items-center gap-5 hover:shadow-[0_4px_20px_rgba(13,24,61,0.06)] transition-all">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background:'rgba(255,183,3,0.1)' }}>
-                  <Calendar size={18} style={{ color:'#FFB703' }}/>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <p className="text-[13px] font-bold text-[#0D183D]">{u.ngo}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.bg} ${st.color}`}>{st.label}</span>
-                  </div>
-                  <p className="text-[11px] text-[#4B6382]">{u.role}</p>
-                  <div className="flex items-center gap-3 mt-1 text-[11px] text-[#4B6382]">
-                    <span className="flex items-center gap-1"><Calendar size={10}/> {u.date} at {u.time}</span>
-                    <span className="flex items-center gap-1"><TypeIcon size={10}/> {u.type}</span>
-                  </div>
-                </div>
-                <div className="text-right shrink-0 hidden sm:block">
-                  <p className="text-[10px] text-[#4B6382] mb-1">Prep score</p>
-                  <p className="text-[17px] font-extrabold" style={{ color: u.prep >= 70 ? '#10B981' : '#FFB703' }}>{u.prep}%</p>
-                </div>
-                <button className="shrink-0 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background:'#0D183D' }}>
-                  Prepare
-                </button>
-              </motion.div>
-            )
-          })}
-        </div>
-      </section>
+    <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+      {/* LEFT: Sidebar - List of Opportunities */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden h-fit lg:sticky lg:top-6">
 
-      {/* Practice session */}
-      <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-[14px] font-extrabold text-[#0D183D]">Practice session</p>
-            <p className="text-[12px] text-[#4B6382] mt-0.5">Tailored for your Elem interview</p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background:'rgba(255,183,3,0.1)' }}>
-              <Sparkles size={16} style={{ color:'#FFB703' }}/>
-            </div>
-            <span className="text-[20px] font-extrabold text-[#0D183D]">{progress}%</span>
-          </div>
+        <div className="p-4 border-b border-[rgba(13,24,61,0.08)]">
+          <h3 className="text-[13px] font-bold text-[#0D183D] uppercase tracking-widest">Your Applications</h3>
+          <p className="text-[10px] text-[#4B6382] mt-1">{apps.length} applied</p>
         </div>
-        <div className="w-full h-2 rounded-full mb-2" style={{ background:'rgba(13,24,61,0.07)' }}>
-          <motion.div className="h-2 rounded-full" style={{ background:'#FFB703' }}
-            initial={{ width:0 }} animate={{ width:`${progress}%` }}
-            transition={{ duration:0.8, ease:'easeOut', delay:0.2 }}/>
-        </div>
-        <p className="text-[11px] text-[#4B6382]">{done.size} of {STUDENT_QUESTIONS.length} questions practiced</p>
-      </div>
 
-      {/* Question bank */}
-      <section className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest">Practice questions</h2>
-          <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4B6382] hover:text-[#0D183D] transition-colors">
-            <RefreshCw size={12}/> Refresh
-          </button>
-        </div>
-        <div className="flex flex-col gap-2.5">
-          {STUDENT_QUESTIONS.map((q, i) => (
-            <motion.div key={q.id}
-              initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-              transition={{ delay:i*0.06 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden">
-              <button
-                onClick={() => setExpanded(expanded === q.id ? null : q.id)}
-                className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-[#F8F9FB] transition-colors">
-                <button
-                  onClick={e => { e.stopPropagation(); setDone(s => { const n = new Set(s); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n }) }}
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${done.has(q.id) ? 'bg-emerald-500 border-emerald-500' : 'border-[rgba(13,24,61,0.2)]'}`}>
-                  {done.has(q.id) && <Check size={11} strokeWidth={3} className="text-white"/>}
-                </button>
-                <p className="flex-1 text-[13px] font-medium text-[#0D183D] leading-snug">{q.q}</p>
-                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F8F9FB] text-[#4B6382]">{q.cat}</span>
-                {expanded === q.id ? <ChevronUp size={14} className="text-[#4B6382] shrink-0"/> : <ChevronDown size={14} className="text-[#4B6382] shrink-0"/>}
-              </button>
-              <AnimatePresence>
-                {expanded === q.id && (
-                  <motion.div initial={{ height:0, opacity:0 }} animate={{ height:'auto', opacity:1 }} exit={{ height:0, opacity:0 }}
-                    transition={{ duration:0.2 }}
-                    className="px-5 pb-4 overflow-hidden" style={{ borderTop:'1px solid rgba(13,24,61,0.06)' }}>
-                    <div className="flex gap-3 mt-3">
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                        style={{ background:'#FFB703' }}>
-                        <Mic size={12}/> Practice aloud
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)] hover:bg-[#F8F9FB] transition-colors">
-                        <BookOpen size={12}/> See tips
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+        <div className="max-h-[600px] overflow-y-auto">
+          {apps.map((app, i) => (
+            <motion.button
+              key={app.id}
+              onClick={() => setSelectedAppId(app.id)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`w-full text-left px-4 py-3 border-b border-[rgba(13,24,61,0.06)] transition-all ${
+                selectedAppId === app.id
+                  ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
+                  : 'hover:bg-[#F8F9FB]'
+              }`}>
+              <p className="text-[13px] font-semibold text-[#0D183D] truncate">{app.ngo_name || app.opportunity_title}</p>
+              <p className="text-[11px] text-[#4B6382] mt-0.5 truncate">{app.role_title || 'Position'}</p>
+            </motion.button>
           ))}
         </div>
-      </section>
+      </motion.div>
 
-      {/* Interview tips */}
-      <section>
-        <h2 className="text-[12px] font-extrabold text-[#0D183D] uppercase tracking-widest mb-4">Interview tips</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
-          {TIPS.map((t, i) => {
-            const IconComponent = t.icon
-            return (
-              <motion.div key={i}
-                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                transition={{ delay:0.3 + i*0.06 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-5 flex items-start gap-4 hover:border-[rgba(13,24,61,0.12)] hover:shadow-sm transition-all">
-                <div className="w-10 h-10 rounded-lg bg-[#FFB703]/10 flex items-center justify-center shrink-0 flex-shrink-0">
-                  <IconComponent size={18} className="text-[#FFB703]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-[#0D183D] mb-1">{t.title}</p>
-                  <p className="text-[12px] text-[#4B6382] leading-relaxed">{t.desc}</p>
-                </div>
-              </motion.div>
-            )
-          })}
+      {/* RIGHT: Interview Prep Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Loader size={32} className="text-[#FFB703] animate-spin mx-auto mb-3"/>
+            <p className="text-[#4B6382]">Loading your applications...</p>
+          </div>
         </div>
-      </section>
-    </>
+      ) : apps.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
+          <Briefcase size={48} className="text-[#FFB703]/30 mx-auto mb-4"/>
+          <p className="text-[16px] font-semibold text-[#0D183D] mb-2">No applications yet</p>
+          <p className="text-[14px] text-[#4B6382] mb-4">Apply to opportunities to see interview prep guides</p>
+          <button className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#0D183D' }}>
+            Browse opportunities <ArrowRight size={14}/>
+          </button>
+        </div>
+      ) : selectedApp ? (
+        <motion.div
+          key={selectedAppId}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}>
+
+          {/* Header */}
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-[14px] font-extrabold text-[#0D183D]">{selectedApp.ngo_name || selectedApp.opportunity_title}</p>
+                <p className="text-[12px] text-[#4B6382] mt-1">{selectedApp.role_title || 'Position'}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background:'rgba(255,183,3,0.1)' }}>
+                <Sparkles size={16} style={{ color:'#FFB703' }}/>
+              </div>
+            </div>
+            <p className="text-[12px] text-[#4B6382]">Interview preparation guide</p>
+          </div>
+
+          {/* Tabs */}
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden">
+            <div className="flex gap-0 border-b border-[rgba(13,24,61,0.08)]">
+              {Object.entries(PREP_CATEGORIES).map(([key, cat]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedTab(key)}
+                  className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                    selectedTab === key
+                      ? 'text-[#FFB703] border-b-[#FFB703]'
+                      : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
+                  }`}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#FFB703' }}>
+                  <TabIcon size={14} className="text-white"/>
+                </div>
+                <p className="text-[13px] font-bold text-[#0D183D]">{tabCategory.label}</p>
+              </div>
+
+              <div className="space-y-3">
+                {tabCategory.tips.map((tip, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex gap-3 p-3 rounded-xl"
+                    style={{ background: 'rgba(13,24,61,0.03)' }}>
+                    <div className="text-[#FFB703] font-bold flex-shrink-0 pt-0.5">•</div>
+                    <p className="text-[12px] text-[#4B6382] leading-relaxed">{tip}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      ) : null}
+    </div>
   )
 }
 
-// ─── NGO view ─────────────────────────────────────────────────────────────────
-
 function NGOView() {
-  const [expanded, setExpanded]   = useState(null)
-  const [statuses, setStatuses]   = useState(() => Object.fromEntries(NGO_INTERVIEWS.map(i => [i.id, i.status])))
-  const [toast, setToast]         = useState(null)
+  const { profile } = useApp()
+  const [ngoOpportunities, setNgoOpportunities] = useState([])
+  const [selectedRole, setSelectedRole] = useState(null)
+  const [selectedTab, setSelectedTab] = useState('prepare')
 
-  function confirm(id) {
-    setStatuses(s => ({ ...s, [id]: 'confirmed' }))
-    setToast('Interview confirmed')
-    setTimeout(() => setToast(null), 2200)
-  }
-  function cancel(id) {
-    setStatuses(s => ({ ...s, [id]: 'cancelled' }))
-    setToast('Interview cancelled')
-    setTimeout(() => setToast(null), 2200)
-  }
+  useEffect(() => {
+    if (profile?.opportunities) {
+      const opps = Array.isArray(profile.opportunities) ? profile.opportunities : []
+      setNgoOpportunities(opps)
+      if (opps.length > 0 && !selectedRole) {
+        setSelectedRole(opps[0].title)
+      }
+    }
+  }, [profile])
+
+  const selectedOpp = ngoOpportunities.find(o => o.title === selectedRole)
+  const guide = selectedOpp ? INTERVIEW_GUIDES[selectedRole] : null
+  const tabCategory = PREP_CATEGORIES[selectedTab]
+  const TabIcon = tabCategory?.icon || Sparkles
 
   return (
-    <>
-      {/* Summary chips */}
-      <div className="flex gap-3 mb-6 flex-wrap">
-        {[
-          { label: `${NGO_INTERVIEWS.length} scheduled`, color: '#6366F1' },
-          { label: `${Object.values(statuses).filter(s=>s==='confirmed').length} confirmed`, color: '#10B981' },
-          { label: `${Object.values(statuses).filter(s=>s==='pending').length} awaiting`, color: '#D99E00' },
-        ].map(({ label, color }) => (
-          <div key={label} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold border"
-            style={{ borderColor:`${color}30`, background:`${color}12`, color }}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background:color }}/>
-            {label}
-          </div>
-        ))}
-      </div>
+    <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+      {/* LEFT: Sidebar - List of Opportunities Posted */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden h-fit lg:sticky lg:top-6">
 
-      {NGO_INTERVIEWS.length === 0 && (
-        <EmptyState
-          emoji="🗓️"
-          title="No interviews scheduled"
-          description="When you schedule interviews with applicants, they'll appear here."
-          actionLabel="View applicants"
-          actionHref="/applicants"
-        />
-      )}
-      <div className="flex flex-col gap-4">
-        {NGO_INTERVIEWS.map((iv, i) => {
-          const st = STATUS_STYLE[statuses[iv.id]]
-          const isOpen = expanded === iv.id
-          const TypeIcon = TYPE_ICON[iv.type] || Video
-          return (
-            <motion.div key={iv.id}
-              initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-              transition={{ delay:i*0.07 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden hover:shadow-[0_4px_20px_rgba(13,24,61,0.06)] transition-shadow">
+        <div className="p-4 border-b border-[rgba(13,24,61,0.08)]">
+          <h3 className="text-[13px] font-bold text-[#0D183D] uppercase tracking-widest">Your Roles</h3>
+          <p className="text-[10px] text-[#4B6382] mt-1">{ngoOpportunities.length} posted</p>
+        </div>
 
-              {/* Card header */}
-              <div className="px-5 py-4 flex items-center gap-4">
-                <GradientAvatar name={iv.candidate} size={44} radius="0.65rem"/>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <p className="text-[13px] font-bold text-[#0D183D]">{iv.candidate}</p>
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${st.bg} ${st.color}`}>{st.label}</span>
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 shrink-0">{iv.score}%</span>
-                  </div>
-                  <p className="text-[11px] text-[#4B6382] mb-1 truncate">{iv.field} · {iv.role}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-[#4B6382]">
-                    <span className="flex items-center gap-1"><Calendar size={10}/> {iv.date} at {iv.time}</span>
-                    <span className="flex items-center gap-1"><TypeIcon size={10}/> {iv.type}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {statuses[iv.id] === 'pending' && (
-                    <button onClick={() => confirm(iv.id)}
-                      className="px-3.5 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                      style={{ background:'#10B981' }}>
-                      Confirm
-                    </button>
-                  )}
-                  {statuses[iv.id] === 'confirmed' && (
-                    <span className="flex items-center gap-1 text-[12px] font-semibold text-emerald-600">
-                      <CheckCircle2 size={13}/> Confirmed
-                    </span>
-                  )}
-                  <button onClick={() => setExpanded(isOpen ? null : iv.id)}
-                    className="px-3.5 py-2 rounded-xl text-[12px] font-semibold border text-[#0D183D] hover:bg-[#F8F9FB] transition-colors border-[rgba(13,24,61,0.1)]">
-                    {isOpen ? 'Hide' : 'AI Questions'}
-                  </button>
-                </div>
+        <div className="max-h-[600px] overflow-y-auto">
+          {ngoOpportunities.map((opp, i) => (
+            <motion.button
+              key={opp.id}
+              onClick={() => setSelectedRole(opp.title)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`w-full text-left px-4 py-3 border-b border-[rgba(13,24,61,0.06)] transition-all ${
+                selectedRole === opp.title
+                  ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
+                  : 'hover:bg-[#F8F9FB]'
+              }`}>
+              <p className="text-[13px] font-semibold text-[#0D183D] truncate">{opp.title}</p>
+              <p className="text-[11px] text-[#4B6382] mt-0.5 truncate">{opp.location || 'Remote'}</p>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* RIGHT: Interview Prep Content */}
+      {ngoOpportunities.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
+          <Briefcase size={48} className="text-[#FFB703]/30 mx-auto mb-4"/>
+          <p className="text-[16px] font-semibold text-[#0D183D] mb-2">No roles posted yet</p>
+          <p className="text-[14px] text-[#4B6382]">Create opportunities to see interview prep guides</p>
+        </div>
+      ) : selectedOpp && guide ? (
+        <motion.div
+          key={selectedRole}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}>
+
+          {/* Header */}
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-[14px] font-extrabold text-[#0D183D]">{selectedOpp.title}</p>
+                <p className="text-[12px] text-[#4B6382] mt-1">Interview preparation guide</p>
               </div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background:'rgba(255,183,3,0.1)' }}>
+                <Mic size={16} style={{ color:'#FFB703' }}/>
+              </div>
+            </div>
+            <p className="text-[12px] text-[#4B6382]">Tips for interviewing candidates for this role</p>
+          </div>
 
-              {/* AI questions panel */}
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.div initial={{ height:0, opacity:0 }} animate={{ height:'auto', opacity:1 }} exit={{ height:0, opacity:0 }}
-                    transition={{ duration:0.22 }}
-                    className="overflow-hidden"
-                    style={{ borderTop:'1px solid rgba(13,24,61,0.07)', background:'rgba(255,183,3,0.02)' }}>
-                    <div className="px-5 py-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background:'#FFB703' }}>
-                          <Sparkles size={11} strokeWidth={2.5} className="text-white"/>
-                        </div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color:'#D99E00' }}>
-                          AI-generated questions for this candidate
-                        </p>
+          {/* Tabs */}
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden mb-6">
+            <div className="flex gap-0 border-b border-[rgba(13,24,61,0.08)]">
+              <button
+                onClick={() => setSelectedTab('questions')}
+                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                  selectedTab === 'questions'
+                    ? 'text-[#FFB703] border-b-[#FFB703]'
+                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
+                }`}>
+                Questions
+              </button>
+              <button
+                onClick={() => setSelectedTab('lookfor')}
+                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                  selectedTab === 'lookfor'
+                    ? 'text-[#FFB703] border-b-[#FFB703]'
+                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
+                }`}>
+                Look For
+              </button>
+              <button
+                onClick={() => setSelectedTab('redflags')}
+                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                  selectedTab === 'redflags'
+                    ? 'text-[#FFB703] border-b-[#FFB703]'
+                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
+                }`}>
+                Red Flags
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                {selectedTab === 'questions' && (
+                  <motion.div
+                    key="questions"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#FFB703' }}>
+                        <Mic size={14} className="text-white"/>
                       </div>
-                      <div className="grid sm:grid-cols-2 gap-2.5">
-                        {iv.questions.map((q, qi) => (
-                          <motion.div key={qi}
-                            initial={{ opacity:0, x:-4 }} animate={{ opacity:1, x:0 }}
-                            transition={{ delay: qi*0.05 }}
-                            className="rounded-xl p-3.5 text-[12px] text-[#4B6382] leading-relaxed"
-                            style={{ background:'rgba(13,24,61,0.03)', border:'1px solid rgba(13,24,61,0.07)' }}>
-                            <span className="font-extrabold mr-1.5" style={{ color:'#FFB703' }}>Q{qi+1}</span>
-                            {q}
-                          </motion.div>
-                        ))}
-                      </div>
-                      {statuses[iv.id] !== 'cancelled' && (
-                        <div className="flex gap-2 mt-4">
-                          <button onClick={() => cancel(iv.id)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold text-red-500 border border-red-100 hover:bg-red-50 transition-colors">
-                            <X size={12}/> Cancel interview
-                          </button>
+                      <p className="text-[13px] font-bold text-[#0D183D]">Questions to Ask</p>
+                    </div>
+                    <div className="space-y-3">
+                      {guide.questions.map((q, i) => (
+                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
+                          <div className="text-[#FFB703] font-bold flex-shrink-0 pt-0.5 text-[12px]">Q{i+1}</div>
+                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{q}</p>
                         </div>
-                      )}
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+                {selectedTab === 'lookfor' && (
+                  <motion.div
+                    key="lookfor"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#10B981' }}>
+                        <Lightbulb size={14} className="text-white"/>
+                      </div>
+                      <p className="text-[13px] font-bold text-[#0D183D]">What to Look For</p>
+                    </div>
+                    <div className="space-y-3">
+                      {guide.lookFor.map((item, i) => (
+                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
+                          <div className="text-[#10B981] font-bold flex-shrink-0 pt-0.5">✓</div>
+                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+                {selectedTab === 'redflags' && (
+                  <motion.div
+                    key="redflags"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#EF4444' }}>
+                        <AlertCircle size={14} className="text-white"/>
+                      </div>
+                      <p className="text-[13px] font-bold text-[#0D183D]">Red Flags</p>
+                    </div>
+                    <div className="space-y-3">
+                      {guide.redFlags.map((flag, i) => (
+                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
+                          <div className="text-[#EF4444] font-bold flex-shrink-0 pt-0.5">⚠</div>
+                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{flag}</p>
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
-          )
-        })}
-      </div>
-
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:16 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-3 rounded-2xl text-white text-[13px] font-semibold z-50 pointer-events-none"
-            style={{ background:'#0D183D', boxShadow:'0 8px 24px rgba(13,24,61,0.3)' }}>
-            <CheckCircle2 size={14}/> {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+            </div>
+          </div>
+        </motion.div>
+      ) : null}
+    </div>
   )
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Interviews() {
   const { user } = useApp()
   const isNGO = user?.role === 'ngo'
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-7">
-      <div className="mb-6">
-        <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Interviews</h1>
-        <p className="text-[13px] text-[#4B6382] mt-0.5">
-          {isNGO
-            ? 'Manage scheduled interviews and review AI-generated questions per candidate'
-            : 'Prepare for upcoming interviews with AI-powered practice questions'}
-        </p>
+    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
+      <div className="px-8 py-7 max-w-6xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-[1.15rem] font-extrabold text-[#0D183D]">Interviews</h1>
+          <p className="text-[13px] text-[#4B6382] mt-0.5">
+            {isNGO
+              ? 'Interview guides for each role you posted'
+              : 'Interview prep guides for your applications'}
+          </p>
+        </div>
+        {isNGO ? <NGOView /> : <StudentView />}
       </div>
-      {isNGO ? <NGOView/> : <StudentView/>}
-    </div>
+    </main>
   )
 }
