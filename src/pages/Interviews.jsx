@@ -7,6 +7,7 @@ import {
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchStudentApplications } from '../services/applications'
+import { fetchNgoOpportunities } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
 
 // Student interview prep categories and content
@@ -281,23 +282,31 @@ function StudentView() {
 }
 
 function NGOView() {
-  const { profile } = useApp()
+  const { user } = useApp()
   const [ngoOpportunities, setNgoOpportunities] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
   const [selectedTab, setSelectedTab] = useState('prepare')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (profile?.opportunities) {
-      const opps = Array.isArray(profile.opportunities) ? profile.opportunities : []
-      setNgoOpportunities(opps)
-      if (opps.length > 0 && !selectedRole) {
-        setSelectedRole(opps[0].title)
-      }
-    }
-  }, [profile])
+    if (!user?.id) return
+    setLoading(true)
+    withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunities')
+      .then(opps => {
+        setNgoOpportunities(opps || [])
+        if (opps && opps.length > 0 && !selectedRole) {
+          setSelectedRole(opps[0].id)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load NGO opportunities:', err.message)
+        setNgoOpportunities([])
+      })
+      .finally(() => setLoading(false))
+  }, [user?.id])
 
-  const selectedOpp = ngoOpportunities.find(o => o.title === selectedRole)
-  const guide = selectedOpp ? INTERVIEW_GUIDES[selectedRole] : null
+  const selectedOpp = ngoOpportunities.find(o => o.id === selectedRole)
+  const guide = selectedOpp ? INTERVIEW_GUIDES[selectedOpp.title] : null
   const tabCategory = PREP_CATEGORIES[selectedTab]
   const TabIcon = tabCategory?.icon || Sparkles
 
@@ -311,37 +320,56 @@ function NGOView() {
 
         <div className="p-4 border-b border-[rgba(13,24,61,0.08)]">
           <h3 className="text-[13px] font-bold text-[#0D183D] uppercase tracking-widest">Your Roles</h3>
-          <p className="text-[10px] text-[#4B6382] mt-1">{ngoOpportunities.length} posted</p>
+          <p className="text-[10px] text-[#4B6382] mt-1">{loading ? 'Loading...' : `${ngoOpportunities.length} posted`}</p>
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
-          {ngoOpportunities.map((opp, i) => (
-            <motion.button
-              key={opp.id}
-              onClick={() => setSelectedRole(opp.title)}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`w-full text-left px-4 py-3 border-b border-[rgba(13,24,61,0.06)] transition-all ${
-                selectedRole === opp.title
-                  ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
-                  : 'hover:bg-[#F8F9FB]'
-              }`}>
-              <p className="text-[13px] font-semibold text-[#0D183D] truncate">{opp.title}</p>
-              <p className="text-[11px] text-[#4B6382] mt-0.5 truncate">{opp.location || 'Remote'}</p>
-            </motion.button>
-          ))}
+          {loading ? (
+            <div className="space-y-2 p-3">
+              {[1,2,3].map(i => (
+                <div key={i} className="h-16 bg-[rgba(13,24,61,0.04)] rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : ngoOpportunities.length === 0 ? (
+            <div className="p-4 text-center text-[12px] text-[#4B6382]">
+              No roles posted yet
+            </div>
+          ) : (
+            ngoOpportunities.map((opp, i) => (
+              <motion.button
+                key={opp.id}
+                onClick={() => setSelectedRole(opp.id)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`w-full text-left px-4 py-3 border-b border-[rgba(13,24,61,0.06)] transition-all ${
+                  selectedRole === opp.id
+                    ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
+                    : 'hover:bg-[#F8F9FB]'
+                }`}>
+                <p className="text-[13px] font-semibold text-[#0D183D] truncate">{opp.title || opp.role}</p>
+                <p className="text-[11px] text-[#4B6382] mt-0.5 truncate">{opp.location || 'Remote'}</p>
+              </motion.button>
+            ))
+          )}
         </div>
       </motion.div>
 
       {/* RIGHT: Interview Prep Content */}
-      {ngoOpportunities.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Loader size={32} className="text-[#FFB703] animate-spin mx-auto mb-3"/>
+            <p className="text-[#4B6382]">Loading your roles...</p>
+          </div>
+        </div>
+      ) : ngoOpportunities.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
           <Briefcase size={48} className="text-[#FFB703]/30 mx-auto mb-4"/>
           <p className="text-[16px] font-semibold text-[#0D183D] mb-2">No roles posted yet</p>
           <p className="text-[14px] text-[#4B6382]">Create opportunities to see interview prep guides</p>
         </div>
-      ) : selectedOpp && guide ? (
+      ) : selectedOpp ? (
         <motion.div
           key={selectedRole}
           initial={{ opacity: 0, y: 12 }}
@@ -349,121 +377,60 @@ function NGOView() {
           transition={{ duration: 0.3 }}>
 
           {/* Header */}
-          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-[14px] font-extrabold text-[#0D183D]">{selectedOpp.title}</p>
-                <p className="text-[12px] text-[#4B6382] mt-1">Interview preparation guide</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background:'rgba(255,183,3,0.1)' }}>
-                <Mic size={16} style={{ color:'#FFB703' }}/>
-              </div>
+          <div className="bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl px-8 py-8 mb-6 flex items-start gap-6">
+            <GradientAvatar name={selectedOpp.orgName || selectedOpp.org_name || 'Organization'} size={64} radius="1rem"/>
+            <div className="flex-1">
+              <p className="text-[12px] font-bold text-[#FFB703] uppercase tracking-widest mb-2">
+                {selectedOpp.orgName || selectedOpp.org_name}
+              </p>
+              <h2 className="text-[32px] font-extrabold text-white mb-3">{selectedOpp.title || selectedOpp.role}</h2>
+              <p className="text-[13px] text-white/80">Interview preparation guide for candidates</p>
             </div>
-            <p className="text-[12px] text-[#4B6382]">Tips for interviewing candidates for this role</p>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background:'rgba(255,183,3,0.2)' }}>
+              <Sparkles size={16} style={{ color:'#FFB703' }}/>
+            </div>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden mb-6">
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden">
             <div className="flex gap-0 border-b border-[rgba(13,24,61,0.08)]">
-              <button
-                onClick={() => setSelectedTab('questions')}
-                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-                  selectedTab === 'questions'
-                    ? 'text-[#FFB703] border-b-[#FFB703]'
-                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
-                }`}>
-                Questions
-              </button>
-              <button
-                onClick={() => setSelectedTab('lookfor')}
-                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-                  selectedTab === 'lookfor'
-                    ? 'text-[#FFB703] border-b-[#FFB703]'
-                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
-                }`}>
-                Look For
-              </button>
-              <button
-                onClick={() => setSelectedTab('redflags')}
-                className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-                  selectedTab === 'redflags'
-                    ? 'text-[#FFB703] border-b-[#FFB703]'
-                    : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
-                }`}>
-                Red Flags
-              </button>
+              {Object.entries(PREP_CATEGORIES).map(([key, cat]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedTab(key)}
+                  className={`flex-1 px-4 py-3 text-center text-[12px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                    selectedTab === key
+                      ? 'text-[#FFB703] border-b-[#FFB703]'
+                      : 'text-[#4B6382] border-b-transparent hover:text-[#0D183D]'
+                  }`}>
+                  {cat.label}
+                </button>
+              ))}
             </div>
 
             {/* Tab Content */}
             <div className="p-6">
-              <AnimatePresence mode="wait">
-                {selectedTab === 'questions' && (
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#FFB703' }}>
+                  <TabIcon size={14} className="text-white"/>
+                </div>
+                <p className="text-[13px] font-bold text-[#0D183D]">{tabCategory.label}</p>
+              </div>
+
+              <div className="space-y-3">
+                {tabCategory.tips.map((tip, i) => (
                   <motion.div
-                    key="questions"
+                    key={i}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#FFB703' }}>
-                        <Mic size={14} className="text-white"/>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#0D183D]">Questions to Ask</p>
-                    </div>
-                    <div className="space-y-3">
-                      {guide.questions.map((q, i) => (
-                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
-                          <div className="text-[#FFB703] font-bold flex-shrink-0 pt-0.5 text-[12px]">Q{i+1}</div>
-                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{q}</p>
-                        </div>
-                      ))}
-                    </div>
+                    transition={{ delay: i * 0.05 }}
+                    className="flex gap-3 p-3 rounded-xl"
+                    style={{ background: 'rgba(13,24,61,0.03)' }}>
+                    <div className="text-[#FFB703] font-bold flex-shrink-0 pt-0.5">•</div>
+                    <p className="text-[12px] text-[#4B6382] leading-relaxed">{tip}</p>
                   </motion.div>
-                )}
-                {selectedTab === 'lookfor' && (
-                  <motion.div
-                    key="lookfor"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#10B981' }}>
-                        <Lightbulb size={14} className="text-white"/>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#0D183D]">What to Look For</p>
-                    </div>
-                    <div className="space-y-3">
-                      {guide.lookFor.map((item, i) => (
-                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
-                          <div className="text-[#10B981] font-bold flex-shrink-0 pt-0.5">✓</div>
-                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-                {selectedTab === 'redflags' && (
-                  <motion.div
-                    key="redflags"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-6 h-6 flex items-center justify-center rounded-lg" style={{ background:'#EF4444' }}>
-                        <AlertCircle size={14} className="text-white"/>
-                      </div>
-                      <p className="text-[13px] font-bold text-[#0D183D]">Red Flags</p>
-                    </div>
-                    <div className="space-y-3">
-                      {guide.redFlags.map((flag, i) => (
-                        <div key={i} className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(13,24,61,0.03)' }}>
-                          <div className="text-[#EF4444] font-bold flex-shrink-0 pt-0.5">⚠</div>
-                          <p className="text-[12px] text-[#4B6382] leading-relaxed">{flag}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
