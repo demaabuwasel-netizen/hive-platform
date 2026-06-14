@@ -66,10 +66,16 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
 
 // ─── Hive Visualization ───────────────────────────────────────────────────────
 
-function HiveVisualization({ opportunities, applicants, navigate }) {
+function HiveVisualization({ opportunities, applicants, navigate, suggestedMatches = [] }) {
   const R = 26
   const CX = 250, CY = 170
   const d = Math.sqrt(3) * R
+
+  // Create mapping of opportunity ID to suggested student
+  const oppToStudent = {}
+  suggestedMatches.forEach(match => {
+    oppToStudent[match.opportunity.id] = match.student
+  })
 
   function hexPoints(cx, cy, r = R) {
     return Array.from({ length: 6 }, (_, i) => {
@@ -224,27 +230,39 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y} textAnchor="middle" dominantBaseline="middle"
-                    fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '20' : '7'}
-                    fontWeight={h.type === 'slot-opp' ? '500' : '700'}
-                    fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none' }}>
-                    {h.type === 'slot-opp' ? (
-                      hexLabel(h)
-                    ) : (
-                      wrapText(hexLabel(h), 11).map((line, idx) => {
-                        const lines = wrapText(hexLabel(h), 11)
-                        const totalLines = lines.length
-                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 7
-                        return (
-                          <tspan key={idx} x={h.x} y={offsetY}>
-                            {line}
-                          </tspan>
-                        )
-                      })
+                  <>
+                    <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y - 5} textAnchor="middle" dominantBaseline="middle"
+                      fill={hexLabelColor(h)}
+                      fontSize={h.type === 'slot-opp' ? '20' : '6.5'}
+                      fontWeight={h.type === 'slot-opp' ? '500' : '700'}
+                      fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                      style={{ pointerEvents: 'none' }}>
+                      {h.type === 'slot-opp' ? (
+                        hexLabel(h)
+                      ) : (
+                        wrapText(hexLabel(h), 11).map((line, idx) => {
+                          const lines = wrapText(hexLabel(h), 11)
+                          const totalLines = lines.length
+                          const offsetY = h.y - 5 + (idx - (totalLines - 1) / 2) * 5.5
+                          return (
+                            <tspan key={idx} x={h.x} y={offsetY}>
+                              {line}
+                            </tspan>
+                          )
+                        })
+                      )}
+                    </text>
+                    {h.type === 'opp' && oppToStudent[h.opp.id] && (
+                      <text x={h.x} y={h.y + 6} textAnchor="middle" dominantBaseline="middle"
+                        fill={hexLabelColor(h)}
+                        fontSize="5.5"
+                        fontWeight="600"
+                        fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
+                        style={{ pointerEvents: 'none', opacity: 0.8 }}>
+                        {oppToStudent[h.opp.id].name.split(' ')[0]}
+                      </text>
                     )}
-                  </text>
+                  </>
                 )}
               </g>
             )
@@ -814,7 +832,7 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
           </div>
 
           {/* ── Hive Visualization ── */}
-          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} />
+          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} suggestedMatches={suggestedMatches} />
 
           {/* ── Suggested Student Matches ── */}
           {opportunities.length > 0 && suggestedMatches.length > 0 && (
