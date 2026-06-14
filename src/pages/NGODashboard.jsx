@@ -781,7 +781,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate, suggestedMatches }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate, suggestedMatches, debugInfo }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -830,6 +830,17 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
               </motion.div>
             ))}
           </div>
+
+          {/* ── Debug Info ── */}
+          {debugInfo && (
+            <div className="mb-6 p-4 rounded-xl border border-yellow-200 bg-yellow-50">
+              <p className="text-[12px] font-bold text-yellow-900 mb-2">🔍 Debug Info:</p>
+              <p className="text-[11px] text-yellow-800">
+                Students: {debugInfo.studentsFetched} | Opportunities: {debugInfo.opportunitiesCount} | Matches: {debugInfo.matchesFound}
+                {debugInfo.message && ` | Error: ${debugInfo.message}`}
+              </p>
+            </div>
+          )}
 
           {/* ── Hive Visualization ── */}
           <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} suggestedMatches={suggestedMatches} />
@@ -1054,6 +1065,7 @@ export default function NGODashboard() {
   const [oppCount,          setOppCount]          = useState(0)
   const [loadingData,       setLoadingData]       = useState(true)
   const [suggestedMatches,  setSuggestedMatches]  = useState([])
+  const [debugInfo,        setDebugInfo]         = useState(null)
 
   const orgName = profile?.name || user?.name || 'Your NGO'
 
@@ -1140,9 +1152,19 @@ export default function NGODashboard() {
         })
 
         console.log('✅ Total matches:', matches.length)
+        setDebugInfo({
+          studentsFetched: students.length,
+          opportunitiesCount: opportunities.length,
+          matchesFound: matches.length,
+          status: 'success'
+        })
         setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
       } catch (err) {
         console.error('💥 Error computing matches:', err)
+        setDebugInfo({
+          status: 'error',
+          message: err.message
+        })
         setSuggestedMatches([])
       }
     }
@@ -1171,6 +1193,7 @@ export default function NGODashboard() {
         loadingData={loadingData}
         navigate={navigate}
         suggestedMatches={suggestedMatches}
+        debugInfo={debugInfo}
       />
       <AnimatePresence>
         {activeStudent && (
