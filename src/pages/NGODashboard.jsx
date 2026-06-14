@@ -137,7 +137,10 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   function hexLabel(h) {
     if (h.type === 'center') return null
     if (h.type === 'slot-opp') return '+'
-    if (h.type === 'opp') return h.opp.title || 'Role'
+    if (h.type === 'opp') {
+      const title = h.opp.title || 'Role'
+      return title.length > 20 ? title.slice(0, 17) + '...' : title
+    }
     return null
   }
 
@@ -203,12 +206,12 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} y={h.y + 5} textAnchor="middle"
+                  <text x={h.x} y={h.y + 4} textAnchor="middle" dominantBaseline="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '10'}
-                    fontWeight={h.type === 'slot-opp' ? '300' : '700'}
+                    fontSize={h.type === 'slot-opp' ? '16' : '8'}
+                    fontWeight={h.type === 'slot-opp' ? '300' : '600'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none', wordWrap: 'break-word' }}>
+                    style={{ pointerEvents: 'none', overflow: 'hidden' }}>
                     {hexLabel(h)}
                   </text>
                 )}
