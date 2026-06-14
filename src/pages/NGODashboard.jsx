@@ -131,7 +131,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
       <div style={{ marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
         <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
-          {opportunities.length} active role{opportunities.length !== 1 ? 's' : ''}
+          Each hexagon represents a role you've posted. Build your hive and connect with talented volunteers.
         </p>
       </div>
 
