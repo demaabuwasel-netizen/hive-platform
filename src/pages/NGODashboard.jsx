@@ -90,65 +90,39 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
 
   const hexes = positions.map((pos, i) => {
     if (i === 0) return { ...pos, type: 'center' }
-    if (i <= 6) {
-      const opp = opportunities[i - 1] || null
-      return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
-    }
-    const app = applicants[i - 7] || null
-    return { ...pos, type: app ? 'app' : 'slot-app', app }
+    const opp = opportunities[i - 1] || null
+    return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
   })
 
   function hexFill(h) {
     if (h.type === 'center') return '#1a1f3a'
     if (h.type === 'slot-opp') return '#EEF2FF'
-    if (h.type === 'slot-app') return '#F8FAFC'
-    if (h.type === 'opp') {
-      return applicants.some(a => a.opportunityId === h.opp.id) ? '#FFB84D' : '#FFF8E8'
-    }
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#D1FAE5'
-      if (h.app.status === 'completed') return '#DBEAFE'
-      return '#FEF3C7'
-    }
+    if (h.type === 'opp') return '#FFB84D'
     return '#F8FAFC'
   }
 
   function hexStroke(h) {
     if (h.type === 'center') return 'none'
     if (h.type === 'slot-opp') return '#C7D2FE'
-    if (h.type === 'slot-app') return '#E2E8F0'
-    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#E8A038' : '#FDE68A'
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#6EE7B7'
-      if (h.app.status === 'completed') return '#93C5FD'
-      return '#FCD34D'
-    }
+    if (h.type === 'opp') return '#E8A038'
     return '#E2E8F0'
   }
 
   function hexLabel(h) {
     if (h.type === 'center') return null
     if (h.type === 'slot-opp') return '+'
-    if (h.type === 'slot-app') return null
-    if (h.type === 'opp') return (h.opp.title || 'O')[0].toUpperCase()
-    if (h.type === 'app') return (h.app.volunteerName || 'V')[0].toUpperCase()
+    if (h.type === 'opp') return h.opp.title || 'Role'
     return null
   }
 
   function hexLabelColor(h) {
     if (h.type === 'slot-opp') return '#818CF8'
-    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#1a1f3a' : '#92400E'
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#065F46'
-      if (h.app.status === 'completed') return '#1E40AF'
-      return '#92400E'
-    }
+    if (h.type === 'opp') return '#1a1f3a'
     return '#94A3B8'
   }
 
   function hexTooltip(h) {
     if (h.type === 'opp') return h.opp.title
-    if (h.type === 'app') return `${h.app.volunteerName} · ${h.app.status}`
     return null
   }
 
@@ -157,13 +131,13 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
       <div style={{ marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
         <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
-          {opportunities.length} active opportunity{opportunities.length !== 1 ? 'ies' : ''} · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
+          {opportunities.length} active role{opportunities.length !== 1 ? 's' : ''}
         </p>
       </div>
 
       <div style={{ display: 'flex', gap: 32 }}>
         <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
-          {hexes.slice(1, 7).map((h, i) =>
+          {hexes.slice(1).map((h, i) =>
             h.type === 'opp' ? (
               <line key={`cl-${i}`}
                 x1={hexes[0].x} y1={hexes[0].y} x2={h.x} y2={h.y}
@@ -180,7 +154,6 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                 style={{ cursor: clickable ? 'pointer' : 'default' }}
                 onClick={() => {
                   if (h.type === 'opp' || h.type === 'slot-opp') navigate('/opportunities')
-                  if (h.type === 'app') navigate('/applicants')
                 }}
               >
                 {tip && <title>{tip}</title>}
@@ -200,10 +173,10 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                 {hexLabel(h) && (
                   <text x={h.x} y={h.y + 5} textAnchor="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '12'}
-                    fontWeight={h.type === 'slot-opp' ? '300' : '800'}
+                    fontSize={h.type === 'slot-opp' ? '16' : '10'}
+                    fontWeight={h.type === 'slot-opp' ? '300' : '700'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none' }}>
+                    style={{ pointerEvents: 'none', wordWrap: 'break-word' }}>
                     {hexLabel(h)}
                   </text>
                 )}
@@ -215,11 +188,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
         <div style={{ flex: 0.8, minWidth: 200 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { color: '#FFB84D', stroke: '#E8A038', label: 'Active with applications' },
-              { color: '#FFF8E8', stroke: '#FDE68A', label: 'No applications yet' },
-              { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending review' },
-              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted volunteer' },
-              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Completed' },
+              { color: '#FFB84D', stroke: '#E8A038', label: 'Active role' },
               { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
