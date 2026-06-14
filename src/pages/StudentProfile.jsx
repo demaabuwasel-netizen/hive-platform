@@ -515,147 +515,109 @@ export default function StudentProfile() {
       <div className="px-8 py-7 max-w-6xl mx-auto">
 
         {/* ══════════════════════════════════════════════════════
-            HERO PROFILE CARD
+            HERO PROFILE HEADER
         ══════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
-          className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6 shadow-sm relative overflow-hidden">
+          className="bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl p-10 mb-6 flex items-center gap-8">
 
-          <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
-            style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat' }}/>
-
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
-            style={{ background: '#FFB703', transform: 'translate(40%, -40%)' }}/>
-
-          <div className="relative flex items-start justify-between gap-10">
-            {/* LEFT - Profile Info */}
-            <div className="flex gap-5 flex-1">
-              {/* Avatar */}
-              <div className="relative shrink-0">
-                <div className="w-32 h-32 rounded-xl overflow-hidden ring-4 ring-[#FFB703]/20 shadow-lg">
-                  <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="w-full h-full"/>
-                </div>
-                <button className="absolute bottom-3 right-3 p-3 bg-[#FFB703] rounded-full text-white hover:opacity-90 transition-opacity shadow-lg">
-                  <Camera size={18}/>
-                </button>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1">
-                <h1 className="text-[1.8rem] font-extrabold text-[#0D183D] leading-tight mb-1">
-                  {displayName}
-                </h1>
-
-                <p className="text-[14px] font-semibold text-[#0D183D] mb-0.5">
-                  {profile?.field || 'Student'}
-                </p>
-
-                <div className="flex items-center gap-2 text-[12px] text-[#4B6382] mb-3">
-                  {profile?.university && (
-                    <>
-                      <span className="flex items-center gap-1">
-                        <Home size={13}/>
-                        {profile.university}
-                      </span>
-                      {profile?.field?.includes('Final') && <span>•</span>}
-                      {profile?.field?.includes('Final') && <span>Final Year</span>}
-                    </>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 mb-3">
-                  {user?.email && (
-                    <span className="flex items-center gap-1.5 text-[11px] text-[#4B6382]">
-                      <Mail size={12}/>
-                      {user.email}
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669' }}>
-                        ✓ Verified
-                      </span>
-                    </span>
-                  )}
-                </div>
-
-                {editingAbout ? (
-                  <div className="space-y-2">
-                    <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-[13px] border border-[#FFB703] outline-none resize-none"
-                      rows={3}/>
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveAbout} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{ background: '#0D183D', color: 'white' }}>
-                        <Check size={13} className="inline mr-1"/>Save
-                      </button>
-                      <button onClick={() => setEditingAbout(false)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-[13px] leading-relaxed text-[#0D183D] mb-2">
-                      {profile?.bio || 'No bio added yet.'}
-                    </p>
-                    {profile?.bio && !showMore && (
-                      <button onClick={() => setShowMore(true)} className="text-[12px] font-semibold text-[#4B6382] flex items-center gap-1 hover:text-[#0D183D]">
-                        Show more <ChevronDown size={12}/>
-                      </button>
-                    )}
-                  </>
-                )}
-
-                {showMore && (
-                  <div className="mt-3 pt-3 border-t border-[rgba(13,24,61,0.06)]">
-                    <div className="flex flex-wrap gap-3 text-[12px]">
-                      {profile?.country && (
-                        <span className="flex items-center gap-1 text-[#4B6382]">
-                          <MapPin size={13}/>
-                          {profile.country}
-                        </span>
-                      )}
-                      {languages.length > 0 && (
-                        <span className="flex items-center gap-1 text-[#4B6382]">
-                          <Globe size={13}/>
-                          {languages.map(l => typeof l === 'string' ? l : l.lang).join(', ')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT - Profile Strength */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                <svg className="transform -rotate-90 w-28 h-28" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(13,24,61,0.08)" strokeWidth="5"/>
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="#FFB703" strokeWidth="5"
-                    strokeDasharray={`${(score / 100) * 264} 264`} strokeLinecap="round"/>
-                </svg>
-                <div className="absolute text-center">
-                  <p className="text-[1.5rem] font-extrabold text-[#FFB703] leading-none">{score}%</p>
-                  <p className="text-[10px] font-semibold text-[#4B6382]">Complete</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <p className="text-[11px] font-semibold text-[#FFB703] mb-2">
-                  {score >= 75 ? 'Strong' : score >= 50 ? 'Good' : 'Getting there'}
-                </p>
-                <p className="text-[10px] text-[#4B6382]">Keep going! Complete a few more sections.</p>
-              </div>
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-[#FFB703]/30 shadow-lg">
+              <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="w-full h-full"/>
             </div>
           </div>
+
+          {/* Profile Info */}
+          <div className="flex-1">
+            <p className="text-[12px] font-bold text-[#FFB703] uppercase tracking-widest mb-2">
+              Student Profile
+            </p>
+            <h1 className="text-[40px] font-extrabold text-white leading-tight mb-3">
+              {displayName}
+            </h1>
+
+            <div className="flex items-center gap-4 flex-wrap text-[14px] text-white/80 mb-4">
+              {profile?.field && (
+                <span className="flex items-center gap-2">
+                  <Briefcase size={16}/>
+                  {profile.field}
+                </span>
+              )}
+              {profile?.university && (
+                <span className="flex items-center gap-2">
+                  <Home size={16}/>
+                  {profile.university}
+                </span>
+              )}
+              {profile?.country && (
+                <span className="flex items-center gap-2">
+                  <MapPin size={16}/>
+                  {profile.country}
+                </span>
+              )}
+            </div>
+
+            {user?.email && (
+              <span className="flex items-center gap-2 text-[13px] text-white/80">
+                <Mail size={14}/>
+                {user.email}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded ml-1" style={{ background: 'rgba(5,150,105,0.3)', color: '#10B981' }}>
+                  ✓ Verified
+                </span>
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ABOUT SECTION */}
+        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
+          viewport={{ once:true }}
+          className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
+                <Users size={14} style={{ color: '#6366F1' }}/>
+              </span>
+              About
+            </h2>
+            {!editingAbout && (
+              <button onClick={() => setEditingAbout(true)}
+                className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
+                {profile?.bio ? 'Edit' : 'Add'} <Edit3 size={12}/>
+              </button>
+            )}
+          </div>
+
+          {editingAbout ? (
+            <div className="space-y-2">
+              <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-[13px] border border-[#FFB703] outline-none resize-none"
+                rows={3}/>
+              <div className="flex gap-2">
+                <button onClick={handleSaveAbout} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold" style={{ background: '#0D183D', color: 'white' }}>
+                  <Check size={13} className="inline mr-1"/>Save
+                </button>
+                <button onClick={() => setEditingAbout(false)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[13px] leading-relaxed text-[#0D183D]">
+              {profile?.bio || 'No bio added yet.'}
+            </p>
+          )}
         </motion.div>
 
         {/* ══════════════════════════════════════════════════════
             STAT CARDS ROW
         ══════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
-          className="grid grid-cols-4 gap-3 mb-6">
+          className="grid grid-cols-3 gap-3 mb-6">
           {[
             { icon: Code, value: displayedSkills.length > 0 ? displayedSkills.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
             { icon: Globe, value: languages.length, label: 'Languages', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
             { icon: Heart, value: interests.length, label: 'Top causes', color: '#FFB703', bg: 'rgba(255,183,3,0.1)' },
-            { icon: Briefcase, value: experiences.length, label: 'Experiences', color: '#EC4899', bg: 'rgba(236,72,153,0.1)' },
           ].map((stat, i) => (
             <motion.div key={i}
               initial={{ opacity:0, y:8 }}
@@ -958,150 +920,7 @@ export default function StudentProfile() {
               )}
             </motion.div>
 
-            {/* EXPERIENCE */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[14px] font-extrabold text-[#EC4893] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#EC489315' }}>
-                    <Briefcase size={14} style={{ color: '#EC4893' }}/>
-                  </span>
-                  Experience
-                </h2>
-                {!editingExperience && (
-                  <button onClick={() => setEditingExperience(true)}
-                    className="text-[12px] font-semibold text-[#EC4893] flex items-center gap-1 hover:opacity-70">
-                    {experiences.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
 
-              {editingExperience ? (
-                <div className="space-y-3">
-                  {editingExpIndex !== null && (
-                    <div className="p-2 rounded-lg bg-blue-50 text-[11px] text-blue-600 mb-2">
-                      Editing: {experiences[editingExpIndex]?.title || 'Experience'}
-                    </div>
-                  )}
-
-                  <input type="text" value={newExp.title} onChange={e => setNewExp({...newExp, title: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="Job title or role (e.g., Data Analytics Intern)"/>
-
-                  <input type="text" value={newExp.organization} onChange={e => setNewExp({...newExp, organization: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="Organization/Company name"/>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="text" value={newExp.startDate} onChange={e => setNewExp({...newExp, startDate: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="Start date (e.g., May 2024)"/>
-                    <input type="text" value={newExp.endDate} onChange={e => setNewExp({...newExp, endDate: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="End date or Present"/>
-                  </div>
-
-                  <input type="text" value={newExp.location} onChange={e => setNewExp({...newExp, location: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="Location (e.g., Mumbai, India)"/>
-
-                  <textarea value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
-                    placeholder="What did you do? Describe your accomplishments..."
-                    rows={3}/>
-
-                  <div className="flex gap-2">
-                    <button onClick={handleSaveExperience}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-                      setEditingExpIndex(null)
-                      setEditingExperience(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {experiences.length > 0 ? (
-                    <div className="space-y-3">
-                      {experiences.map((exp, idx) => (
-                        <div key={idx} className="border border-[rgba(13,24,61,0.07)] rounded-lg p-4 hover:shadow-md transition-shadow group">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex-1">
-                              <h4 className="text-[13px] font-bold text-[#0D183D]">{exp.title}</h4>
-                              <p className="text-[12px] font-semibold text-[#4B6382]">{exp.organization}</p>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => {
-                                setNewExp(exp)
-                                setEditingExpIndex(idx)
-                                setEditingExperience(true)
-                              }} className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-600"
-                                title="Edit">
-                                <Edit3 size={14}/>
-                              </button>
-                              <button onClick={() => handleDeleteExperience(idx)} className="p-1.5 hover:bg-red-100 rounded-lg text-red-600"
-                                title="Delete">
-                                <X size={14}/>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 text-[11px] text-[#4B6382] mb-2">
-                            {exp.startDate && (
-                              <span className="flex items-center gap-1">
-                                <Calendar size={12}/>
-                                {exp.startDate} {exp.endDate ? ` - ${exp.endDate}` : ''}
-                              </span>
-                            )}
-                            {exp.location && (
-                              <span className="flex items-center gap-1">
-                                <MapPin size={12}/>
-                                {exp.location}
-                              </span>
-                            )}
-                          </div>
-
-                          {exp.description && (
-                            <p className="text-[12px] leading-relaxed text-[#0D183D]">{exp.description}</p>
-                          )}
-                        </div>
-                      ))}
-                      <button onClick={() => {
-                        setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-                        setEditingExpIndex(null)
-                        setEditingExperience(true)
-                      }} className="w-full mt-2 py-2 rounded-lg text-[12px] font-semibold border border-dashed border-[#FFB703]"
-                        style={{ color: '#FFB703' }}>
-                        Add Experience
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <Briefcase size={32} className="mx-auto mb-3 text-[#EC4893]" style={{ opacity: 0.5 }}/>
-                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No experiences yet</p>
-                      <p className="text-[12px] text-[#4B6382] mb-4">Share your work experience and projects</p>
-                      <button onClick={() => {
-                        setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-                        setEditingExpIndex(null)
-                        setEditingExperience(true)
-                      }} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
-                        style={{ background: '#EC4893', color: 'white' }}>
-                        <Plus size={14}/>
-                        Add Experience
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
 
             {/* EDUCATION */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
@@ -1254,53 +1073,6 @@ export default function StudentProfile() {
               )}
             </motion.div>
 
-            {/* MOTIVATION */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#EC489320' }}>
-                    <Heart size={14} style={{ color: '#EC4899' }}/>
-                  </span>
-                  Why These Causes Matter
-                </h2>
-                {!editingMotivation && (
-                  <button onClick={() => setEditingMotivation(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {motivationDraft ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingMotivation ? (
-                <div className="space-y-3">
-                  <textarea value={motivationDraft} onChange={e => setMotivationDraft(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
-                    placeholder="Why do these causes matter to you?"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={handleSaveMotivation}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setMotivationDraft(profile?.motivation || '')
-                      setEditingMotivation(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[12px] leading-relaxed text-[#0D183D]">
-                  {motivationDraft || 'Share your motivation for these causes.'}
-                </p>
-              )}
-            </motion.div>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -1580,124 +1352,7 @@ export default function StudentProfile() {
               </div>
             </motion.div>
 
-            {/* CONTACT INFO */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#EC489320' }}>
-                    <Phone size={14} style={{ color: '#EC4899' }}/>
-                  </span>
-                  Contact Info
-                </h3>
-                {!editingContact && (
-                  <button onClick={() => setEditingContact(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {contactDraft.phone || contactDraft.city ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
 
-              {editingContact ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Phone</label>
-                    <input type="tel" value={contactDraft.phone} onChange={e => setContactDraft({...contactDraft, phone: e.target.value})}
-                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all"
-                      placeholder="e.g., +1 (555) 123-4567"/>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">City</label>
-                    <input type="text" value={contactDraft.city} onChange={e => setContactDraft({...contactDraft, city: e.target.value})}
-                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all"
-                      placeholder="e.g., San Francisco, CA"/>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={handleSaveContact}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setContactDraft({ phone: profile?.phone || '', city: profile?.city || '' })
-                      setEditingContact(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 text-[13px] text-[#0D183D]">
-                  {contactDraft.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone size={14} style={{ color: '#EC4899' }}/>
-                      <a href={`tel:${contactDraft.phone}`} className="hover:underline">{contactDraft.phone}</a>
-                    </div>
-                  )}
-                  {contactDraft.city && (
-                    <div className="flex items-center gap-2">
-                      <MapPin size={14} style={{ color: '#EC4899' }}/>
-                      {contactDraft.city}
-                    </div>
-                  )}
-                  {!contactDraft.phone && !contactDraft.city && (
-                    <p className="text-[#4B6382] text-center py-2">Add your contact information</p>
-                  )}
-                </div>
-              )}
-            </motion.div>
-
-            {/* GOALS */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#10B98120' }}>
-                    <Target size={14} style={{ color: '#10B981' }}/>
-                  </span>
-                  Goals & Aspirations
-                </h3>
-                {!editingGoals && (
-                  <button onClick={() => setEditingGoals(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {goalsDraft ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingGoals ? (
-                <div className="space-y-3">
-                  <textarea value={goalsDraft} onChange={e => setGoalsDraft(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                    placeholder="What are your professional goals? What do you want to achieve?"
-                    rows={4}
-                    style={{ background: '#F8F9FB' }}
-                    onFocus={e => e.target.style.borderColor = '#FFB703'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                  <div className="flex gap-2">
-                    <button onClick={handleSaveGoals}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setGoalsDraft(profile?.goals || '')
-                      setEditingGoals(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[13px] leading-relaxed text-[#0D183D]">
-                  {goalsDraft || 'No goals added yet. Share your aspirations and what you want to achieve.'}
-                </p>
-              )}
-            </motion.div>
 
             {/* AVAILABILITY */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}

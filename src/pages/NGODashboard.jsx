@@ -727,7 +727,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, ngoStats, loadingData, navigate }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -778,7 +778,7 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
           </div>
 
           {/* ── Hive Visualization ── */}
-          <HiveVisualization opportunities={[]} applicants={applicants} navigate={navigate} />
+          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} />
 
           {/* ── Body ── */}
           <div className="grid lg:grid-cols-[1fr_264px] gap-5">
@@ -925,6 +925,7 @@ export default function NGODashboard() {
   const navigate = useNavigate()
   const [activeStudent,  setActiveStudent]  = useState(null)
   const [applicants,     setApplicants]     = useState([])
+  const [opportunities,  setOpportunities]  = useState([])
   const [oppCount,       setOppCount]       = useState(0)
   const [loadingData,    setLoadingData]    = useState(true)
 
@@ -938,6 +939,7 @@ export default function NGODashboard() {
       fetchNgoOpportunities(user.id).catch(() => []),
     ]).then(([apps, opps]) => {
       setApplicants(apps)
+      setOpportunities(opps)
       setOppCount(opps.length)
     }).finally(() => setLoadingData(false))
   }, [user?.id])
@@ -958,6 +960,7 @@ export default function NGODashboard() {
         setActiveStudent={setActiveStudent}
         orgName={orgName}
         applicants={applicants}
+        opportunities={opportunities}
         ngoStats={ngoStats}
         loadingData={loadingData}
         navigate={navigate}

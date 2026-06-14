@@ -55,7 +55,7 @@ export async function getUserRow(userId, { signal } = {}) {
   try {
     let q = supabase.from('users').select('*').eq('id', userId).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 60000, 'getUserRow SELECT')
+    const { data, error } = await withQueryTimeout(q, 1800000, 'getUserRow SELECT')
     if (error) {
       console.error(`[getUserRow] Supabase error ${ms()}:`, error.message, '(code:', error.code, ')')
       return null
@@ -191,7 +191,7 @@ export async function ensureUserRow(authUser, { signal } = {}) {
   try {
     let q = supabase.from('users').select('id').eq('id', uid).maybeSingle()
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 60000, 'ensureUserRow SELECT')
+    const { data, error } = await withQueryTimeout(q, 1800000, 'ensureUserRow SELECT')
     console.log(`[ensureUserRow] SELECT end ${ms()} — data:`, data, 'error:', error?.message ?? null)
     if (error) console.warn('[ensureUserRow] SELECT error (non-fatal):', error.message, 'code:', error.code)
     existing = data
@@ -231,7 +231,7 @@ export async function ensureUserRow(authUser, { signal } = {}) {
       provider:            authUser.app_metadata?.provider || 'email',
     })
     if (signal) q = q.abortSignal(signal)
-    const { data, error } = await withQueryTimeout(q, 60000, 'ensureUserRow INSERT')
+    const { data, error } = await withQueryTimeout(q, 1800000, 'ensureUserRow INSERT')
     if (error && error.code !== '23505') {
       console.error(`[ensureUserRow] INSERT error ${ms()}:`, error.message, '(code:', error.code, ')')
     } else if (error?.code === '23505') {

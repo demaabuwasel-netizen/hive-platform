@@ -160,6 +160,7 @@ function scoreLanguages(studentLangs, requiredLangs) {
 // ─── Dimension 4: Availability (10 pts) ──────────────────────────────────────
 
 function parseHoursRange(availability = '') {
+  if (!availability) return [0, 40]
   const a = availability.toLowerCase()
   if (!a || a.includes('immediately') || a.includes('flexible')) return [0, 40]
   const nums = a.match(/\d+/g)?.map(Number)

@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchActiveOpportunities } from '../services/opportunities'
 import { computeMatch } from '../services/matching'
+import { withTimeout } from '../utils/withTimeout'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
 
@@ -288,16 +289,16 @@ export default function MatchResults() {
 
   useEffect(() => {
     if (!profile) { setLoading(false); return }
-    fetchActiveOpportunities()
+    withTimeout(fetchActiveOpportunities(), 10000, 'fetchActiveOpportunities')
       .then(opps => {
         const scored = opps
           .map(opp => ({ opp, result: computeMatch(profile, opp) }))
           .sort((a, b) => b.result.score - a.result.score)
         setMatches(scored.map(({ opp, result }) => oppToCard(opp, result, userName, userField)))
       })
-      .catch(() => {})
+      .catch(err => console.error('Failed to fetch matches:', err.message))
       .finally(() => setLoading(false))
-  }, [profile])
+  }, [user?.id])
 
   if (user && !user.onboardingComplete) {
     return (

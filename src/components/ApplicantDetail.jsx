@@ -56,7 +56,7 @@ const STATUS_CONFIG = {
   rejected:    { label: 'Rejected',    color: 'text-red-500',     bg: 'bg-red-50'      },
 }
 
-export default function ApplicantDetail({ applicant, status, onStatusChange }) {
+export default function ApplicantDetail({ applicant, status, onStatusChange, opportunityId }) {
   const navigate = useNavigate()
 
   if (!applicant) {
@@ -85,7 +85,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange }) {
             className="ring-[3px] ring-white shadow shrink-0"/>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <button onClick={() => navigate(`/student-profile/${applicant.studentId}`)}
+              <button onClick={() => navigate(`/student-profile/${applicant.studentId}${opportunityId ? `?backTo=applicants&opportunity=${opportunityId}` : ''}`)}
                 className="text-[15px] font-bold text-[#FFB703] hover:text-[#D99E00] transition-colors text-left">
                 {applicant.name}
               </button>

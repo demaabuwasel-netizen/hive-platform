@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext'
 import { getMessages, sendInterviewMessage } from '../services/messages'
 import { supabase } from '../services/supabase'
 import GradientAvatar from '../components/GradientAvatar'
+import { withTimeout } from '../utils/withTimeout'
 
 function formatTime(isoString) {
   if (!isoString) return ''
@@ -40,7 +41,7 @@ export default function Messages() {
     ;(async () => {
       try {
         setLoading(true)
-        const data = await getMessages(user.id)
+        const data = await withTimeout(getMessages(user.id), 10000, 'getMessages')
         setMessages(data || [])
 
         // Get all unique user IDs from messages
@@ -55,10 +56,14 @@ export default function Messages() {
         }
 
         // Fetch profiles for these users - they'll have names
-        const { data: profiles } = await supabase
-          .from('ngo_profiles')
-          .select('user_id, name')
-          .in('user_id', userIds)
+        const { data: profiles } = await withTimeout(
+          supabase
+            .from('ngo_profiles')
+            .select('user_id, name')
+            .in('user_id', userIds),
+          10000,
+          'fetchNgoProfiles'
+        )
 
         // Build name map
         const nameMap = {}
@@ -71,10 +76,14 @@ export default function Messages() {
         // For students without names, try to get from users table
         const missingIds = userIds.filter(id => !nameMap[id])
         if (missingIds.length > 0) {
-          const { data: users } = await supabase
-            .from('users')
-            .select('id, name')
-            .in('id', missingIds)
+          const { data: users } = await withTimeout(
+            supabase
+              .from('users')
+              .select('id, name')
+              .in('id', missingIds),
+            10000,
+            'fetchUserNames'
+          )
 
           users?.forEach(u => {
             if (u.name) nameMap[u.id] = u.name
@@ -83,7 +92,7 @@ export default function Messages() {
 
         setUserNames(nameMap)
       } catch (err) {
-        console.error('Error loading names:', err)
+        console.error('Error loading names:', err.message)
       } finally {
         setLoading(false)
       }

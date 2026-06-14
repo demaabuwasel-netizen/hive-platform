@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, MapPin, BookOpen, Briefcase, Heart, Target, CheckCircle2,
@@ -110,9 +110,21 @@ function AvatarInitials({ name, size = 64 }) {
 export default function StudentPublicProfile() {
   const { studentId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const handleBack = () => {
+    const backTo = searchParams.get('backTo')
+    const opportunityId = searchParams.get('opportunity')
+
+    if (backTo === 'applicants' && opportunityId) {
+      navigate(`/applicants?opportunity=${opportunityId}`)
+    } else {
+      handleBack()
+    }
+  }
 
   useEffect(() => {
     if (!studentId) {
@@ -188,7 +200,7 @@ export default function StudentPublicProfile() {
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            onClick={() => navigate(-1)}
+            onClick={() => handleBack()}
             className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8"
           >
             <ArrowLeft size={16} />
@@ -219,7 +231,7 @@ export default function StudentPublicProfile() {
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          onClick={() => navigate(-1)}
+          onClick={() => handleBack()}
           className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8 text-sm"
         >
           <ArrowLeft size={16} />

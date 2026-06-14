@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSearchParams } from 'react-router-dom'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import RolesList from '../components/RolesList'
@@ -9,6 +10,7 @@ import {
   fetchNgoApplicants, fetchOpportunityApplicantsWithMatches, updateApplicationStatus
 } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
+import { withTimeout } from '../utils/withTimeout'
 
 function toUiStatus(dbStatus) {
   if (dbStatus === 'submitted' || dbStatus === 'under_review') return 'new'
@@ -24,6 +26,8 @@ function toDbStatus(uiStatus) {
 
 export default function Applicants() {
   const { user } = useApp()
+  const [searchParams] = useSearchParams()
+  const filterOppId = searchParams.get('opportunity')
 
   // Roles sidebar
   const [roles, setRoles]               = useState([])
@@ -50,7 +54,7 @@ export default function Applicants() {
     if (!user?.id) return
     setRolesLoading(true)
     setError(null)
-    fetchNgoOpportunities(user.id)
+    withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunities')
       .then(opps => {
         // Map to match the expected format with stats
         const mapped = opps.map(opp => ({
@@ -60,11 +64,21 @@ export default function Applicants() {
         setRoles(mapped)
       })
       .catch(err => {
-        console.error('Error loading opportunities:', err)
+        console.error('Error loading opportunities:', err.message)
         setError('Could not load opportunities. Please try again.')
       })
       .finally(() => setRolesLoading(false))
   }, [user?.id])
+
+  // ── Auto-select opportunity from query parameter ────────────────────────────
+  useEffect(() => {
+    if (filterOppId && roles.length > 0) {
+      const matching = roles.find(r => r.id === filterOppId)
+      if (matching) {
+        setSelectedRoleId(filterOppId)
+      }
+    }
+  }, [filterOppId, roles])
 
   // ── Fetch applicants when role is selected ─────────────────────────────────
 
@@ -73,24 +87,24 @@ export default function Applicants() {
     if (selectedRoleId === null) {
       // Load all applicants
       setApplicantsLoading(true)
-      fetchNgoApplicants(user.id)
+      withTimeout(fetchNgoApplicants(user.id), 10000, 'fetchNgoApplicants')
         .then(data => {
           setApplicants(data)
           setStatuses(Object.fromEntries(data.map(a => [a.id, toUiStatus(a.status)])))
           setSelected(null)
         })
-        .catch(() => setError('Could not load applicants.'))
+        .catch(err => setError('Could not load applicants. ' + err.message))
         .finally(() => setApplicantsLoading(false))
     } else {
       // Load applicants for specific role
       setApplicantsLoading(true)
-      fetchOpportunityApplicantsWithMatches(selectedRoleId, user.id)
+      withTimeout(fetchOpportunityApplicantsWithMatches(selectedRoleId, user.id), 10000, 'fetchOpportunityApplicantsWithMatches')
         .then(data => {
           setApplicants(data)
           setStatuses(Object.fromEntries(data.map(a => [a.id, toUiStatus(a.status)])))
           setSelected(null)
         })
-        .catch(() => setError('Could not load applicants for this role.'))
+        .catch(err => setError('Could not load applicants for this role. ' + err.message))
         .finally(() => setApplicantsLoading(false))
     }
   }, [selectedRoleId, user?.id])
@@ -198,6 +212,7 @@ export default function Applicants() {
             applicant={selected}
             status={selectedStatus}
             onStatusChange={handleStatusChange}
+            opportunityId={filterOppId}
           />
         </div>
       )}

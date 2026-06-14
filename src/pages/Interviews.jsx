@@ -7,6 +7,7 @@ import {
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchStudentApplications } from '../services/applications'
+import { withTimeout } from '../utils/withTimeout'
 
 // Student interview prep categories and content
 const PREP_CATEGORIES = {
@@ -139,12 +140,15 @@ function StudentView() {
   useEffect(() => {
     if (!user?.id) return
     setLoading(true)
-    fetchStudentApplications(user.id)
+    withTimeout(fetchStudentApplications(user.id), 10000, 'fetchStudentApplications')
       .then(apps => {
         setApps(apps)
         if (apps.length > 0) setSelectedAppId(apps[0].id)
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error('Failed to load applications:', err.message)
+        setApps([])
+      })
       .finally(() => setLoading(false))
   }, [user?.id])
 
@@ -173,13 +177,16 @@ function StudentView() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`w-full text-left px-4 py-3 border-b border-[rgba(13,24,61,0.06)] transition-all ${
+              className={`w-full text-left px-4 py-4 border-b border-[rgba(13,24,61,0.06)] transition-all flex gap-3 items-start ${
                 selectedAppId === app.id
                   ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
                   : 'hover:bg-[#F8F9FB]'
               }`}>
-              <p className="text-[13px] font-semibold text-[#0D183D] truncate">{app.ngo_name || app.opportunity_title}</p>
-              <p className="text-[11px] text-[#4B6382] mt-0.5 truncate">{app.role_title || 'Position'}</p>
+              <GradientAvatar name={app.ngoName || app.ngo_name || 'NGO'} size={40} radius="0.625rem" className="shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-[#0D183D] truncate">{app.role || app.role_title}</p>
+                <p className="text-[11px] text-[#7A8BA6] mt-0.5 truncate">{app.ngoName || app.ngo_name}</p>
+              </div>
             </motion.button>
           ))}
         </div>
@@ -211,17 +218,18 @@ function StudentView() {
           transition={{ duration: 0.3 }}>
 
           {/* Header */}
-          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-[14px] font-extrabold text-[#0D183D]">{selectedApp.ngo_name || selectedApp.opportunity_title}</p>
-                <p className="text-[12px] text-[#4B6382] mt-1">{selectedApp.role_title || 'Position'}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background:'rgba(255,183,3,0.1)' }}>
-                <Sparkles size={16} style={{ color:'#FFB703' }}/>
-              </div>
+          <div className="bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl px-8 py-8 mb-6 flex items-start gap-6">
+            <GradientAvatar name={selectedApp.ngoName || selectedApp.ngo_name || 'Organization'} size={64} radius="1rem"/>
+            <div className="flex-1">
+              <p className="text-[12px] font-bold text-[#FFB703] uppercase tracking-widest mb-2">
+                {selectedApp.ngoName || selectedApp.ngo_name}
+              </p>
+              <h2 className="text-[32px] font-extrabold text-white mb-3">{selectedApp.role || selectedApp.role_title}</h2>
+              <p className="text-[13px] text-white/80">Interview preparation guide</p>
             </div>
-            <p className="text-[12px] text-[#4B6382]">Interview preparation guide</p>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background:'rgba(255,183,3,0.2)' }}>
+              <Sparkles size={16} style={{ color:'#FFB703' }}/>
+            </div>
           </div>
 
           {/* Tabs */}
