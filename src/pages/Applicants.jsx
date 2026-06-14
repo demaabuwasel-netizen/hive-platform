@@ -70,15 +70,22 @@ export default function Applicants() {
       .finally(() => setRolesLoading(false))
   }, [user?.id])
 
-  // ── Auto-select opportunity from query parameter ────────────────────────────
+  // ── Auto-select opportunity from query parameter or select first by default ──
   useEffect(() => {
-    if (filterOppId && roles.length > 0) {
+    if (roles.length === 0) return
+
+    // If query param exists, use that
+    if (filterOppId) {
       const matching = roles.find(r => r.id === filterOppId)
       if (matching) {
         setSelectedRoleId(filterOppId)
       }
     }
-  }, [filterOppId, roles])
+    // Otherwise select the first opportunity if nothing is selected
+    else if (selectedRoleId === null) {
+      setSelectedRoleId(roles[0].id)
+    }
+  }, [filterOppId, roles, selectedRoleId])
 
   // ── Fetch applicants when role is selected ─────────────────────────────────
 
