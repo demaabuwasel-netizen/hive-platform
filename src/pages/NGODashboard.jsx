@@ -91,8 +91,15 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   const hexes = positions.map((pos, i) => {
     if (i === 0) return { ...pos, type: 'center' }
     const opp = opportunities[i - 1] || null
-    return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
-  })
+    if (opp) {
+      return { ...pos, type: 'opp', opp }
+    }
+    // Only show one open slot - the first empty position
+    if (i - 1 === opportunities.length) {
+      return { ...pos, type: 'slot-opp' }
+    }
+    return null
+  }).filter(h => h !== null)
 
   function getOppState(opp) {
     if (!opp) return 'empty'
@@ -176,7 +183,8 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
               <g key={i}
                 style={{ cursor: clickable ? 'pointer' : 'default' }}
                 onClick={() => {
-                  if (h.type === 'opp' || h.type === 'slot-opp') navigate('/opportunities')
+                  if (h.type === 'opp') navigate('/opportunities')
+                  if (h.type === 'slot-opp') navigate('/opportunities/new')
                 }}
               >
                 {tip && <title>{tip}</title>}
