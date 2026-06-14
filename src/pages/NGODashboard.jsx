@@ -234,7 +234,7 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                       wrapText(hexLabel(h), 11).map((line, idx) => {
                         const lines = wrapText(hexLabel(h), 11)
                         const totalLines = lines.length
-                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 5
+                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 7
                         return (
                           <tspan key={idx} x={h.x} y={offsetY}>
                             {line}
