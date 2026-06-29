@@ -10,6 +10,8 @@ import {
 import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
+import { supabase } from '../services/supabase'
+import { computeMatch } from '../services/matching'
 import HiveLogo from '../components/HiveLogo'
 import CategorizedSkillTags from '../components/CategorizedSkillTags'
 import { AvatarDisplay } from '../components/Avatar'
@@ -64,10 +66,16 @@ function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' })
 
 // ─── Hive Visualization ───────────────────────────────────────────────────────
 
-function HiveVisualization({ opportunities, applicants, navigate }) {
+function HiveVisualization({ opportunities, applicants, navigate, suggestedMatches = [] }) {
   const R = 26
   const CX = 250, CY = 170
   const d = Math.sqrt(3) * R
+
+  // Create mapping of opportunity ID to suggested student
+  const oppToStudent = {}
+  suggestedMatches.forEach(match => {
+    oppToStudent[match.opportunity.id] = match.student
+  })
 
   function hexPoints(cx, cy, r = R) {
     return Array.from({ length: 6 }, (_, i) => {
@@ -90,25 +98,34 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
 
   const hexes = positions.map((pos, i) => {
     if (i === 0) return { ...pos, type: 'center' }
-    if (i <= 6) {
-      const opp = opportunities[i - 1] || null
-      return { ...pos, type: opp ? 'opp' : 'slot-opp', opp }
+    const opp = opportunities[i - 1] || null
+    if (opp) {
+      return { ...pos, type: 'opp', opp }
     }
-    const app = applicants[i - 7] || null
-    return { ...pos, type: app ? 'app' : 'slot-app', app }
+    // Show one open slot - the first empty position
+    if (i - 1 === opportunities.length) {
+      return { ...pos, type: 'slot-opp' }
+    }
+    // Show other empty positions as greyed out
+    return { ...pos, type: 'empty' }
   })
+
+  function getOppState(opp) {
+    if (!opp) return 'empty'
+    if (applicants.some(a => a.opportunityId === opp.id && (a.status === 'accepted' || a.status === 'interview'))) {
+      return 'working'
+    }
+    return 'active'
+  }
 
   function hexFill(h) {
     if (h.type === 'center') return '#1a1f3a'
     if (h.type === 'slot-opp') return '#EEF2FF'
-    if (h.type === 'slot-app') return '#F8FAFC'
+    if (h.type === 'empty') return '#F3F4F6'
     if (h.type === 'opp') {
-      return applicants.some(a => a.opportunityId === h.opp.id) ? '#FFB84D' : '#FFF8E8'
-    }
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#D1FAE5'
-      if (h.app.status === 'completed') return '#DBEAFE'
-      return '#FEF3C7'
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#D1FAE5'
+      return '#FFB84D'
     }
     return '#F8FAFC'
   }
@@ -116,12 +133,11 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   function hexStroke(h) {
     if (h.type === 'center') return 'none'
     if (h.type === 'slot-opp') return '#C7D2FE'
-    if (h.type === 'slot-app') return '#E2E8F0'
-    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#E8A038' : '#FDE68A'
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#6EE7B7'
-      if (h.app.status === 'completed') return '#93C5FD'
-      return '#FCD34D'
+    if (h.type === 'empty') return '#D1D5DB'
+    if (h.type === 'opp') {
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#6EE7B7'
+      return '#E8A038'
     }
     return '#E2E8F0'
   }
@@ -129,26 +145,42 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
   function hexLabel(h) {
     if (h.type === 'center') return null
     if (h.type === 'slot-opp') return '+'
-    if (h.type === 'slot-app') return null
-    if (h.type === 'opp') return (h.opp.title || 'O')[0].toUpperCase()
-    if (h.type === 'app') return (h.app.volunteerName || 'V')[0].toUpperCase()
+    if (h.type === 'opp') {
+      return h.opp.title || 'Role'
+    }
     return null
+  }
+
+  function wrapText(text, maxCharsPerLine = 10) {
+    const words = text.split(' ')
+    const lines = []
+    let currentLine = ''
+
+    words.forEach(word => {
+      if ((currentLine + word).length <= maxCharsPerLine) {
+        currentLine += (currentLine ? ' ' : '') + word
+      } else {
+        if (currentLine) lines.push(currentLine)
+        currentLine = word
+      }
+    })
+    if (currentLine) lines.push(currentLine)
+
+    return lines
   }
 
   function hexLabelColor(h) {
     if (h.type === 'slot-opp') return '#818CF8'
-    if (h.type === 'opp') return applicants.some(a => a.opportunityId === h.opp.id) ? '#1a1f3a' : '#92400E'
-    if (h.type === 'app') {
-      if (h.app.status === 'accepted') return '#065F46'
-      if (h.app.status === 'completed') return '#1E40AF'
-      return '#92400E'
+    if (h.type === 'opp') {
+      const state = getOppState(h.opp)
+      if (state === 'working') return '#065F46'
+      return '#1a1f3a'
     }
     return '#94A3B8'
   }
 
   function hexTooltip(h) {
     if (h.type === 'opp') return h.opp.title
-    if (h.type === 'app') return `${h.app.volunteerName} · ${h.app.status}`
     return null
   }
 
@@ -157,13 +189,13 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
       <div style={{ marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
         <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
-          {opportunities.length} active opportunity{opportunities.length !== 1 ? 'ies' : ''} · {applicants.length} application{applicants.length !== 1 ? 's' : ''}
+          Each hexagon represents a role you've posted. Build your hive and connect with talented volunteers.
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 32 }}>
+      <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
         <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
-          {hexes.slice(1, 7).map((h, i) =>
+          {hexes.slice(1).map((h, i) =>
             h.type === 'opp' ? (
               <line key={`cl-${i}`}
                 x1={hexes[0].x} y1={hexes[0].y} x2={h.x} y2={h.y}
@@ -179,8 +211,8 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
               <g key={i}
                 style={{ cursor: clickable ? 'pointer' : 'default' }}
                 onClick={() => {
-                  if (h.type === 'opp' || h.type === 'slot-opp') navigate('/opportunities')
-                  if (h.type === 'app') navigate('/applicants')
+                  if (h.type === 'opp') navigate(`/opportunities?opportunity=${h.opp.id}`)
+                  if (h.type === 'slot-opp') navigate('/opportunities/new')
                 }}
               >
                 {tip && <title>{tip}</title>}
@@ -198,13 +230,26 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
                   </text>
                 )}
                 {hexLabel(h) && (
-                  <text x={h.x} y={h.y + 5} textAnchor="middle"
+                  <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y} textAnchor="middle" dominantBaseline="middle"
                     fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '16' : '12'}
-                    fontWeight={h.type === 'slot-opp' ? '300' : '800'}
+                    fontSize={h.type === 'slot-opp' ? '20' : '7'}
+                    fontWeight={h.type === 'slot-opp' ? '500' : '700'}
                     fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
                     style={{ pointerEvents: 'none' }}>
-                    {hexLabel(h)}
+                    {h.type === 'slot-opp' ? (
+                      hexLabel(h)
+                    ) : (
+                      wrapText(hexLabel(h), 11).map((line, idx) => {
+                        const lines = wrapText(hexLabel(h), 11)
+                        const totalLines = lines.length
+                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 7
+                        return (
+                          <tspan key={idx} x={h.x} y={offsetY}>
+                            {line}
+                          </tspan>
+                        )
+                      })
+                    )}
                   </text>
                 )}
               </g>
@@ -215,12 +260,9 @@ function HiveVisualization({ opportunities, applicants, navigate }) {
         <div style={{ flex: 0.8, minWidth: 200 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { color: '#FFB84D', stroke: '#E8A038', label: 'Active with applications' },
-              { color: '#FFF8E8', stroke: '#FDE68A', label: 'No applications yet' },
-              { color: '#FEF3C7', stroke: '#FCD34D', label: 'Pending review' },
-              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Accepted volunteer' },
-              { color: '#DBEAFE', stroke: '#93C5FD', label: 'Completed' },
-              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Open slot' },
+              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Someone working' },
+              { color: '#FFB84D', stroke: '#E8A038', label: 'Active role' },
+              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Add new role' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
@@ -727,7 +769,7 @@ function Sidebar({ user, profile, onLogout }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate }) {
+function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate, suggestedMatches }) {
   const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
 
   return (
@@ -778,7 +820,78 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
           </div>
 
           {/* ── Hive Visualization ── */}
-          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} />
+          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} suggestedMatches={suggestedMatches} />
+
+          {/* ── Suggested Student Matches ── */}
+          {opportunities.length > 0 && suggestedMatches.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Suggested Matches</h2>
+                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who fit your opportunities</p>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                {suggestedMatches.map((match, i) => (
+                  <motion.div
+                    key={`${match.opportunity.id}-${match.student.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.05 }}
+                    className="bg-white rounded-2xl border p-5"
+                    style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
+
+                    {/* Opportunity title */}
+                    <p className="text-[10px] font-bold text-[#FFB703] uppercase tracking-widest mb-3">
+                      {match.opportunity.title}
+                    </p>
+
+                    {/* Match card */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                          style={{
+                            background: `linear-gradient(135deg, ${match.colors[0]}, ${match.colors[1]})`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '14px'
+                          }}>
+                          {match.student.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-bold text-[#0D183D] truncate">{match.student.name}</p>
+                          <p className="text-[11px] text-[#4B6382]">{match.student.field}</p>
+                        </div>
+                      </div>
+
+                      {/* Match percentage and message button */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-center">
+                          <p className="text-[14px] font-extrabold text-[#0D183D]">{match.score}%</p>
+                          <p className="text-[9px] text-[#4B6382]">match</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setActiveStudent(match.student)
+                          }}
+                          className="px-3 py-2 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                          style={{ background: '#FFB703' }}>
+                          Message
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* ── Body ── */}
           <div className="grid lg:grid-cols-[1fr_264px] gap-5">
@@ -923,11 +1036,12 @@ function NGODashboardContent({ user, profile, setActiveStudent, orgName, applica
 export default function NGODashboard() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
-  const [activeStudent,  setActiveStudent]  = useState(null)
-  const [applicants,     setApplicants]     = useState([])
-  const [opportunities,  setOpportunities]  = useState([])
-  const [oppCount,       setOppCount]       = useState(0)
-  const [loadingData,    setLoadingData]    = useState(true)
+  const [activeStudent,     setActiveStudent]     = useState(null)
+  const [applicants,        setApplicants]        = useState([])
+  const [opportunities,     setOpportunities]     = useState([])
+  const [oppCount,          setOppCount]          = useState(0)
+  const [loadingData,       setLoadingData]       = useState(true)
+  const [suggestedMatches,  setSuggestedMatches]  = useState([])
 
   const orgName = profile?.name || user?.name || 'Your NGO'
 
@@ -943,6 +1057,86 @@ export default function NGODashboard() {
       setOppCount(opps.length)
     }).finally(() => setLoadingData(false))
   }, [user?.id])
+
+  // Compute suggested matches for each opportunity
+  useEffect(() => {
+    if (opportunities.length === 0) {
+      setSuggestedMatches([])
+      return
+    }
+
+    const computeMatches = async () => {
+      try {
+        // Fetch all student profiles with user info (for names)
+        const { data: students, error } = await supabase
+          .from('student_profiles')
+          .select('user_id, field, skills, languages, availability, interests, experience, goals, users(id, name)')
+
+        console.log('🔍 Fetched students:', students?.length || 0)
+        console.log('📋 Opportunities:', opportunities.length)
+        console.log('❌ Error:', error)
+
+        if (error) {
+          console.error('Student fetch error:', error)
+        }
+
+        if (!students || students.length === 0) {
+          console.warn('No students found in database')
+          setSuggestedMatches([])
+          return
+        }
+
+        // For each opportunity, find the best matching student
+        const matches = []
+        const colorPalettes = [
+          ['#7C3AED', '#A78BFA'],
+          ['#0EA5E9', '#38BDF8'],
+          ['#EC4899', '#F472B6'],
+          ['#14B8A6', '#2DD4BF'],
+          ['#F59E0B', '#FBBF24'],
+        ]
+
+        opportunities.forEach((opp, idx) => {
+          let bestMatch = null
+          let bestScore = 0
+
+          students.forEach(student => {
+            try {
+              const result = computeMatch(student, opp)
+              const score = typeof result === 'object' && result !== null ? (result.score ?? 0) : 0
+
+              if (score > bestScore) {
+                bestScore = score
+                bestMatch = student
+              }
+            } catch (e) {
+              console.error(`Error matching student ${student.user_id} to opportunity ${opp.id}:`, e)
+            }
+          })
+
+          const studentName = bestMatch?.users?.name || 'Unknown'
+          console.log(`✓ "${opp.title}": ${studentName} (${Math.round(bestScore)}%)`)
+
+          if (bestMatch) {
+            matches.push({
+              opportunity: opp,
+              student: { ...bestMatch, id: bestMatch.user_id, name: bestMatch.users?.name, match: Math.round(bestScore) },
+              score: Math.round(bestScore),
+              colors: colorPalettes[idx % colorPalettes.length],
+            })
+          }
+        })
+
+        console.log('✅ Total matches:', matches.length)
+        setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
+      } catch (err) {
+        console.error('💥 Error computing matches:', err)
+        setSuggestedMatches([])
+      }
+    }
+
+    computeMatches()
+  }, [opportunities])
 
   // Build stat cards from real data
   const ngoStats = [
@@ -964,6 +1158,7 @@ export default function NGODashboard() {
         ngoStats={ngoStats}
         loadingData={loadingData}
         navigate={navigate}
+        suggestedMatches={suggestedMatches}
       />
       <AnimatePresence>
         {activeStudent && (

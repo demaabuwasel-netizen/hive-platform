@@ -6,11 +6,11 @@ import {
   LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
   MessageCircle, Settings, Briefcase, Users, BarChart2, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight, Globe,
+  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchActiveOpportunities, fetchNgoOpportunities } from '../services/opportunities'
+import { fetchActiveOpportunities, fetchNgoOpportunities, deleteOpportunity } from '../services/opportunities'
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
@@ -431,6 +431,34 @@ export default function Opportunities() {
   const [loading, setLoading]   = useState(true)
   const [viewingOpp, setViewingOpp] = useState(null)
   const [applyingTo, setApplyingTo] = useState(null)
+  const [deleting, setDeleting] = useState(null)
+
+  const handleDeleteOpportunity = async (oppId) => {
+    if (!window.confirm('Are you sure you want to delete this opportunity? All related applications will also be deleted.')) {
+      return
+    }
+
+    setDeleting(oppId)
+    try {
+      await deleteOpportunity(oppId, user.id)
+      setNgoOpps(prev => prev.filter(o => o.id !== oppId))
+      if (selectedOppId === oppId) {
+        setSelectedOppId(null)
+      }
+      // Update cache
+      const remaining = ngoOpps.filter(o => o.id !== oppId)
+      try {
+        localStorage.setItem(`hive_ngo_opps_${user.id}`, JSON.stringify(remaining))
+      } catch (e) {
+        console.warn('Failed to update cache')
+      }
+    } catch (err) {
+      console.error('Error deleting opportunity:', err)
+      setNgoError('Failed to delete opportunity: ' + err.message)
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   // Fetch NGO's own opportunities
   useEffect(() => {
@@ -726,17 +754,24 @@ export default function Opportunities() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <button
                         onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
                         className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
                         style={{ background: '#FFB703' }}>
-                        Edit Opportunity
+                        Edit
                       </button>
                       <button
                         onClick={() => navigate(`/applicants?opportunity=${opp.id}`)}
                         className="px-6 py-3 rounded-xl text-[13px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#0D183D] hover:bg-[#F8F9FB] transition-all">
                         View Applicants
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOpportunity(opp.id)}
+                        disabled={deleting === opp.id}
+                        className="px-6 py-3 rounded-xl text-[13px] font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
+                        title="Delete this opportunity">
+                        {deleting === opp.id ? 'Deleting...' : <Trash2 size={16} />}
                       </button>
                     </div>
                   </motion.div>
