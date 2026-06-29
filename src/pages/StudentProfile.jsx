@@ -511,61 +511,74 @@ export default function StudentProfile() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-      <div className="px-8 py-7 max-w-6xl mx-auto">
+    <main className="flex-1 overflow-y-auto" style={{ background: '#FAFBFC' }}>
+      <div className="px-8 py-10 max-w-5xl mx-auto">
 
-        {/* ══════════════════════════════════════════════════════
-            HERO PROFILE HEADER
-        ══════════════════════════════════════════════════════ */}
+        {/* ════════════════════════════════════════════════════════════
+            PREMIUM HERO HEADER
+        ════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
-          className="bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl p-10 mb-6 flex items-center gap-8">
+          className="mb-10">
+          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.06)] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div className="flex items-start gap-8">
+              {/* Avatar */}
+              <div className="shrink-0">
+                <div className="w-24 h-24 rounded-xl overflow-hidden ring-1 ring-[rgba(13,24,61,0.1)]">
+                  <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="w-full h-full"/>
+                </div>
+              </div>
 
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div className="w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-[#FFB703]/30 shadow-lg">
-              <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="w-full h-full"/>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold text-[#0D183D] mb-2">
+                  {displayName}
+                </h1>
+
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  {profile?.field && (
+                    <span className="text-[13px] font-semibold text-[#4B6382]">
+                      {profile.field}
+                    </span>
+                  )}
+                  {profile?.university && (
+                    <span className="text-[13px] text-[#4B6382]">
+                      • {profile.university}
+                    </span>
+                  )}
+                  {profile?.country && (
+                    <span className="text-[13px] text-[#4B6382]">
+                      • {profile.country}
+                    </span>
+                  )}
+                </div>
+
+                {user?.email && (
+                  <div className="flex items-center gap-2 text-[12px] text-[#4B6382] mb-4">
+                    <Mail size={13}/>
+                    {user.email}
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.15)', color: '#065F46' }}>
+                      ✓ Verified
+                    </span>
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                <div className="flex flex-wrap gap-6 pt-4 border-t border-[rgba(13,24,61,0.05)]">
+                  <div>
+                    <p className="text-[18px] font-bold text-[#0D183D]">{displayedSkills.length > 0 ? displayedSkills.length : rawSkills.length}</p>
+                    <p className="text-[11px] font-semibold text-[#4B6382]">Skills</p>
+                  </div>
+                  <div>
+                    <p className="text-[18px] font-bold text-[#0D183D]">{languages.length}</p>
+                    <p className="text-[11px] font-semibold text-[#4B6382]">Languages</p>
+                  </div>
+                  <div>
+                    <p className="text-[18px] font-bold text-[#0D183D]">{interests.length}</p>
+                    <p className="text-[11px] font-semibold text-[#4B6382]">Causes</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Profile Info */}
-          <div className="flex-1">
-            <p className="text-[12px] font-bold text-[#FFB703] uppercase tracking-widest mb-2">
-              Student Profile
-            </p>
-            <h1 className="text-[40px] font-extrabold text-white leading-tight mb-3">
-              {displayName}
-            </h1>
-
-            <div className="flex items-center gap-4 flex-wrap text-[14px] text-white/80 mb-4">
-              {profile?.field && (
-                <span className="flex items-center gap-2">
-                  <Briefcase size={16}/>
-                  {profile.field}
-                </span>
-              )}
-              {profile?.university && (
-                <span className="flex items-center gap-2">
-                  <Home size={16}/>
-                  {profile.university}
-                </span>
-              )}
-              {profile?.country && (
-                <span className="flex items-center gap-2">
-                  <MapPin size={16}/>
-                  {profile.country}
-                </span>
-              )}
-            </div>
-
-            {user?.email && (
-              <span className="flex items-center gap-2 text-[13px] text-white/80">
-                <Mail size={14}/>
-                {user.email}
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded ml-1" style={{ background: 'rgba(5,150,105,0.3)', color: '#10B981' }}>
-                  ✓ Verified
-                </span>
-              </span>
-            )}
           </div>
         </motion.div>
 
@@ -583,7 +596,7 @@ export default function StudentProfile() {
               initial={{ opacity:0, y:8 }}
               animate={{ opacity:1, y:0 }}
               transition={{ delay: 0.15 + i * 0.05 }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-4 shadow-sm">
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                   style={{ background: stat.bg }}>
@@ -599,15 +612,15 @@ export default function StudentProfile() {
         {/* ══════════════════════════════════════════════════════
             MAIN GRID
         ══════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-3 gap-6">
 
           {/* LEFT COLUMN */}
-          <div className="col-span-2 space-y-5">
+          <div className="col-span-2 space-y-4">
 
             {/* ABOUT */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
@@ -667,7 +680,7 @@ export default function StudentProfile() {
             {/* SKILLS */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[14px] font-extrabold text-[#6366F1] flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#6366F115' }}>
@@ -885,7 +898,7 @@ export default function StudentProfile() {
             {/* EDUCATION */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
               viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-5 shadow-sm">
+              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
@@ -1036,7 +1049,7 @@ export default function StudentProfile() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="space-y-5">
+          <div className="space-y-4">
 
             {/* LANGUAGES */}
             <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
