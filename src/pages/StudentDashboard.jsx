@@ -1,649 +1,276 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { submitApplication, fetchStudentApplications } from '../services/applications'
-import { fetchActiveOpportunities } from '../services/opportunities'
-import { computeMatch } from '../services/matching'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  TrendingUp, MessageCircle, Settings, LogOut, ChevronRight, Bell,
-  X, Send, Sparkles, RefreshCw, CheckCircle2, Clock,
-  MapPin, Globe, Link2, ArrowRight,
+  ArrowRight,
+  Briefcase,
+  ChevronRight,
+  FileText,
+  MessageSquare,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import HiveLogo from '../components/HiveLogo'
-import { AvatarDisplay } from '../components/Avatar'
-import GradientAvatar from '../components/GradientAvatar'
-import img3 from '../assets/img3.png'
-import img5 from '../assets/img5.png'
+import { fetchStudentApplications } from '../services/applications'
+import { computeMatch } from '../services/matching'
+import { fetchActiveOpportunities } from '../services/opportunities'
 
-// ─── Data helpers ─────────────────────────────────────────────────────────────
-
-const CARD_GRADIENTS = [
-  'from-purple-500 to-indigo-600',
-  'from-emerald-500 to-teal-600',
-  'from-pink-500 to-rose-600',
-  'from-amber-500 to-orange-600',
-  'from-cyan-500 to-blue-600',
-  'from-violet-500 to-purple-600',
-  'from-yellow-400 to-amber-500',
-  'from-teal-500 to-cyan-600',
-]
-
-function timeGreeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
+function skillName(skill) {
+  return typeof skill === 'string' ? skill : (skill?.name ?? '')
 }
 
-function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
-
-function oppToMatchCard(opp, matchResult) {
-  const hash = opp.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+function toMatchCard(opportunity, matchResult) {
   return {
-    id:            opp.id,
-    opportunityId: opp.id,
-    ngoId:         opp.ngoId,
-    name:          opp.orgName,
-    category:      opp.category  ?? '',
-    location:      opp.location  ?? '',
-    desc:          opp.description || opp.missionImpact || '',
-    match:         matchResult.score,
-    hours:         opp.weeklyHours ? `${opp.weeklyHours} hrs/wk` : 'Flexible',
-    workMode:      opp.workMode   ?? 'Hybrid',
-    skills:        (opp.skills ?? []).slice(0, 3).map(skillName).filter(Boolean),
-    bannerGrad:    CARD_GRADIENTS[hash % CARD_GRADIENTS.length],
-    avatars:       [opp.orgName, opp.category, opp.location].filter(Boolean),
-    mission:       opp.missionImpact || opp.description || '',
+    id: opportunity.id,
+    title: opportunity.title || 'Opportunity',
+    orgName: opportunity.orgName || 'Organization',
+    category: opportunity.category || 'Volunteer role',
+    location: opportunity.location || '',
+    description: opportunity.description || opportunity.missionImpact || 'No description added yet.',
+    score: Math.round(matchResult.score),
+    headline: matchResult.headline || '',
+    workMode: opportunity.workMode || 'Flexible',
+    hours: opportunity.weeklyHours ? `${opportunity.weeklyHours} hrs/week` : 'Flexible',
+    skills: (opportunity.skills || []).slice(0, 3).map(skillName).filter(Boolean),
   }
 }
-
-// AI-generated application message based on student profile + NGO mission
-function generateAppMessage(profile, ngo) {
-  const name = profile?.name || 'I'
-  const first = name.split(' ')[0]
-  const field = profile?.field || 'my field'
-  const skills = Array.isArray(profile?.skills)
-    ? profile.skills.slice(0,2).join(' and ')
-    : (profile?.skills?.split(',').slice(0,2).join(' and ').trim() || 'relevant skills')
-
-  return `Hi ${ngo.name} team,
-
-My name is ${first} and I'm studying ${field}. I discovered your opportunity through Hive and I'd love to contribute to your mission.
-
-${ngo.mission}
-
-This resonates deeply with me. My experience in ${skills} means I can contribute meaningfully from day one. I'm especially drawn to the chance to create real impact — not just add a line to a CV, but actually help people through this work.
-
-I'm available ${profile?.availability || 'flexibly'} and excited about the possibility of working together.
-
-Looking forward to hearing from you,
-${first}`
-}
-
-// Chat intro message from NGO
-function generateChatIntro(ngo, profile) {
-  const firstName = profile?.name?.split(' ')[0] || 'there'
-  return `Hi ${firstName}! 👋 We came across your profile on Hive and were really impressed by what we saw. Your background looks like a strong fit for our team. Would you be open to a quick 20-minute intro call? We'd love to tell you more about the role and learn a bit about you.`
-}
-
-const NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard/student' },
-  { icon: Zap,             label: 'Matches',      to: '/matches'           },
-  { icon: TrendingUp,      label: 'Opportunities',to: '/opportunities'     },
-  { icon: FileText,        label: 'Applications', to: '/applications'      },
-  { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'        },
-  { icon: Bookmark,        label: 'Saved',        to: '/saved'             },
-  { icon: MessageCircle,   label: 'Messages',     to: '/messages', badge: '3' },
-  { icon: Settings,        label: 'Settings',     to: '/settings'          },
-]
-
-const BANNER_GRADS = ['#6366F1','#10B981','#EC4899','#F59E0B','#06B6D4','#8B5CF6','#FFB703','#14B8A6']
-function seedHash(s) { return s.split('').reduce((a,c) => a + c.charCodeAt(0), 0) }
-function seedInitials(seed) { return (seed[0]?.toUpperCase() || '') + (seed.slice(1).match(/[A-Z]/)?.[0] || '') }
-
-function NGOBanner({ grad, avatars, match }) {
-  return (
-    <div className={`bg-gradient-to-br ${grad} h-[100px] relative overflow-hidden`}>
-      <div className="absolute inset-0 opacity-10"
-        style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='35'%3E%3Cpath d='M10 2l9 5.2v10.4L10 23 1 17.6V7.2z' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E")` }}/>
-      <div className="absolute bottom-3 left-3 flex -space-x-1.5">
-        {avatars.map(seed => (
-          <div key={seed} className="w-7 h-7 rounded-full border-2 border-white/70 flex items-center justify-center text-white text-[9px] font-bold select-none shrink-0"
-            style={{ background: BANNER_GRADS[seedHash(seed) % BANNER_GRADS.length] }}>
-            {seedInitials(seed)}
-          </div>
-        ))}
-      </div>
-      <div className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur text-[#0D183D] text-[10px] font-extrabold px-2 py-1 rounded-full shadow-sm">
-        {match}% Match
-      </div>
-    </div>
-  )
-}
-
-// ─── Apply Modal ─────────────────────────────────────────────────────────────
-
-function ApplyModal({ ngo, profile, studentId, onClose, onSuccess }) {
-  const [step, setStep]         = useState('form')  // 'form' | 'success'
-  const [message, setMessage]   = useState(() => generateAppMessage(profile, ngo))
-  const [links, setLinks]       = useState({ linkedin:'', github:'', portfolio:'' })
-  const [availability, setAvail] = useState('')
-  const [focusKey, setFocus]    = useState(null)
-  const [generating, setGen]    = useState(false)
-
-  const AVAIL_OPTIONS = ['Immediately', '1–5 hrs/week', '5–10 hrs/week', '10–15 hrs/week', '15–20 hrs/week', '20+ hrs/week']
-
-  function regenerate() {
-    setGen(true)
-    setTimeout(() => { setMessage(generateAppMessage(profile, ngo)); setGen(false) }, 600)
-  }
-
-  async function submit() {
-    try {
-      await submitApplication({
-        studentId:     profile?.id || studentId,
-        opportunityId: ngo.opportunityId ?? null,
-        ngoId:         ngo.ngoId ?? ngo.id,
-        message,
-        availability,
-        links,
-      })
-    } catch (err) {
-      console.error('Apply error:', err)
-    }
-    setStep('success')
-    onSuccess?.()
-  }
-
-  const iStyle = k => ({
-    background:'white', color:'#0D183D',
-    border:`1.5px solid ${focusKey===k ? '#FFB703' : 'rgba(13,24,61,0.1)'}`,
-  })
-
-  return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.5)', backdropFilter:'blur(8px)' }}
-      onClick={onClose}>
-      <motion.div initial={{ opacity:0, scale:0.97, y:20 }} animate={{ opacity:1, scale:1, y:0 }}
-        exit={{ opacity:0, scale:0.97, y:12 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 24px 80px rgba(10,18,48,0.25)', maxHeight:'90vh' }}
-        onClick={e => e.stopPropagation()}>
-
-        {step === 'success' ? (
-          <div className="flex flex-col items-center text-center px-8 py-10">
-            <motion.div initial={{ scale:0 }} animate={{ scale:1 }}
-              transition={{ type:'spring', stiffness:280, damping:18, delay:0.1 }}
-              className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5"
-              style={{ background:'rgba(16,185,129,0.1)' }}>
-              <CheckCircle2 size={32} className="text-emerald-500"/>
-            </motion.div>
-            <h2 className="text-[1.3rem] font-extrabold text-[#0D183D] mb-2">Application sent!</h2>
-            <p className="text-[13px] text-[#4B6382] mb-2">Your application to <strong>{ngo.name}</strong> is on its way.</p>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-              style={{ background:'rgba(255,183,3,0.08)', border:'1px solid rgba(255,183,3,0.2)' }}>
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"/>
-              <span className="text-[12px] font-semibold" style={{ color:'#D99E00' }}>Status: Under Review</span>
-            </div>
-            <button onClick={onClose} className="px-8 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-              style={{ background:'#0D183D' }}>
-              Back to dashboard
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Modal header */}
-            <div className="px-6 pt-5 pb-4 shrink-0"
-              style={{ background:'linear-gradient(160deg,#FFF7E6,#F0EEFF)', borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
-              <button onClick={onClose}
-                className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
-                <X size={14}/>
-              </button>
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={ngo.name} size={44} radius="0.75rem"/>
-                <div>
-                  <p className="text-[15px] font-extrabold text-[#0D183D]">Apply to {ngo.name}</p>
-                  <p className="text-[12px] text-[#4B6382]">{ngo.category} · {ngo.location} · {ngo.match}% match</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Scrollable form */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
-
-              {/* AI motivation message */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background:'#FFB703' }}>
-                      <Sparkles size={11} className="text-white"/>
-                    </div>
-                    <p className="text-[12px] font-extrabold text-[#0D183D]">AI-generated application message</p>
-                  </div>
-                  <button onClick={regenerate}
-                    className={`flex items-center gap-1 text-[11px] font-semibold transition-all ${generating ? 'opacity-50' : ''}`}
-                    style={{ color:'#FFB703' }}>
-                    <RefreshCw size={11} className={generating ? 'animate-spin' : ''}/>
-                    Regenerate
-                  </button>
-                </div>
-                <textarea value={message} onChange={e => setMessage(e.target.value)} rows={8}
-                  onFocus={() => setFocus('msg')} onBlur={() => setFocus(null)}
-                  className="w-full px-4 py-3 rounded-xl text-[12px] outline-none transition-all resize-none"
-                  style={{ ...iStyle('msg'), lineHeight:1.65 }}/>
-                <p className="text-[10px] text-[#4B6382] mt-1.5">✏️ Feel free to edit before sending.</p>
-              </div>
-
-              {/* Availability */}
-              <div>
-                <p className="text-[12px] font-semibold text-[#0D183D] mb-2">Your availability</p>
-                <div className="flex flex-wrap gap-2">
-                  {AVAIL_OPTIONS.map(a => (
-                    <button key={a} onClick={() => setAvail(a)}
-                      className="px-3.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all"
-                      style={availability===a
-                        ? { background:'#0D183D', color:'white', borderColor:'#0D183D' }
-                        : { background:'white', color:'#4B6382', borderColor:'rgba(13,24,61,0.1)' }}>
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Links */}
-              <div className="flex flex-col gap-3">
-                <p className="text-[12px] font-semibold text-[#0D183D]">Portfolio links <span className="text-[11px] font-normal text-[#4B6382]">(optional)</span></p>
-                {[
-                  { key:'linkedin', placeholder:'LinkedIn profile URL', label:'🔗 LinkedIn' },
-                  { key:'github',   placeholder:'GitHub profile URL',   label:'💻 GitHub'   },
-                  { key:'portfolio',placeholder:'Portfolio / website URL',label:'🌐 Portfolio'},
-                ].map(({ key, placeholder, label }) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <span className="text-[11px] font-semibold text-[#4B6382] w-20 shrink-0">{label}</span>
-                    <input value={links[key]} onChange={e => setLinks(l => ({...l,[key]:e.target.value}))}
-                      placeholder={placeholder}
-                      onFocus={() => setFocus(key)} onBlur={() => setFocus(null)}
-                      className="flex-1 px-3 py-2.5 rounded-xl text-[12px] outline-none transition-all placeholder-[#4B6382]/40"
-                      style={iStyle(key)}/>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="shrink-0 px-6 py-4 border-t flex gap-3"
-              style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
-              <button onClick={onClose}
-                className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors"
-                style={{ borderColor:'rgba(13,24,61,0.12)' }}>
-                Cancel
-              </button>
-              <button onClick={submit}
-                className="flex-2 flex items-center justify-center gap-2 px-8 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background:'#FFB703', boxShadow:'0 4px 16px rgba(255,183,3,0.3)', flex:2 }}>
-                <Send size={13}/> Submit application →
-              </button>
-            </div>
-          </>
-        )}
-      </motion.div>
-    </motion.div>
-  )
-}
-
-// ─── Chat Modal ───────────────────────────────────────────────────────────────
-
-function ChatModal({ ngo, profile, onClose }) {
-  const introText = generateChatIntro(ngo, profile)
-  const [messages, setMessages] = useState([
-    { id: 1, from: 'them', text: introText, time: 'now' },
-  ])
-  const [input, setInput] = useState('')
-  const [focusKey, setFocus] = useState(null)
-
-  const SUGGESTIONS = [
-    `Thanks for reaching out! I'd love to learn more about the ${ngo.category} role.`,
-    'A 20-minute call sounds great — what time works for you?',
-    'Could you share more details about day-to-day responsibilities?',
-  ]
-
-  function send(text = input) {
-    const t = text.trim()
-    if (!t) return
-    setMessages(m => [...m, { id: Date.now(), from: 'me', text: t, time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false}) }])
-    setInput('')
-  }
-
-  return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-      style={{ background:'rgba(10,18,48,0.45)', backdropFilter:'blur(8px)' }}
-      onClick={onClose}>
-      <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }}
-        exit={{ opacity:0, y:40 }} transition={{ type:'spring', stiffness:320, damping:28 }}
-        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden"
-        style={{ boxShadow:'0 24px 80px rgba(10,18,48,0.25)', height:520 }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
-        <div className="px-5 py-4 flex items-center gap-3 shrink-0"
-          style={{ background:'linear-gradient(160deg,#FFF7E6,#F0EEFF)', borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
-          <GradientAvatar name={ngo.name} size={38} radius="0.65rem"/>
-          <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-bold text-[#0D183D]">{ngo.name}</p>
-            <p className="text-[11px] flex items-center gap-1 text-[#4B6382]">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"/>Online
-            </p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
-            <X size={14}/>
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
-          {messages.map(m => (
-            <div key={m.id} className={`flex items-end gap-2 ${m.from === 'me' ? 'flex-row-reverse' : ''}`}>
-              {m.from === 'them' && <GradientAvatar name={ngo.name} size={26} radius="0.45rem"/>}
-              <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
-                m.from === 'me' ? 'rounded-br-sm text-white' : 'rounded-bl-sm text-[#0D183D]'
-              }`} style={{ background:m.from==='me'?'#0D183D':'white', boxShadow:'0 1px 8px rgba(13,24,61,0.08)', whiteSpace:'pre-line' }}>
-                {m.text}
-              </div>
-            </div>
-          ))}
-
-          {/* Suggestions */}
-          {messages.length === 1 && (
-            <div className="flex flex-col gap-2 mt-1">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] flex items-center gap-1.5">
-                <Sparkles size={10} style={{ color:'#FFB703' }}/> Suggested replies
-              </p>
-              {SUGGESTIONS.map((s, i) => (
-                <button key={i} onClick={() => send(s)}
-                  className="text-left px-4 py-2.5 rounded-xl text-[12px] font-medium border hover:shadow-sm transition-all"
-                  style={{ background:'white', color:'#4B6382', borderColor:'rgba(13,24,61,0.09)' }}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="px-5 py-4 shrink-0" style={{ borderTop:'1px solid rgba(13,24,61,0.08)' }}>
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl"
-            style={{ background:'#F8F9FB', border:'1.5px solid rgba(13,24,61,0.09)' }}>
-            <input value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key==='Enter') { e.preventDefault(); send() } }}
-              placeholder="Type a message…"
-              className="flex-1 bg-transparent text-[13px] text-[#0D183D] placeholder-[#4B6382]/50 outline-none"/>
-            <button onClick={() => send()}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 shrink-0"
-              style={{ background: input.trim() ? '#FFB703' : 'rgba(13,24,61,0.15)' }}>
-              <Send size={13}/>
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StudentDashboard() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
   const firstName = user?.name?.split(' ')[0] || 'there'
-  const avatarSrc = profile?.avatar || user?.avatar || null
 
-  const [applyingTo, setApplyingTo]     = useState(null)
-  const [chattingWith, setChattingWith] = useState(null)
-  const [topMatches, setTopMatches]     = useState([])
-  const [matchCount, setMatchCount]     = useState(0)
-  const [appCount, setAppCount]         = useState(0)
+  const [appCount, setAppCount] = useState(0)
   const [interviewCount, setInterviewCount] = useState(0)
+  const [topMatches, setTopMatches] = useState([])
   const [loadingMatches, setLoadingMatches] = useState(true)
 
   useEffect(() => {
     if (!user?.id) return
 
-    // Fetch opportunities and score them against the student's profile
-    fetchActiveOpportunities()
-      .then(opps => {
-        const scored = opps
-          .map(opp => ({ opp, result: computeMatch(profile, opp) }))
-          .sort((a, b) => b.result.score - a.result.score)
-        const good = scored.filter(({ result }) => result.score >= 45)
-        setMatchCount(good.length)
-        setTopMatches(good.slice(0, 3).map(({ opp, result }) => oppToMatchCard(opp, result)))
-      })
-      .catch(() => {})
-      .finally(() => setLoadingMatches(false))
-
-    // Fetch applications for count + interview tally
     fetchStudentApplications(user.id)
       .then(apps => {
         setAppCount(apps.length)
         setInterviewCount(apps.filter(a => a.status === 'interview').length)
       })
       .catch(() => {})
-  }, [user?.id, profile])
+  }, [user?.id])
 
-  function handleApplySuccess() {
-    setAppCount(n => n + 1)
-  }
+  useEffect(() => {
+    if (!user?.id) return
 
-  const STATS = [
-    { icon: '✦',  label: 'Matches',      value: String(matchCount),     accent: 'text-[#D99E00]'   },
-    { icon: '📄', label: 'Applications', value: String(appCount),        accent: 'text-blue-600'    },
-    { icon: '💬', label: 'Interviews',   value: String(interviewCount),  accent: 'text-emerald-600' },
+    fetchActiveOpportunities()
+      .then(opportunities => {
+        const studentProfile = profile || user || {}
+        const matches = opportunities
+          .map(opportunity => ({
+            opportunity,
+            result: computeMatch(studentProfile, opportunity),
+          }))
+          .sort((a, b) => b.result.score - a.result.score)
+          .slice(0, 10)
+          .map(({ opportunity, result }) => toMatchCard(opportunity, result))
+
+        setTopMatches(matches)
+      })
+      .catch(() => setTopMatches([]))
+      .finally(() => setLoadingMatches(false))
+  }, [user?.id, profile, user])
+
+  const quickActions = [
+    {
+      icon: TrendingUp,
+      label: 'Opportunities',
+      hint: 'Explore roles',
+      to: '/opportunities',
+      accent: 'bg-[#E8F0FE] text-[#1A73E8]',
+    },
+    {
+      icon: FileText,
+      label: 'Applications',
+      hint: `${appCount} submitted`,
+      to: '/applications',
+      accent: 'bg-[#FEF7E0] text-[#B06000]',
+    },
+    {
+      icon: MessageSquare,
+      label: 'Interviews',
+      hint: `${interviewCount} active`,
+      to: '/interviews',
+      accent: 'bg-[#F3E8FD] text-[#9334E6]',
+    },
   ]
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-      <div className="px-8 py-7 max-w-[1100px] mx-auto">
+    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+            Welcome {firstName}
+          </h1>
+          <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+            Manage opportunities, applications, and interviews from one clean workspace.
+          </p>
+        </motion.div>
 
-        {/* Greeting */}
-        <motion.div initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
-          transition={{ duration:0.4 }}
-          className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-extrabold text-[#0D183D] mb-1 flex items-center gap-2">
-              {timeGreeting()}, {firstName}! ☀️
-              <motion.span animate={{ rotate:[0,10,-10,0] }} transition={{ repeat:Infinity, duration:2.5, ease:'easeInOut' }}
-                className="text-xl select-none">🐝</motion.span>
-            </h1>
-            <p className="text-[#4B6382] text-sm">Discover opportunities, grow your skills, and make an impact.</p>
-          </div>
-          <motion.div initial={{ opacity:0, x:12 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.25 }}
-            className="hidden md:flex items-center gap-3 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card px-4 py-2.5 shrink-0 cursor-pointer hover:shadow-[0_4px_20px_rgba(13,24,61,0.09)] transition-all"
-            onClick={() => navigate('/profile/student')}>
-            <AvatarDisplay src={avatarSrc} name={user?.name||''} size="sm" className="rounded-xl"/>
+        <section className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-[#0D183D] leading-tight">{user?.name||'Student'}</p>
-              <p className="text-[10px] text-navy-400">Student · Hive</p>
+              <h2 className="text-[1.05rem] font-semibold text-[#202124]">Quick actions</h2>
+              <p className="mt-1 text-[0.84rem] leading-6 text-[#5F6368]">
+                Move through the student workspace without hunting.
+              </p>
             </div>
-            <button onClick={e => e.stopPropagation()} className="text-navy-400 hover:text-navy-600 ml-1 transition-colors"><Bell size={14}/></button>
-          </motion.div>
-        </motion.div>
+            <button
+              onClick={() => navigate('/profile/student')}
+              className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-[0.84rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]"
+            >
+              Open profile
+              <ArrowRight size={15} />
+            </button>
+          </div>
 
-        {/* Stats */}
-        <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-          transition={{ delay:0.1, duration:0.35 }}
-          className="flex items-center gap-3 mb-7 flex-wrap">
-          {STATS.map((s, i) => (
-            <motion.div key={s.label}
-              initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.12 + i*0.06 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] shadow-card px-5 py-3 flex items-center gap-3 hover:shadow-soft transition-shadow cursor-default">
-              <span className="text-xl">{s.icon}</span>
-              <div>
-                <p className={`text-2xl font-extrabold leading-none ${s.accent}`}>{s.value}</p>
-                <p className="text-[11px] text-navy-400 mt-0.5">{s.label}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Main layout */}
-        <div className="grid lg:grid-cols-[1fr_260px] gap-6">
-
-          {/* Matches */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-extrabold text-[#0D183D]">Top Matches for You</h2>
-              <Link to="/matches" className="text-xs text-[#FFB703] font-semibold flex items-center gap-0.5 hover:underline">
-                View All <ChevronRight size={12}/>
-              </Link>
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-4">
-              {loadingMatches ? (
-                // Loading skeletons
-                [0,1,2].map(i => (
-                  <div key={i} className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] overflow-hidden animate-pulse">
-                    <div className="h-[100px] bg-[rgba(13,24,61,0.06)]"/>
-                    <div className="p-4 flex flex-col gap-2.5">
-                      <div className="h-3 w-3/4 rounded-full bg-[rgba(13,24,61,0.06)]"/>
-                      <div className="h-2.5 w-1/2 rounded-full bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-8 w-full rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-7 w-full rounded-xl bg-[rgba(13,24,61,0.06)] mt-1"/>
-                    </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {quickActions.map((action, i) => {
+              const Icon = action.icon
+              return (
+                <motion.button
+                  key={action.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 + i * 0.05 }}
+                  onClick={() => navigate(action.to)}
+                  className="group rounded-[24px] border border-[#DCE7F8] bg-[#FBFCFE] p-5 text-left transition-all hover:border-[#C8DCF8] hover:bg-white hover:shadow-[0_14px_30px_rgba(17,24,39,0.05)]"
+                >
+                  <div className="mb-9 flex items-start justify-between">
+                    <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.accent}`}>
+                      <Icon size={20} />
+                    </span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#9AA0A6] transition-colors group-hover:text-[#1A73E8]">
+                      <ChevronRight size={18} />
+                    </span>
                   </div>
+                  <p className="text-[1rem] font-semibold text-[#202124]">{action.label}</p>
+                  <p className="mt-2 text-[0.84rem] text-[#5F6368]">{action.hint}</p>
+                </motion.button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8]">
+                <Sparkles size={14} />
+                Top matches
+              </div>
+              <h2 className="text-[1.35rem] font-semibold text-[#202124]">
+                Recommended for you
+              </h2>
+              <p className="mt-1 text-[0.84rem] leading-6 text-[#5F6368]">
+                Scroll sideways to browse opportunities that fit your profile best.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/opportunities')}
+              className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-[0.84rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]"
+            >
+              Browse all
+              <ArrowRight size={15} />
+            </button>
+          </div>
+
+          <div className="-mx-2 overflow-x-auto overscroll-x-contain px-2 pb-3 [scrollbar-gutter:stable]">
+            <div className="flex snap-x snap-mandatory gap-4">
+              {loadingMatches ? (
+                [0, 1, 2, 3].map(item => (
+                  <div
+                    key={item}
+                    className="h-[270px] w-[300px] shrink-0 snap-start animate-pulse rounded-[28px] border border-[#E5EEFB] bg-[#F8FBFF] sm:w-[340px]"
+                  />
                 ))
               ) : topMatches.length === 0 ? (
-                <div className="sm:col-span-3 flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <span className="text-4xl">🔍</span>
-                  <p className="text-sm font-semibold text-[#0D183D]">No matches yet</p>
-                  <p className="text-[12px] text-[#4B6382] max-w-xs">
-                    Add skills and interests to your profile to get matched with opportunities.
-                  </p>
-                  <button onClick={() => navigate('/settings')}
-                    className="mt-1 text-[12px] font-semibold px-4 py-2 rounded-xl text-white"
-                    style={{ background:'#FFB703' }}>
-                    Complete your profile →
-                  </button>
+                <div className="flex min-h-[230px] w-full items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-6 text-center">
+                  <div>
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                      <Briefcase size={24} />
+                    </div>
+                    <p className="text-[1rem] font-semibold text-[#202124]">No matches yet</p>
+                    <p className="mx-auto mt-2 max-w-md text-[0.84rem] leading-6 text-[#5F6368]">
+                      Add more skills and interests to your profile so we can recommend stronger opportunities.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                topMatches.map((ngo, i) => (
-                  <motion.div key={ngo.id}
-                    initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }}
-                    transition={{ delay:0.18 + i*0.1, duration:0.4 }}
-                    className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] overflow-hidden flex flex-col hover:shadow-soft hover:-translate-y-0.5 transition-all duration-200">
-
-                    <NGOBanner grad={ngo.bannerGrad} avatars={ngo.avatars} match={ngo.match}/>
-
-                    <div className="p-4 flex flex-col gap-2 flex-1">
-                      <div>
-                        <p className="font-extrabold text-[#0D183D] text-sm">{ngo.name}</p>
-                        <p className="text-[10px] text-navy-400">{ngo.category} · {ngo.location}</p>
+                topMatches.map((match, index) => (
+                  <motion.button
+                    key={match.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + index * 0.04 }}
+                    onClick={() => navigate(`/opportunities?opportunity=${encodeURIComponent(match.id)}`)}
+                    className="flex h-[270px] w-[300px] shrink-0 snap-start flex-col rounded-[28px] border border-[#E5EEFB] bg-[#FBFCFE] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-[#C8DCF8] hover:bg-white hover:shadow-[0_16px_34px_rgba(17,24,39,0.055)] sm:w-[340px]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-[1.02rem] font-semibold text-[#202124]">
+                          {match.title}
+                        </p>
+                        <p className="mt-1 truncate text-[0.84rem] text-[#5F6368]">
+                          {match.orgName}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">{ngo.desc}</p>
-
-                      <div className="flex items-center gap-2 text-[10px] text-[#4B6382] mt-0.5">
-                        <span className="flex items-center gap-1"><Clock size={9}/>{ngo.hours}</span>
-                        <span className="flex items-center gap-1"><MapPin size={9}/>{ngo.workMode}</span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mt-0.5">
-                        {ngo.skills.map(s => (
-                          <span key={s} className="bg-[#FFF7E6] text-navy-600 text-[9px] font-semibold px-2 py-0.5 rounded-full border border-[rgba(13,24,61,0.08)]">{s}</span>
-                        ))}
-                      </div>
-
-                      <div className="flex gap-2 mt-1">
-                        <button onClick={() => setApplyingTo(ngo)}
-                          className="flex-1 py-2 rounded-xl text-[11px] font-semibold text-white text-center transition-all hover:opacity-90"
-                          style={{ background:'#FFB703' }}>
-                          Apply now →
-                        </button>
-                        <button onClick={() => setChattingWith(ngo)}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] hover:text-[#0D183D] transition-colors shrink-0">
-                          <MessageCircle size={13}/>
-                        </button>
-                      </div>
+                      <span className="shrink-0 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.72rem] font-bold text-[#1A73E8]">
+                        {match.score}% fit
+                      </span>
                     </div>
-                  </motion.div>
+
+                    <p className="mt-4 line-clamp-3 text-[0.82rem] leading-6 text-[#5F6368]">
+                      {match.headline || match.description}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2 text-[0.72rem] font-semibold text-[#5F6368]">
+                      <span className="rounded-full bg-white px-2.5 py-1 shadow-[0_4px_12px_rgba(17,24,39,0.025)]">
+                        {match.category}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 shadow-[0_4px_12px_rgba(17,24,39,0.025)]">
+                        {match.workMode}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 shadow-[0_4px_12px_rgba(17,24,39,0.025)]">
+                        {match.hours}
+                      </span>
+                    </div>
+
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#E5EEFB] pt-4">
+                      <div className="flex min-w-0 flex-wrap gap-1.5">
+                        {match.skills.length > 0 ? match.skills.map(skill => (
+                          <span
+                            key={skill}
+                            className="max-w-[110px] truncate rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.68rem] font-semibold text-[#1A73E8]"
+                          >
+                            {skill}
+                          </span>
+                        )) : (
+                          <span className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.68rem] font-semibold text-[#1A73E8]">
+                            Open role
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="shrink-0 text-[#1A73E8]" size={18} />
+                    </div>
+                  </motion.button>
                 ))
               )}
             </div>
           </div>
-
-          {/* Impact sidebar */}
-          <motion.div initial={{ opacity:0, x:14 }} animate={{ opacity:1, x:0 }}
-            transition={{ delay:0.28, duration:0.45 }}
-            className="bg-white rounded-2xl shadow-card border border-[rgba(13,24,61,0.08)] p-5 h-fit flex flex-col gap-4">
-
-            <div>
-              <p className="text-xs font-extrabold text-[#FFB703] uppercase tracking-widest mb-0.5">Your Impact</p>
-              <p className="text-[11px] text-navy-400 leading-relaxed">Every step you take helps someone grow.</p>
-            </div>
-
-            <div className="w-full rounded-xl overflow-hidden bg-honey-50 border border-honey-100">
-              <img src={img3} alt="Students making an impact" className="w-full object-contain object-top" style={{ maxHeight:130 }} draggable={false}/>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-cream-50 rounded-xl p-3 text-center border border-[rgba(13,24,61,0.08)]">
-                <p className="text-2xl font-extrabold text-[#0D183D] leading-none">24</p>
-                <p className="text-[10px] text-navy-400 mt-1">Hours contributed</p>
-              </div>
-              <div className="bg-cream-50 rounded-xl p-3 text-center border border-[rgba(13,24,61,0.08)]">
-                <p className="text-2xl font-extrabold text-[#0D183D] leading-none">120+</p>
-                <p className="text-[10px] text-navy-400 mt-1">People impacted</p>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] mb-1.5">
-                <span className="text-[#4B6382] font-semibold">Personal growth</span>
-                <span className="text-[#FFB703] font-extrabold">68%</span>
-              </div>
-              <div className="w-full bg-cream-200 rounded-full h-1.5">
-                <motion.div className="bg-[#FFB703] h-1.5 rounded-full"
-                  initial={{ width:0 }} animate={{ width:'68%' }}
-                  transition={{ delay:0.6, duration:0.8, ease:'easeOut' }}/>
-              </div>
-            </div>
-
-            <button onClick={() => navigate('/matches')} className="btn-navy text-xs py-2.5 w-full">
-              See your matches →
-            </button>
-
-            <div className="pt-2 border-t border-[rgba(13,24,61,0.07)]">
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-navy-400 mb-2 text-center">Partner institutions</p>
-              <img src={img5} alt="Partner universities and NGOs" className="w-full object-contain opacity-70" draggable={false}/>
-            </div>
-          </motion.div>
-        </div>
+        </section>
       </div>
-
-      {/* Modals */}
-      <AnimatePresence>
-        {applyingTo && (
-          <ApplyModal
-            key="apply"
-            ngo={applyingTo}
-            profile={profile || user}
-            studentId={user?.id}
-            onClose={() => setApplyingTo(null)}
-            onSuccess={handleApplySuccess}
-          />
-        )}
-        {chattingWith && (
-          <ChatModal
-            key="chat"
-            ngo={chattingWith}
-            profile={profile || user}
-            onClose={() => setChattingWith(null)}
-          />
-        )}
-      </AnimatePresence>
     </main>
   )
 }

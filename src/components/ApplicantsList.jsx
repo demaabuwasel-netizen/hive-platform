@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Users } from 'lucide-react'
+import { Search } from 'lucide-react'
 import GradientAvatar from './GradientAvatar'
-import { parseSkillString } from '../services/opportunities'
-
-function skillDisplay(s) {
-  const parsed = parseSkillString(s)
-  return parsed.level ? `${parsed.name} [${parsed.level}]` : parsed.name
-}
 
 function toUiStatus(dbStatus) {
   if (dbStatus === 'submitted' || dbStatus === 'under_review') return 'new'
@@ -15,11 +9,11 @@ function toUiStatus(dbStatus) {
 }
 
 const STATUS_CONFIG = {
-  new:         { label: 'New',         color: 'text-indigo-600',  bg: 'bg-indigo-50'   },
-  shortlisted: { label: 'Shortlisted', color: 'text-[#D99E00]',   bg: 'bg-amber-50'    },
-  interview:   { label: 'Interview',   color: 'text-emerald-700', bg: 'bg-emerald-50'  },
-  accepted:    { label: 'Accepted',    color: 'text-emerald-700', bg: 'bg-emerald-50'  },
-  rejected:    { label: 'Rejected',    color: 'text-red-500',     bg: 'bg-red-50'      },
+  new:         { label: 'New',         color: 'text-[#1A73E8]', bg: 'bg-[#E8F0FE]' },
+  shortlisted: { label: 'Viewed',      color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
+  interview:   { label: 'Interview',   color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
+  accepted:    { label: 'Accepted',    color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
+  rejected:    { label: 'Rejected',    color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
 }
 
 export default function ApplicantsList({ applicants, selectedId, onSelectApplicant, statuses, loading, searchQuery, selectedRoleTitle }) {
@@ -27,68 +21,83 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
   const [filter, setFilter] = useState('all')
 
   const q = searchQuery || localQ
+  const statusFor = a => statuses?.[a.id] ?? toUiStatus(a.status)
+  const activeApplicants = applicants.filter(a => statusFor(a) !== 'rejected')
   const visible = applicants.filter(a => {
-    const matchSearch = a.name.toLowerCase().includes(q.toLowerCase()) ||
-                       a.field.toLowerCase().includes(q.toLowerCase())
-    const matchFilter = filter === 'all' || toUiStatus(a.status) === filter
+    const matchSearch = (a.name || '').toLowerCase().includes(q.toLowerCase()) ||
+                       (a.field || '').toLowerCase().includes(q.toLowerCase())
+    const currentStatus = statusFor(a)
+    const matchFilter = filter === 'all'
+      ? currentStatus !== 'rejected'
+      : currentStatus === filter
     return matchSearch && matchFilter
   })
 
   const statusCounts = {
-    all:         applicants.length,
-    new:         applicants.filter(a => toUiStatus(a.status) === 'new').length,
-    shortlisted: applicants.filter(a => toUiStatus(a.status) === 'shortlisted').length,
-    interview:   applicants.filter(a => toUiStatus(a.status) === 'interview').length,
-    rejected:    applicants.filter(a => toUiStatus(a.status) === 'rejected').length,
+    all:      activeApplicants.length,
+    new:      applicants.filter(a => statusFor(a) === 'new').length,
+    rejected: applicants.filter(a => statusFor(a) === 'rejected').length,
   }
 
   return (
-    <div className="flex flex-col gap-4 flex-1">
-      {/* Role heading */}
-      {selectedRoleTitle && (
-        <h2 className="text-[15px] font-semibold text-[#0D183D] px-1">
-          Applicants for {selectedRoleTitle}
-        </h2>
-      )}
+    <section className="min-w-0">
+      <div className="mb-4 rounded-[28px] bg-[#F8FAFF]/70 p-4">
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            {loading ? (
+              <>
+                <div className="h-8 w-56 animate-pulse rounded-2xl bg-[#EEF4FF]" />
+                <div className="mt-2 h-4 w-36 animate-pulse rounded-full bg-[#F1F4F9]" />
+              </>
+            ) : (
+              <>
+                <h2 className="truncate text-[1.35rem] font-semibold tracking-[-0.04em] text-[#202124]">
+                  {selectedRoleTitle || 'Select a role'}
+                </h2>
+                <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+                  {activeApplicants.length} applicant{activeApplicants.length !== 1 ? 's' : ''} in this role
+                </p>
+              </>
+            )}
+          </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-        <Search size={13} className="text-[#4B6382] shrink-0"/>
-        <input value={q} onChange={e => setLocalQ(e.target.value)} placeholder="Search applicants…"
-          className="flex-1 bg-transparent text-[13px] outline-none text-[#0D183D] placeholder-[#4B6382]/50"/>
-      </div>
+          <div className="grid h-10 w-full grid-cols-3 gap-1 rounded-[15px] bg-[#EEF3FB] p-1 lg:w-[320px]">
+            {[
+              { key: 'all', label: 'All', count: statusCounts.all },
+              { key: 'new', label: 'New', count: statusCounts.new },
+              { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
+            ].map(({ key, label, count }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={`h-8 rounded-[12px] px-2.5 text-[0.73rem] font-semibold transition-colors ${
+                  filter === key
+                    ? 'bg-white text-[#1A73E8] shadow-[0_1px_4px_rgba(60,64,67,0.12)]'
+                    : 'text-[#5F6368] hover:text-[#202124]'
+                }`}
+              >
+                {label} <span className="ml-1 text-[0.66rem] opacity-70">{count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Status filters */}
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { key: 'all', label: 'All', count: statusCounts.all },
-          { key: 'new', label: 'New', count: statusCounts.new },
-          { key: 'shortlisted', label: 'Shortlisted', count: statusCounts.shortlisted },
-          { key: 'interview', label: 'Interview', count: statusCounts.interview },
-          { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
-        ].map(({ key, label, count }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${
-              filter === key
-                ? 'bg-[#0D183D] text-white'
-                : 'text-[#4B6382] bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[rgba(13,24,61,0.02)]'
-            }`}>
-            {label} {count > 0 && <span className="text-[11px] ml-1">({count})</span>}
-          </button>
-        ))}
+        <div className="flex h-12 items-center gap-2 rounded-[18px] border border-[#E5EEFB] bg-white px-3 shadow-[0_8px_20px_rgba(60,64,67,0.035)]">
+          <Search size={14} className="shrink-0 text-[#5F6368]"/>
+          <input value={q} onChange={e => setLocalQ(e.target.value)} placeholder="Search applicants"
+            className="min-w-0 flex-1 bg-transparent text-[0.84rem] text-[#202124] outline-none placeholder:text-[#9AA0A6]"/>
+        </div>
       </div>
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {[0,1,2].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] px-5 py-4 flex items-center gap-4 animate-pulse">
-              <div className="w-11 h-11 rounded-xl bg-[rgba(13,24,61,0.06)] shrink-0"/>
+            <div key={i} className="flex h-[86px] items-center gap-3 rounded-[24px] border border-[#E5EEFB] bg-white/80 px-4 py-3.5 animate-pulse">
+              <div className="h-11 w-11 shrink-0 rounded-2xl bg-[#F1F3F4]"/>
               <div className="flex-1 space-y-2">
-                <div className="h-3 w-1/3 rounded-full bg-[rgba(13,24,61,0.06)]"/>
-                <div className="h-2.5 w-1/2 rounded-full bg-[rgba(13,24,61,0.04)]"/>
+                <div className="h-3 w-1/3 rounded-full bg-[#F1F3F4]"/>
+                <div className="h-2.5 w-1/2 rounded-full bg-[#F8FAFC]"/>
               </div>
             </div>
           ))}
@@ -98,81 +107,77 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
       {/* Empty state */}
       <AnimatePresence>
         {!loading && applicants.length === 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
-            <p className="text-[14px] font-bold text-[#0D183D] mb-1">No applicants for this role yet</p>
-            <p className="text-[12px] text-[#4B6382]">Students will appear here once they apply.</p>
+          <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants for this role yet</p>
+            <p className="text-[0.82rem] text-[#5F6368]">Students will appear here once they apply.</p>
           </motion.div>
         )}
 
         {/* No filter results */}
         {!loading && applicants.length > 0 && visible.length === 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
-            <p className="text-[14px] font-bold text-[#0D183D] mb-1">No applicants found</p>
-            <p className="text-[12px] text-[#4B6382]">Try adjusting your search or filter.</p>
+          <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants found</p>
+            <p className="text-[0.82rem] text-[#5F6368]">Try adjusting your search or filter.</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Applicant cards */}
       {!loading && visible.length > 0 && (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {visible.map((a, i) => {
-            const st = STATUS_CONFIG[toUiStatus(a.status)] ?? STATUS_CONFIG.new
-            const scoreColor = a.match >= 90 ? '#059669' : a.match >= 80 ? '#D99E00' : '#6366F1'
+            const currentStatus = statusFor(a)
+            const st = STATUS_CONFIG[currentStatus] ?? STATUS_CONFIG.new
             const isActive = selectedId === a.id
             return (
-              <motion.button
+              <motion.div
                 key={a.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                initial={false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.12 }}
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectApplicant(a)}
-                className={`w-full text-left rounded-2xl border px-5 py-4 flex items-center gap-4 cursor-pointer transition-all ${
-                  isActive
-                    ? 'border-[#FFB703] shadow-[0_0_0_3px_rgba(255,183,3,0.1)]'
-                    : 'hover:shadow-[0_2px_8px_rgba(13,24,61,0.06)]'
-                } ${
-                  toUiStatus(a.status) === 'interview'
-                    ? 'bg-emerald-50 border-emerald-200'
-                    : 'bg-white border-[rgba(13,24,61,0.08)]'
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onSelectApplicant(a)
+                  }
+                }}
+                className={`group flex min-h-[86px] w-full cursor-pointer items-center gap-4 rounded-[24px] border px-4 py-3.5 text-left transition-all ${
+                  currentStatus === 'accepted'
+                    ? 'border-[#D9F0E4] bg-[#F1FBF6] shadow-[0_10px_24px_rgba(24,128,56,0.06)] hover:bg-[#ECF9F0]'
+                    : isActive
+                    ? 'border-[#BFD7FF] bg-[#F8FAFF] shadow-[0_14px_30px_rgba(26,115,232,0.10)]'
+                    : 'border-[#E5EEFB] bg-white/80 shadow-[0_8px_20px_rgba(60,64,67,0.03)] hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:bg-white hover:shadow-[0_14px_28px_rgba(60,64,67,0.055)]'
                 }`}>
-                <GradientAvatar name={a.name} size={44} radius="0.65rem"/>
+                <GradientAvatar name={a.name} size={44} radius="0.9rem" className="shadow-none"/>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[13px] font-bold text-[#0D183D] truncate">{a.name}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${st.bg} ${st.color}`}>
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className={`truncate text-[0.96rem] font-semibold ${
+                      currentStatus === 'accepted' ? 'text-[#188038]' : 'text-[#202124]'
+                    }`}>{a.name}</span>
+                    <span className={`inline-flex h-6 w-[58px] shrink-0 items-center justify-center rounded-full text-[0.62rem] font-semibold ${st.bg} ${st.color}`}>
                       {st.label}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#4B6382] mb-2 truncate">
+                  <p className="mb-3 truncate text-[0.76rem] text-[#5F6368]">
                     {a.field}{a.uni ? ` · ${a.uni}` : ''}
                   </p>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {a.skills.slice(0, 2).map(s => {
-                      const display = skillDisplay(s)
-                      return (
-                        <span key={display} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
-                          style={{ background: '#F8F9FB', color: '#4B6382', borderColor: 'rgba(13,24,61,0.08)' }}>
-                          {display}
-                        </span>
-                      )
-                    })}
-                    {a.skills.length > 2 && (
-                      <span className="text-[10px] text-[#4B6382]/60">+{a.skills.length - 2}</span>
-                    )}
-                    <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                      style={{ background: `${scoreColor}15`, color: scoreColor }}>
-                      {a.match}%
-                    </span>
-                  </div>
                 </div>
-              </motion.button>
+                <div className="shrink-0 text-right">
+                  <span className="inline-flex h-8 items-center justify-center rounded-full bg-[#E8F0FE] px-3 text-[0.72rem] font-semibold text-[#1A73E8]">
+                    {a.match}% match
+                  </span>
+                  <p className="mt-2 text-[0.68rem] font-semibold text-[#9AA0A6]">Open profile</p>
+                </div>
+              </motion.div>
             )
           })}
         </div>
       )}
-    </div>
+    </section>
   )
 }

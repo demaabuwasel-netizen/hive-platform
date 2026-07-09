@@ -90,7 +90,7 @@ export async function fetchApplicationsForOpportunity(opportunityId) {
     .from('applications')
     .select(`
       *,
-      student_profiles (field, university, skills, languages, availability, bio, links)
+      student_profiles (field, university, skills, languages, bio, links)
     `)
     .eq('opportunity_id', opportunityId)
     .order('submitted_at', { ascending: false })
@@ -108,7 +108,7 @@ export async function fetchNgoApplications(ngoId) {
     .select(`
       *,
       opportunities (title, category, location),
-      student_profiles (field, university, skills, languages, availability, bio)
+      student_profiles (field, university, skills, languages, bio)
     `)
     .eq('ngo_id', ngoId)
     .order('submitted_at', { ascending: false })
@@ -149,7 +149,7 @@ export async function fetchNgoApplicants(ngoId) {
   const [{ data: userData }, { data: profileData }] = await Promise.all([
     supabase.from('users').select('id, name, email').in('id', studentIds),
     supabase.from('student_profiles')
-      .select('user_id, field, university, skills, languages, availability, bio, interests, links, experience, goals')
+      .select('user_id, field, university, skills, languages, bio, interests, links, experience, goals')
       .in('user_id', studentIds),
   ])
 
@@ -187,7 +187,6 @@ export async function fetchNgoApplicants(ngoId) {
       uni:              prof.university ?? '',
       skills:           toSkillObjects(prof.skills),
       languages,
-      availability:     prof.availability ?? '',
       bio:              prof.bio        ?? '',
       interests:        prof.interests  ?? [],
       links:            prof.links      ?? {},
@@ -247,15 +246,17 @@ export async function fetchNgoOpportunitiesWithApplicantCounts(ngoId) {
 
   if (countError) throw new Error(countError.message)
 
-  // Build a map of opportunity_id -> { total, new, shortlisted, interview, rejected }
+  // Build a map of opportunity_id -> visible totals plus status counts.
   const statMap = {}
   (appCounts ?? []).forEach(app => {
     if (!statMap[app.opportunity_id]) {
       statMap[app.opportunity_id] = { total: 0, new: 0, shortlisted: 0, interview: 0, rejected: 0 }
     }
-    statMap[app.opportunity_id].total++
 
     const uiStatus = app.status === 'submitted' || app.status === 'under_review' ? 'new' : app.status
+    if (uiStatus !== 'rejected') {
+      statMap[app.opportunity_id].total++
+    }
     if (statMap[app.opportunity_id][uiStatus] !== undefined) {
       statMap[app.opportunity_id][uiStatus]++
     }
@@ -293,7 +294,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
   const [{ data: userData }, { data: profileData }] = await Promise.all([
     supabase.from('users').select('id, name, email').in('id', studentIds),
     supabase.from('student_profiles')
-      .select('user_id, field, university, skills, languages, availability, bio, interests, links, experience, goals')
+      .select('user_id, field, university, skills, languages, bio, interests, links, experience, goals')
       .in('user_id', studentIds),
   ])
 
@@ -331,7 +332,6 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       uni:              prof.university ?? '',
       skills:           toSkillObjects(prof.skills),
       languages,
-      availability:     prof.availability ?? '',
       bio:              prof.bio        ?? '',
       interests:        prof.interests  ?? [],
       links:            prof.links      ?? {},
@@ -351,7 +351,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
 // Helper: Compute stats from applicants array
 export function computeRoleStats(applicants) {
   return {
-    total:       applicants.length,
+    total:       applicants.filter(a => a.status !== 'rejected').length,
     new:         applicants.filter(a => a.status === 'submitted' || a.status === 'under_review').length,
     shortlisted: applicants.filter(a => a.status === 'shortlisted').length,
     interview:   applicants.filter(a => a.status === 'interview').length,

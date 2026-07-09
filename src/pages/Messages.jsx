@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, MessageCircle, Loader, Send } from 'lucide-react'
+import { Loader, MessageCircle, Search, Send } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import GradientAvatar from '../components/GradientAvatar'
 import { getMessages, sendInterviewMessage } from '../services/messages'
 import { supabase } from '../services/supabase'
-import GradientAvatar from '../components/GradientAvatar'
 import { withTimeout } from '../utils/withTimeout'
 
 function formatTime(isoString) {
@@ -20,7 +20,7 @@ function formatTime(isoString) {
 }
 
 function getDisplayName(userId, userNames) {
-  return userNames[userId] || ''
+  return userNames[userId] || 'Conversation'
 }
 
 export default function Messages() {
@@ -38,24 +38,23 @@ export default function Messages() {
   useEffect(() => {
     if (!user?.id) return
 
+    let cancelled = false
+
     ;(async () => {
       try {
         setLoading(true)
         const data = await withTimeout(getMessages(user.id), 10000, 'getMessages')
+        if (cancelled) return
+
         setMessages(data || [])
 
-        // Get all unique user IDs from messages
         const userIds = Array.from(new Set([
           ...(data?.map(msg => msg.sender_id) || []),
-          ...(data?.map(msg => msg.recipient_id) || [])
+          ...(data?.map(msg => msg.recipient_id) || []),
         ]))
 
-        if (userIds.length === 0) {
-          setLoading(false)
-          return
-        }
+        if (userIds.length === 0) return
 
-        // Fetch profiles for these users - they'll have names
         const { data: profiles } = await withTimeout(
           supabase
             .from('ngo_profiles')
@@ -65,15 +64,13 @@ export default function Messages() {
           'fetchNgoProfiles'
         )
 
-        // Build name map
-        const nameMap = {}
+        if (cancelled) return
 
-        // Add NGO names from ngo_profiles
-        profiles?.forEach(p => {
-          if (p.name) nameMap[p.user_id] = p.name
+        const nameMap = {}
+        profiles?.forEach(profile => {
+          if (profile.name) nameMap[profile.user_id] = profile.name
         })
 
-        // For students without names, try to get from users table
         const missingIds = userIds.filter(id => !nameMap[id])
         if (missingIds.length > 0) {
           const { data: users } = await withTimeout(
@@ -85,18 +82,22 @@ export default function Messages() {
             'fetchUserNames'
           )
 
-          users?.forEach(u => {
-            if (u.name) nameMap[u.id] = u.name
+          users?.forEach(nextUser => {
+            if (nextUser.name) nameMap[nextUser.id] = nextUser.name
           })
         }
 
-        setUserNames(nameMap)
+        if (!cancelled) setUserNames(nameMap)
       } catch (err) {
-        console.error('Error loading names:', err.message)
+        console.error('Error loading messages:', err.message)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     })()
+
+    return () => {
+      cancelled = true
+    }
   }, [user?.id])
 
   useEffect(() => {
@@ -110,7 +111,6 @@ export default function Messages() {
     try {
       await sendInterviewMessage(selected.otherId, user.id, newMessage)
 
-      // Add message to local state
       const timestamp = new Date().toISOString()
       const newMsg = {
         id: `temp-${timestamp}`,
@@ -120,7 +120,7 @@ export default function Messages() {
         message_type: 'general',
         created_at: timestamp,
       }
-      setMessages([...messages, newMsg])
+      setMessages(prev => [...prev, newMsg])
       setNewMessage('')
       inputRef.current?.focus()
     } catch (err) {
@@ -131,7 +131,6 @@ export default function Messages() {
     }
   }
 
-  // Group messages by conversation (sender + recipient)
   const conversations = messages.reduce((acc, msg) => {
     const otherId = msg.sender_id === user?.id ? msg.recipient_id : msg.sender_id
     const key = [user?.id, otherId].sort().join('-')
@@ -140,7 +139,6 @@ export default function Messages() {
       acc[key] = {
         id: key,
         otherId,
-        otherName: msg.sender_id === user?.id ? msg.recipient_id : msg.sender_id,
         lastMessage: msg,
         messages: [],
       }
@@ -154,174 +152,230 @@ export default function Messages() {
     (a, b) => new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at)
   )
 
-  const filtered = conversationList.filter(c =>
-    (c.lastMessage.message_body?.toLowerCase() || '').includes(searchQ.toLowerCase())
-  )
+  const filtered = conversationList.filter(conversation => {
+    const query = searchQ.toLowerCase()
+    const name = getDisplayName(conversation.otherId, userNames).toLowerCase()
+    const body = conversation.lastMessage.message_body?.toLowerCase() || ''
+    return name.includes(query) || body.includes(query)
+  })
 
-  const selected = conversationList.find(c => c.id === selectedConvId)
-  const selectedMessages = selected?.messages?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || []
+  const selected = conversationList.find(conversation => conversation.id === selectedConvId)
+  const selectedMessages = selected
+    ? [...selected.messages].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    : []
+  const selectedName = selected ? getDisplayName(selected.otherId, userNames) : ''
 
   return (
-    <div className="flex h-[calc(100vh-60px)] overflow-hidden" style={{ background: '#F8F9FB' }}>
-      {/* Conversation List */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="w-[320px] shrink-0 bg-white flex flex-col border-r border-[rgba(13,24,61,0.08)]"
-      >
-        <div className="px-6 pt-6 pb-4 border-b border-[rgba(13,24,61,0.08)]">
-          <h2 className="text-[16px] font-bold text-[#0D183D] mb-4">Messages</h2>
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#F8F9FB] border border-[rgba(13,24,61,0.08)]">
-            <Search size={14} className="text-[#4B6382] shrink-0" />
-            <input
-              value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
-              placeholder="Search conversations…"
-              className="bg-transparent text-[12px] flex-1 outline-none text-[#0D183D] placeholder-[#4B6382]/50"
-            />
-          </div>
-        </div>
+    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+            Your Messages
+          </h1>
+          <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+            Keep interview conversations and NGO updates organized in one clean workspace.
+          </p>
+        </motion.header>
 
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="px-6 py-12 text-center">
-              <Loader size={20} className="text-[#FFB703] mx-auto animate-spin mb-3" />
-              <p className="text-[12px] text-[#4B6382]">Loading messages…</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <MessageCircle size={24} className="text-[#FFB703] mx-auto mb-3" />
-              <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No conversations yet</p>
-              <p className="text-[11px] text-[#4B6382] leading-relaxed">
-                Interview invitations will appear here
-              </p>
-            </div>
-          ) : (
-            filtered.map((conv) => {
-              const otherUserName = getDisplayName(conv.otherId, userNames)
-              return (
-                <motion.button
-                  key={conv.id}
-                  onClick={() => setSelectedConvId(conv.id)}
-                  className={`w-full text-left px-4 py-3.5 border-b border-[rgba(13,24,61,0.04)] transition-all hover:bg-[#F8F9FB] ${
-                    selectedConvId === conv.id ? 'bg-[#FFF9F0] border-l-4 border-l-[#FFB703]' : ''
-                  }`}
-                >
-                  <div className="flex gap-3 items-start">
-                    <GradientAvatar name={otherUserName} size={40} radius="0.6rem" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-semibold text-[#0D183D] truncate">
-                        {otherUserName}
-                      </p>
-                      <p className="text-[11px] text-[#4B6382] truncate line-clamp-1">
-                        {conv.lastMessage.message_body}
-                      </p>
-                      <p className="text-[10px] text-[#4B6382]/60 mt-1">
-                        {formatTime(conv.lastMessage.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-              )
-            })
-          )}
-        </div>
-      </motion.div>
+        <section className="grid gap-6 md:grid-cols-[340px_minmax(0,1fr)]">
+          <motion.aside
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.28 }}
+            className="flex h-[min(720px,calc(100vh-220px))] min-h-[560px] flex-col overflow-hidden rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_14px_38px_rgba(17,24,39,0.035)]"
+          >
+            <div className="shrink-0 border-b border-[#E5EEFB] px-6 py-6">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-[1.05rem] font-semibold text-[#202124]">Conversations</h2>
+                  <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+                    {loading ? 'Loading...' : `${conversationList.length} total`}
+                  </p>
+                </div>
+              </div>
 
-      {/* Message Thread */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex-1 flex flex-col bg-white"
-      >
-        {!selectedConvId ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <MessageCircle size={48} className="text-[#FFB703]/30 mx-auto mb-4" />
-              <p className="text-[14px] font-semibold text-[#0D183D] mb-2">
-                Select a conversation
-              </p>
-              <p className="text-[12px] text-[#4B6382]">
-                Choose a conversation to view messages
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Message Thread Header */}
-            <div className="px-6 py-4 border-b border-[rgba(13,24,61,0.08)] flex items-center gap-3">
-              <GradientAvatar name={getDisplayName(selected?.otherId, userNames)} size={36} radius="0.5rem" />
-              <div>
-                <p className="text-[13px] font-semibold text-[#0D183D]">{getDisplayName(selected?.otherId, userNames)}</p>
-                <p className="text-[11px] text-[#4B6382]">
-                  {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
-                </p>
+              <div className="flex items-center gap-2 rounded-2xl border border-[#E5EEFB] bg-[#F8FBFF] px-3 py-2.5">
+                <Search size={15} className="shrink-0 text-[#1A73E8]" />
+                <input
+                  value={searchQ}
+                  onChange={event => setSearchQ(event.target.value)}
+                  placeholder="Search conversations..."
+                  className="min-w-0 flex-1 bg-transparent text-[0.84rem] text-[#202124] outline-none placeholder:text-[#9AA0A6]"
+                />
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-              {selectedMessages.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-[12px] text-[#4B6382]">No messages in this conversation</p>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {loading ? (
+                <div className="space-y-3">
+                  {[0, 1, 2, 3].map(item => (
+                    <div
+                      key={item}
+                      className="h-[84px] animate-pulse rounded-[24px] border border-[#E5EEFB] bg-[#F8FBFF]"
+                    />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex h-full items-center justify-center rounded-[26px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-5 text-center">
+                  <div>
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                      <MessageCircle size={24} />
+                    </div>
+                    <p className="text-[0.95rem] font-semibold text-[#202124]">No conversations yet</p>
+                    <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">
+                      Interview invitations and replies will appear here.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                selectedMessages.map((msg, i) => (
-                  <motion.div
-                    key={msg.id || i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-3 rounded-2xl text-[12px] leading-relaxed ${
-                        msg.sender_id === user?.id
-                          ? 'bg-[#0D183D] text-white'
-                          : 'bg-[#F0F0F0] text-[#0D183D]'
-                      }`}
+                filtered.map(conversation => {
+                  const otherUserName = getDisplayName(conversation.otherId, userNames)
+                  const selectedConversation = selectedConvId === conversation.id
+
+                  return (
+                    <motion.button
+                      key={conversation.id}
+                      onClick={() => setSelectedConvId(conversation.id)}
+                      className="mb-3 w-full rounded-[24px] border p-4 text-left transition-all"
+                      style={
+                        selectedConversation
+                          ? {
+                              background: '#EAF1FF',
+                              borderColor: '#C8D9FF',
+                              boxShadow: '0 10px 28px rgba(26,115,232,0.08)',
+                            }
+                          : {
+                              background: '#FFFFFF',
+                              borderColor: '#E5EEFB',
+                            }
+                      }
                     >
-                      <p className="whitespace-pre-wrap break-words">{msg.message_body}</p>
-                      <p
-                        className={`text-[10px] mt-2 ${
-                          msg.sender_id === user?.id ? 'text-white/70' : 'text-[#4B6382]/60'
-                        }`}
-                      >
-                        {formatTime(msg.created_at)}
+                      <div className="flex items-start gap-3">
+                        <GradientAvatar name={otherUserName} size={44} radius="0.85rem" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="truncate text-[0.94rem] font-semibold text-[#202124]">
+                              {otherUserName}
+                            </p>
+                            <span className="shrink-0 text-[0.72rem] font-medium text-[#9AA0A6]">
+                              {formatTime(conversation.lastMessage.created_at)}
+                            </span>
+                          </div>
+                          <p className="mt-1 truncate text-[0.82rem] leading-6 text-[#5F6368]">
+                            {conversation.lastMessage.message_body}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.button>
+                  )
+                })
+              )}
+            </div>
+          </motion.aside>
+
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex h-[min(720px,calc(100vh-220px))] min-h-[560px] flex-col overflow-hidden rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_14px_38px_rgba(17,24,39,0.035)]"
+          >
+            {!selectedConvId ? (
+              <div className="flex flex-1 items-center justify-center px-8 py-16 text-center">
+                <div>
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
+                    <MessageCircle size={30} />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-[#202124]">Select a conversation</h2>
+                  <p className="mx-auto mt-3 max-w-md text-[0.9rem] leading-7 text-[#5F6368]">
+                    Choose a conversation from the left to read messages and reply.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="shrink-0 border-b border-[#E5EEFB] px-6 py-5">
+                  <div className="flex items-center gap-3">
+                    <GradientAvatar name={selectedName} size={44} radius="0.85rem" />
+                    <div>
+                      <p className="text-[1rem] font-semibold text-[#202124]">{selectedName}</p>
+                      <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">
+                        {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
                       </p>
                     </div>
-                  </motion.div>
-                ))
-              )}
-              <div ref={bottomRef} />
-            </div>
+                  </div>
+                </div>
 
-            {/* Message Input */}
-            <div className="px-6 py-4 border-t border-[rgba(13,24,61,0.08)] flex gap-2">
-              <input
-                ref={inputRef}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSendMessage()
-                  }
-                }}
-                placeholder="Type a message…"
-                disabled={sending}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[rgba(13,24,61,0.1)] text-[12px] text-[#0D183D] placeholder-[#4B6382]/50 focus:outline-none focus:border-[#FFB703] disabled:opacity-50"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sending}
-                className="px-4 py-2.5 rounded-xl bg-[#FFB703] text-white font-semibold text-[12px] hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {sending ? <Loader size={14} className="animate-spin" /> : <Send size={14} />}
-              </button>
-            </div>
-          </>
-        )}
-      </motion.div>
-    </div>
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#FBFCFE] px-6 py-6">
+                  {selectedMessages.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-[0.86rem] text-[#5F6368]">No messages in this conversation</p>
+                    </div>
+                  ) : (
+                    selectedMessages.map((msg, index) => {
+                      const mine = msg.sender_id === user?.id
+
+                      return (
+                        <motion.div
+                          key={msg.id || index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[min(72%,560px)] rounded-[22px] px-4 py-3 text-[0.88rem] leading-6 shadow-[0_8px_22px_rgba(17,24,39,0.04)] ${
+                              mine
+                                ? 'rounded-br-md bg-[#1A73E8] text-white'
+                                : 'rounded-bl-md border border-[#E5EEFB] bg-white text-[#202124]'
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap break-words">{msg.message_body}</p>
+                            <p className={`mt-2 text-[0.7rem] ${mine ? 'text-white/70' : 'text-[#9AA0A6]'}`}>
+                              {formatTime(msg.created_at)}
+                            </p>
+                          </div>
+                        </motion.div>
+                      )
+                    })
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+
+                <div className="shrink-0 border-t border-[#E5EEFB] bg-white px-6 py-4">
+                  <div className="flex gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#F8FBFF] p-2">
+                    <input
+                      ref={inputRef}
+                      value={newMessage}
+                      onChange={event => setNewMessage(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      placeholder="Type a message..."
+                      disabled={sending}
+                      className="min-w-0 flex-1 bg-transparent px-3 text-[0.9rem] text-[#202124] outline-none placeholder:text-[#9AA0A6] disabled:opacity-50"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || sending}
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.18)] transition-all hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Send message"
+                    >
+                      {sending ? <Loader size={17} className="animate-spin" /> : <Send size={17} />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.section>
+        </section>
+      </div>
+    </main>
   )
 }

@@ -148,11 +148,6 @@ export default function StudentProfileModal({ studentId, student, onClose }) {
                       {profile.university}
                     </div>
                   )}
-                  {profile.availability && (
-                    <div className="px-3.5 py-2 rounded-lg bg-emerald-500/20 text-emerald-100 text-[12px] font-semibold border border-emerald-400/30">
-                      {profile.availability}
-                    </div>
-                  )}
                   {profile.languages?.length > 0 && (
                     <div className="px-3.5 py-2 rounded-lg bg-white/10 text-white text-[12px] font-semibold border border-white/20 flex items-center gap-2">
                       <Globe size={14} />
@@ -190,7 +185,7 @@ export default function StudentProfileModal({ studentId, student, onClose }) {
               <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
                 <h2 className="text-[18px] font-bold text-[#0D183D] mb-6 flex items-center gap-2">
                   <Code2 size={18} className="text-[#FFB703]" />
-                  Skills & Expertise
+                  Skills
                 </h2>
                 <div className="space-y-6">
                   {Object.entries(grouped).map(([category, skills]) => (
@@ -200,9 +195,9 @@ export default function StudentProfileModal({ studentId, student, onClose }) {
                           {category}
                         </h3>
                         <div className="flex flex-wrap gap-2.5">
-                          {skills.map(({ name, level }, i) => (
+                          {skills.map(({ name }, i) => (
                             <span key={i} className="px-4 py-2.5 rounded-lg text-[13px] font-semibold bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/20">
-                              {level ? `${name} · ${level}` : name}
+                              {name}
                             </span>
                           ))}
                         </div>

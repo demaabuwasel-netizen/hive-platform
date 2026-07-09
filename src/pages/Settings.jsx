@@ -808,7 +808,7 @@ export default function Settings() {
 
   return (
     <div className="w-full min-h-screen bg-[#F8F9FB]">
-      <div className="max-w-[1180px] mx-auto px-8 py-8">
+      <div className="max-w-[1180px] mx-auto px-8 pb-8 pt-12">
 
         <div className="mb-7">
           <h1 className="text-[1.3rem] font-extrabold text-[#0D183D]">Settings</h1>

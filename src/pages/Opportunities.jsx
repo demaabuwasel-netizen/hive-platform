@@ -3,10 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { submitApplication } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  MessageCircle, Settings, Briefcase, Users, BarChart2, Search,
+  Briefcase, Users, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2,
+  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2, PencilLine,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -17,45 +16,52 @@ import { withTimeout } from '../utils/withTimeout'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
-// Parse skill - handle JSON strings, objects, or garbage
-function parseSkill(s) {
-  if (!s) return { name: '', level: '' }
+function OpportunityCardSkeleton({ index }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.25 }}
+      className="min-h-[330px] animate-pulse rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]"
+    >
+      <div className="flex items-start gap-4">
+        <div className="h-[58px] w-[58px] shrink-0 rounded-2xl bg-[#E8F0FE]" />
+        <div className="min-w-0 flex-1">
+          <div className="mb-3 flex gap-2">
+            <div className="h-7 w-24 rounded-full bg-[#E8F0FE]" />
+            <div className="h-7 w-20 rounded-full bg-[#F1F4F9]" />
+          </div>
+          <div className="h-5 w-11/12 rounded-full bg-[#EEF4FF]" />
+          <div className="mt-2 h-4 w-2/5 rounded-full bg-[#F1F4F9]" />
+        </div>
+        <div className="h-10 w-10 shrink-0 rounded-full border border-[#E5EEFB] bg-[#FBFCFE]" />
+      </div>
 
-  // If it's a string that looks like JSON
-  if (typeof s === 'string') {
-    if (s.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(s)
-        return {
-          name: parsed.name || '',
-          level: parsed.level || ''
-        }
-      } catch (e) {
-        // If it fails to parse, just return the string as name
-        return { name: s, level: '' }
-      }
-    }
-    return { name: s, level: '' }
-  }
+      <div className="mt-6 flex flex-wrap gap-2">
+        <div className="h-8 w-28 rounded-full bg-[#F1F4F9]" />
+        <div className="h-8 w-24 rounded-full bg-[#F1F4F9]" />
+        <div className="h-8 w-32 rounded-full bg-[#F1F4F9]" />
+      </div>
 
-  // If it's already an object
-  if (typeof s === 'object') {
-    // Check if it has a nested "name" field that's a JSON string
-    if (s.name && typeof s.name === 'string' && s.name.startsWith('{')) {
-      try {
-        const nested = JSON.parse(s.name)
-        return {
-          name: nested.name || s.name,
-          level: s.level || nested.level || ''
-        }
-      } catch (e) {
-        return { name: s.name || '', level: s.level || '' }
-      }
-    }
-    return { name: s.name || '', level: s.level || '' }
-  }
+      <div className="mt-6 space-y-3">
+        <div className="h-3.5 w-full rounded-full bg-[#F1F4F9]" />
+        <div className="h-3.5 w-11/12 rounded-full bg-[#F1F4F9]" />
+        <div className="h-3.5 w-2/3 rounded-full bg-[#F1F4F9]" />
+      </div>
 
-  return { name: '', level: '' }
+      <div className="mt-6 flex flex-wrap gap-2">
+        <div className="h-7 w-20 rounded-full bg-[#E8F0FE]" />
+        <div className="h-7 w-24 rounded-full bg-[#E8F0FE]" />
+        <div className="h-7 w-16 rounded-full bg-[#E8F0FE]" />
+      </div>
+
+      <div className="mt-6 h-px bg-[#E5EEFB]" />
+      <div className="mt-4 flex items-center justify-between">
+        <div className="h-4 w-28 rounded-full bg-[#F1F4F9]" />
+        <div className="h-9 w-28 rounded-full bg-[#E8F0FE]" />
+      </div>
+    </motion.div>
+  )
 }
 
 function generateAppMessage(user, ngo) {
@@ -207,7 +213,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                           const parsed = JSON.parse(s)
                           skillName = parsed.name || s
                           skillLevel = parsed.level || ''
-                        } catch (e) {
+                        } catch {
                           skillName = s
                         }
                       } else {
@@ -413,19 +419,53 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
 
 function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
 
+function normalizeNgoOpportunity(opp = {}) {
+  return {
+    ...opp,
+    title: opp.title || 'Opportunity',
+    status: opp.status || 'draft',
+    category: opp.category || opp.field || '',
+    location: opp.location || '',
+    workMode: opp.workMode || opp.work_mode || '',
+    weeklyHours: opp.weeklyHours || opp.weekly_hours || '',
+    description: opp.description || opp.missionImpact || '',
+    missionImpact: opp.missionImpact || opp.description || '',
+    applicantCount: opp.applicantCount ?? 0,
+    deadline: opp.deadline || '',
+  }
+}
+
+function statusMeta(status) {
+  switch ((status || '').toLowerCase()) {
+    case 'active':
+      return { label: 'Open', bg: 'rgba(26,115,232,0.10)', text: '#1A73E8' }
+    case 'paused':
+      return { label: 'Filled', bg: 'rgba(24,128,56,0.10)', text: '#188038' }
+    case 'draft':
+    default:
+      return { label: 'Draft', bg: 'rgba(95,99,104,0.10)', text: '#5F6368' }
+  }
+}
+
+function isOpenOpportunity(opp) {
+  return (opp?.status || 'active').toLowerCase() === 'active'
+}
+
 export default function Opportunities() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const filterNgoId = searchParams.get('ngo')
+  const opportunityParam = searchParams.get('opportunity')
   const isNGO = user?.role === 'ngo'
 
   const [q, setQ]           = useState('')
   const [cat, setCat]       = useState('All')
+  const [sortBy, setSortBy] = useState('match')
   const [opps, setOpps]     = useState([])
   const [ngoOpps, setNgoOpps]   = useState([])
   const [selectedOppId, setSelectedOppId] = useState(null)
-  const [ngoError, setNgoError] = useState(null)
+  const [, setNgoError] = useState(null)
   const [savedIds, setSavedIds] = useState(new Set())
   const [toggling, setToggling] = useState(null)
   const [loading, setLoading]   = useState(true)
@@ -433,6 +473,11 @@ export default function Opportunities() {
   const [applyingTo, setApplyingTo] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
+  const selectedOpp = isNGO && ngoOpps.length > 0
+    ? normalizeNgoOpportunity(ngoOpps.find(o => String(o.id) === String(selectedOppId)) || ngoOpps[0])
+    : null
+  const selectedOppFilled = (selectedOpp?.status || '').toLowerCase() === 'paused'
+  const selectedOppStatus = selectedOpp ? statusMeta(selectedOpp.status) : null
   const handleDeleteOpportunity = async (oppId) => {
     if (!window.confirm('Are you sure you want to delete this opportunity? All related applications will also be deleted.')) {
       return
@@ -449,7 +494,7 @@ export default function Opportunities() {
       const remaining = ngoOpps.filter(o => o.id !== oppId)
       try {
         localStorage.setItem(`hive_ngo_opps_${user.id}`, JSON.stringify(remaining))
-      } catch (e) {
+      } catch {
         console.warn('Failed to update cache')
       }
     } catch (err) {
@@ -463,6 +508,7 @@ export default function Opportunities() {
   // Fetch NGO's own opportunities
   useEffect(() => {
     if (!isNGO || !user?.id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setNgoError(null)
 
@@ -471,7 +517,7 @@ export default function Opportunities() {
     if (cached) {
       try {
         setNgoOpps(JSON.parse(cached))
-      } catch (e) {
+      } catch {
         console.warn('Failed to parse cached NGO opportunities')
       }
     }
@@ -483,7 +529,7 @@ export default function Opportunities() {
         // Cache it
         try {
           localStorage.setItem(`hive_ngo_opps_${user.id}`, JSON.stringify(data ?? []))
-        } catch (e) {
+        } catch {
           console.warn('Failed to cache NGO opportunities')
         }
       })
@@ -499,14 +545,26 @@ export default function Opportunities() {
 
   // Select first NGO opportunity by default
   useEffect(() => {
-    if (isNGO && ngoOpps.length > 0 && !selectedOppId) {
+    if (!isNGO || ngoOpps.length === 0) return
+
+    if (opportunityParam) {
+      const matched = ngoOpps.find(opp => String(opp.id) === String(opportunityParam))
+      if (matched && selectedOppId !== matched.id) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedOppId(matched.id)
+        return
+      }
+    }
+
+    if (!selectedOppId) {
       setSelectedOppId(ngoOpps[0].id)
     }
-  }, [ngoOpps, isNGO, selectedOppId])
+  }, [ngoOpps, isNGO, selectedOppId, opportunityParam])
 
   // Fetch active opportunities for students
   useEffect(() => {
     if (isNGO) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
 
     // Try to load from cache first
@@ -514,7 +572,7 @@ export default function Opportunities() {
     if (cached) {
       try {
         const cachedData = JSON.parse(cached)
-        const cards = cachedData.map(opp => ({
+        const cards = cachedData.filter(isOpenOpportunity).map(opp => ({
           id:            opp.id,
           ngoId:         opp.ngoId,
           opportunityId: opp.id,
@@ -529,7 +587,7 @@ export default function Opportunities() {
           mission:       opp.missionImpact || opp.description || '',
         }))
         setOpps(cards)
-      } catch (e) {
+      } catch {
         console.warn('Failed to parse cached active opportunities')
       }
     }
@@ -539,7 +597,8 @@ export default function Opportunities() {
       user?.id ? withTimeout(fetchSavedIds(user.id), 10000, 'fetchSavedIds') : Promise.resolve(new Set()),
     ]).then(([raw, ids]) => {
       console.log('[Opportunities] fetchActiveOpportunities returned:', raw.length, 'opportunities')
-      const cards = raw.map(opp => ({
+      const activeRaw = raw.filter(isOpenOpportunity)
+      const cards = activeRaw.map(opp => ({
         // ── All original fields for modal ──
         ...opp,
         // ── Computed fields for card display ──
@@ -549,12 +608,12 @@ export default function Opportunities() {
       setSavedIds(ids)
       // Cache fresh data
       try {
-        localStorage.setItem('hive_active_opps', JSON.stringify(raw))
-      } catch (e) {
+        localStorage.setItem('hive_active_opps', JSON.stringify(activeRaw))
+      } catch {
         console.warn('Failed to cache active opportunities')
       }
     }).catch((err) => { console.error('[Opportunities] Fetch error:', err) }).finally(() => setLoading(false))
-  }, [isNGO, user?.id])
+  }, [isNGO, user?.id, profile])
 
   async function toggleSave(opp) {
     if (!user?.id || toggling) return
@@ -581,344 +640,602 @@ export default function Opportunities() {
     }
   }
 
-  const filtered = opps.filter(n =>
-    (cat === 'All' || n.category === cat) &&
-    ((n.title?.toLowerCase().includes(q.toLowerCase()) || false) ||
-     (n.orgName?.toLowerCase().includes(q.toLowerCase()) || false) ||
-     (n.description?.toLowerCase().includes(q.toLowerCase()) || false)) &&
-    (!filterNgoId || n.ngoId === filterNgoId)
-  )
+  useEffect(() => {
+    if (isNGO || loading || !opportunityParam || opps.length === 0) return
+
+    const matched = opps.find(opp => String(opp.id) === String(opportunityParam))
+    if (matched && String(viewingOpp?.id) !== String(matched.id)) {
+      queueMicrotask(() => setViewingOpp(matched))
+    }
+  }, [isNGO, loading, opportunityParam, opps, viewingOpp?.id])
+
+  const filtered = opps.filter(n => {
+    const category = n.category || n.cat || ''
+    const query = q.trim().toLowerCase()
+    return (
+      (cat === 'All' || category === cat) &&
+      (!query ||
+        n.title?.toLowerCase().includes(query) ||
+        n.orgName?.toLowerCase().includes(query) ||
+        n.name?.toLowerCase().includes(query) ||
+        n.description?.toLowerCase().includes(query) ||
+        n.missionImpact?.toLowerCase().includes(query) ||
+        (n.skills || []).some(skill => skillName(skill).toLowerCase().includes(query))) &&
+      (!filterNgoId || n.ngoId === filterNgoId)
+    )
+  })
+
+  const sortedOpportunities = [...filtered].sort((a, b) => {
+    if (sortBy === 'match') return (b.match ?? -1) - (a.match ?? -1)
+    if (sortBy === 'newest') {
+      const bTime = new Date(b.createdAt || b.created_at || b.updatedAt || b.updated_at || 0).getTime()
+      const aTime = new Date(a.createdAt || a.created_at || a.updatedAt || a.updated_at || 0).getTime()
+      return bTime - aTime
+    }
+    if (sortBy === 'hours') {
+      const getHours = value => Number.parseFloat(String(value?.weeklyHours || value?.hours || '').replace(/[^\d.]/g, '')) || 0
+      return getHours(a) - getHours(b)
+    }
+    return String(a.title || '').localeCompare(String(b.title || ''))
+  })
 
   return (
     <>
-      <div className="max-w-5xl mx-auto px-8 py-7">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h1 className="text-4xl font-bold text-[#0D183D] mb-2">
-              {isNGO ? 'Your Opportunities' : 'Browse Opportunities'}
-            </h1>
-            <p className="text-[15px] text-[#4B6382]">
-              {isNGO ? 'Manage your posted opportunities and track applicants' : 'Discover volunteer roles that match your skills'}
-            </p>
-          </div>
-          {isNGO && (
-            <button onClick={() => navigate('/opportunities/new')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background:'#FFB703', boxShadow:'0 4px 14px rgba(255,183,3,0.28)' }}>
-              <Plus size={14}/> Post opportunity
-            </button>
-          )}
-        </div>
+      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
 
         {isNGO ? (
-          /* NGO view — Two column layout */
-          <div className="grid lg:grid-cols-[320px_1fr] gap-6">
-            {/* LEFT SIDEBAR - List of Opportunities */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] overflow-hidden h-fit lg:sticky lg:top-6">
-
-              <div className="p-4 border-b border-[rgba(13,24,61,0.08)]">
-                <h3 className="text-[13px] font-bold text-[#0D183D] uppercase tracking-widest">Your Opportunities</h3>
-                <p className="text-[10px] text-[#4B6382] mt-1">{ngoOpps.length} posted</p>
-              </div>
-
-              <div className="max-h-[600px] overflow-y-auto">
-                {loading ? (
-                  <div className="space-y-2 p-3">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="h-16 bg-[rgba(13,24,61,0.04)] rounded-lg animate-pulse" />
-                    ))}
-                  </div>
-                ) : ngoOpps.length === 0 ? (
-                  <div className="p-4 text-center text-[12px] text-[#4B6382]">
-                    No opportunities yet
-                  </div>
-                ) : (
-                  ngoOpps.map((opp, i) => (
-                    <motion.button
-                      key={opp.id}
-                      onClick={() => setSelectedOppId(opp.id)}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`w-full text-left px-4 py-4 border-b border-[rgba(13,24,61,0.06)] transition-all flex gap-3 items-start ${
-                        selectedOppId === opp.id
-                          ? 'bg-[#FFB703]/10 border-l-4 border-l-[#FFB703]'
-                          : 'hover:bg-[#F8F9FB]'
-                      }`}>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-semibold text-[#0D183D] truncate">{opp.title}</p>
-                        <p className="text-[11px] text-[#7A8BA6] mt-0.5 truncate">{opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}</p>
-                      </div>
-                    </motion.button>
-                  ))
-                )}
-              </div>
-            </motion.div>
-
-            {/* RIGHT PANEL - Opportunity Details */}
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-[#FFB703]/20 animate-spin mx-auto mb-3" />
-                  <p className="text-[#4B6382]">Loading opportunities...</p>
-                </div>
-              </div>
-            ) : ngoOpps.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-[rgba(13,24,61,0.08)]">
-                <Briefcase size={48} className="text-[#FFB703]/30 mx-auto mb-4"/>
-                <p className="text-[16px] font-semibold text-[#0D183D] mb-2">No opportunities yet</p>
-                <p className="text-[14px] text-[#4B6382] mb-4">Post your first opportunity to start receiving applications</p>
-                <button onClick={() => navigate('/opportunities/new')}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: '#FFB703' }}>
-                  <Plus size={14}/>
-                  Post opportunity
-                </button>
-              </div>
-            ) : selectedOppId && ngoOpps.find(o => o.id === selectedOppId) ? (
-              (() => {
-                const opp = ngoOpps.find(o => o.id === selectedOppId)
-                return (
-                  <motion.div
-                    key={selectedOppId}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}>
-
-                    {/* Header */}
-                    <div className="bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl px-8 py-8 mb-6 flex items-start gap-6">
-                      <div className="flex-1">
-                        <p className="text-[12px] font-bold text-[#FFB703] uppercase tracking-widest mb-2">
-                          Opportunity
-                        </p>
-                        <h2 className="text-[36px] font-extrabold text-white mb-3">{opp.title}</h2>
-                        <div className="flex items-center gap-4 flex-wrap text-[14px] text-white/80">
-                          {opp.location && (
-                            <span className="flex items-center gap-2">
-                              <MapPin size={16} />
-                              {opp.location}
-                            </span>
-                          )}
-                          {opp.category && (
-                            <span className="flex items-center gap-2">
-                              <Briefcase size={16} />
-                              {opp.category}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center text-[11px] font-bold px-3 py-1.5 rounded-lg shrink-0 ${
-                        opp.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
-                        opp.status === 'draft'  ? 'bg-gray-100 text-[#4B6382]' :
-                        opp.status === 'paused' ? 'bg-amber-50 text-amber-700' :
-                        'bg-gray-100 text-[#4B6382]'
-                      }`}>{opp.status ?? 'draft'}</span>
-                    </div>
-
-                    {/* Content */}
-                    <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-8 space-y-6 mb-6">
-                      {/* Key Info Grid */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {opp.weeklyHours && (
-                          <div>
-                            <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-wider mb-2">Time Commitment</p>
-                            <p className="text-[16px] font-bold text-[#0D183D]">{opp.weeklyHours} hrs/week</p>
-                          </div>
-                        )}
-                        {opp.work_mode && (
-                          <div>
-                            <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-wider mb-2">Work Mode</p>
-                            <p className="text-[16px] font-bold text-[#0D183D]">{opp.work_mode}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      {opp.description && (
-                        <div>
-                          <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-wider mb-2">About This Role</p>
-                          <p className="text-[13px] text-[#4B6382] leading-relaxed">{opp.description}</p>
-                        </div>
-                      )}
-
-                      {/* Applicants */}
-                      <div>
-                        <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-wider mb-2">Applicants</p>
-                        <p className="text-[16px] font-bold text-[#FFB703]">{opp.applicantCount ?? 0} applicant{(opp.applicantCount ?? 0) !== 1 ? 's' : ''}</p>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <button
-                        onClick={() => navigate(`/opportunities/new?edit=${opp.id}`)}
-                        className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                        style={{ background: '#FFB703' }}>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => navigate(`/applicants?opportunity=${opp.id}`)}
-                        className="px-6 py-3 rounded-xl text-[13px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#0D183D] hover:bg-[#F8F9FB] transition-all">
-                        View Applicants
-                      </button>
-                      <button
-                        onClick={() => handleDeleteOpportunity(opp.id)}
-                        disabled={deleting === opp.id}
-                        className="px-6 py-3 rounded-xl text-[13px] font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
-                        title="Delete this opportunity">
-                        {deleting === opp.id ? 'Deleting...' : <Trash2 size={16} />}
-                      </button>
-                    </div>
-                  </motion.div>
-                )
-              })()
-            ) : null}
-          </div>
-        ) : (
-          /* Student view */
-          <>
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-              <div className="flex items-center gap-2 flex-1 px-4 py-3 rounded-2xl bg-white border border-[rgba(13,24,61,0.08)]">
-                <Search size={14} className="text-[#4B6382] shrink-0"/>
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search NGOs by name or skill…"
-                  className="flex-1 bg-transparent text-[13px] text-[#0D183D] outline-none placeholder-[#4B6382]/50"/>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {CATEGORIES.map(c => (
-                  <button key={c} onClick={() => setCat(c)}
-                    className={`px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all ${
-                      cat===c ? 'text-white' : 'text-[#4B6382] bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[#F8F9FB]'
-                    }`}
-                    style={cat===c ? { background:'#0D183D' } : {}}>
-                    {c}
-                  </button>
-                ))}
+          <div className="space-y-6">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+              <div className="max-w-3xl">
+                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
+                  Opportunities
+                </h1>
+                <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
+                  Manage your posted roles and keep track of applicants from one clean workspace.
+                </p>
               </div>
             </div>
 
-            {loading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[0,1,2,3,4,5].map(i => (
-                  <div key={i} className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 animate-pulse">
-                    <div className="flex gap-4 mb-4">
-                      <div className="w-14 h-14 rounded-xl bg-[rgba(13,24,61,0.06)]"/>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-3/4 rounded-lg bg-[rgba(13,24,61,0.06)]"/>
-                        <div className="h-3 w-1/2 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+            <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+              <motion.aside
+                initial={false}
+                animate={{ opacity: 1 }}
+                className="sticky top-6 h-fit rounded-[32px] border bg-white p-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+                style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+              >
+                <div className="flex items-start justify-between gap-3 pb-4">
+                  <div>
+                    <h3 className="text-[1rem] font-semibold tracking-[-0.02em] text-[#202124]">Posted roles</h3>
+                    <p className="mt-1 text-[0.86rem] text-[#5F6368]">{ngoOpps.length} total</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/opportunities/new')}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8] transition-transform hover:-translate-y-0.5"
+                    aria-label="Create opportunity"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <div className="max-h-[calc(100vh-232px)] space-y-2 overflow-y-auto pr-1">
+                  {loading ? (
+                    [1, 2, 3].map(i => (
+                      <div
+                        key={i}
+                        className="h-[112px] animate-pulse rounded-[22px] border bg-[#FBFCFE]"
+                        style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+                      />
+                    ))
+                  ) : ngoOpps.length === 0 ? (
+                    <div
+                      className="rounded-[22px] border border-dashed bg-[#FBFCFE] px-4 py-6 text-center text-[0.86rem] text-[#5F6368]"
+                      style={{ borderColor: 'rgba(26,115,232,0.16)' }}
+                    >
+                      No opportunities yet
+                    </div>
+                  ) : (
+                    ngoOpps.map((opp, i) => {
+                      const normalized = normalizeNgoOpportunity(opp)
+                      const active = String(selectedOppId) === String(opp.id)
+                      const status = statusMeta(normalized.status)
+                      const filled = (normalized.status || '').toLowerCase() === 'paused'
+                      return (
+                        <motion.button
+                          key={opp.id}
+                          onClick={() => setSelectedOppId(opp.id)}
+                          initial={false}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.12 }}
+                          className={`min-h-[112px] w-full rounded-[22px] border px-4 py-4 text-left transition-all ${
+                            filled
+                              ? 'bg-[#F2FBF6] shadow-[0_8px_22px_rgba(24,128,56,0.07)]'
+                              : active
+                              ? 'bg-[#E8F0FE] shadow-[0_8px_20px_rgba(26,115,232,0.10)]'
+                              : 'bg-white hover:bg-[#FBFCFE]'
+                          }`}
+                          style={{
+                            borderColor: filled
+                              ? 'rgba(24,128,56,0.20)'
+                              : active
+                                ? 'rgba(26,115,232,0.22)'
+                                : 'rgba(26,115,232,0.10)',
+                          }}
+                          >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              {filled && (
+                                <span className="mb-2 inline-flex h-2 w-8 rounded-full bg-[#34A853]" aria-hidden="true" />
+                              )}
+                              <p className="truncate text-[0.92rem] font-semibold text-[#202124]">
+                                {normalized.title}
+                              </p>
+	                              <p className={`mt-1 truncate text-[0.78rem] ${
+	                                filled ? 'text-[#188038]' : 'text-[#5F6368]'
+	                              }`}>
+	                                {normalized.category || normalized.location || (filled ? 'Filled role' : 'Open role')}
+	                              </p>
+                            </div>
+                            {!filled && (
+                              <span
+                                className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold"
+                                style={{ background: status.bg, color: status.text }}
+                              >
+                                {status.label}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between gap-3 text-[0.78rem] text-[#5F6368]">
+                            <span className={filled ? 'text-[#188038]' : ''}>
+                              {filled ? 'Someone works there' : `${normalized.applicantCount} applicant${normalized.applicantCount === 1 ? '' : 's'}`}
+                            </span>
+                            <span className={`inline-flex items-center gap-1 ${
+                              filled ? 'text-[#188038]' : 'text-[#1A73E8]'
+                            }`}>
+                              {filled ? 'View placement' : 'View'}
+                              <ChevronRight size={13} />
+                            </span>
+                          </div>
+                        </motion.button>
+                      )
+                    })
+                  )}
+                </div>
+              </motion.aside>
+
+              <section className="space-y-6">
+                {loading ? (
+                  <div
+                    className="rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+                    style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+                  >
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="max-w-4xl flex-1">
+                        <div className="h-[30px] w-40 animate-pulse rounded-full bg-[#E8F0FE]" />
+                        <div className="mt-4 h-[46px] w-3/5 animate-pulse rounded-2xl bg-[#EEF4FF]" />
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 self-start">
+                        <div className="h-[33px] w-20 animate-pulse rounded-full bg-[#E8F0FE]" />
+                        <div className="h-[33px] w-36 animate-pulse rounded-full border border-[#E5EEFB] bg-white" />
+                        <div className="h-[33px] w-20 animate-pulse rounded-full border border-[#E5EEFB] bg-white" />
                       </div>
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="h-3 w-1/3 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-3 w-full rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-3 w-5/6 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+
+                    <div className="mt-7 rounded-[28px] border bg-white p-6" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                      <div className="grid gap-6">
+                        <div>
+                          <div className="h-4 w-28 animate-pulse rounded-full bg-[#EEF4FF]" />
+                          <div className="mt-3 grid gap-3 xl:grid-cols-4">
+                            {[0, 1, 2, 3].map(i => (
+                              <div
+                                key={i}
+                                className="h-[98px] animate-pulse rounded-[20px] border bg-[#FBFCFE]"
+                                style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <div className="h-4 w-28 animate-pulse rounded-full bg-[#EEF4FF]" />
+                          <div className="mt-4 space-y-3">
+                            <div className="h-3.5 w-full animate-pulse rounded-full bg-[#F1F4F9]" />
+                            <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-[#F1F4F9]" />
+                            <div className="h-3.5 w-2/3 animate-pulse rounded-full bg-[#F1F4F9]" />
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <div className="h-4 w-16 animate-pulse rounded-full bg-[#EEF4FF]" />
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {[0, 1, 2, 3].map(i => (
+                              <div key={i} className="h-[32px] w-24 animate-pulse rounded-full border border-[#E5EEFB] bg-[#FBFCFE]" />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <div className="h-4 w-24 animate-pulse rounded-full bg-[#EEF4FF]" />
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {[0, 1, 2].map(i => (
+                              <div key={i} className="h-[32px] w-24 animate-pulse rounded-full border border-[#E5EEFB] bg-[#FBFCFE]" />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-2 mb-4">
-                      <div className="h-6 w-16 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
-                      <div className="h-6 w-20 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
+
+                    <div className="mt-5 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-end" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                      <div className="h-[42px] w-32 animate-pulse rounded-full border border-[#FAD2CF] bg-white" />
                     </div>
-                    <div className="h-10 rounded-lg bg-[rgba(13,24,61,0.04)]"/>
                   </div>
-                ))}
+                ) : !selectedOpp ? (
+                  <div className="rounded-[32px] border bg-white p-8 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                      <Briefcase size={24} />
+                    </div>
+                    <h3 className="text-[1.05rem] font-semibold text-[#202124]">No opportunity selected</h3>
+                    <p className="mx-auto mt-2 max-w-lg text-[0.92rem] leading-7 text-[#5F6368]">
+                      Choose a role on the left to view details, applicants, and quick actions.
+                    </p>
+                    <button
+                      onClick={() => navigate('/opportunities/new')}
+                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.9rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)]"
+                    >
+                      <Plus size={14} />
+                      Create role
+                    </button>
+                  </div>
+                ) : (
+                  <motion.div
+                    key={selectedOpp.id}
+                    initial={false}
+	                    animate={{ opacity: 1 }}
+	                    transition={{ duration: 0.12 }}
+	                    className="rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+	                    style={{
+                        background: selectedOppFilled ? 'linear-gradient(180deg, #F4FBF7 0%, #FFFFFF 38%)' : '#FFFFFF',
+                        borderColor: selectedOppFilled ? 'rgba(24,128,56,0.18)' : 'rgba(26,115,232,0.10)',
+                      }}
+	                  >
+	                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+	                      <div className="max-w-4xl">
+	                        <div
+	                            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold"
+	                            style={{
+	                              background: selectedOppFilled ? 'rgba(24,128,56,0.10)' : '#E8F0FE',
+	                              color: selectedOppFilled ? '#188038' : '#1A73E8',
+	                            }}
+	                          >
+		                          <Sparkles size={13} />
+		                          {selectedOppFilled ? 'Filled role' : 'Opportunity details'}
+		                        </div>
+		                        <h2 className="mt-4 text-[2rem] font-semibold tracking-[-0.04em] text-[#202124] sm:text-[2.4rem]">
+		                          {selectedOpp.title}
+		                        </h2>
+                            {selectedOppFilled && (
+                              <p className="mt-3 max-w-2xl text-[0.9rem] leading-6 text-[#188038]">
+                                Someone works in this role, so it is no longer open for new student applications.
+                              </p>
+                            )}
+		                      </div>
+	
+	                      <div className="flex flex-wrap items-center gap-3 self-start">
+		                        {!selectedOppFilled && (
+		                          <span
+	                              className="inline-flex items-center rounded-full px-3 py-1.5 text-[0.78rem] font-semibold"
+	                              style={{
+	                                background: selectedOppStatus.bg,
+	                                color: selectedOppStatus.text,
+	                              }}
+	                            >
+		                            {selectedOppStatus.label}
+		                          </span>
+		                        )}
+	                        <button
+	                          onClick={() => navigate(`/applicants?opportunity=${selectedOpp.id}`)}
+	                          className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 transition-colors hover:bg-[#FBFCFE]"
+	                          style={{ borderColor: selectedOppFilled ? 'rgba(24,128,56,0.16)' : 'rgba(26,115,232,0.10)' }}
+	                        >
+	                          <Users size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
+		                          <span className="text-[0.78rem] font-semibold text-[#202124]">
+		                            {selectedOppFilled ? 'View placement' : 'View applicants'}
+		                          </span>
+	                          <ChevronRight size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
+	                        </button>
+	                        <button
+	                          onClick={() => navigate(`/opportunities/new?edit=${selectedOpp.id}`)}
+	                          className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 transition-colors hover:bg-[#FBFCFE]"
+	                          style={{ borderColor: selectedOppFilled ? 'rgba(24,128,56,0.16)' : 'rgba(26,115,232,0.10)' }}
+	                        >
+	                          <PencilLine size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
+	                          <span className="text-[0.78rem] font-semibold text-[#202124]">
+	                            Edit
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-7 rounded-[28px] border bg-white p-6" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                      <div className="grid gap-6">
+                        <div>
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+                            Role details
+                          </p>
+                          <div className="mt-3 grid gap-3 xl:grid-cols-4">
+                            {[
+                              { label: 'Location', value: selectedOpp.location || 'Not set' },
+                              { label: 'Category', value: selectedOpp.category || 'Not set' },
+                              { label: 'Work mode', value: selectedOpp.workMode || 'Not set' },
+                              { label: 'Hours/week', value: selectedOpp.weeklyHours ? `${selectedOpp.weeklyHours}` : 'Not set' },
+                            ].map(item => (
+                              <div
+                                key={item.label}
+                                className="rounded-[20px] border bg-[#FBFCFE] px-4 py-4 shadow-[0_1px_0_rgba(17,24,39,0.02)]"
+                                style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+                              >
+                                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+                                  {item.label}
+                                </p>
+                                <p className="mt-2 text-[0.92rem] font-semibold text-[#202124]">
+                                  {item.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+                            Role overview
+                          </p>
+                          <p className="mt-3 max-w-4xl text-[0.94rem] leading-8 text-[#5F6368] whitespace-pre-wrap">
+                            {selectedOpp.description || selectedOpp.missionImpact || 'No description added yet.'}
+                          </p>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Skills</p>
+                          <div className="mt-3 flex min-h-[32px] flex-wrap gap-2">
+                            {selectedOpp.skills?.length > 0 ? (
+                              selectedOpp.skills.map((s, i) => {
+                                const parsed = typeof s === 'string' ? s : (s?.name ?? '')
+                                if (!parsed) return null
+                                return (
+                                  <span key={i} className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] text-[#5F6368]">
+                                    {parsed}
+                                  </span>
+                                )
+                              })
+                            ) : (
+                              <span className="text-[0.86rem] text-[#9AA0A6]">Not set</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Languages</p>
+                          <div className="mt-3 flex min-h-[32px] flex-wrap gap-2">
+                            {selectedOpp.languages?.length > 0 ? (
+                              selectedOpp.languages.map((lang, i) => (
+                                  <span key={i} className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] text-[#5F6368]">
+                                    {lang}
+                                  </span>
+                              ))
+                            ) : (
+                              <span className="text-[0.86rem] text-[#9AA0A6]">Not set</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-end" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                      <button
+                        onClick={() => handleDeleteOpportunity(selectedOpp.id)}
+                        disabled={deleting === selectedOpp.id}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border bg-white px-4 py-2.5 text-[0.84rem] font-semibold text-[#B42318] transition-colors hover:bg-[#FFF9F9] disabled:opacity-50"
+                        style={{ borderColor: 'rgba(244,63,94,0.18)' }}
+                      >
+                        <Trash2 size={15} />
+                        {deleting === selectedOpp.id ? 'Deleting...' : 'Delete role'}
+                      </button>
+                      </div>
+                  </motion.div>
+                )}
+              </section>
+            </div>
+          </div>
+        ) : (
+          /* Student view */
+          <div className="space-y-7">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+            >
+              <div>
+                <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+                  Opportunities
+                </h1>
+                <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+                  Browse roles that fit your skills, interests, and goals.
+                </p>
               </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-24">
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(255,183,3,0.1)' }}>
-                  <Briefcase size={32} className="text-[#FFB703]" />
+              <div className="flex w-fit items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-3 py-2 text-[0.84rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(17,24,39,0.035)]">
+                {loading ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                {loading
+                  ? 'Loading roles'
+                  : `${sortedOpportunities.length} role${sortedOpportunities.length === 1 ? '' : 's'}`}
+              </div>
+            </motion.div>
+
+            <section className="rounded-[32px] border border-[#D7E6FF] bg-white p-5 shadow-[0_14px_38px_rgba(17,24,39,0.035)] sm:p-6">
+              <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_220px_220px]">
+                <label className="flex items-center gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-3 transition focus-within:border-[#1A73E8] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1A73E8]/10">
+                  <Search size={17} className="shrink-0 text-[#1A73E8]"/>
+                  <input
+                    value={q}
+                    onChange={e => setQ(e.target.value)}
+                    placeholder="Search by role, NGO, or skill"
+                    className="min-w-0 flex-1 bg-transparent text-[0.92rem] font-medium text-[#202124] outline-none placeholder:text-[#8A8F98]"
+                  />
+                </label>
+
+                <label className="rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-2.5">
+                  <span className="block text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#8A8F98]">
+                    Category
+                  </span>
+                  <select
+                    value={cat}
+                    onChange={e => setCat(e.target.value)}
+                    className="mt-1 w-full bg-transparent text-[0.9rem] font-semibold text-[#202124] outline-none"
+                  >
+                    {CATEGORIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-2.5">
+                  <span className="block text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#8A8F98]">
+                    Sort
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                    className="mt-1 w-full bg-transparent text-[0.9rem] font-semibold text-[#202124] outline-none"
+                  >
+                    <option value="match">Best match first</option>
+                    <option value="newest">Newest first</option>
+                    <option value="hours">Lowest hours first</option>
+                    <option value="title">A to Z</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            {loading ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {[0,1,2,3,4,5].map(i => <OpportunityCardSkeleton key={i} index={i} />)}
+              </div>
+            ) : sortedOpportunities.length === 0 ? (
+              <div className="rounded-[32px] border border-[#D7E6FF] bg-white px-6 py-20 text-center shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[#E8F0FE] text-[#1A73E8]">
+                  <Briefcase size={28} />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#0D183D] mb-2">No opportunities found</h3>
-                <p className="text-[14px] text-[#4B6382] mb-8">Try adjusting your filters or search terms to find more opportunities</p>
-                <button onClick={() => { setQ(''); setCat('All') }}
-                  className="px-6 py-3 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: '#0D183D' }}>
+                <h3 className="text-[1.1rem] font-semibold text-[#202124]">No opportunities found</h3>
+                <p className="mx-auto mt-2 max-w-md text-[0.92rem] leading-7 text-[#5F6368]">
+                  Try a different search, category, or sorting option.
+                </p>
+                <button
+                  onClick={() => { setQ(''); setCat('All'); setSortBy('match') }}
+                  className="mt-6 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.86rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition hover:-translate-y-0.5"
+                >
                   Clear filters
                 </button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((ngo, i) => (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {sortedOpportunities.map((ngo, i) => {
+                  const orgName = ngo.orgName || ngo.name || 'Organization'
+                  const category = ngo.category || ngo.cat || 'Opportunity'
+                  const description = ngo.description || ngo.missionImpact || ngo.desc || ''
+                  const skills = (ngo.skills || []).map(skillName).filter(Boolean).slice(0, 3)
+                  return (
                   <motion.div key={ngo.id}
                     initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
                     transition={{ delay:i*0.05, duration:0.3 }}
                     onClick={() => setViewingOpp(ngo)}
-                    className="bg-white rounded-2xl border border-[rgba(13,24,61,0.1)] p-6 flex flex-col gap-4 hover:shadow-[0_12px_40px_rgba(13,24,61,0.1)] hover:border-[rgba(13,24,61,0.15)] transition-all duration-200 cursor-pointer group">
+                    className="group flex min-h-[330px] cursor-pointer flex-col rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BBD4FF] hover:shadow-[0_18px_44px_rgba(26,115,232,0.09)]">
 
-                    {/* Top: Logo + Title + Save */}
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0">
-                        <GradientAvatar name={ngo.orgName} size={56} radius="0.875rem"/>
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0 rounded-2xl bg-[#E8F0FE] p-1">
+                        <GradientAvatar name={orgName} size={50} radius="0.8rem"/>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-[15px] font-bold text-[#0D183D] leading-tight mb-1 line-clamp-2 group-hover:text-[#FFB703] transition-colors">
-                          {ngo.title}
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          {ngo.match !== null && ngo.match !== undefined && (
+                            <span className="rounded-full bg-[#E8F0FE] px-3 py-1 text-[0.76rem] font-semibold text-[#1A73E8]">
+                              {ngo.match}% match
+                            </span>
+                          )}
+                          <span className="rounded-full bg-[#FAFBFC] px-3 py-1 text-[0.74rem] font-semibold text-[#5F6368]">
+                            {category}
+                          </span>
+                        </div>
+                        <h3 className="line-clamp-2 text-[1.06rem] font-semibold leading-snug tracking-[-0.02em] text-[#202124] transition-colors group-hover:text-[#1A73E8]">
+                          {ngo.title || category}
                         </h3>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
-                          className="text-[12px] font-semibold text-[#FFB703] hover:text-[#D99E00] transition-colors">
-                          {ngo.orgName}
+                          className="mt-1 text-[0.84rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
+                          {orgName}
                         </button>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSave(ngo) }}
                         disabled={toggling === ngo.id}
-                        className="p-2 rounded-lg hover:bg-[#F8F9FB] transition-colors shrink-0 disabled:opacity-40">
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FBFF] disabled:opacity-40">
                         <BookmarkIcon size={18} className={
-                          savedIds.has(ngo.id) ? 'fill-[#FFB703] text-[#FFB703]' : 'text-[#4B6382]'
+                          savedIds.has(ngo.id) ? 'fill-[#1A73E8] text-[#1A73E8]' : ''
                         }/>
                       </button>
                     </div>
 
-                    {/* Match + Meta info row */}
-                    <div className="flex items-center flex-wrap gap-2.5">
-                      {ngo.match !== null && (
-                        <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 whitespace-nowrap">
-                          {ngo.match}% match
-                        </span>
-                      )}
-                      <div className="flex items-center gap-3 flex-wrap text-[12px] text-[#4B6382]">
+                    <div className="mt-5 flex flex-wrap gap-2 text-[0.78rem] font-medium text-[#5F6368]">
                         {ngo.location && (
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <MapPin size={13} className="text-[#FFB703]" />
+                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
+                            <MapPin size={13} className="text-[#1A73E8]" />
                             {ngo.location}
                           </span>
                         )}
                         {ngo.workMode && (
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <Globe size={13} className="text-[#FFB703]" />
+                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
+                            <Globe size={13} className="text-[#1A73E8]" />
                             {ngo.workMode}
                           </span>
                         )}
                         {ngo.weeklyHours && (
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <Clock size={13} className="text-[#FFB703]" />
+                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
+                            <Clock size={13} className="text-[#1A73E8]" />
                             {ngo.weeklyHours} hrs/week
                           </span>
                         )}
-                      </div>
                     </div>
 
-                    {/* Description Preview */}
-                    {(ngo.description || ngo.missionImpact) && (
-                      <p className="text-[13px] text-[#4B6382] leading-relaxed line-clamp-2 flex-1">
-                        {ngo.description || ngo.missionImpact}
+                    {description && (
+                      <p className="mt-5 line-clamp-3 flex-1 text-[0.92rem] leading-7 text-[#5F6368]">
+                        {description}
                       </p>
                     )}
 
-                    {/* View Details Button */}
-                    <button onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
-                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-95 mt-2"
-                      style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
-                      View details
-                    </button>
+                    <div className="mt-5 border-t border-[#EEF3FB] pt-4">
+                      {skills.length > 0 && (
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {skills.map(skill => (
+                            <span key={skill} className="rounded-full border border-[#D7E6FF] bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8]">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-3 text-[0.88rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition hover:-translate-y-0.5"
+                      >
+                        View role
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </motion.div>
-                ))}
+                )})}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 

@@ -99,7 +99,7 @@ export default function ForStudents() {
                 num: '01',
                 title: 'Build your profile',
                 desc: 'Tell us about your skills, languages, interests, and what kind of impact you want to make.',
-                details: ['Your skills & expertise', 'Languages you speak', 'Values & causes you care about', 'Availability & commitment']
+                details: ['Your skills & expertise', 'Languages you speak', 'Values & causes you care about', 'Portfolio links']
               },
               {
                 num: '02',

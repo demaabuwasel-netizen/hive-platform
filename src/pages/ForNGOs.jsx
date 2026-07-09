@@ -112,7 +112,7 @@ export default function ForNGOs() {
                 num: '03',
                 title: 'Get matched candidates',
                 desc: 'Hive surfaces students whose skills and values align with your needs.',
-                details: ['Skill-based matches', 'Mission-aligned students', 'Availability fit', 'Quality candidates']
+                details: ['Skill-based matches', 'Mission-aligned students', 'Values alignment', 'Quality candidates']
               },
               {
                 num: '04',

@@ -1,1174 +1,426 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Briefcase, Users, Zap, MessageSquare, BarChart2,
-  MessageCircle, Settings, LogOut, ChevronRight, ExternalLink,
-  X, MapPin, GraduationCap, Star, Globe, Mail, Sparkles,
-  CheckCircle2, Clock, Languages, RefreshCw, Send, ArrowLeft,
+  Briefcase,
+  BarChart2,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  MessageCircle,
+  MessageSquare,
+  Sparkles,
+  Users,
+  Zap,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
 import { supabase } from '../services/supabase'
 import { computeMatch } from '../services/matching'
-import HiveLogo from '../components/HiveLogo'
-import CategorizedSkillTags from '../components/CategorizedSkillTags'
-import { AvatarDisplay } from '../components/Avatar'
-import img3 from '../assets/img3.png'  // woman w/ laptop — community impact
 
-// ─── Gradient avatar ──────────────────────────────────────────────────────────
-
-const GRADIENTS = [
-  ['#6366F1', '#8B5CF6'],
-  ['#FFB703', '#F97316'],
-  ['#06B6D4', '#3B82F6'],
-  ['#10B981', '#059669'],
-  ['#EC4899', '#F43F5E'],
-  ['#8B5CF6', '#A855F7'],
-  ['#F59E0B', '#EF4444'],
-  ['#14B8A6', '#06B6D4'],
+const QUICK_ACTIONS = [
+  {
+    icon: Users,
+    title: 'Applicants',
+    description: 'Review queue',
+    to: '/applicants',
+    tint: '#E8F0FE',
+    accent: '#1A73E8',
+  },
+  {
+    icon: Zap,
+    title: 'Matches',
+    description: 'Find fit',
+    to: '/matches',
+    tint: '#E6F4EA',
+    accent: '#188038',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Interviews',
+    description: 'Schedule calls',
+    to: '/interviews',
+    tint: '#FEF7E0',
+    accent: '#F29900',
+  },
+  {
+    icon: BarChart2,
+    title: 'Analytics',
+    description: 'View trends',
+    to: '/analytics',
+    tint: '#F3E8FD',
+    accent: '#A142F4',
+  },
 ]
 
-function nameHash(str) {
-  return str.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-}
+function QuickActionCard({ action, delay = 0 }) {
+  const Icon = action.icon
 
-function getInitials(name) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(w => /^[\p{L}]/u.test(w))
-    .map(w => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
-
-function GradientAvatar({ name, size = 48, radius = '0.75rem', className = '' }) {
-  const [c1, c2] = GRADIENTS[nameHash(name) % GRADIENTS.length]
   return (
-    <div
-      aria-hidden="true"
-      className={`flex items-center justify-center shrink-0 select-none font-bold text-white ${className}`}
-      style={{
-        width: size, height: size, borderRadius: radius,
-        background: `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`,
-        fontSize: Math.round(size * 0.34),
-        letterSpacing: '0.03em',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.14)',
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, delay }}
+      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
-      {getInitials(name)}
-    </div>
+      <Link to={action.to} className="absolute inset-0" aria-label={action.title} />
+
+      <div className="flex items-start justify-between gap-4">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ background: action.tint, color: action.accent }}
+        >
+          <Icon size={18} strokeWidth={2.15} />
+        </div>
+
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-transform duration-200 group-hover:translate-x-0.5"
+          style={{ boxShadow: 'inset 0 0 0 1px rgba(17,24,39,0.05)' }}
+        >
+          <ChevronRight size={16} />
+        </div>
+      </div>
+
+      <div className="mt-10">
+        <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.title}</h3>
+        <p className="mt-1.5 text-[0.88rem] text-[#5F6368]">{action.description}</p>
+      </div>
+    </motion.div>
   )
 }
 
-// ─── Hive Visualization ───────────────────────────────────────────────────────
-
-function HiveVisualization({ opportunities, applicants, navigate, suggestedMatches = [] }) {
-  const R = 26
-  const CX = 250, CY = 170
-  const d = Math.sqrt(3) * R
-
-  // Create mapping of opportunity ID to suggested student
-  const oppToStudent = {}
-  suggestedMatches.forEach(match => {
-    oppToStudent[match.opportunity.id] = match.student
-  })
-
-  function hexPoints(cx, cy, r = R) {
-    return Array.from({ length: 6 }, (_, i) => {
-      const a = (Math.PI / 3) * i
-      return `${(cx + r * Math.sin(a)).toFixed(1)},${(cy - r * Math.cos(a)).toFixed(1)}`
-    }).join(' ')
-  }
-
-  const relPositions = [
-    { x: 0, y: 0 },
-    { x: d, y: 0 }, { x: d / 2, y: d * 0.866 }, { x: -d / 2, y: d * 0.866 },
-    { x: -d, y: 0 }, { x: -d / 2, y: -d * 0.866 }, { x: d / 2, y: -d * 0.866 },
-    { x: 2 * d, y: 0 }, { x: d, y: d * 1.732 }, { x: -d, y: d * 1.732 },
-    { x: -2 * d, y: 0 }, { x: -d, y: -d * 1.732 }, { x: d, y: -d * 1.732 },
-    { x: 1.5 * d, y: d * 0.866 }, { x: 0, y: d * 1.732 }, { x: -1.5 * d, y: d * 0.866 },
-    { x: -1.5 * d, y: -d * 0.866 }, { x: 0, y: -d * 1.732 }, { x: 1.5 * d, y: -d * 0.866 },
-  ]
-
-  const positions = relPositions.map(p => ({ x: CX + p.x, y: CY + p.y }))
-
-  const hexes = positions.map((pos, i) => {
-    if (i === 0) return { ...pos, type: 'center' }
-    const opp = opportunities[i - 1] || null
-    if (opp) {
-      return { ...pos, type: 'opp', opp }
-    }
-    // Show one open slot - the first empty position
-    if (i - 1 === opportunities.length) {
-      return { ...pos, type: 'slot-opp' }
-    }
-    // Show other empty positions as greyed out
-    return { ...pos, type: 'empty' }
-  })
-
-  function getOppState(opp) {
-    if (!opp) return 'empty'
-    if (applicants.some(a => a.opportunityId === opp.id && (a.status === 'accepted' || a.status === 'interview'))) {
-      return 'working'
-    }
-    return 'active'
-  }
-
-  function hexFill(h) {
-    if (h.type === 'center') return '#1a1f3a'
-    if (h.type === 'slot-opp') return '#EEF2FF'
-    if (h.type === 'empty') return '#F3F4F6'
-    if (h.type === 'opp') {
-      const state = getOppState(h.opp)
-      if (state === 'working') return '#D1FAE5'
-      return '#FFB84D'
-    }
-    return '#F8FAFC'
-  }
-
-  function hexStroke(h) {
-    if (h.type === 'center') return 'none'
-    if (h.type === 'slot-opp') return '#C7D2FE'
-    if (h.type === 'empty') return '#D1D5DB'
-    if (h.type === 'opp') {
-      const state = getOppState(h.opp)
-      if (state === 'working') return '#6EE7B7'
-      return '#E8A038'
-    }
-    return '#E2E8F0'
-  }
-
-  function hexLabel(h) {
-    if (h.type === 'center') return null
-    if (h.type === 'slot-opp') return '+'
-    if (h.type === 'opp') {
-      return h.opp.title || 'Role'
-    }
-    return null
-  }
-
-  function wrapText(text, maxCharsPerLine = 10) {
-    const words = text.split(' ')
-    const lines = []
-    let currentLine = ''
-
-    words.forEach(word => {
-      if ((currentLine + word).length <= maxCharsPerLine) {
-        currentLine += (currentLine ? ' ' : '') + word
-      } else {
-        if (currentLine) lines.push(currentLine)
-        currentLine = word
-      }
-    })
-    if (currentLine) lines.push(currentLine)
-
-    return lines
-  }
-
-  function hexLabelColor(h) {
-    if (h.type === 'slot-opp') return '#818CF8'
-    if (h.type === 'opp') {
-      const state = getOppState(h.opp)
-      if (state === 'working') return '#065F46'
-      return '#1a1f3a'
-    }
-    return '#94A3B8'
-  }
-
-  function hexTooltip(h) {
-    if (h.type === 'opp') return h.opp.title
-    return null
-  }
+function RoleCard({ opportunity, applicantCount, index, onOpen }) {
+  const title = opportunity?.title || 'Opportunity'
+  const tag = opportunity?.workMode || opportunity?.category || opportunity?.field || 'Open role'
+  const summary = opportunity?.description || opportunity?.missionImpact || opportunity?.summary || ''
 
   return (
-    <div style={{ marginBottom: 48 }}>
-      <div style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0D183D' }}>Your Hive</h3>
-        <p style={{ fontSize: 13, color: '#4B6382', margin: '4px 0 0' }}>
-          Each hexagon represents a role you've posted. Build your hive and connect with talented volunteers.
+    <motion.article
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.06 * index }}
+      className="snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[260px] min-h-[190px] rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_10px_26px_rgba(17,24,39,0.04)]"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen?.(opportunity)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen?.(opportunity)
+        }
+      }}
+      aria-label={`Open role ${title}`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+            <Briefcase size={18} strokeWidth={2.15} />
+          </div>
+          <div>
+            <p className="text-[0.92rem] font-semibold text-[#202124]">{title}</p>
+            <p className="mt-0.5 text-[0.76rem] text-[#5F6368]">{tag}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-3 py-3">
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+          Overview
+        </p>
+        <p
+          className="mt-2 text-[0.83rem] leading-6 text-[#5F6368]"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {summary || 'Role details available in the opportunity page.'}
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-        <svg viewBox="110 40 280 260" style={{ flex: 1, minWidth: 400 }} xmlns="http://www.w3.org/2000/svg">
-          {hexes.slice(1).map((h, i) =>
-            h.type === 'opp' ? (
-              <line key={`cl-${i}`}
-                x1={hexes[0].x} y1={hexes[0].y} x2={h.x} y2={h.y}
-                stroke="#D1D5DB" strokeWidth="1.5" strokeDasharray="3 3"
-              />
-            ) : null
-          )}
-
-          {hexes.map((h, i) => {
-            const tip = hexTooltip(h)
-            const clickable = h.type === 'opp' || h.type === 'slot-opp' || h.type === 'app'
-            return (
-              <g key={i}
-                style={{ cursor: clickable ? 'pointer' : 'default' }}
-                onClick={() => {
-                  if (h.type === 'opp') navigate(`/opportunities?opportunity=${h.opp.id}`)
-                  if (h.type === 'slot-opp') navigate('/opportunities/new')
-                }}
-              >
-                {tip && <title>{tip}</title>}
-                <polygon
-                  points={hexPoints(h.x, h.y)}
-                  fill={hexFill(h)}
-                  stroke={hexStroke(h)}
-                  strokeWidth="1.5"
-                />
-                {h.type === 'center' && (
-                  <text x={h.x} y={h.y + 5} textAnchor="middle" fill="#FFB84D"
-                    fontSize="11" fontWeight="900" fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none' }}>
-                    hive
-                  </text>
-                )}
-                {hexLabel(h) && (
-                  <text x={h.x} y={h.type === 'slot-opp' ? h.y + 4 : h.y} textAnchor="middle" dominantBaseline="middle"
-                    fill={hexLabelColor(h)}
-                    fontSize={h.type === 'slot-opp' ? '20' : '7'}
-                    fontWeight={h.type === 'slot-opp' ? '500' : '700'}
-                    fontFamily="Plus Jakarta Sans, system-ui, sans-serif"
-                    style={{ pointerEvents: 'none' }}>
-                    {h.type === 'slot-opp' ? (
-                      hexLabel(h)
-                    ) : (
-                      wrapText(hexLabel(h), 11).map((line, idx) => {
-                        const lines = wrapText(hexLabel(h), 11)
-                        const totalLines = lines.length
-                        const offsetY = h.y + (idx - (totalLines - 1) / 2) * 7
-                        return (
-                          <tspan key={idx} x={h.x} y={offsetY}>
-                            {line}
-                          </tspan>
-                        )
-                      })
-                    )}
-                  </text>
-                )}
-              </g>
-            )
-          })}
-        </svg>
-
-        <div style={{ flex: 0.8, minWidth: 200 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[
-              { color: '#D1FAE5', stroke: '#6EE7B7', label: 'Someone working' },
-              { color: '#FFB84D', stroke: '#E8A038', label: 'Active role' },
-              { color: '#EEF2FF', stroke: '#C7D2FE', label: 'Add new role' },
-            ].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{
-                  width: 16, height: 16, borderRadius: 3,
-                  background: l.color, border: `1.5px solid ${l.stroke}`
-                }} />
-                <span style={{ fontSize: 12, color: '#4B6382' }}>{l.label}</span>
-              </div>
-            ))}
-          </div>
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+            Applicants
+          </p>
+          <p className="mt-1 text-[1.05rem] font-semibold text-[#202124]">
+            {applicantCount}
+          </p>
         </div>
       </div>
-    </div>
+    </motion.article>
   )
 }
-
-const AI_QUESTIONS = []
-
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard',     to: '/dashboard/ngo'  },
-  { icon: Briefcase,       label: 'Opportunities', to: '/opportunities'  },
-  { icon: Users,           label: 'Applicants',    to: '/applicants'     },
-  { icon: Zap,             label: 'Matches',       to: '/matches'        },
-  { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'     },
-  { icon: BarChart2,       label: 'Analytics',     to: '/analytics'      },
-  { icon: MessageCircle,   label: 'Messages',      to: '/messages', badge: '2' },
-  { icon: Settings,        label: 'Settings',      to: '/settings'       },
-]
-
-// ─── Match ring ───────────────────────────────────────────────────────────────
-
-function MatchRing({ score, size = 72 }) {
-  const r = 28
-  const circ = 2 * Math.PI * r
-  const offset = circ * (1 - score / 100)
-  const color = score >= 88 ? '#10B981' : score >= 80 ? '#FFB703' : '#6366F1'
-  const trackColor = score >= 88 ? '#D1FAE5' : score >= 80 ? '#FEF3C7' : '#EEF2FF'
-  return (
-    <svg width={size} height={size} viewBox="0 0 72 72" aria-label={`${score}% match score`}>
-      <circle cx="36" cy="36" r={r} fill="none" stroke={trackColor} strokeWidth="6"/>
-      <motion.circle
-        cx="36" cy="36" r={r} fill="none"
-        stroke={color} strokeWidth="6"
-        strokeDasharray={circ}
-        strokeLinecap="round"
-        transform="rotate(-90 36 36)"
-        initial={{ strokeDashoffset: circ }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1, ease: 'easeOut', delay: 0.15 }}
-      />
-      <text x="36" y="36" textAnchor="middle" dominantBaseline="central"
-        fontSize="13" fontWeight="800" fill="#0D183D">{score}%</text>
-    </svg>
-  )
-}
-
-// ─── AI message generator ────────────────────────────────────────────────────
-
-const TONES = [
-  { id: 'professional', label: 'Professional' },
-  { id: 'friendly',     label: 'Friendly'     },
-  { id: 'enthusiastic', label: 'Enthusiastic' },
-  { id: 'concise',      label: 'Concise'      },
-]
-
-function generateMessage(student, tone, orgName) {
-  const firstName = student.name.split(' ')[0]
-  const skill1 = student.skills[0]?.name ?? student.skills[0] ?? ''
-  const skill2 = (student.skills[1]?.name ?? student.skills[1]) || skill1
-  const reason = student.matchReasons?.[0] || `your ${skill1} experience aligns with our mission`
-
-  const messages = {
-    professional: `Dear ${firstName},\n\nI came across your Hive profile and was genuinely impressed by your background in ${student.field} and your expertise in ${skill1} and ${skill2}. Your experience — particularly that ${reason.toLowerCase()} — caught our attention.\n\nAt ${orgName}, we are currently looking for a motivated collaborator to support our programs, and we believe your profile is a strong match for what we need. I'd love to schedule a brief call to explore how we might work together.\n\nLooking forward to hearing from you.\n\nWarm regards,\n${orgName}`,
-
-    friendly: `Hi ${firstName}! 👋\n\nI was browsing Hive and your profile immediately stood out. Your work in ${student.field} and your skills in ${skill1} are exactly what we're looking for at ${orgName}.\n\nI especially loved that ${reason.toLowerCase()} — it really resonates with our mission. I'd love to grab a quick chat and see if we'd be a good fit to work together!\n\nHope to hear from you soon 😊`,
-
-    enthusiastic: `Hi ${firstName}! ✨\n\nWOW — your profile is a fantastic match for what we're building at ${orgName}! Your ${skill1} skills and experience in ${student.field} are exactly the kind of energy and talent we're looking for.\n\nHive's AI gave you a ${student.match}% match with us, and honestly, I can see why. Your work — ${reason.toLowerCase()} — is precisely the kind of impact we want to create together.\n\nWould love to connect ASAP and explore the possibilities! 🚀`,
-
-    concise: `Hi ${firstName},\n\nI'm reaching out from ${orgName}. Your ${skill1} skills and ${student.field} background caught our attention — you're a ${student.match}% match for our current opening.\n\nWould you be open to a 20-minute call this week?\n\nBest,\n${orgName}`,
-  }
-  return messages[tone] || messages.professional
-}
-
-// ─── Student profile modal ────────────────────────────────────────────────────
-
-function StudentProfileModal({ student, onClose, orgName = 'Majd – Arab Youth Hub' }) {
-  const score = student.match
-  const scoreColor = score >= 88 ? '#059669' : score >= 80 ? '#D99E00' : '#6366F1'
-  const scoreBg   = score >= 88 ? 'rgba(16,185,129,0.1)' : score >= 80 ? 'rgba(255,183,3,0.1)' : 'rgba(99,102,241,0.1)'
-  const [mode, setMode] = useState('profile') // 'profile' | 'connect' | 'sent'
-  const [tone, setTone] = useState('professional')
-  const [msg, setMsg] = useState(() => generateMessage(student, 'professional', orgName))
-
-  function switchTone(t) {
-    setTone(t)
-    setMsg(generateMessage(student, t, orgName))
-  }
-
-  function regenerate() {
-    setMsg(generateMessage(student, tone, orgName))
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      transition={{ duration: 0.16 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(10,18,48,0.52)', backdropFilter: 'blur(8px)' }}
-      onClick={onClose}
-    >
-      <motion.article
-        initial={{ opacity: 0, scale: 0.97, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 12 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-        className="relative bg-white w-full max-w-[500px] rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow: '0 24px 80px rgba(10,18,48,0.25)', maxHeight: '90vh' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* ── Header ── */}
-        <div className="px-7 pt-6 pb-5 shrink-0"
-          style={{ background: 'linear-gradient(160deg, #FFF7E6 0%, #F0EEFF 100%)' }}>
-          <button onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] transition-all hover:bg-black/[0.06] active:scale-95"
-            aria-label="Close">
-            <X size={14} strokeWidth={2.5}/>
-          </button>
-
-          <div className="flex items-start gap-4">
-            <GradientAvatar name={student.name} size={64} radius="1rem"
-              className="ring-[3px] ring-white shadow-lg shrink-0"/>
-            <div className="min-w-0 pt-0.5">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h2 className="font-extrabold text-[1.05rem] text-[#0D183D] leading-snug">{student.name}</h2>
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0"
-                  style={{ background: scoreBg, color: scoreColor }}>
-                  {score}% Match
-                </span>
-              </div>
-              <p className="text-[13px] font-semibold text-[#0D183D]/70 mb-1.5 leading-snug">
-                {student.field} · {student.year}
-              </p>
-              <div className="flex flex-col gap-0.5">
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-[#4B6382]">
-                  <GraduationCap size={10} strokeWidth={2}/> {student.uni}
-                </span>
-                {student.location && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-[#4B6382]">
-                    <MapPin size={10} strokeWidth={2}/> {student.location}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Scrollable body ── */}
-        <div className="overflow-y-auto flex-1 px-7 py-5 flex flex-col gap-5">
-
-          {/* Why Hive matched */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-                style={{ background: '#FFB703' }}>
-                <Sparkles size={11} strokeWidth={2.5} className="text-white"/>
-              </div>
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#0D183D]">
-                Why Hive matched this student
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              {student.matchReasons.map((r, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 + i * 0.06 }}
-                  className="flex items-start gap-2.5 rounded-xl p-3 text-[12px] text-[#4B6382] leading-relaxed"
-                  style={{ background: 'rgba(255,183,3,0.06)', border: '1px solid rgba(255,183,3,0.14)' }}>
-                  <CheckCircle2 size={13} strokeWidth={2} className="mt-0.5 shrink-0" style={{ color: '#FFB703' }}/>
-                  {r}
-                </motion.div>
-              ))}
-            </div>
-          </section>
-
-          <div className="h-px" style={{ background: 'rgba(13,24,61,0.07)' }}/>
-
-          {/* Match + availability */}
-          <section className="flex items-center gap-5">
-            <MatchRing score={score} />
-            <div className="flex flex-col gap-2.5">
-              <div>
-                <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-1">Availability</p>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"/>
-                  {student.availability}
-                </span>
-              </div>
-              <div>
-                <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-1">Languages</p>
-                <p className="text-[12px] font-semibold text-[#0D183D]">{student.languages.join(' · ')}</p>
-              </div>
-            </div>
-          </section>
-
-          <div className="h-px" style={{ background: 'rgba(13,24,61,0.07)' }}/>
-
-          {/* Bio */}
-          <section>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">About</p>
-            <p className="text-[13px] text-[#4B6382] leading-[1.65]">{student.bio}</p>
-          </section>
-
-          {/* Skills */}
-          <section>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2.5">Skills</p>
-            <CategorizedSkillTags skills={student.skills} showLevel />
-          </section>
-
-          {/* Interests */}
-          {student.interests?.length > 0 && (
-            <section>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2.5">Interests</p>
-              <div className="flex flex-wrap gap-1.5">
-                {student.interests.map(t => (
-                  <span key={t}
-                    className="text-[11px] font-semibold px-2.5 py-1 rounded-lg"
-                    style={{ background: 'rgba(255,183,3,0.08)', color: '#D99E00', border: '1px solid rgba(255,183,3,0.18)' }}>
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Notable work */}
-          {student.projects?.length > 0 && (
-            <section>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2.5">Notable Work</p>
-              <ul className="flex flex-col gap-2">
-                {student.projects.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-[13px] text-[#4B6382] leading-snug">
-                    <span className="mt-[5px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#FFB703' }}/>
-                    {p}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
-
-        {/* ── Footer — profile mode ── */}
-        {mode === 'profile' && (
-          <div className="shrink-0 px-7 py-4 flex gap-2.5 border-t" style={{ borderColor: 'rgba(13,24,61,0.08)', background: '#FAFAFA' }}>
-            <button
-              onClick={() => setMode('connect')}
-              className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2"
-              style={{ background: '#0D183D', boxShadow: '0 2px 12px rgba(13,24,61,0.2)' }}>
-              <Sparkles size={13}/> Connect with {student.name.split(' ')[0]}
-            </button>
-            <button
-              className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-150 hover:bg-[rgba(13,24,61,0.04)] active:scale-95"
-              style={{ color: '#4B6382', borderColor: 'rgba(13,24,61,0.14)' }}
-              aria-label="Send email">
-              <Mail size={14} strokeWidth={2}/>
-            </button>
-          </div>
-        )}
-
-        {/* ── Connect composer — AI message ── */}
-        {mode === 'connect' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22 }}
-            className="shrink-0 flex flex-col border-t"
-            style={{ borderColor: 'rgba(13,24,61,0.08)', background: '#FAFAFA' }}>
-
-            {/* Connect header */}
-            <div className="px-7 pt-5 pb-4 border-b" style={{ borderColor: 'rgba(13,24,61,0.07)' }}>
-              <div className="flex items-center gap-3 mb-4">
-                <button onClick={() => setMode('profile')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[#4B6382] hover:bg-[rgba(13,24,61,0.06)] transition-colors">
-                  <ArrowLeft size={14}/>
-                </button>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: '#FFB703' }}>
-                    <Sparkles size={11} className="text-white"/>
-                  </div>
-                  <p className="text-[13px] font-extrabold text-[#0D183D]">AI Connection Composer</p>
-                </div>
-              </div>
-
-              {/* Mini profile + match */}
-              <div className="flex items-center gap-3 mb-4">
-                <GradientAvatar name={student.name} size={36} radius="0.55rem" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-bold text-[#0D183D]">{student.name}</p>
-                  <p className="text-[11px] text-[#4B6382]">{student.field}</p>
-                </div>
-                <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full"
-                  style={{ background: scoreBg, color: scoreColor }}>{score}% match</span>
-              </div>
-
-              {/* Why this works */}
-              <div className="rounded-xl p-3.5 mb-4" style={{ background: 'rgba(255,183,3,0.06)', border: '1px solid rgba(255,183,3,0.14)' }}>
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#D99E00] mb-2">Why this match works</p>
-                <ul className="flex flex-col gap-1.5">
-                  {(student.matchReasons || []).slice(0,2).map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[11px] text-[#4B6382]">
-                      <CheckCircle2 size={11} className="mt-0.5 shrink-0 text-[#FFB703]"/>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Tone selector */}
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382] mb-2">Tone</p>
-                <div className="flex gap-1.5">
-                  {TONES.map(t => (
-                    <button key={t.id} onClick={() => switchTone(t.id)}
-                      className="flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150"
-                      style={tone === t.id
-                        ? { background: '#0D183D', color: 'white' }
-                        : { background: 'rgba(13,24,61,0.06)', color: '#4B6382' }}>
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Message editor */}
-            <div className="px-7 pt-4 pb-3 flex flex-col gap-3">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4B6382]">Message</p>
-                <button onClick={regenerate}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-[#FFB703] hover:opacity-70 transition-opacity">
-                  <RefreshCw size={11}/> Regenerate
-                </button>
-              </div>
-              <textarea
-                value={msg} onChange={e => setMsg(e.target.value)} rows={6}
-                className="w-full px-4 py-3 rounded-xl text-[12px] text-[#0D183D] leading-relaxed resize-none outline-none transition-all"
-                style={{ background: 'white', border: '1.5px solid rgba(13,24,61,0.1)', lineHeight: 1.65 }}
-                onFocus={e => e.target.style.borderColor = '#FFB703'}
-                onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}
-              />
-              <button
-                onClick={() => setMode('sent')}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: '#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.28)' }}>
-                <Send size={13}/> Send introduction
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Sent success state ── */}
-        {mode === 'sent' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-            className="shrink-0 px-7 py-8 flex flex-col items-center text-center border-t"
-            style={{ borderColor: 'rgba(13,24,61,0.08)', background: '#FAFAFA' }}>
-            <motion.div
-              initial={{ scale: 0 }} animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: 'rgba(16,185,129,0.1)' }}>
-              <CheckCircle2 size={28} className="text-emerald-500"/>
-            </motion.div>
-            <p className="text-[15px] font-extrabold text-[#0D183D] mb-1">Message sent!</p>
-            <p className="text-[12px] text-[#4B6382] mb-5 leading-relaxed">
-              Your introduction to <strong>{student.name.split(' ')[0]}</strong> is on its way. You'll be notified when they respond.
-            </p>
-            <div className="flex gap-2.5 w-full">
-              <button onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.12)] hover:bg-[rgba(13,24,61,0.04)] transition-colors">
-                Close
-              </button>
-              <button
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: '#0D183D' }}
-                onClick={onClose}>
-                View in Messages
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </motion.article>
-    </motion.div>
-  )
-}
-
-// ─── Student card ─────────────────────────────────────────────────────────────
-
-function StudentCard({ student, onOpen, index }) {
-  const sc = student.match
-  const scoreColor = sc >= 88 ? '#059669' : sc >= 80 ? '#D99E00' : '#6366F1'
-  const scoreBg   = sc >= 88 ? 'rgba(16,185,129,0.1)' : sc >= 80 ? 'rgba(255,183,3,0.1)' : 'rgba(99,102,241,0.1)'
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.08 + index * 0.06, duration: 0.3 }}
-      className="group bg-white rounded-2xl border px-5 py-4 flex items-center gap-4 transition-all duration-200 hover:shadow-[0_4px_24px_rgba(13,24,61,0.08)] cursor-default"
-      style={{ borderColor: 'rgba(13,24,61,0.08)' }}
-    >
-      <GradientAvatar name={student.name} size={44} radius="0.65rem" />
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-[13px] font-bold text-[#0D183D] truncate leading-snug">{student.name}</p>
-          <span className="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full"
-            style={{ background: scoreBg, color: scoreColor }}>
-            {sc}%
-          </span>
-        </div>
-        <p className="text-[11px] text-[#4B6382] mb-2 truncate">{student.field} · {student.uni}</p>
-        <div className="flex items-center gap-1 flex-wrap">
-          {student.skills.slice(0, 3).map(s => {
-            const name = s?.name ?? s
-            return (
-              <span key={name}
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
-                style={{ background: '#F8F9FB', color: '#4B6382', borderColor: 'rgba(13,24,61,0.09)' }}>
-                {name}
-              </span>
-            )
-          })}
-          {student.skills.length > 3 && (
-            <span className="text-[10px] text-[#4B6382] opacity-60 font-medium px-0.5">
-              +{student.skills.length - 3}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <button
-        onClick={() => onOpen(student)}
-        className="shrink-0 cursor-pointer text-[11px] font-semibold text-white px-4 py-2 rounded-xl transition-all duration-150 hover:opacity-90 hover:-translate-y-px active:scale-[0.97] active:translate-y-0 select-none"
-        style={{ background: '#0D183D', boxShadow: '0 2px 8px rgba(13,24,61,0.2)' }}>
-        View profile
-      </button>
-    </motion.div>
-  )
-}
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-function Sidebar({ user, profile, onLogout }) {
-  const orgName = profile?.name || user?.name || 'Your NGO'
-  const src = profile?.imageUrl || profile?.avatar || user?.avatar || null
-
-  return (
-    <aside className="w-[220px] shrink-0 flex flex-col h-screen sticky top-0 z-10 bg-white"
-      style={{ borderRight: '1px solid rgba(13,24,61,0.08)' }}>
-
-      {/* Logo */}
-      <div className="px-5 py-[14px]" style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
-        <Link to="/" className="flex items-center gap-2">
-          <HiveLogo size={24} nameSize="text-base" />
-          <span style={{ fontSize: '14px', fontWeight: '900', color: '#0D183D' }}>Hive</span>
-        </Link>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 p-2.5 flex flex-col gap-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(item => {
-          const active = window.location.pathname === item.to
-          return (
-            <Link key={item.label} to={item.to}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-100 ${
-                active ? 'bg-[#0D183D] text-white' : 'text-[#4B6382] hover:bg-[rgba(13,24,61,0.04)] hover:text-[#0D183D]'
-              }`}>
-              <item.icon size={14} strokeWidth={active ? 2.5 : 1.8}/>
-              <span className="flex-1">{item.label}</span>
-              {item.badge && <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full text-white" style={{ background:'#FFB703' }}>{item.badge}</span>}
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* User footer */}
-      <div className="p-2.5" style={{ borderTop: '1px solid rgba(13,24,61,0.07)' }}>
-        <div className="group flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-[rgba(13,24,61,0.04)] transition-colors cursor-default">
-          <AvatarDisplay src={src} name={orgName} size="xs"
-            className="ring-[2px] ring-[rgba(255,183,3,0.35)] shrink-0"/>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-bold text-[#0D183D] truncate leading-snug">{orgName}</p>
-            <p className="text-[10px] text-[#4B6382]">NGO Account</p>
-          </div>
-          <button onClick={onLogout} aria-label="Log out"
-            className="opacity-0 group-hover:opacity-100 text-[#4B6382] hover:text-red-400 transition-all p-1 rounded-lg hover:bg-red-50">
-            <LogOut size={12}/>
-          </button>
-        </div>
-      </div>
-    </aside>
-  )
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-function NGODashboardContent({ user, profile, setActiveStudent, orgName, applicants, opportunities, ngoStats, loadingData, navigate, suggestedMatches }) {
-  const avatarSrc = profile?.imageUrl || profile?.avatar || user?.avatar || null
-
-  return (
-    <main className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-      <div className="max-w-[960px] mx-auto px-8 py-7">
-
-          {/* ── Org header ── */}
-          <motion.header
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center gap-4 mb-6">
-            <GradientAvatar name={orgName} size={52} radius="1rem"
-              className="ring-[3px] ring-white shadow-sm"/>
-            <div>
-              <div className="flex items-center gap-2.5 mb-0.5">
-                <h1 className="text-[1.15rem] font-extrabold text-[#0D183D] leading-tight">{orgName}</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                  Active
-                </span>
-              </div>
-              <p className="text-[13px] text-[#4B6382] leading-snug">
-                {profile?.location ? `${profile.location} · ` : ''}
-                {profile?.description?.slice(0, 70) || 'Dashboard overview'}
-                {(profile?.description?.length || 0) > 70 ? '…' : ''}
-              </p>
-            </div>
-          </motion.header>
-
-          {/* ── Stats ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {ngoStats.map((s, i) => (
-              <motion.div key={s.label}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.28 }}
-                className="bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 border transition-shadow duration-200 hover:shadow-[0_4px_20px_rgba(13,24,61,0.06)]"
-                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
-                  <s.icon size={15} className={s.color} strokeWidth={2}/>
-                </div>
-                <div>
-                  <p className="text-[20px] font-extrabold text-[#0D183D] leading-none tracking-tight">
-                    {loadingData ? '—' : s.value}
-                  </p>
-                  <p className="text-[10px] text-[#4B6382] mt-0.5 leading-snug">{s.label}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* ── Hive Visualization ── */}
-          <HiveVisualization opportunities={opportunities} applicants={applicants} navigate={navigate} suggestedMatches={suggestedMatches} />
-
-          {/* ── Suggested Student Matches ── */}
-          {opportunities.length > 0 && suggestedMatches.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Suggested Matches</h2>
-                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who fit your opportunities</p>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                {suggestedMatches.map((match, i) => (
-                  <motion.div
-                    key={`${match.opportunity.id}-${match.student.id}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.05 }}
-                    className="bg-white rounded-2xl border p-5"
-                    style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-
-                    {/* Opportunity title */}
-                    <p className="text-[10px] font-bold text-[#FFB703] uppercase tracking-widest mb-3">
-                      {match.opportunity.title}
-                    </p>
-
-                    {/* Match card */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-12 h-12 rounded-lg flex-shrink-0"
-                          style={{
-                            background: `linear-gradient(135deg, ${match.colors[0]}, ${match.colors[1]})`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '14px'
-                          }}>
-                          {match.student.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold text-[#0D183D] truncate">{match.student.name}</p>
-                          <p className="text-[11px] text-[#4B6382]">{match.student.field}</p>
-                        </div>
-                      </div>
-
-                      {/* Match percentage and message button */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="text-center">
-                          <p className="text-[14px] font-extrabold text-[#0D183D]">{match.score}%</p>
-                          <p className="text-[9px] text-[#4B6382]">match</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setActiveStudent(match.student)
-                          }}
-                          className="px-3 py-2 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
-                          style={{ background: '#FFB703' }}>
-                          Message
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── Body ── */}
-          <div className="grid lg:grid-cols-[1fr_264px] gap-5">
-
-            {/* Applicants */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h2 className="text-[13px] font-extrabold text-[#0D183D]">Recent Applicants</h2>
-                  <p className="text-[11px] text-[#4B6382] mt-0.5">Students who applied to your opportunities</p>
-                </div>
-                <Link to="/applicants"
-                  className="text-[11px] font-semibold flex items-center gap-0.5 transition-opacity hover:opacity-70"
-                  style={{ color: '#FFB703' }}>
-                  See all <ChevronRight size={11} strokeWidth={2.5}/>
-                </Link>
-              </div>
-
-              {loadingData ? (
-                <div className="flex flex-col gap-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-white rounded-2xl border px-5 py-4 h-[76px] animate-pulse"
-                      style={{ borderColor: 'rgba(13,24,61,0.08)' }} />
-                  ))}
-                </div>
-              ) : applicants.length === 0 ? (
-                <div className="bg-white rounded-2xl border px-6 py-10 text-center"
-                  style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-                  <p className="text-3xl mb-3">📭</p>
-                  <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No applicants yet</p>
-                  <p className="text-[12px] text-[#4B6382] leading-relaxed">
-                    Once students apply to your opportunities, they'll appear here.
-                  </p>
-                  <Link to="/opportunities/new"
-                    className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                    style={{ background: '#FFB703' }}>
-                    Post an opportunity
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {applicants.slice(0, 5).map((s, i) => (
-                    <StudentCard key={s.id} student={s} onOpen={setActiveStudent} index={i}/>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* Right column */}
-            <aside className="flex flex-col gap-4">
-
-              {/* AI Interview Questions */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 0.35 }}
-                className="rounded-2xl p-5 flex flex-col gap-4"
-                style={{ background: '#0D183D' }}>
-
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FFB703' }}>
-                    <Sparkles size={12} strokeWidth={2.5} className="text-white"/>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-bold text-white leading-snug">AI Interview Questions</p>
-                    <p className="text-[10px] text-white/40">Tailored for your top match</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {AI_QUESTIONS.map((q, i) => (
-                    <motion.div key={i}
-                      initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.07 }}
-                      className="rounded-xl p-3 flex gap-2.5"
-                      style={{ background: 'rgba(255,255,255,0.06)' }}>
-                      <span className="text-[10px] font-extrabold shrink-0 mt-0.5" style={{ color: '#FFB703' }}>Q{i + 1}</span>
-                      <p className="text-[11px] leading-relaxed text-white/55">{q}</p>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <Link to="/matches"
-                  className="flex items-center gap-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
-                  style={{ color: '#FFB703' }}>
-                  <ExternalLink size={10}/> Full match explanation
-                </Link>
-              </motion.div>
-
-              {/* Community Impact */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.28, duration: 0.35 }}
-                className="bg-white rounded-2xl p-5 flex flex-col gap-4 border"
-                style={{ borderColor: 'rgba(13,24,61,0.08)' }}>
-
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[13px] font-extrabold text-[#0D183D]">Community Impact</h3>
-                  <span className="text-[10px] font-semibold text-[#4B6382]">This quarter</span>
-                </div>
-
-                <div className="rounded-xl overflow-hidden border"
-                  style={{ background: 'rgba(255,183,3,0.05)', borderColor: 'rgba(255,183,3,0.15)' }}>
-                  <img src={img3} alt="Community impact"
-                    className="w-full object-contain object-top"
-                    style={{ maxHeight: 96 }} draggable={false}/>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl p-3 text-center border"
-                    style={{ background: 'rgba(255,183,3,0.05)', borderColor: 'rgba(255,183,3,0.14)' }}>
-                    <p className="text-[18px] font-extrabold leading-none" style={{ color: '#D99E00' }}>4</p>
-                    <p className="text-[10px] text-[#4B6382] mt-1">Active projects</p>
-                  </div>
-                  <div className="rounded-xl p-3 text-center bg-indigo-50 border border-indigo-100">
-                    <p className="text-[18px] font-extrabold leading-none text-indigo-600">46</p>
-                    <p className="text-[10px] text-[#4B6382] mt-1">Students helped</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-[10px] font-semibold text-[#4B6382]">Annual impact goal</span>
-                    <span className="text-[10px] font-extrabold" style={{ color: '#D99E00' }}>72%</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(13,24,61,0.07)' }}>
-                    <motion.div className="h-1.5 rounded-full" style={{ background: '#FFB703' }}
-                      initial={{ width: 0 }}
-                      animate={{ width: '72%' }}
-                      transition={{ delay: 0.5, duration: 0.9, ease: 'easeOut' }}/>
-                  </div>
-                </div>
-              </motion.div>
-            </aside>
-          </div>
-        </div>
-    </main>
-  )
-}
-
-// ─── Export ───────────────────────────────────────────────────────────────────
 
 export default function NGODashboard() {
   const { user, profile } = useApp()
   const navigate = useNavigate()
-  const [activeStudent,     setActiveStudent]     = useState(null)
-  const [applicants,        setApplicants]        = useState([])
-  const [opportunities,     setOpportunities]     = useState([])
-  const [oppCount,          setOppCount]          = useState(0)
-  const [loadingData,       setLoadingData]       = useState(true)
-  const [suggestedMatches,  setSuggestedMatches]  = useState([])
+  const rolesRef = useRef(null)
 
-  const orgName = profile?.name || user?.name || 'Your NGO'
+  const [applicants, setApplicants] = useState([])
+  const [opportunities, setOpportunities] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [topMatches, setTopMatches] = useState([])
+
+  const orgName = profile?.name || user?.name || 'Organization'
+  const headerLine = 'Manage connections, roles, and hiring momentum from one clean workspace.'
 
   useEffect(() => {
     if (!user?.id) return
-    setLoadingData(true)
-    Promise.all([
-      fetchNgoApplicants(user.id).catch(() => []),
-      fetchNgoOpportunities(user.id).catch(() => []),
-    ]).then(([apps, opps]) => {
-      setApplicants(apps)
-      setOpportunities(opps)
-      setOppCount(opps.length)
-    }).finally(() => setLoadingData(false))
-  }, [user?.id])
 
-  // Compute suggested matches for each opportunity
-  useEffect(() => {
-    if (opportunities.length === 0) {
-      setSuggestedMatches([])
-      return
-    }
+    let cancelled = false
 
-    const computeMatches = async () => {
+    async function loadData() {
+      setLoading(true)
+
       try {
-        // Fetch all student profiles with user info (for names)
-        const { data: students, error } = await supabase
-          .from('student_profiles')
-          .select('user_id, field, skills, languages, availability, interests, experience, goals, users(id, name)')
+        const [apps, opps] = await Promise.all([
+          fetchNgoApplicants(user.id).catch(() => []),
+          fetchNgoOpportunities(user.id).catch(() => []),
+        ])
 
-        console.log('🔍 Fetched students:', students?.length || 0)
-        console.log('📋 Opportunities:', opportunities.length)
-        console.log('❌ Error:', error)
-
-        if (error) {
-          console.error('Student fetch error:', error)
-        }
-
-        if (!students || students.length === 0) {
-          console.warn('No students found in database')
-          setSuggestedMatches([])
-          return
-        }
-
-        // For each opportunity, find the best matching student
-        const matches = []
-        const colorPalettes = [
-          ['#7C3AED', '#A78BFA'],
-          ['#0EA5E9', '#38BDF8'],
-          ['#EC4899', '#F472B6'],
-          ['#14B8A6', '#2DD4BF'],
-          ['#F59E0B', '#FBBF24'],
-        ]
-
-        opportunities.forEach((opp, idx) => {
-          let bestMatch = null
-          let bestScore = 0
-
-          students.forEach(student => {
-            try {
-              const result = computeMatch(student, opp)
-              const score = typeof result === 'object' && result !== null ? (result.score ?? 0) : 0
-
-              if (score > bestScore) {
-                bestScore = score
-                bestMatch = student
-              }
-            } catch (e) {
-              console.error(`Error matching student ${student.user_id} to opportunity ${opp.id}:`, e)
-            }
-          })
-
-          const studentName = bestMatch?.users?.name || 'Unknown'
-          console.log(`✓ "${opp.title}": ${studentName} (${Math.round(bestScore)}%)`)
-
-          if (bestMatch) {
-            matches.push({
-              opportunity: opp,
-              student: { ...bestMatch, id: bestMatch.user_id, name: bestMatch.users?.name, match: Math.round(bestScore) },
-              score: Math.round(bestScore),
-              colors: colorPalettes[idx % colorPalettes.length],
-            })
-          }
-        })
-
-        console.log('✅ Total matches:', matches.length)
-        setSuggestedMatches(matches.sort((a, b) => b.score - a.score))
-      } catch (err) {
-        console.error('💥 Error computing matches:', err)
-        setSuggestedMatches([])
+        if (cancelled) return
+        setApplicants(Array.isArray(apps) ? apps : [])
+        setOpportunities(Array.isArray(opps) ? opps : [])
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
 
-    computeMatches()
+    loadData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!opportunities.length) {
+      setTopMatches([])
+      return
+    }
+
+    let cancelled = false
+
+    async function computeTopMatches() {
+      try {
+        const { data: students, error } = await supabase
+          .from('student_profiles')
+          .select('user_id, field, skills, languages, interests, experience, goals, users(id, name)')
+
+        if (error || !students?.length || cancelled) {
+          setTopMatches([])
+          return
+        }
+
+        const palettes = [
+          ['#1A73E8', '#8AB4F8'],
+          ['#188038', '#81C995'],
+          ['#F29900', '#FBC02D'],
+          ['#A142F4', '#C58AF9'],
+        ]
+
+        const matches = opportunities
+          .map((opportunity, index) => {
+            let best = null
+            let bestScore = -1
+
+            students.forEach(student => {
+              try {
+                const result = computeMatch(student, opportunity)
+                const score = typeof result === 'object' && result !== null ? (result.score ?? 0) : 0
+                if (score > bestScore) {
+                  bestScore = score
+                  best = student
+                }
+              } catch (err) {
+                console.error('Match computation failed:', err)
+              }
+            })
+
+            if (!best) return null
+
+            return {
+              opportunity,
+              student: {
+                ...best,
+                id: best.user_id,
+                name: best.users?.name || 'Unknown',
+                match: Math.round(bestScore),
+              },
+              score: Math.round(bestScore),
+              colors: palettes[index % palettes.length],
+            }
+          })
+          .filter(Boolean)
+          .sort((a, b) => b.score - a.score)
+
+        if (!cancelled) setTopMatches(matches)
+      } catch (err) {
+        console.error('Unable to compute matches:', err)
+        if (!cancelled) setTopMatches([])
+      }
+    }
+
+    computeTopMatches()
+
+    return () => {
+      cancelled = true
+    }
   }, [opportunities])
 
-  // Build stat cards from real data
-  const ngoStats = [
-    { icon: Briefcase,  label: 'Opportunities', value: oppCount,                                              color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { icon: Users,      label: 'Total applicants', value: applicants.length,                                   color: 'text-[#FFB703]',  bg: 'bg-amber-50'  },
-    { icon: Clock,      label: 'Pending review',   value: applicants.filter(a => a.status === 'submitted').length, color: 'text-violet-500', bg: 'bg-violet-50' },
-    { icon: CheckCircle2, label: 'Accepted',       value: applicants.filter(a => a.status === 'accepted').length,  color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  ]
+  const applicantsByOpportunity = opportunities.map(opportunity => {
+    const count = applicants.filter(app => {
+      const appOppId = app?.opportunityId ?? app?.opportunity_id ?? app?.opportunity?.id
+      return String(appOppId) === String(opportunity.id)
+    }).length
+    return {
+      opportunity,
+      applicantCount: count,
+      match: topMatches.find(m => String(m.opportunity?.id) === String(opportunity.id)),
+    }
+  })
 
   return (
-    <>
-      <NGODashboardContent
-        user={user}
-        profile={profile}
-        setActiveStudent={setActiveStudent}
-        orgName={orgName}
-        applicants={applicants}
-        opportunities={opportunities}
-        ngoStats={ngoStats}
-        loadingData={loadingData}
-        navigate={navigate}
-        suggestedMatches={suggestedMatches}
-      />
-      <AnimatePresence>
-        {activeStudent && (
-          <StudentProfileModal
-            student={activeStudent}
-            onClose={() => setActiveStudent(null)}
-            orgName={orgName}
-          />
-        )}
-      </AnimatePresence>
-    </>
+    <main className="min-h-screen bg-[#F5F7FB]">
+      <div className="mx-auto max-w-[1440px] px-6 py-10 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32 }}
+          className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
+              {orgName}
+            </h1>
+            <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
+              {headerLine}
+            </p>
+          </div>
+        </motion.header>
+
+        <section className="rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+          style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Quick actions</h2>
+              <p className="mt-1.5 text-[0.9rem] text-[#5F6368]">Move through the workspace without hunting.</p>
+            </div>
+            <Link
+              to="/opportunities"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-[#1A73E8] transition-opacity hover:opacity-75"
+            >
+              Manage roles
+              <ExternalLink size={14} />
+            </Link>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-4">
+            {QUICK_ACTIONS.map((action, index) => (
+              <QuickActionCard key={action.title} action={action} delay={index * 0.04} />
+            ))}
+          </div>
+        </section>
+
+        <section
+          className="mt-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+          style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+        >
+            <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Open roles</h2>
+                <span className="rounded-full border border-[#C6DAFC] bg-[#F7FAFF] px-3 py-1 text-[0.82rem] font-semibold text-[#1A73E8]">
+                  {loading ? '...' : opportunities.length}
+                </span>
+              </div>
+              <p className="mt-1.5 text-[0.9rem] text-[#5F6368]">
+                A quick view of the roles your team is actively managing.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => rolesRef.current?.scrollBy({ left: -420, behavior: 'smooth' })}
+                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
+                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                aria-label="Scroll roles left"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={() => rolesRef.current?.scrollBy({ left: 420, behavior: 'smooth' })}
+                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
+                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                aria-label="Scroll roles right"
+              >
+                <ChevronRight size={20} />
+              </button>
+              <Link
+                to="/opportunities"
+                className="ml-2 inline-flex items-center gap-1 text-sm font-semibold text-[#1A73E8] transition-opacity hover:opacity-75"
+              >
+                Manage
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="grid gap-4 xl:grid-cols-3">
+              {[0, 1, 2].map(index => (
+                <div
+                  key={index}
+                  className="h-[220px] animate-pulse rounded-[28px] border bg-[#FBFCFE]"
+                  style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+                />
+              ))}
+            </div>
+          ) : opportunities.length === 0 ? (
+            <div
+              className="rounded-[28px] border bg-[#FBFCFE] px-6 py-10 text-center"
+              style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+            >
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                <Briefcase size={24} />
+              </div>
+              <h3 className="text-lg font-semibold text-[#202124]">No open roles yet</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5F6368]">
+                Add your first opportunity and it will appear here in the dashboard.
+              </p>
+              <Link
+                to="/opportunities/new"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition-transform hover:-translate-y-0.5"
+              >
+                Create role
+                <ChevronRight size={16} />
+              </Link>
+            </div>
+          ) : (
+            <div ref={rolesRef} className="flex gap-4 overflow-x-auto pb-2 pr-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {applicantsByOpportunity.map((item, index) => (
+                <RoleCard
+                  key={item.opportunity.id}
+                  opportunity={item.opportunity}
+                  applicantCount={item.applicantCount}
+                  index={index}
+                  onOpen={(opp) => navigate(`/opportunities?opportunity=${opp.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+      </div>
+
+    </main>
   )
 }

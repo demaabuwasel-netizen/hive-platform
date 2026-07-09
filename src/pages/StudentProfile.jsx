@@ -1,1514 +1,817 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Camera, MoreVertical, ChevronRight, Edit3, X, Check,
-  MapPin, Mail, Calendar, Clock, MapPinIcon, Sparkles,
-  Users, Leaf, Heart, Code, Home, GraduationCap, Zap,
-  PawPrint, Apple, Scale, Palette, Trees, Plus, Trash2,
-  Briefcase, Globe, BookOpen, ChevronDown, ExternalLink, Link2,
-  BarChart2, TrendingUp, Target, Phone,
+  Briefcase,
+  Check,
+  ChevronDown,
+  Code,
+  Edit3,
+  ExternalLink,
+  Globe,
+  GraduationCap,
+  Heart,
+  MapPin,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from '../components/Avatar'
-import { groupSkills } from '../data/skills'
-import cardsBackground from '../assets/cards_background.png'
 
-function computeLevel(profile, skills, languages, interests) {
-  let score = 0
-  if (profile?.bio) score += 15
-  if (skills.length >= 3) score += 20
-  if (skills.length >= 6) score += 10
-  if (languages.length >= 1) score += 10
-  if (interests.length >= 2) score += 10
-  if (profile?.experience) score += 15
-  if (profile?.goals) score += 10
-  if (profile?.field) score += 5
-  if (profile?.links?.linkedin || profile?.links?.portfolio) score += 5
-  return Math.min(score, 100)
+const SKILLS_LIST = {
+  Programming: ['Python', 'JavaScript', 'React', 'Java', 'SQL', 'Node.js', 'TypeScript', 'C++'],
+  'Data & AI': ['Machine Learning', 'Data Analysis', 'TensorFlow', 'Pandas', 'Statistics', 'Deep Learning'],
+  'Tools & Platforms': ['Git', 'Docker', 'AWS', 'Google Cloud', 'Figma', 'Linux'],
+  'Soft Skills': ['Communication', 'Leadership', 'Project Management', 'Problem Solving', 'Teamwork'],
+  Design: ['UI Design', 'UX Design', 'Graphic Design', 'Web Design', 'Prototyping', 'Canva'],
+  Marketing: ['Digital Marketing', 'Content Writing', 'Social Media', 'SEO', 'Email Marketing'],
 }
 
-const LEVELS = [
-  { min: 0,  label: 'Explorer',           color: '#6366F1' },
-  { min: 25, label: 'Rising Contributor', color: '#0891B2' },
-  { min: 50, label: 'Community Builder',  color: '#D99E00' },
-  { min: 75, label: 'Impact Maker',       color: '#059669' },
-  { min: 92, label: 'Hive Champion',      color: '#FFB703' },
-]
+const LANGUAGES = ['English', 'Arabic', 'Hebrew', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian', 'Chinese (Mandarin)', 'Japanese', 'Korean', 'Hindi', 'Turkish']
+const INTERESTS = ['Education', 'Youth Empowerment', 'Women Empowerment', 'Environment', 'Mental Health', 'Digital Inclusion', 'Animal Welfare', 'Community Development']
 
-function getLevel(score) {
-  return [...LEVELS].reverse().find(l => score >= l.min) || LEVELS[0]
+const inputClass = 'w-full rounded-2xl border border-[#E5EEFB] bg-white px-3.5 py-3 text-[0.88rem] text-[#202124] outline-none transition placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-4 focus:ring-[#1A73E8]/10'
+const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-45'
+const softButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-[#1A73E8] transition hover:-translate-y-0.5 hover:border-[#C8DCF8] hover:bg-[#F8FBFF]'
+
+function getSkillCategory(name) {
+  const match = Object.entries(SKILLS_LIST).find(([, categorySkills]) =>
+    categorySkills.some(skill => skill.toLowerCase() === String(name).toLowerCase())
+  )
+  return match?.[0] || 'Other'
 }
 
-const SKILL_CATEGORY_COLORS = {
-  'Programming': '#6366F1',
-  'Data & AI': '#3B82F6',
-  'Tools & Platforms': '#0891B2',
-  'Soft Skills': '#D99E00',
-  'Design': '#EC4899',
-  'Marketing': '#F97316',
-  'Research': '#10B981',
-  'Other': '#6B7280',
+function toArray(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') return value.split(',').map(item => item.trim()).filter(Boolean)
+  return []
 }
 
-const SKILL_LEVEL_COLORS = {
-  'Beginner': { bg: '#FEE2E2', color: '#B91C1C' },
-  'Intermediate': { bg: '#FEF3C7', color: '#92400E' },
-  'Advanced': { bg: '#D1FAE5', color: '#065F46' },
-  'Expert': { bg: '#EDE9FE', color: '#5B21B6' },
+function normalizeSkills(profile) {
+  if (Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0) {
+    return profile.skillsWithLevel
+      .map(skill => ({
+        name: skill?.name || skill,
+        category: skill?.category || getSkillCategory(skill?.name || skill),
+      }))
+      .filter(skill => skill.name)
+  }
+
+  return toArray(profile?.skills).map(name => ({ name, category: getSkillCategory(name) }))
+}
+
+function Card({ children, className = '' }) {
+  return (
+    <section
+      className={`rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_10px_30px_rgba(17,24,39,0.03)] ${className}`}
+    >
+      {children}
+    </section>
+  )
+}
+
+function SectionHeader({ icon: Icon, title, description, action }) {
+  return (
+    <div className="mb-5 flex flex-col gap-3 border-b border-[#E5EEFB] pb-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <p className="inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase text-[#9AA0A6]">
+          {Icon && <Icon size={14} className="text-[#1A73E8]" />}
+          {title}
+        </p>
+        {description && <p className="mt-2 max-w-3xl text-[0.92rem] leading-7 text-[#5F6368]">{description}</p>}
+      </div>
+      {action}
+    </div>
+  )
+}
+
+function FieldLabel({ children }) {
+  return <label className="mb-1.5 block text-[0.68rem] font-semibold uppercase text-[#9AA0A6]">{children}</label>
+}
+
+function EmptyState({ title, description }) {
+  return (
+    <div className="rounded-[22px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-4 py-4 text-center">
+      <span className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+        <Plus size={15} />
+      </span>
+      <p className="text-[0.88rem] font-semibold text-[#202124]">{title}</p>
+      <p className="mx-auto mt-1 max-w-sm text-[0.8rem] leading-6 text-[#5F6368]">{description}</p>
+    </div>
+  )
+}
+
+function Chip({ children, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-[#F8FBFF] px-2.5 py-1 text-[0.76rem] font-semibold text-[#202124]">
+      {children}
+      {onRemove && (
+        <button type="button" onClick={onRemove} className="rounded-full p-0.5 text-[#9AA0A6] transition hover:bg-[#FCE8E6] hover:text-[#C5221F]">
+          <X size={12} />
+        </button>
+      )}
+    </span>
+  )
+}
+
+function SmallProfileCard({ icon: Icon, title, summary, children, action, defaultOpen = false, forceOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const isOpen = forceOpen || open
+
+  return (
+    <section className="rounded-[28px] border border-[#D7E6FF] bg-white p-4 shadow-[0_10px_30px_rgba(17,24,39,0.025)] transition hover:border-[#C8DCF8] sm:p-5">
+      <div className={`${isOpen ? 'mb-4 border-b border-[#E5EEFB] pb-3' : ''} flex items-start justify-between gap-3`}>
+        <div className="flex min-w-0 gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+            <Icon size={18} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[1rem] font-semibold text-[#202124]">{title}</h3>
+            <p className="mt-1 text-[0.8rem] leading-5 text-[#5F6368]">{summary}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {action}
+          <button
+            type="button"
+            onClick={() => setOpen(value => !value)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] transition hover:border-[#1A73E8] hover:bg-[#F8FBFF] hover:text-[#1A73E8]"
+            aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
+          >
+            <ChevronDown size={17} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      </div>
+      {isOpen && children}
+    </section>
+  )
 }
 
 export default function StudentProfile() {
   const { user, profile, updateProfile } = useApp()
-  const navigate = useNavigate()
 
-  const displayName = user?.name || 'Student'
+  const displayName = user?.name || profile?.name || 'Student'
   const avatarSrc = profile?.avatar || user?.avatar || null
 
-  const rawSkills = Array.isArray(profile?.skills)
-    ? profile.skills
-    : (profile?.skills?.split(',').map(s => s.trim()).filter(Boolean) || [])
+  const skillOptions = useMemo(() => {
+    return Object.entries(SKILLS_LIST).flatMap(([category, skills]) => skills.map(name => ({ name, category })))
+  }, [])
 
-  const languages = Array.isArray(profile?.languages) ? profile.languages : []
-
-  const interests = Array.isArray(profile?.interests)
-    ? profile.interests
-    : (profile?.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
-
-  const score = computeLevel(profile, rawSkills, languages, interests)
-  const level = getLevel(score)
-  const skillGroups = groupSkills(rawSkills)
-
-  const [showMore, setShowMore] = useState(false)
-  const [globalEditMode, setGlobalEditMode] = useState(false)
-  const [editingAbout, setEditingAbout] = useState(false)
-  const [aboutDraft, setAboutDraft] = useState(profile?.bio || '')
+  const [skills, setSkills] = useState(() => normalizeSkills(profile))
+  const [skillsDraft, setSkillsDraft] = useState(() => normalizeSkills(profile))
   const [editingSkills, setEditingSkills] = useState(false)
-  const [newSkillId, setNewSkillId] = useState('')
-  const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
-  const [displayedSkills, setDisplayedSkills] = useState(
-    Array.isArray(profile?.skillsWithLevel) ? profile.skillsWithLevel : []
-  )
+  const [skillDropdownOpen, setSkillDropdownOpen] = useState(false)
+  const [customSkillDraft, setCustomSkillDraft] = useState('')
   const [savingSkills, setSavingSkills] = useState(false)
 
-  const SKILLS_LIST = {
-    'Programming': [
-      { name: 'Python', level: 'Intermediate' },
-      { name: 'JavaScript', level: 'Advanced' },
-      { name: 'React', level: 'Advanced' },
-      { name: 'Java', level: 'Intermediate' },
-      { name: 'SQL', level: 'Intermediate' },
-      { name: 'Node.js', level: 'Advanced' },
-      { name: 'TypeScript', level: 'Advanced' },
-      { name: 'C++', level: 'Beginner' },
-    ],
-    'Data & AI': [
-      { name: 'Machine Learning', level: 'Advanced' },
-      { name: 'Data Analysis', level: 'Advanced' },
-      { name: 'TensorFlow', level: 'Intermediate' },
-      { name: 'Pandas', level: 'Advanced' },
-      { name: 'Statistics', level: 'Intermediate' },
-      { name: 'Deep Learning', level: 'Advanced' },
-    ],
-    'Tools & Platforms': [
-      { name: 'Git', level: 'Advanced' },
-      { name: 'Docker', level: 'Intermediate' },
-      { name: 'AWS', level: 'Intermediate' },
-      { name: 'Google Cloud', level: 'Beginner' },
-      { name: 'Figma', level: 'Advanced' },
-      { name: 'Linux', level: 'Intermediate' },
-    ],
-    'Soft Skills': [
-      { name: 'Communication', level: 'Advanced' },
-      { name: 'Leadership', level: 'Advanced' },
-      { name: 'Project Management', level: 'Intermediate' },
-      { name: 'Problem Solving', level: 'Advanced' },
-      { name: 'Teamwork', level: 'Advanced' },
-    ],
-    'Design': [
-      { name: 'UI Design', level: 'Advanced' },
-      { name: 'UX Design', level: 'Advanced' },
-      { name: 'Graphic Design', level: 'Intermediate' },
-      { name: 'Web Design', level: 'Advanced' },
-      { name: 'Prototyping', level: 'Intermediate' },
-    ],
-    'Marketing': [
-      { name: 'Digital Marketing', level: 'Advanced' },
-      { name: 'Content Writing', level: 'Advanced' },
-      { name: 'Social Media', level: 'Advanced' },
-      { name: 'SEO', level: 'Intermediate' },
-      { name: 'Email Marketing', level: 'Intermediate' },
-    ],
-  }
-  const [expandedCategories, setExpandedCategories] = useState({})
-  const [editingLinks, setEditingLinks] = useState(false)
+  const [editingAbout, setEditingAbout] = useState(false)
+  const [aboutDraft, setAboutDraft] = useState(profile?.bio || '')
+
+  const [educations, setEducations] = useState(
+    Array.isArray(profile?.educations) && profile.educations.length > 0
+      ? profile.educations
+      : (profile?.field || profile?.university)
+        ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '', description: '', isCurrent: false }]
+        : []
+  )
+  const [educationDraft, setEducationDraft] = useState({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
+  const [editingEducation, setEditingEducation] = useState(false)
+  const [editingEducationIndex, setEditingEducationIndex] = useState(null)
+
+  const [languagesDraft, setLanguagesDraft] = useState(() => toArray(profile?.languages))
+  const [languageDraft, setLanguageDraft] = useState({ lang: '', level: 'Fluent' })
+  const [editingLanguages, setEditingLanguages] = useState(false)
+
+  const [interestsDraft, setInterestsDraft] = useState(() => toArray(profile?.interests))
+  const [newInterest, setNewInterest] = useState('')
+  const [editingInterests, setEditingInterests] = useState(false)
+
   const [linksDraft, setLinksDraft] = useState({
     github: profile?.links?.github || '',
     linkedin: profile?.links?.linkedin || '',
     portfolio: profile?.links?.portfolio || '',
   })
-  const [editingAvailability, setEditingAvailability] = useState(false)
-  const [availabilityDraft, setAvailabilityDraft] = useState({
-    availability: profile?.availability || '',
-    workMode: profile?.workMode || '',
-    startDate: profile?.startDate || '',
-    startMonth: profile?.startMonth || '',
-    startYear: profile?.startYear || '',
-    startImmediately: profile?.startImmediately || false,
-    preferredRoles: profile?.preferredRoles || '',
-  })
-
-  const [editingLanguages, setEditingLanguages] = useState(false)
-  const [languagesDraft, setLanguagesDraft] = useState(Array.isArray(profile?.languages) ? profile.languages : [])
-  const [newLanguage, setNewLanguage] = useState('')
-  const [newLanguageLevel, setNewLanguageLevel] = useState('Fluent')
-
-  const [editingCauses, setEditingCauses] = useState(false)
-  const [causesDraft, setCausesDraft] = useState(
-    Array.isArray(profile?.interests)
-      ? profile.interests
-      : (profile?.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
-  )
-  const [newCause, setNewCause] = useState('')
-
-  const [editingMotivation, setEditingMotivation] = useState(false)
-  const [motivationDraft, setMotivationDraft] = useState(profile?.motivation || '')
-
-  const [editingEducation, setEditingEducation] = useState(false)
-  const [educations, setEducations] = useState(
-    Array.isArray(profile?.educations) ? profile.educations :
-    (profile?.field || profile?.university) ? [{ field: profile?.field || '', university: profile?.university || '', degreeType: profile?.graduation_year || '', description: '', isCurrent: false }] : []
-  )
-  const [newEducation, setNewEducation] = useState({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
-  const [editingEduIndex, setEditingEduIndex] = useState(null)
-
-  const [editingContact, setEditingContact] = useState(false)
-  const [contactDraft, setContactDraft] = useState({
-    phone: profile?.phone || '',
-    city: profile?.city || '',
-  })
-
-  const [editingGoals, setEditingGoals] = useState(false)
-  const [goalsDraft, setGoalsDraft] = useState(profile?.goals || '')
-
-  const toggleCategory = (cat) => {
-    setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))
-  }
+  const [editingLinks, setEditingLinks] = useState(false)
 
   useEffect(() => {
-    if (Array.isArray(profile?.skillsWithLevel) && profile.skillsWithLevel.length > 0) {
-      console.log('[useEffect] Syncing skills:', profile.skillsWithLevel)
-      const skillsWithCategories = profile.skillsWithLevel.map(s => ({
-        name: s.name || s,
-        level: s.level || '',
-        category: s.category || 'Other'
+    queueMicrotask(() => {
+      const normalizedSkills = normalizeSkills(profile)
+      setSkills(normalizedSkills)
+      setSkillsDraft(normalizedSkills)
+      setAboutDraft(profile?.bio || '')
+      setLanguagesDraft(toArray(profile?.languages))
+      setInterestsDraft(toArray(profile?.interests))
+      setLinksDraft({
+        github: profile?.links?.github || '',
+        linkedin: profile?.links?.linkedin || '',
+        portfolio: profile?.links?.portfolio || '',
+      })
+      if (Array.isArray(profile?.educations)) setEducations(profile.educations)
+    })
+  }, [profile])
+
+  const visibleSkills = editingSkills ? skillsDraft : skills
+
+  const selectedSkillNames = useMemo(() => {
+    return new Set(visibleSkills.map(skill => skill.name.toLowerCase()))
+  }, [visibleSkills])
+
+  const skillDropdownGroups = useMemo(() => {
+    return Object.entries(SKILLS_LIST)
+      .map(([category, categorySkills]) => ({
+        category,
+        skills: categorySkills.filter(skill => !selectedSkillNames.has(skill.toLowerCase())),
       }))
-      console.log('[useEffect] Skills with categories:', skillsWithCategories)
-      setDisplayedSkills(skillsWithCategories)
-    } else {
-      console.log('[useEffect] No skills in profile')
-      setDisplayedSkills([])
-    }
-  }, [profile?.skillsWithLevel])
+      .filter(group => group.skills.length > 0)
+  }, [selectedSkillNames])
 
-  useEffect(() => {
-    if (profile?.motivation) {
-      setMotivationDraft(profile.motivation)
-    }
-  }, [profile?.motivation])
+  const skillsByCategory = useMemo(() => {
+    return visibleSkills.reduce((groups, skill) => {
+      const category = skill.category || getSkillCategory(skill.name)
+      if (!groups[category]) groups[category] = []
+      groups[category].push(skill)
+      return groups
+    }, {})
+  }, [visibleSkills])
 
-  useEffect(() => {
-    if (profile?.availability || profile?.workMode || profile?.startDate || profile?.preferredRoles) {
-      setAvailabilityDraft({
-        availability: profile?.availability || '',
-        workMode: profile?.workMode || '',
-        startDate: profile?.startDate || '',
-        startMonth: profile?.startMonth || '',
-        startYear: profile?.startYear || '',
-        startImmediately: profile?.startImmediately || false,
-        preferredRoles: profile?.preferredRoles || '',
-      })
-    }
-  }, [profile?.availability, profile?.workMode, profile?.startDate, profile?.startMonth, profile?.startYear, profile?.startImmediately, profile?.preferredRoles])
-
-  useEffect(() => {
-    if (Array.isArray(profile?.educations) && profile.educations.length > 0) {
-      console.log('[useEffect] Syncing educations:', profile.educations)
-      setEducations(profile.educations)
-    }
-  }, [profile?.educations])
-
-  useEffect(() => {
-    if (Array.isArray(profile?.experiences) && profile.experiences.length > 0) {
-      console.log('[useEffect] Syncing experiences:', profile.experiences)
-      setExperiences(profile.experiences)
-    }
-  }, [profile?.experiences])
-
-  const CATEGORY_ICONS = {
-    'Programming': Code,
-    'Data & AI': BarChart2,
-    'Tools & Platforms': Zap,
-    'Soft Skills': Users,
-    'Design': Palette,
-    'Marketing': TrendingUp,
-    'Research': BookOpen,
-    'Other': Sparkles,
-  }
-
-  const handleSaveLinks = async () => {
-    console.log('[handleSaveLinks] Saving links:', linksDraft)
+  const primaryEducation = educations[0]
+  const profileTitle = profile?.field || primaryEducation?.field || 'Student profile'
+  const universitySummary = profile?.university || primaryEducation?.university || ''
+  const profileFacts = [
+    { label: 'Skills', value: `${visibleSkills.length}` },
+    { label: 'Education', value: educations.length ? `${educations.length}` : '0' },
+    { label: 'Languages', value: `${languagesDraft.length}` },
+  ]
+  const saveSkills = async updated => {
+    setSkills(updated)
+    setSavingSkills(true)
     try {
-      await updateProfile({ ...profile, links: linksDraft })
-      console.log('[handleSaveLinks] Links saved successfully')
-      setEditingLinks(false)
+      await updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(skill => skill.name) })
     } catch (err) {
-      console.error('[handleSaveLinks] Error:', err.message)
-      alert('Error saving links: ' + (err.message || 'Unknown error'))
+      setSkills(normalizeSkills(profile))
+      alert('Failed to save skills: ' + (err.message || 'Unknown error'))
+    } finally {
+      setSavingSkills(false)
     }
   }
 
-  const handleSaveAvailability = async () => {
-    console.log('[handleSaveAvailability] Saving availability:', availabilityDraft)
-    try {
-      await updateProfile({
-        ...profile,
-        availability: availabilityDraft.availability,
-        workMode: availabilityDraft.workMode,
-        startDate: availabilityDraft.startDate,
-        startMonth: availabilityDraft.startMonth,
-        startYear: availabilityDraft.startYear,
-        startImmediately: availabilityDraft.startImmediately,
-        preferredRoles: availabilityDraft.preferredRoles,
-      })
-      console.log('[handleSaveAvailability] Availability saved successfully')
-      setEditingAvailability(false)
-    } catch (err) {
-      console.error('[handleSaveAvailability] Error:', err.message)
-      alert('Error saving availability: ' + (err.message || 'Unknown error'))
+  const addSkillToDraft = rawName => {
+    const name = rawName.trim()
+    if (!name) return false
+    if (skillsDraft.some(skill => skill.name.toLowerCase() === name.toLowerCase())) {
+      return false
     }
+
+    const knownSkill = skillOptions.find(option => option.name.toLowerCase() === name.toLowerCase())
+    setSkillsDraft([...skillsDraft, { name, category: knownSkill?.category || 'Other' }])
+    return true
   }
 
-  const handleSaveMotivation = async () => {
-    console.log('[handleSaveMotivation] Saving motivation:', motivationDraft)
-    try {
-      await updateProfile({ ...profile, motivation: motivationDraft })
-      console.log('[handleSaveMotivation] Motivation saved successfully')
-      setEditingMotivation(false)
-    } catch (err) {
-      console.error('[handleSaveMotivation] Error:', err.message)
-      alert('Error saving motivation: ' + (err.message || 'Unknown error'))
-    }
+  const handleCustomSkillSubmit = event => {
+    event.preventDefault()
+    const added = addSkillToDraft(customSkillDraft)
+    if (added) setCustomSkillDraft('')
+  }
+
+  const handleRemoveSkillDraft = index => {
+    setSkillsDraft(skillsDraft.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  const handleStartSkillsEdit = () => {
+    setSkillsDraft(skills)
+    setCustomSkillDraft('')
+    setSkillDropdownOpen(false)
+    setEditingSkills(true)
+  }
+
+  const handleCancelSkillsEdit = () => {
+    setSkillsDraft(skills)
+    setCustomSkillDraft('')
+    setSkillDropdownOpen(false)
+    setEditingSkills(false)
+  }
+
+  const handleSaveSkills = async () => {
+    await saveSkills(skillsDraft)
+    setSkillDropdownOpen(false)
+    setCustomSkillDraft('')
+    setEditingSkills(false)
+  }
+
+  const handleSaveAbout = async () => {
+    await updateProfile({ ...profile, bio: aboutDraft })
+    setEditingAbout(false)
   }
 
   const handleSaveEducation = async () => {
-    console.log('[handleSaveEducation] Starting save...')
-    let updatedEducations
-    if (editingEduIndex !== null) {
-      updatedEducations = [...educations]
-      updatedEducations[editingEduIndex] = newEducation
-      setEditingEduIndex(null)
-      console.log('[handleSaveEducation] Updating education at index:', editingEduIndex, 'New data:', newEducation)
-    } else if (newEducation.field || newEducation.university) {
-      updatedEducations = [...educations, newEducation]
-      console.log('[handleSaveEducation] Adding new education:', newEducation)
-    } else {
-      console.log('[handleSaveEducation] No data to save, closing edit mode')
+    const hasContent = educationDraft.field || educationDraft.university || educationDraft.degreeType
+    if (!hasContent) {
       setEditingEducation(false)
       return
     }
 
-    console.log('[handleSaveEducation] Updated educations array:', updatedEducations)
-    setEducations(updatedEducations)
-    setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
+    const updated = editingEducationIndex !== null
+      ? educations.map((education, index) => index === editingEducationIndex ? educationDraft : education)
+      : [...educations, educationDraft]
 
-    try {
-      console.log('[handleSaveEducation] Calling updateProfile...')
-      await updateProfile({
-        ...profile,
-        educations: updatedEducations,
-        field: updatedEducations[0]?.field || profile?.field,
-        university: updatedEducations[0]?.university || profile?.university,
-        graduation_year: updatedEducations[0]?.degreeType || profile?.graduation_year
-      })
-      console.log('[handleSaveEducation] Education saved successfully!')
-      setEditingEducation(false)
-    } catch (err) {
-      console.error('[handleSaveEducation] Error saving education:', err.message)
-      alert('Error saving education: ' + (err.message || 'Unknown error'))
-      setEducations(educations)
-    }
+    setEducations(updated)
+    await updateProfile({
+      ...profile,
+      educations: updated,
+      field: updated[0]?.field || profile?.field,
+      university: updated[0]?.university || profile?.university,
+      graduation_year: updated[0]?.degreeType || profile?.graduation_year,
+    })
+    setEducationDraft({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
+    setEditingEducationIndex(null)
+    setEditingEducation(false)
   }
 
-  const handleDeleteEducation = async (index) => {
-    const updated = educations.filter((_, i) => i !== index)
+  const handleDeleteEducation = async index => {
+    const updated = educations.filter((_, itemIndex) => itemIndex !== index)
     setEducations(updated)
     await updateProfile({ ...profile, educations: updated })
   }
 
-  const handleSaveContact = async () => {
-    await updateProfile({ ...profile, phone: contactDraft.phone, city: contactDraft.city })
-    setEditingContact(false)
-  }
-
-  const handleSaveGoals = async () => {
-    await updateProfile({ ...profile, goals: goalsDraft })
-    setEditingGoals(false)
-  }
-
   const handleSaveLanguages = async () => {
-    console.log('[handleSaveLanguages] Saving languages:', languagesDraft)
-    try {
-      await updateProfile({ ...profile, languages: languagesDraft })
-      console.log('[handleSaveLanguages] Languages saved successfully')
-      setEditingLanguages(false)
-    } catch (err) {
-      console.error('[handleSaveLanguages] Error:', err.message)
-      alert('Error saving languages: ' + (err.message || 'Unknown error'))
-    }
+    await updateProfile({ ...profile, languages: languagesDraft })
+    setEditingLanguages(false)
   }
 
   const handleAddLanguage = () => {
-    if (!newLanguage.trim()) return
-    const langObj = { lang: newLanguage.trim(), level: newLanguageLevel }
-    setLanguagesDraft([...languagesDraft, langObj])
-    setNewLanguage('')
-    setNewLanguageLevel('Fluent')
+    if (!languageDraft.lang) return
+    if (languagesDraft.some(item => (typeof item === 'string' ? item : item?.lang) === languageDraft.lang)) return
+    setLanguagesDraft([...languagesDraft, languageDraft])
+    setLanguageDraft({ lang: '', level: 'Fluent' })
   }
 
-  const handleRemoveLanguage = (index) => {
-    setLanguagesDraft(languagesDraft.filter((_, i) => i !== index))
+  const handleSaveInterests = async () => {
+    await updateProfile({ ...profile, interests: interestsDraft })
+    setEditingInterests(false)
   }
 
-  const handleSaveCauses = async () => {
-    console.log('[handleSaveCauses] Saving causes/interests:', causesDraft)
-    try {
-      await updateProfile({ ...profile, interests: causesDraft })
-      console.log('[handleSaveCauses] Causes saved successfully')
-      setEditingCauses(false)
-    } catch (err) {
-      console.error('[handleSaveCauses] Error:', err.message)
-      alert('Error saving causes: ' + (err.message || 'Unknown error'))
-    }
+  const handleAddInterest = value => {
+    if (!value || interestsDraft.includes(value)) return
+    setInterestsDraft([...interestsDraft, value])
+    setNewInterest('')
   }
 
-  const handleAddCause = (cause) => {
-    if (!cause.trim()) return
-    if (causesDraft.includes(cause)) return
-    setCausesDraft([...causesDraft, cause.trim()])
-    setNewCause('')
+  const handleSaveLinks = async () => {
+    await updateProfile({ ...profile, links: linksDraft })
+    setEditingLinks(false)
   }
 
-  const handleRemoveCause = (index) => {
-    setCausesDraft(causesDraft.filter((_, i) => i !== index))
-  }
-
-  const [editingExperience, setEditingExperience] = useState(false)
-  const [experiences, setExperiences] = useState(
-    Array.isArray(profile?.experiences) ? profile.experiences : profile?.experience ? [{ description: profile.experience }] : []
-  )
-  const [newExp, setNewExp] = useState({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-  const [editingExpIndex, setEditingExpIndex] = useState(null)
-
-  const handleSaveAbout = async () => {
-    console.log('[handleSaveAbout] Saving bio:', aboutDraft)
-    try {
-      await updateProfile({ ...profile, bio: aboutDraft })
-      console.log('[handleSaveAbout] Bio saved successfully')
-      setEditingAbout(false)
-    } catch (err) {
-      console.error('[handleSaveAbout] Error:', err.message)
-      alert('Error saving bio: ' + (err.message || 'Unknown error'))
-    }
-  }
-
-  const handleAddSkill = async () => {
-    if (!newSkillId.trim()) return
-    const [category, skillName] = newSkillId.split('||')
-    if (!skillName || !category) return
-
-    if (displayedSkills.some(s => s.name === skillName)) {
-      alert('This skill is already added!')
-      return
-    }
-
-    const newSkill = { name: skillName, level: newSkillLevel, category }
-    const updated = [...displayedSkills, newSkill]
-
-    setDisplayedSkills(updated)
-    setNewSkillId('')
-    setNewSkillLevel('Intermediate')
-
-    setSavingSkills(true)
-    console.log('[handleAddSkill] Starting save with skills:', updated)
-    console.log('[handleAddSkill] Updated skills WITH CATEGORIES:', updated.map(s => ({name: s.name, level: s.level, category: s.category})))
-
-    try {
-      console.log('[handleAddSkill] Calling updateProfile with skillsWithLevel:', updated)
-      const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Save timeout - took too long')), 30000)
-      )
-
-      await Promise.race([savePromise, timeoutPromise])
-      console.log('[handleAddSkill] Save completed successfully')
-    } catch (err) {
-      console.error('[handleAddSkill] Error:', err.message)
-      setDisplayedSkills(displayedSkills)
-      alert('Failed to save skill: ' + (err.message || 'Unknown error'))
-    } finally {
-      setSavingSkills(false)
-    }
-  }
-
-  const handleRemoveSkill = async (index) => {
-    const updated = displayedSkills.filter((_, i) => i !== index)
-    setDisplayedSkills(updated)
-    setSavingSkills(true)
-    console.log('[handleRemoveSkill] Starting save...')
-
-    try {
-      const savePromise = updateProfile({ ...profile, skillsWithLevel: updated, skills: updated.map(s => s.name) })
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Save timeout - took too long')), 30000)
-      )
-
-      await Promise.race([savePromise, timeoutPromise])
-      console.log('[handleRemoveSkill] Save completed successfully')
-    } catch (err) {
-      console.error('[handleRemoveSkill] Error:', err.message)
-      setDisplayedSkills(displayedSkills)
-      alert('Failed to remove skill: ' + (err.message || 'Unknown error'))
-    } finally {
-      setSavingSkills(false)
-    }
-  }
-
-  const handleDeleteExperience = async (index) => {
-    const updated = experiences.filter((_, i) => i !== index)
-    setExperiences(updated)
-    await updateProfile({ ...profile, experiences: updated })
-  }
-
-  const handleSaveExperience = async () => {
-    let updatedExperiences
-    if (editingExpIndex !== null) {
-      updatedExperiences = [...experiences]
-      updatedExperiences[editingExpIndex] = newExp
-      setEditingExpIndex(null)
-    } else if (newExp.title || newExp.description) {
-      updatedExperiences = [...experiences, newExp]
-    } else {
-      setEditingExperience(false)
-      return
-    }
-    setExperiences(updatedExperiences)
-    setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-    await updateProfile({ ...profile, experiences: updatedExperiences })
-    setEditingExperience(false)
+  const startEducationEdit = (education = { field: '', university: '', degreeType: '', description: '', isCurrent: false }, index = null) => {
+    setEducationDraft(education)
+    setEditingEducationIndex(index)
+    setEditingEducation(true)
   }
 
   return (
-    <main className="flex-1 overflow-y-auto" style={{ background: '#FAFBFC' }}>
-      <div className="px-8 py-10 max-w-5xl mx-auto">
+    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="mb-8"
+        >
+          <div>
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              Profile
+            </h1>
+            <p className="mt-3 max-w-4xl whitespace-nowrap text-[0.98rem] leading-7 text-[#5F6368] max-lg:whitespace-normal">
+              Keep your skills, education, causes, and links in one connected view so the whole page feels like part of the same workspace.
+            </p>
+          </div>
+        </motion.header>
 
-        {/* ════════════════════════════════════════════════════════════
-            PREMIUM HERO HEADER
-        ════════════════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
-          className="mb-10">
-          <div className="bg-white rounded-2xl border border-[rgba(13,24,61,0.06)] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <div className="flex items-start gap-8">
-              {/* Avatar */}
-              <div className="shrink-0">
-                <div className="w-24 h-24 rounded-xl overflow-hidden ring-1 ring-[rgba(13,24,61,0.1)]">
-                  <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="w-full h-full"/>
-                </div>
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_10px_30px_rgba(17,24,39,0.03)] sm:p-7"
+        >
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[24px] border border-[#D7E6FF] bg-[#F8FBFF]">
+                <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="h-full w-full" />
               </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-3xl font-bold text-[#0D183D] mb-2">
+              <div className="min-w-0">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.72rem] font-semibold uppercase text-[#1A73E8]">
+                  <GraduationCap size={13} />
+                  Student profile
+                </div>
+                <h2 className="truncate text-[2rem] font-semibold text-[#202124]">
                   {displayName}
-                </h1>
-
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                  {profile?.field && (
-                    <span className="text-[13px] font-semibold text-[#4B6382]">
-                      {profile.field}
-                    </span>
-                  )}
-                  {profile?.university && (
-                    <span className="text-[13px] text-[#4B6382]">
-                      • {profile.university}
-                    </span>
+                </h2>
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.94rem] font-semibold text-[#5F6368]">
+                  <span>{profileTitle}</span>
+                  {universitySummary && (
+                    <>
+                      <span className="text-[#9AA0A6]">·</span>
+                      <span>{universitySummary}</span>
+                    </>
                   )}
                   {profile?.country && (
-                    <span className="text-[13px] text-[#4B6382]">
-                      • {profile.country}
-                    </span>
-                  )}
-                </div>
-
-                {user?.email && (
-                  <div className="flex items-center gap-2 text-[12px] text-[#4B6382] mb-4">
-                    <Mail size={13}/>
-                    {user.email}
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.15)', color: '#065F46' }}>
-                      ✓ Verified
-                    </span>
-                  </div>
-                )}
-
-                {/* Quick Stats */}
-                <div className="flex flex-wrap gap-6 pt-4 border-t border-[rgba(13,24,61,0.05)]">
-                  <div>
-                    <p className="text-[18px] font-bold text-[#0D183D]">{displayedSkills.length > 0 ? displayedSkills.length : rawSkills.length}</p>
-                    <p className="text-[11px] font-semibold text-[#4B6382]">Skills</p>
-                  </div>
-                  <div>
-                    <p className="text-[18px] font-bold text-[#0D183D]">{languages.length}</p>
-                    <p className="text-[11px] font-semibold text-[#4B6382]">Languages</p>
-                  </div>
-                  <div>
-                    <p className="text-[18px] font-bold text-[#0D183D]">{interests.length}</p>
-                    <p className="text-[11px] font-semibold text-[#4B6382]">Causes</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* ══════════════════════════════════════════════════════
-            STAT CARDS ROW
-        ══════════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
-          className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { icon: Code, value: displayedSkills.length > 0 ? displayedSkills.length : rawSkills.length, label: 'Key skills', color: '#6366F1', bg: 'rgba(99,102,241,0.1)' },
-            { icon: Globe, value: languages.length, label: 'Languages', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
-            { icon: Heart, value: interests.length, label: 'Top causes', color: '#FFB703', bg: 'rgba(255,183,3,0.1)' },
-          ].map((stat, i) => (
-            <motion.div key={i}
-              initial={{ opacity:0, y:8 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ delay: 0.15 + i * 0.05 }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: stat.bg }}>
-                  <stat.icon size={18} style={{ color: stat.color }}/>
-                </div>
-                <p className="text-[20px] font-extrabold text-[#0D183D] leading-none">{stat.value}</p>
-              </div>
-              <p className="text-[11px] font-semibold text-[#4B6382]">{stat.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ══════════════════════════════════════════════════════
-            MAIN GRID
-        ══════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-3 gap-6">
-
-          {/* LEFT COLUMN */}
-          <div className="col-span-2 space-y-4">
-
-            {/* ABOUT */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
-                    <Users size={14} style={{ color: '#6366F1' }}/>
-                  </span>
-                  About
-                </h2>
-                {!editingAbout && (
-                  <button onClick={() => setEditingAbout(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {profile?.bio ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingAbout ? (
-                <div className="space-y-3">
-                  <textarea value={aboutDraft} onChange={e => setAboutDraft(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-[13px] text-[#0D183D] border border-[rgba(13,24,61,0.1)] outline-none transition-all placeholder-[#4B6382]/40 resize-none"
-                    placeholder="Write a bio to help NGOs understand who you are..."
-                    rows={4}
-                    style={{ background: '#F8F9FB' }}
-                    onFocus={e => e.target.style.borderColor = '#FFB703'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(13,24,61,0.1)'}/>
-                  <div className="flex gap-2">
-                    <button onClick={handleSaveAbout}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setAboutDraft(profile?.bio || '')
-                      setEditingAbout(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="text-[13px] leading-relaxed text-[#0D183D] mb-4">
-                    {profile?.bio || 'Add a bio to help NGOs understand who you are.'}
-                  </p>
-                  <div className="flex flex-wrap gap-4 text-[12px]">
-                    {profile?.country && (
-                      <span className="flex items-center gap-1.5 text-[#4B6382]">
-                        <MapPin size={13}/>
+                    <>
+                      <span className="text-[#9AA0A6]">·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin size={13} />
                         {profile.country}
                       </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </motion.div>
-
-            {/* SKILLS */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[14px] font-extrabold text-[#6366F1] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#6366F115' }}>
-                    <Sparkles size={14} style={{ color: '#6366F1' }}/>
-                  </span>
-                  Skills
-                </h2>
-                {!editingSkills && (
-                  <button onClick={() => setEditingSkills(true)}
-                    className="text-[12px] font-semibold text-[#6366F1] flex items-center gap-1 hover:opacity-70">
-                    Edit <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingSkills ? (
-                <div className="space-y-3">
-                  {displayedSkills.length > 0 && (
-                    <div className="mb-4 pb-4 border-b border-[rgba(13,24,61,0.06)]">
-                      <div className="space-y-3">
-                        {(() => {
-                          const skillsByCategory = {}
-                          displayedSkills.forEach(skill => {
-                            const category = skill.category || 'Other'
-                            if (!skillsByCategory[category]) skillsByCategory[category] = []
-                            skillsByCategory[category].push(skill)
-                          })
-                          return Object.entries(skillsByCategory).map(([cat, skills]) => {
-                            const catColor = SKILL_CATEGORY_COLORS[cat] || SKILL_CATEGORY_COLORS['Other']
-                            return (
-                              <div key={cat}>
-                                <div className="flex items-center gap-2 mb-2">
-                                  {(() => {
-                                    const IconComponent = CATEGORY_ICONS[cat]
-                                    return (
-                                      <span className="px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5"
-                                        style={{ background: `${catColor}20`, color: catColor }}>
-                                        {IconComponent && <IconComponent size={14} strokeWidth={2}/>}
-                                        {cat}
-                                        <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold" style={{ background: catColor, color: 'white' }}>
-                                          {skills.length}
-                                        </span>
-                                      </span>
-                                    )
-                                  })()}
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {skills.map((skill, idx) => {
-                                    const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
-                                    return (
-                                      <div key={`${cat}-${skill.name}-${idx}`} className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[rgba(13,24,61,0.1)] hover:border-[rgba(13,24,61,0.2)] transition-colors">
-                                        <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                          {skill.level}
-                                        </span>
-                                        <button onClick={() => handleRemoveSkill(profile.skillsWithLevel.indexOf(skill))}
-                                          className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                                          title="Delete skill">
-                                          <X size={12}/>
-                                        </button>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )
-                          })
-                        })()}
-                      </div>
-                    </div>
+                    </>
                   )}
+                </div>
+                <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
+                  {profile?.bio || 'Shape how NGOs see your skills, education, links, and the causes you care about.'}
+                </p>
+              </div>
+            </div>
 
-                  {displayedSkills.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pb-2">
-                      {displayedSkills.map((skill, idx) => {
-                        const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
+            <div className="grid grid-cols-3 gap-3 rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] p-3 sm:min-w-[280px]">
+              {profileFacts.map(fact => (
+                <div key={fact.label} className="text-center">
+                  <p className="text-[1.25rem] font-semibold text-[#202124]">{fact.value}</p>
+                  <p className="mt-1 text-[0.72rem] font-semibold text-[#5F6368]">{fact.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-6">
+
+          <Card className="p-5 sm:p-6">
+            <SectionHeader
+              icon={Heart}
+              title="Bio"
+              description="A short intro that explains what motivates you and what kind of work you want to do."
+              action={!editingAbout && (
+                <button className={softButtonClass} onClick={() => setEditingAbout(true)}>
+                  <Edit3 size={14} />
+                  {profile?.bio ? 'Edit bio' : 'Add bio'}
+                </button>
+              )}
+            />
+
+            {editingAbout ? (
+              <div className="space-y-3">
+                <textarea
+                  value={aboutDraft}
+                  onChange={event => setAboutDraft(event.target.value)}
+                  rows={4}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Example: I'm a computer science student interested in data, education, and building useful tools for communities."
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button className={primaryButtonClass} onClick={handleSaveAbout}><Check size={14} />Save bio</button>
+                  <button className={softButtonClass} onClick={() => { setAboutDraft(profile?.bio || ''); setEditingAbout(false) }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-[1rem] leading-8 text-[#202124]">
+                  {profile?.bio || 'Add a short bio so NGOs can understand who you are beyond your skills.'}
+                </p>
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5 sm:p-6">
+            <SectionHeader
+              icon={Code}
+              title="Skills"
+              description={editingSkills ? 'Add or remove skills, then save when everything looks right.' : 'Saved skills are organized by category so NGOs can scan them quickly.'}
+              action={editingSkills ? (
+                <div className="flex flex-wrap gap-2">
+                  <button className={primaryButtonClass} onClick={handleSaveSkills} disabled={savingSkills}>
+                    <Check size={14} />
+                    Save
+                  </button>
+                  <button className={softButtonClass} onClick={handleCancelSkillsEdit} disabled={savingSkills}>Cancel</button>
+                </div>
+              ) : (
+                <button className={softButtonClass} onClick={handleStartSkillsEdit}>
+                  <Edit3 size={14} />
+                  Edit skills
+                </button>
+              )}
+            />
+
+            <div className="mb-3 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+              {visibleSkills.length > 0 ? (
+                Object.entries(skillsByCategory).map(([category, categorySkills]) => (
+                  <div
+                    key={category}
+                    className="grid gap-3 border-b border-[#E5EEFB] px-4 py-4 last:border-b-0 md:grid-cols-[180px_minmax(0,1fr)] md:items-start"
+                  >
+                    <div>
+                      <span className="inline-flex rounded-full bg-[#E8F0FE] px-3 py-1 text-[0.72rem] font-semibold uppercase text-[#1A73E8]">{category}</span>
+                      <p className="mt-2 text-[0.76rem] font-semibold text-[#9AA0A6]">{categorySkills.length} added</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {categorySkills.map(skill => {
+                        const originalIndex = visibleSkills.findIndex(item => item.name.toLowerCase() === skill.name.toLowerCase())
+                        if (originalIndex < 0) return null
                         return (
-                          <div key={`${skill.name}-${idx}`} className="relative group">
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[rgba(13,24,61,0.1)]">
-                              <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                {skill.level}
-                              </span>
-                            </div>
-                            <button onClick={() => handleRemoveSkill(idx)}
-                              className="absolute -top-2 -right-2 p-1 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-md transition-all"
-                              title="Delete skill">
-                              <X size={12}/>
-                            </button>
-                          </div>
+                          <Chip key={`${category}-${skill.name}`} onRemove={editingSkills ? () => handleRemoveSkillDraft(originalIndex) : undefined}>
+                            {skill.name}
+                          </Chip>
                         )
                       })}
                     </div>
-                  )}
-
-                  <div className="p-4 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white space-y-3">
-                    <div>
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Select a skill to add</label>
-                      <select value={newSkillId} onChange={e => setNewSkillId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
-                        <option value="">Choose a skill...</option>
-                        {Object.entries(SKILLS_LIST).map(([category, skills]) => (
-                          <optgroup key={category} label={category}>
-                            {skills.map(skill => (
-                              <option key={skill.name} value={`${category}||${skill.name}`}>
-                                {skill.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Your expertise level</label>
-                      <select value={newSkillLevel} onChange={e => setNewSkillLevel(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] bg-white text-[#0D183D] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem', height: '38px' }}>
-                        <option>Beginner</option>
-                        <option>Intermediate</option>
-                        <option>Advanced</option>
-                        <option>Expert</option>
-                      </select>
-                    </div>
-
-                    <button onClick={handleAddSkill}
-                      className="w-full px-3 py-2.5 rounded-lg text-[12px] font-semibold text-[#0D183D] border border-[rgba(13,24,61,0.1)]"
-                      style={{ background: 'rgba(13,24,61,0.02)' }}>
-                      Add the skill
-                    </button>
                   </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={() => setEditingSkills(false)}
-                      disabled={savingSkills}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      {savingSkills ? 'Saving...' : 'Done'}
-                    </button>
-                  </div>
-                </div>
+                ))
               ) : (
-                <>
-                  {displayedSkills.length > 0 ? (
-                    <div className="space-y-4">
-                      {(() => {
-                        console.log('[Skills Display] displayedSkills:', displayedSkills)
-                        const skillsByCategory = {}
-                        displayedSkills.forEach(skill => {
-                          const category = skill?.category || 'Other'
-                          console.log('[Skills Display] Skill:', skill.name, 'Category:', category)
-                          if (!skillsByCategory[category]) skillsByCategory[category] = []
-                          skillsByCategory[category].push({
-                            name: skill?.name || 'Unknown',
-                            level: skill?.level || '',
-                            category: category
-                          })
-                        })
-                        return Object.entries(skillsByCategory).map(([cat, skills]) => {
-                          const catColor = SKILL_CATEGORY_COLORS[cat] || SKILL_CATEGORY_COLORS['Other']
-                          return (
-                            <div key={cat}>
-                              <div className="flex items-center gap-2 mb-2">
-                                {(() => {
-                                  const IconComponent = CATEGORY_ICONS[cat]
-                                  return (
-                                    <span className="px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5"
-                                      style={{ background: `${catColor}20`, color: catColor }}>
-                                      {IconComponent && <IconComponent size={14} strokeWidth={2}/>}
-                                      {cat}
-                                      <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold" style={{ background: catColor, color: 'white' }}>
-                                        {skills.length}
-                                      </span>
-                                    </span>
-                                  )
-                                })()}
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {skills.map((skill, idx) => {
-                                  const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
-                                  return (
-                                    <div key={`${cat}-${skill.name}-${idx}`} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[rgba(13,24,61,0.1)]">
-                                      <p className="text-[12px] font-semibold text-[#0D183D]">{skill.name}</p>
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                        {skill.level}
-                                      </span>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )
-                        })
-                      })()}
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <Code size={32} className="mx-auto mb-3 text-[#6366F1]" style={{ opacity: 0.5 }}/>
-                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No skills added yet</p>
-                      <p className="text-[12px] text-[#4B6382] mb-4">Share your skills and expertise</p>
-                      <button onClick={() => setEditingSkills(true)} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
-                        style={{ background: '#6366F1', color: 'white' }}>
-                        <Plus size={14}/>
-                        Add Skills
-                      </button>
-                    </div>
-                  )}
-                </>
+                <div className="p-4">
+                  <EmptyState title="No skills yet" description="Add a few skills so Hive can recommend better opportunities." />
+                </div>
               )}
-            </motion.div>
+            </div>
 
-
-
-            {/* EDUCATION */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.06)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[14px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px]" style={{ background: '#6366F115' }}>
-                    <GraduationCap size={14} style={{ color: '#6366F1' }}/>
+            {editingSkills && (
+            <div className="mx-auto max-w-2xl rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] p-3">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSkillDropdownOpen(open => !open)}
+                  className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-[#E5EEFB] bg-[#F8FBFF] px-4 py-3 text-left transition hover:border-[#1A73E8] hover:bg-white"
+                >
+                  <div>
+                    <p className="text-[0.72rem] font-semibold uppercase text-[#9AA0A6]">Add skill</p>
+                    <p className="mt-0.5 text-[0.9rem] font-semibold text-[#202124]">Choose from categories</p>
+                  </div>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                    <ChevronDown size={18} className={`transition-transform ${skillDropdownOpen ? 'rotate-180' : ''}`} />
                   </span>
-                  Education
-                </h2>
-                {!editingEducation && (
-                  <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false }); setEditingEduIndex(null); setEditingEducation(true) }}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {educations.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
+                </button>
 
-              {editingEducation ? (
-                <div className="space-y-3">
-                  {editingEduIndex !== null && (
-                    <div className="p-2 rounded-lg bg-blue-50 text-[11px] text-blue-600 mb-2">
-                      Editing: {educations[editingEduIndex]?.field || 'Education'}
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Field of Study</label>
-                    <input type="text" value={newEducation.field} onChange={e => setNewEducation({...newEducation, field: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="e.g., Computer Science"/>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">University / School</label>
-                    <input type="text" value={newEducation.university} onChange={e => setNewEducation({...newEducation, university: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                      placeholder="e.g., Stanford University"/>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Degree Type</label>
-                    <select value={newEducation.degreeType} onChange={e => setNewEducation({...newEducation, degreeType: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                      <option value="">Select degree type</option>
-                      <option value="High School">High School</option>
-                      <option value="Certificate">Certificate</option>
-                      <option value="Bachelor's">Bachelor's</option>
-                      <option value="Master's">Master's</option>
-                      <option value="PhD">PhD</option>
-                      <option value="Diploma">Diploma</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="isCurrent" checked={newEducation.isCurrent || false} onChange={e => setNewEducation({...newEducation, isCurrent: e.target.checked})}
-                      className="w-4 h-4 rounded border border-[rgba(13,24,61,0.1)] cursor-pointer"/>
-                    <label htmlFor="isCurrent" className="text-[11px] font-semibold text-[#0D183D] cursor-pointer">
-                      I'm still pursuing this degree
-                    </label>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Description (optional)</label>
-                    <textarea value={newEducation.description} onChange={e => setNewEducation({...newEducation, description: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] resize-none"
-                      placeholder="e.g., Major achievements, relevant coursework, or details about this education..."
-                      rows={3}/>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={handleSaveEducation}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setNewEducation({ field: '', university: '', degreeType: '', description: '', isCurrent: false })
-                      setEditingEduIndex(null)
-                      setEditingEducation(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {educations.length > 0 ? (
-                    <div className="space-y-3">
-                      {educations.map((edu, idx) => (
-                        <div key={idx} className="border border-[rgba(13,24,61,0.07)] rounded-lg p-4 hover:shadow-md transition-shadow group">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex-1">
-                              <h4 className="text-[13px] font-bold text-[#0D183D]">{edu.field}</h4>
-                              <p className="text-[12px] font-semibold text-[#4B6382]">{edu.university}</p>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => {
-                                setNewEducation(edu)
-                                setEditingEduIndex(idx)
-                                setEditingEducation(true)
-                              }} className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-600"
-                                title="Edit">
-                                <Edit3 size={14}/>
-                              </button>
-                              <button onClick={() => handleDeleteEducation(idx)} className="p-1.5 hover:bg-red-100 rounded-lg text-red-600"
-                                title="Delete">
-                                <X size={14}/>
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            {edu.degreeType && (
-                              <p className="text-[11px] text-[#4B6382] flex items-center gap-1">
-                                <GraduationCap size={12}/>
-                                {edu.degreeType}
+                {skillDropdownOpen && (
+                  <div className="mt-2 overflow-hidden rounded-[20px] border border-[#E5EEFB] bg-white shadow-[0_14px_32px_rgba(17,24,39,0.08)]">
+                    <div className="max-h-[260px] overflow-y-auto px-3 py-2 [scrollbar-color:#9DBCF5_transparent] [scrollbar-width:thin]">
+                      {skillDropdownGroups.length > 0 ? (
+                        skillDropdownGroups.map(group => (
+                          <div key={group.category} className="border-b border-[#E5EEFB] py-2.5 last:border-b-0">
+                            <div className="mb-2">
+                              <p className="text-[0.7rem] font-semibold uppercase text-[#1A73E8]">
+                                {group.category}
                               </p>
-                            )}
-                            {edu.isCurrent && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#10B981] bg-opacity-20 text-[#10B981]">
-                                Currently pursuing
-                              </span>
-                            )}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.skills.map(skill => (
+                                <button
+                                  type="button"
+                                  key={`${group.category}-${skill}`}
+                                  onClick={() => addSkillToDraft(skill)}
+                                  disabled={savingSkills}
+                                  className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.76rem] font-semibold text-[#202124] transition hover:border-[#1A73E8] hover:bg-[#E8F0FE] hover:text-[#1A73E8] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {skill}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          {edu.description && (
-                            <p className="text-[12px] text-[#0D183D] leading-relaxed whitespace-pre-wrap">{edu.description}</p>
-                          )}
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-[#D7E6FF] bg-[#F8FBFF] p-4 text-center">
+                          <p className="text-[0.86rem] font-semibold text-[#202124]">All listed skills are added</p>
                         </div>
-                      ))}
-                      <button onClick={() => {
-                        setNewEducation({ field: '', university: '', degreeType: '', description: '' })
-                        setEditingEduIndex(null)
-                        setEditingEducation(true)
-                      }} className="w-full mt-2 py-2 rounded-lg text-[12px] font-semibold border border-dashed border-[#6366F1]"
-                        style={{ color: '#6366F1' }}>
-                        Add Education
-                      </button>
+                      )}
                     </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <GraduationCap size={32} className="mx-auto mb-3 text-[#6366F1]" style={{ opacity: 0.5 }}/>
-                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No education added yet</p>
-                      <p className="text-[12px] text-[#4B6382] mb-4">Add your degrees and educational background</p>
-                      <button onClick={() => { setNewEducation({ field: '', university: '', degreeType: '', description: '' }); setEditingEduIndex(null); setEditingEducation(true) }} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-semibold"
-                        style={{ background: '#6366F1', color: 'white' }}>
-                        <Plus size={14}/>
-                        Add Education
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
-
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-4">
-
-            {/* LANGUAGES */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#10B981] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#10B98115' }}>
-                    <Globe size={14} style={{ color: '#10B981' }}/>
-                  </span>
-                  Languages
-                </h3>
-                {!globalEditMode && !editingLanguages && (
-                  <button onClick={() => setEditingLanguages(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {languagesDraft.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingLanguages ? (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    {languagesDraft.map((lang, i) => (
-                      <div key={i} className="flex items-center gap-2 p-3 rounded-lg bg-[#F8F9FB] border border-[rgba(13,24,61,0.08)]">
-                        <div className="flex-1">
-                          <p className="text-[12px] font-semibold text-[#0D183D]">{typeof lang === 'string' ? lang : lang?.lang}</p>
-                          {typeof lang === 'object' && lang?.level && (
-                            <p className="text-[11px] text-[#6B7280]">{lang.level}</p>
-                          )}
-                        </div>
-                        <button onClick={() => handleRemoveLanguage(i)}
-                          className="p-1 hover:bg-[#FFB70320] rounded transition-colors">
-                          <Trash2 size={14} className="text-red-500"/>
+                    <form onSubmit={handleCustomSkillSubmit} className="border-t border-[#E5EEFB] px-3 py-2.5">
+                      <p className="mb-2 text-[0.7rem] font-semibold uppercase text-[#1A73E8]">Other</p>
+                      <div className="flex gap-2">
+                        <input
+                          value={customSkillDraft}
+                          onChange={event => setCustomSkillDraft(event.target.value)}
+                          className="min-w-0 flex-1 rounded-full border border-[#E5EEFB] bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-[#202124] outline-none transition placeholder:font-medium placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-3 focus:ring-[#1A73E8]/10"
+                          placeholder="Type a skill"
+                        />
+                        <button
+                          type="submit"
+                          disabled={savingSkills || !customSkillDraft.trim()}
+                          className="rounded-full bg-[#1A73E8] px-3.5 py-1.5 text-[0.76rem] font-semibold text-white transition hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:bg-[#AECBFA]"
+                        >
+                          Add
                         </button>
                       </div>
-                    ))}
+                    </form>
                   </div>
-                  <div className="pt-2 border-t border-[rgba(13,24,61,0.1)]">
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Add Language</label>
-                    <div className="flex gap-2 mb-2">
-                      <select value={newLanguage} onChange={e => setNewLanguage(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                        <option value="">Select language</option>
-                        <option>English</option>
-                        <option>Arabic</option>
-                        <option>Hebrew</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
-                        <option>Italian</option>
-                        <option>Portuguese</option>
-                        <option>Russian</option>
-                        <option>Chinese (Mandarin)</option>
-                        <option>Chinese (Cantonese)</option>
-                        <option>Japanese</option>
-                        <option>Korean</option>
-                        <option>Hindi</option>
-                        <option>Urdu</option>
-                        <option>Turkish</option>
-                        <option>Dutch</option>
-                        <option>Swedish</option>
-                        <option>Norwegian</option>
-                        <option>Danish</option>
-                        <option>Polish</option>
-                        <option>Vietnamese</option>
-                        <option>Thai</option>
-                      </select>
-                      <select value={newLanguageLevel} onChange={e => setNewLanguageLevel(e.target.value)}
-                        className="px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Fluent">Fluent</option>
-                        <option value="Native">Native</option>
-                      </select>
-                    </div>
-                    <button onClick={handleAddLanguage}
-                      className="w-full px-3 py-2 rounded-lg text-[11px] font-semibold text-[#10B981] border border-[#10B98120] hover:bg-[#10B98110]">
-                      Add Language
-                    </button>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={handleSaveLanguages}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setLanguagesDraft(Array.isArray(profile?.languages) ? profile.languages : [])
-                      setEditingLanguages(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {languagesDraft.length > 0 ? (
-                    languagesDraft.map((lang, i) => {
-                      const langName = typeof lang === 'string' ? lang : lang?.lang
-                      const langLevel = typeof lang === 'object' ? lang?.level : null
-                      return (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#F8F9FB]">
-                          <span className="text-[12px] font-semibold text-[#0D183D]">
-                            {langName}
-                          </span>
-                          {langLevel && (
-                            <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#10B981]"
-                              style={{ background: '#10B98120' }}>
-                              {langLevel}
-                            </span>
+                )}
+              </div>
+            </div>
+            )}
+          </Card>
+
+          <Card className="p-5 sm:p-6">
+            <SectionHeader
+              icon={GraduationCap}
+              title="Education"
+              description="Add your field of study, school, and degree information."
+              action={!editingEducation && (
+                <button className={softButtonClass} onClick={() => startEducationEdit()}>
+                  <Plus size={14} />
+                  Add education
+                </button>
+              )}
+            />
+
+            {educations.length > 0 ? (
+              <div className="mb-4 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+                {educations.map((education, index) => (
+                  <div key={`${education.field}-${index}`} className="flex gap-4 border-b border-[#E5EEFB] p-4 last:border-b-0">
+                    <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                      <GraduationCap size={18} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-[1rem] font-semibold text-[#202124]">{education.field || 'Education'}</p>
+                          <p className="mt-1 text-[0.84rem] text-[#5F6368]">{education.university || 'School not set'}</p>
+                          {(education.degreeType || education.isCurrent) && (
+                            <p className="mt-2 inline-flex rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.74rem] font-semibold text-[#1A73E8]">
+                              {[education.degreeType, education.isCurrent ? 'Current' : ''].filter(Boolean).join(' · ')}
+                            </p>
                           )}
                         </div>
-                      )
-                    })
-                  ) : (
-                    <p className="text-[12px] text-[#4B6382]">No languages added</p>
-                  )}
-                </div>
-              )}
-            </motion.div>
-
-            {/* CAUSES */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#FFB703] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#FFB70320' }}>
-                    <Heart size={14} style={{ color: '#FFB703' }}/>
-                  </span>
-                  Causes & Interests
-                </h3>
-                {!globalEditMode && !editingCauses && (
-                  <button onClick={() => setEditingCauses(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {causesDraft.length > 0 ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
-              </div>
-
-              {editingCauses ? (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    {causesDraft.map((cause, i) => (
-                      <div key={i} className="flex items-center gap-2 p-3 rounded-lg bg-[#F8F9FB] border border-[rgba(13,24,61,0.08)]">
-                        <div className="flex-1">
-                          <p className="text-[12px] font-semibold text-[#0D183D]">{cause}</p>
+                        <div className="flex gap-1">
+                          <button className="rounded-full p-2 text-[#5F6368] transition hover:bg-[#E8F0FE] hover:text-[#1A73E8]" onClick={() => startEducationEdit(education, index)}><Edit3 size={14} /></button>
+                          <button className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6]" onClick={() => handleDeleteEducation(index)}><Trash2 size={14} /></button>
                         </div>
-                        <button onClick={() => handleRemoveCause(i)}
-                          className="p-1 hover:bg-[#FFB70320] rounded transition-colors">
-                          <Trash2 size={14} className="text-red-500"/>
-                        </button>
                       </div>
-                    ))}
+                      {education.description && <p className="mt-3 text-[0.84rem] leading-6 text-[#5F6368]">{education.description}</p>}
+                    </div>
                   </div>
-                  <div className="pt-2 border-t border-[rgba(13,24,61,0.1)]">
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Add Interest</label>
-                    <select value={newCause} onChange={e => {
-                      if (e.target.value) handleAddCause(e.target.value)
-                    }}
-                      className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703] appearance-none"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', paddingRight: '2rem' }}>
-                      <option value="">Select interest</option>
-                      <option>Education</option>
-                      <option>Youth Empowerment</option>
-                      <option>Women Empowerment</option>
-                      <option>Environment</option>
-                      <option>Mental Health</option>
-                      <option>Digital Inclusion</option>
-                      <option>Animal Welfare</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2 pt-3">
-                    <button onClick={handleSaveCauses}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Done
-                    </button>
-                    <button onClick={() => {
-                      setCausesDraft(
-                        Array.isArray(profile?.interests)
-                          ? profile.interests
-                          : (profile?.interests?.split(',').map(s => s.trim()).filter(Boolean) || [])
-                      )
-                      setEditingCauses(false)
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {causesDraft.length > 0 ? (
-                    causesDraft.map((interest, i) => {
-                      const causeColors = {
-                        'Education': { bg: '#F0F4FF', color: '#6366F1' },
-                        'Youth Empowerment': { bg: '#FFE8E8', color: '#DC2626' },
-                        'Women Empowerment': { bg: '#FFF0F7', color: '#DB2777' },
-                        'Environment': { bg: '#E8F9F1', color: '#10B981' },
-                        'Mental Health': { bg: '#FFE8F1', color: '#EC4899' },
-                        'Digital Inclusion': { bg: '#F0F4FF', color: '#7C3AED' },
-                        'Animal Welfare': { bg: '#FFFAEB', color: '#D97706' },
-                      }
-                      const colors = causeColors[interest] || { bg: '#F8F9FB', color: '#6B7280' }
-                      return (
-                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
-                          style={{ background: colors.bg, color: colors.color }}>
-                          {interest}
-                        </span>
-                      )
-                    })
-                  ) : (
-                    <p className="text-[12px] text-[#4B6382]">No causes added</p>
-                  )}
-                </div>
-              )}
-            </motion.div>
-
-            {/* LINKS */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#3B82F6] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#3B82F620' }}>
-                    <ExternalLink size={14} style={{ color: '#3B82F6' }}/>
-                  </span>
-                  Links & Social
-                </h3>
+                ))}
               </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">GitHub</label>
-                  <input type="text" value={linksDraft.github} onChange={e => setLinksDraft({...linksDraft, github: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="https://github.com/username"/>
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">LinkedIn</label>
-                  <input type="text" value={linksDraft.linkedin} onChange={e => setLinksDraft({...linksDraft, linkedin: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="https://linkedin.com/in/username"/>
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Portfolio / Website</label>
-                  <input type="text" value={linksDraft.portfolio} onChange={e => setLinksDraft({...linksDraft, portfolio: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] border border-[rgba(13,24,61,0.1)] outline-none focus:border-[#FFB703]"
-                    placeholder="https://yourportfolio.com"/>
-                </div>
-                {(linksDraft.github !== (profile?.links?.github || '') ||
-                  linksDraft.linkedin !== (profile?.links?.linkedin || '') ||
-                  linksDraft.portfolio !== (profile?.links?.portfolio || '')) && (
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={handleSaveLinks}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                      style={{ background: '#0D183D', color: 'white' }}>
-                      <Check size={12} className="inline mr-1"/>Save
-                    </button>
-                    <button onClick={() => {
-                      setLinksDraft({ github: profile?.links?.github || '', linkedin: profile?.links?.linkedin || '', portfolio: profile?.links?.portfolio || '' })
-                    }}
-                      className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                      Cancel
-                    </button>
-                  </div>
-                )}
+            ) : !editingEducation ? (
+              <div className="mb-4">
+                <EmptyState title="No education added" description="Add your field of study so NGOs understand your background." />
               </div>
-            </motion.div>
+            ) : null}
 
-
-
-            {/* AVAILABILITY */}
-            <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-              viewport={{ once:true }}
-              className="bg-white rounded-xl border border-[rgba(13,24,61,0.07)] p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-extrabold text-[#0D183D] flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: '#6B72801F' }}>
-                    <Clock size={14} style={{ color: '#6B7280' }}/>
-                  </span>
-                  Availability / Preferences
-                </h3>
-                {!globalEditMode && !editingAvailability && (
-                  <button onClick={() => setEditingAvailability(true)}
-                    className="text-[12px] font-semibold text-[#6B7280] flex items-center gap-1 hover:opacity-70">
-                    {(availabilityDraft.availability || availabilityDraft.workMode || availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.startImmediately || availabilityDraft.preferredRoles) ? 'Edit' : 'Add'} <Edit3 size={12}/>
-                  </button>
-                )}
+            {editingEducation && (
+              <div className="rounded-[24px] border border-[#E5EEFB] bg-[#F8FBFF] p-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <FieldLabel>Field of study</FieldLabel>
+                    <input className={inputClass} value={educationDraft.field} onChange={event => setEducationDraft(prev => ({ ...prev, field: event.target.value }))} placeholder="Computer Science" />
+                  </div>
+                  <div>
+                    <FieldLabel>University / school</FieldLabel>
+                    <input className={inputClass} value={educationDraft.university} onChange={event => setEducationDraft(prev => ({ ...prev, university: event.target.value }))} placeholder="Tel Aviv University" />
+                  </div>
+                  <div>
+                    <FieldLabel>Degree type</FieldLabel>
+                    <select className={inputClass} value={educationDraft.degreeType} onChange={event => setEducationDraft(prev => ({ ...prev, degreeType: event.target.value }))}>
+                      <option value="">Select type</option>
+                      <option>Bachelor's</option>
+                      <option>Master's</option>
+                      <option>Certificate</option>
+                      <option>Diploma</option>
+                    </select>
+                  </div>
+                  <label className="flex items-center gap-2 self-end rounded-2xl border border-[#E5EEFB] bg-white px-4 py-3 text-[0.82rem] font-semibold text-[#202124]">
+                    <input type="checkbox" checked={educationDraft.isCurrent || false} onChange={event => setEducationDraft(prev => ({ ...prev, isCurrent: event.target.checked }))} />
+                    Currently studying
+                  </label>
+                </div>
+                <textarea className={`${inputClass} mt-3 resize-none`} rows={3} value={educationDraft.description} onChange={event => setEducationDraft(prev => ({ ...prev, description: event.target.value }))} placeholder="Relevant courses, projects, or achievements" />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button className={primaryButtonClass} onClick={handleSaveEducation}><Check size={14} />Save education</button>
+                  <button className={softButtonClass} onClick={() => { setEditingEducation(false); setEditingEducationIndex(null); setEducationDraft({ field: '', university: '', degreeType: '', description: '', isCurrent: false }) }}>Cancel</button>
+                </div>
               </div>
+            )}
+          </Card>
 
-              {globalEditMode || editingAvailability ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Availability</label>
-                    <select value={availabilityDraft.availability} onChange={e => setAvailabilityDraft({...availabilityDraft, availability: e.target.value})}
-                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all appearance-none cursor-pointer"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                      <option value="">Select availability</option>
-                      <option>1-2 weeks</option>
-                      <option>1 month</option>
-                      <option>2-3 months</option>
-                      <option>Flexible</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Work Mode</label>
-                    <select value={availabilityDraft.workMode} onChange={e => setAvailabilityDraft({...availabilityDraft, workMode: e.target.value})}
-                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all appearance-none cursor-pointer"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                      <option value="">Select work mode</option>
-                      <option>Full-time</option>
-                      <option>Part-time</option>
-                      <option>Internship</option>
-                      <option>Project-based</option>
-                      <option>Flexible</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Start Date</label>
-                    <button onClick={() => setAvailabilityDraft({...availabilityDraft, startImmediately: !availabilityDraft.startImmediately, startMonth: '', startYear: ''})}
-                      className="w-full mb-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold border-2"
-                      style={{ borderColor: availabilityDraft.startImmediately ? '#10B981' : '#0D183D', background: availabilityDraft.startImmediately ? '#10B98120' : 'white', color: availabilityDraft.startImmediately ? '#065F46' : '#0D183D' }}>
-                      <Zap size={12} className="inline mr-1"/>Start Immediately
-                    </button>
-                    <div className="grid grid-cols-2 gap-2">
-                      <select value={availabilityDraft.startMonth} onChange={e => setAvailabilityDraft({...availabilityDraft, startMonth: e.target.value, availability: ''})}
-                        className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                        <option value="">Month</option>
-                        <option>January</option>
-                        <option>February</option>
-                        <option>March</option>
-                        <option>April</option>
-                        <option>May</option>
-                        <option>June</option>
-                        <option>July</option>
-                        <option>August</option>
-                        <option>September</option>
-                        <option>October</option>
-                        <option>November</option>
-                        <option>December</option>
-                      </select>
-                      <input type="text" value={availabilityDraft.startYear} onChange={e => setAvailabilityDraft({...availabilityDraft, startYear: e.target.value, availability: ''})}
-                        className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all"
-                        placeholder="Year"/>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[#0D183D] block mb-1.5">Preferred Roles</label>
-                    <select value={availabilityDraft.preferredRoles} onChange={e => setAvailabilityDraft({...availabilityDraft, preferredRoles: e.target.value})}
-                      className="w-full px-4 py-2.5 rounded-xl text-[12px] border-2 border-[#0D183D] outline-none bg-white text-[#0D183D] focus:border-[#FFB703] focus:shadow-lg transition-all appearance-none cursor-pointer"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230D183D' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                      <option value="">Select preferred role</option>
-                      <option>Designer</option>
-                      <option>Data Analyst</option>
-                      <option>Marketing Specialist</option>
-                      <option>Content Writer</option>
-                      <option>Frontend Developer</option>
-                      <option>Backend Developer</option>
-                      <option>Full Stack Developer</option>
-                      <option>Project Manager</option>
-                      <option>Business Analyst</option>
-                      <option>Social Media Manager</option>
-                      <option>Event Coordinator</option>
-                      <option>Research Analyst</option>
-                      <option>Fundraising Specialist</option>
-                    </select>
-                  </div>
-                  {!globalEditMode && (
-                    <div className="flex gap-2 pt-2">
-                      <button onClick={handleSaveAvailability}
-                        className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                        style={{ background: '#0D183D', color: 'white' }}>
-                        <Check size={12} className="inline mr-1"/>Save
-                      </button>
-                      <button onClick={() => {
-                        setAvailabilityDraft({
-                          availability: profile?.availability || '',
-                          workMode: profile?.workMode || '',
-                          startDate: profile?.startDate || '',
-                          startMonth: profile?.startMonth || '',
-                          startYear: profile?.startYear || '',
-                          startImmediately: profile?.startImmediately || false,
-                          preferredRoles: profile?.preferredRoles || '',
-                        })
-                        setEditingAvailability(false)
-                      }}
-                        className="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#4B6382] hover:bg-[#F8F9FB]">
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : !globalEditMode ? (
-                <div className="space-y-3">
-                  {availabilityDraft.availability && (
-                    <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#DBEAFE]">
-                      <p className="text-[10px] font-semibold text-[#1E40AF] mb-1.5">Availability</p>
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} style={{ color: '#1E40AF' }}/>
-                        <p className="text-[13px] font-semibold text-[#0D183D]">{availabilityDraft.availability}</p>
-                      </div>
-                    </div>
-                  )}
-                  {availabilityDraft.startImmediately && (
-                    <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#10B98120]">
-                      <p className="text-[10px] font-semibold text-[#065F46] mb-1.5">Start Date</p>
-                      <div className="flex items-center gap-2">
-                        <Zap size={14} style={{ color: '#065F46' }}/>
-                        <p className="text-[13px] font-semibold text-[#0D183D]">Start Immediately</p>
-                      </div>
-                    </div>
-                  )}
-                  {!availabilityDraft.startImmediately && (availabilityDraft.startMonth || availabilityDraft.startYear || availabilityDraft.startDate) && (
-                    <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#FEF3C7]">
-                      <p className="text-[10px] font-semibold text-[#92400E] mb-1.5">Start Date</p>
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} style={{ color: '#92400E' }}/>
-                        <p className="text-[13px] font-semibold text-[#0D183D]">{availabilityDraft.startMonth && availabilityDraft.startYear ? `${availabilityDraft.startMonth} ${availabilityDraft.startYear}` : availabilityDraft.startDate}</p>
-                      </div>
-                    </div>
-                  )}
-                  {availabilityDraft.workMode && (
-                    <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#E0E7FF]">
-                      <p className="text-[10px] font-semibold text-[#3730A3] mb-1.5">Work Mode</p>
-                      <div className="flex items-center gap-2">
-                        <Briefcase size={14} style={{ color: '#3730A3' }}/>
-                        <p className="text-[13px] font-semibold text-[#0D183D]">{availabilityDraft.workMode}</p>
-                      </div>
-                    </div>
-                  )}
-                  {availabilityDraft.preferredRoles && (
-                    <div className="px-4 py-3 rounded-lg border border-[rgba(13,24,61,0.08)] bg-[#FCE7F3]">
-                      <p className="text-[10px] font-semibold text-[#9D174D] mb-1.5">Preferred Roles</p>
-                      <div className="flex items-center gap-2">
-                        <Users size={14} style={{ color: '#9D174D' }}/>
-                        <p className="text-[13px] font-semibold text-[#0D183D]">{availabilityDraft.preferredRoles}</p>
-                      </div>
-                    </div>
-                  )}
-                  {!availabilityDraft.availability && !availabilityDraft.workMode && !availabilityDraft.startDate && !availabilityDraft.startMonth && !availabilityDraft.startYear && !availabilityDraft.startImmediately && !availabilityDraft.preferredRoles && (
-                    <div className="text-center py-6">
-                      <Clock size={32} className="mx-auto mb-3 text-[#6B7280]" style={{ opacity: 0.5 }}/>
-                      <p className="text-[13px] font-semibold text-[#0D183D] mb-1">No preferences set</p>
-                      <p className="text-[12px] text-[#4B6382]">Tell NGOs about your availability and preferences</p>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </motion.div>
           </div>
         </div>
 
+        <section className="mt-6">
+          <div className="mb-4">
+            <p className="inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase text-[#9AA0A6]">
+              <Briefcase size={14} className="text-[#1A73E8]" />
+              Profile details
+            </p>
+            <p className="mt-2 text-[0.88rem] leading-6 text-[#5F6368]">
+              Quick details NGOs use when they scan for fit.
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <SmallProfileCard
+              icon={Globe}
+              title="Languages"
+              summary={languagesDraft.length ? `${languagesDraft.length} added` : 'Languages you can work in'}
+              action={!editingLanguages && <button className={softButtonClass} onClick={() => setEditingLanguages(true)}>{languagesDraft.length ? 'Edit' : 'Add'}</button>}
+              forceOpen={editingLanguages}
+            >
+              {editingLanguages ? (
+                <div className="space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px_auto]">
+                    <select className={inputClass} value={languageDraft.lang} onChange={event => setLanguageDraft(prev => ({ ...prev, lang: event.target.value }))}>
+                      <option value="">Language</option>
+                      {LANGUAGES.map(language => <option key={language}>{language}</option>)}
+                    </select>
+                    <select className={inputClass} value={languageDraft.level} onChange={event => setLanguageDraft(prev => ({ ...prev, level: event.target.value }))}>
+                      <option>Beginner</option>
+                      <option>Intermediate</option>
+                      <option>Fluent</option>
+                      <option>Native</option>
+                    </select>
+                    <button className={softButtonClass} onClick={handleAddLanguage}><Plus size={14} />Add</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {languagesDraft.map((language, index) => {
+                      const name = typeof language === 'string' ? language : language?.lang
+                      const level = typeof language === 'object' ? language?.level : ''
+                      return <Chip key={`${name}-${index}`} onRemove={() => setLanguagesDraft(languagesDraft.filter((_, itemIndex) => itemIndex !== index))}>{name}{level ? ` · ${level}` : ''}</Chip>
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button className={primaryButtonClass} onClick={handleSaveLanguages}><Check size={14} />Save</button>
+                    <button className={softButtonClass} onClick={() => { setLanguagesDraft(toArray(profile?.languages)); setEditingLanguages(false) }}>Cancel</button>
+                  </div>
+                </div>
+              ) : languagesDraft.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {languagesDraft.map((language, index) => {
+                    const name = typeof language === 'string' ? language : language?.lang
+                    const level = typeof language === 'object' ? language?.level : ''
+                    return <Chip key={`${name}-${index}`}>{name}{level ? ` · ${level}` : ''}</Chip>
+                  })}
+                </div>
+              ) : (
+                <EmptyState title="No languages yet" description="Add the languages you can work in." />
+              )}
+            </SmallProfileCard>
+
+            <SmallProfileCard
+              icon={Heart}
+              title="Causes"
+              summary={interestsDraft.length ? `${interestsDraft.length} interests` : 'Causes you care about'}
+              action={!editingInterests && <button className={softButtonClass} onClick={() => setEditingInterests(true)}>{interestsDraft.length ? 'Edit' : 'Add'}</button>}
+              forceOpen={editingInterests}
+            >
+              {editingInterests ? (
+                <div className="space-y-3">
+                  <select className={inputClass} value={newInterest} onChange={event => { setNewInterest(event.target.value); handleAddInterest(event.target.value) }}>
+                    <option value="">Add cause</option>
+                    {INTERESTS.map(interest => <option key={interest}>{interest}</option>)}
+                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    {interestsDraft.map((interest, index) => (
+                      <Chip key={interest} onRemove={() => setInterestsDraft(interestsDraft.filter((_, itemIndex) => itemIndex !== index))}>{interest}</Chip>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button className={primaryButtonClass} onClick={handleSaveInterests}><Check size={14} />Save</button>
+                    <button className={softButtonClass} onClick={() => { setInterestsDraft(toArray(profile?.interests)); setEditingInterests(false) }}>Cancel</button>
+                  </div>
+                </div>
+              ) : interestsDraft.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {interestsDraft.map(interest => <Chip key={interest}>{interest}</Chip>)}
+                </div>
+              ) : (
+                <EmptyState title="No causes yet" description="Pick causes that match the kind of impact you want." />
+              )}
+            </SmallProfileCard>
+
+            <SmallProfileCard
+              icon={ExternalLink}
+              title="Links"
+              summary={[linksDraft.linkedin && 'LinkedIn', linksDraft.github && 'GitHub', linksDraft.portfolio && 'Portfolio'].filter(Boolean).join(' · ') || 'Optional public links'}
+              action={!editingLinks && <button className={softButtonClass} onClick={() => setEditingLinks(true)}>{linksDraft.linkedin || linksDraft.github || linksDraft.portfolio ? 'Edit' : 'Add'}</button>}
+              forceOpen={editingLinks}
+            >
+              {editingLinks ? (
+                <div className="space-y-3">
+                  <input className={inputClass} value={linksDraft.linkedin} onChange={event => setLinksDraft(prev => ({ ...prev, linkedin: event.target.value }))} placeholder="LinkedIn URL" />
+                  <input className={inputClass} value={linksDraft.github} onChange={event => setLinksDraft(prev => ({ ...prev, github: event.target.value }))} placeholder="GitHub URL" />
+                  <input className={inputClass} value={linksDraft.portfolio} onChange={event => setLinksDraft(prev => ({ ...prev, portfolio: event.target.value }))} placeholder="Portfolio URL" />
+                  <div className="flex flex-wrap gap-2">
+                    <button className={primaryButtonClass} onClick={handleSaveLinks}><Check size={14} />Save</button>
+                    <button className={softButtonClass} onClick={() => setEditingLinks(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {Object.entries(linksDraft).filter(([, value]) => value).map(([key, value]) => (
+                    <a key={key} href={value} target="_blank" rel="noreferrer" className="block truncate rounded-2xl border border-[#E5EEFB] bg-[#F8FBFF] px-3.5 py-2.5 text-[0.8rem] font-semibold text-[#1A73E8] transition hover:border-[#1A73E8] hover:bg-white">
+                      {key}: {value}
+                    </a>
+                  ))}
+                  {!linksDraft.linkedin && !linksDraft.github && !linksDraft.portfolio && <EmptyState title="No links yet" description="Add only links that help NGOs trust your work." />}
+                </div>
+              )}
+            </SmallProfileCard>
+          </div>
+        </section>
       </div>
     </main>
   )

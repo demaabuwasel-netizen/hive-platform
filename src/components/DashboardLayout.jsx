@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import {
   LogOut, LayoutDashboard, Zap, FileText, MessageSquare, Bookmark,
-  MessageCircle, Settings, Briefcase, Users, BarChart2, TrendingUp,
+  MessageCircle, Settings, Briefcase, Users, BarChart2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import HiveLogo from './HiveLogo'
@@ -14,7 +14,6 @@ import { AvatarDisplay } from './Avatar'
 const STUDENT_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard/student'             },
   { icon: Users,           label: 'Profile',      to: '/profile/student'                },
-  { icon: Zap,             label: 'Matches',      to: '/matches'                        },
   { icon: Briefcase,       label: 'Opportunities',to: '/opportunities'                  },
   { icon: FileText,        label: 'Applications', to: '/applications'                   },
   { icon: MessageSquare,   label: 'Interviews',   to: '/interviews'                     },
@@ -57,12 +56,30 @@ export default function DashboardLayout() {
   const { t } = useTranslation()
   const navigate    = useNavigate()
   const { pathname } = useLocation()
+  const isNgo = user?.role === 'ngo'
+  const sidebarTheme = isNgo
+    ? {
+        activeBg: '#E8F0FE',
+        activeText: '#1A73E8',
+        hoverBg: 'rgba(26,115,232,0.08)',
+        border: 'rgba(26,115,232,0.10)',
+        text: '#5F6368',
+        footerRing: 'rgba(26,115,232,0.22)',
+      }
+    : {
+        activeBg: '#E8F0FE',
+        activeText: '#1A73E8',
+        hoverBg: 'rgba(26,115,232,0.08)',
+        border: 'rgba(26,115,232,0.10)',
+        text: '#5F6368',
+        footerRing: 'rgba(26,115,232,0.22)',
+      }
 
-  const navItems    = user?.role === 'ngo' ? NGO_NAV : STUDENT_NAV
-  const settingsItems = user?.role === 'ngo' ? NGO_SETTINGS : STUDENT_SETTINGS
+  const navItems    = isNgo ? NGO_NAV : STUDENT_NAV
+  const settingsItems = isNgo ? NGO_SETTINGS : STUDENT_SETTINGS
   const displayName = profile?.name || user?.name || 'User'
   const avatarSrc   = profile?.avatar || user?.avatar || null
-  const roleLabel   = user?.role === 'ngo' ? 'NGO Account' : t('nav.dashboard').replace('לוח בקרה','Student').replace('لوحة القيادة','Student') || 'Student'
+  const roleLabel   = isNgo ? 'NGO Account' : 'Student'
 
   // i18n key map for nav items
   const NAV_KEYS = {
@@ -91,14 +108,20 @@ export default function DashboardLayout() {
           top: 0,
           height: '100vh',
           background: 'var(--sidebar-bg)',
-          borderRight: '1px solid var(--sidebar-border)',
+          borderRight: `1px solid ${sidebarTheme.border}`,
           zIndex: 30,
         }}>
 
         {/* Logo */}
-        <div className="px-5 py-[14px] shrink-0" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+        <div
+          className="px-5 py-[14px] shrink-0"
+          style={{
+            borderBottom: `1px solid ${sidebarTheme.border}`,
+            background: 'linear-gradient(180deg, rgba(26,115,232,0.08), rgba(26,115,232,0.02))',
+          }}
+        >
           <Link to={user?.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'}>
-            <HiveLogo size={24} nameSize="text-base" />
+            <HiveLogo size={24} nameSize="text-[1.45rem]" />
           </Link>
         </div>
 
@@ -110,11 +133,11 @@ export default function DashboardLayout() {
               <Link
                 key={item.label}
                 to={item.to}
-                className="flex items-center gap-2.5 px-3 py-[8px] rounded-xl text-[13px] font-medium transition-colors duration-100"
+                className="flex items-center gap-2.5 px-3.5 py-[10px] rounded-full text-[13px] font-medium transition-colors duration-100"
                 style={active
-                  ? { background: 'var(--sidebar-active-bg)', color: 'var(--sidebar-active-text)' }
-                  : { color: 'var(--sidebar-text)' }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--hive-bg-hover)' }}
+                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: '0 10px 22px rgba(26,115,232,0.12)' }
+                  : { color: sidebarTheme.text }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarTheme.hoverBg }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
                 <item.icon size={14} strokeWidth={active ? 2.5 : 1.8} />
                 <span className="flex-1 leading-none">{t(NAV_KEYS[item.label] || item.label, item.label)}</span>
@@ -130,18 +153,18 @@ export default function DashboardLayout() {
         </nav>
 
         {/* Settings section at bottom */}
-        <nav className="p-2.5 shrink-0 border-t" style={{ borderColor: 'var(--sidebar-border)' }}>
+        <nav className="p-2.5 shrink-0 border-t" style={{ borderColor: sidebarTheme.border }}>
           {settingsItems.map(item => {
             const active = isActive(item.to, pathname)
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className="flex items-center gap-2.5 px-3 py-[8px] rounded-xl text-[13px] font-medium transition-colors duration-100"
+                className="flex items-center gap-2.5 px-3.5 py-[10px] rounded-full text-[13px] font-medium transition-colors duration-100"
                 style={active
-                  ? { background: 'var(--sidebar-active-bg)', color: 'var(--sidebar-active-text)' }
-                  : { color: 'var(--sidebar-text)' }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--hive-bg-hover)' }}
+                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: '0 10px 22px rgba(26,115,232,0.12)' }
+                  : { color: sidebarTheme.text }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarTheme.hoverBg }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
                 <item.icon size={14} strokeWidth={active ? 2.5 : 1.8} />
                 <span className="flex-1 leading-none">{t(NAV_KEYS[item.label] || item.label, item.label)}</span>
@@ -151,24 +174,25 @@ export default function DashboardLayout() {
         </nav>
 
         {/* User footer */}
-        <div className="p-2.5 shrink-0" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+        <div className="p-2.5 shrink-0" style={{ borderTop: `1px solid ${sidebarTheme.border}` }}>
           <div className="group flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-default transition-colors"
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--hive-bg-hover)'}
+            onMouseEnter={e => e.currentTarget.style.background = sidebarTheme.hoverBg}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <AvatarDisplay src={avatarSrc} name={displayName} size="xs"
-              className="ring-2 ring-[rgba(255,183,3,0.32)] shrink-0"/>
+            <div className="shrink-0 rounded-full" style={{ boxShadow: `0 0 0 2px ${sidebarTheme.footerRing}` }}>
+              <AvatarDisplay src={avatarSrc} name={displayName} size="xs" className="shrink-0"/>
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-bold truncate leading-snug"
                 style={{ color: 'var(--hive-text-primary)' }}>{displayName}</p>
               <p className="text-[10px]" style={{ color: 'var(--hive-text-muted)' }}>
-                {user?.role === 'ngo' ? 'NGO Account' : 'Student'}
+                {roleLabel}
               </p>
             </div>
             <button onClick={() => { logout(); navigate('/') }}
               aria-label={t('nav.signOut')}
               className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-lg"
               style={{ color: 'var(--hive-text-muted)' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#1A73E8'; e.currentTarget.style.background = 'rgba(26,115,232,0.08)' }}
               onMouseLeave={e => { e.currentTarget.style.color = 'var(--hive-text-muted)'; e.currentTarget.style.background = 'transparent' }}>
               <LogOut size={12}/>
             </button>

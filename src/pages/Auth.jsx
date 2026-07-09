@@ -140,7 +140,7 @@ export default function Auth() {
       <div className="relative z-10 flex flex-col min-h-screen">
         <div className="p-6">
           <Link to="/" aria-label="Hive home">
-            <HiveLogo size={24} nameSize="text-sm" />
+            <HiveLogo size={24} nameSize="text-[1.45rem]" />
           </Link>
         </div>
 

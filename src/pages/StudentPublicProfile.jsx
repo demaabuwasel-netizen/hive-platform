@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, MapPin, BookOpen, Briefcase, Heart, Target, CheckCircle2,
-  ExternalLink, Calendar, TrendingUp
+  ExternalLink, TrendingUp
 } from 'lucide-react'
 import { loadStudentProfile } from '../services/storage'
 
@@ -64,14 +64,6 @@ function categorizeSkills(skills) {
   })
 
   return grouped
-}
-
-function getLevelColor(level) {
-  const lower = level?.toLowerCase() || ''
-  if (lower.includes('expert') || lower.includes('advanced')) return 'bg-emerald-100 text-emerald-700'
-  if (lower.includes('intermediate')) return 'bg-blue-100 text-blue-700'
-  if (lower.includes('beginner') || lower.includes('basic')) return 'bg-slate-100 text-slate-700'
-  return 'bg-slate-100 text-slate-700'
 }
 
 function AvatarInitials({ name, size = 64 }) {
@@ -259,12 +251,6 @@ export default function StudentPublicProfile() {
                     {profile.university}
                   </div>
                 )}
-                {profile.availability && (
-                  <div className="bg-white/15 rounded-full px-4 py-2 text-[13px] font-medium flex items-center gap-2 backdrop-blur-sm border border-white/20">
-                    <Calendar size={14} />
-                    {profile.availability}
-                  </div>
-                )}
                 {profile.city && (
                   <div className="bg-white/15 rounded-full px-4 py-2 text-[13px] font-medium flex items-center gap-2 backdrop-blur-sm border border-white/20">
                     <MapPin size={14} />
@@ -332,13 +318,12 @@ export default function StudentPublicProfile() {
                       <div key={category}>
                         <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-widest mb-3">{category}</p>
                         <div className="flex flex-wrap gap-2">
-                          {skills.map(({ name, level }, i) => (
+                          {skills.map(({ name }, i) => (
                             <div
                               key={i}
-                              className={`px-3 py-1.5 rounded-full text-[12px] font-medium ${getLevelColor(level)}`}
+                              className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#E8F0FE] text-[#1A73E8]"
                             >
                               {name}
-                              {level && <span className="text-[10px] ml-1 opacity-75">({level})</span>}
                             </div>
                           ))}
                         </div>
@@ -444,19 +429,6 @@ export default function StudentPublicProfile() {
                     </span>
                   ))}
                 </div>
-              </motion.div>
-            )}
-
-            {/* Availability */}
-            {profile.availability && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h3 className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Availability</h3>
-                <p className="text-[13px] font-semibold text-[#0D183D]">{profile.availability}</p>
               </motion.div>
             )}
 

@@ -1,12 +1,11 @@
 // Hive matching engine
-// Weights confirmed: skills 35, interests 20, languages 15,
-// availability 10, location 10, field 5, text (experience+goals) 5
+// Weights confirmed: skills 40, interests 25, languages 15,
+// location 10, field 5, text (experience+goals) 5
 
 const W = {
-  skills:       35,
-  interests:    20,
+  skills:       40,
+  interests:    25,
   languages:    15,
-  availability: 10,
   location:     10,
   field:         5,
   text:          5,
@@ -157,32 +156,7 @@ function scoreLanguages(studentLangs, requiredLangs) {
   return { score: Math.round(ratio * W.languages * 10) / 10, matched, missing }
 }
 
-// ─── Dimension 4: Availability (10 pts) ──────────────────────────────────────
-
-function parseHoursRange(availability = '') {
-  if (!availability) return [0, 40]
-  const a = availability.toLowerCase()
-  if (!a || a.includes('immediately') || a.includes('flexible')) return [0, 40]
-  const nums = a.match(/\d+/g)?.map(Number)
-  if (!nums?.length) return null
-  return nums.length === 1 ? [nums[0], nums[0] + 10] : [nums[0], nums[1]]
-}
-
-function scoreAvailability(studentAvailability, weeklyHours) {
-  if (!weeklyHours) return { score: W.availability * 0.8, note: null }
-  const range = parseHoursRange(studentAvailability)
-  if (!range) return { score: W.availability * 0.55, note: null }
-
-  const [min, max] = range
-  const h = parseFloat(weeklyHours)
-
-  if (h >= min && h <= max) return { score: W.availability, note: `${h}h/wk fits your schedule` }
-  if (h > max && h - max <= 3) return { score: W.availability * 0.7, note: `${h}h/wk — slightly above your availability` }
-  if (h < min) return { score: W.availability * 0.85, note: `${h}h/wk — less than your stated commitment` }
-  return { score: W.availability * 0.3, note: `${h}h/wk exceeds your availability` }
-}
-
-// ─── Dimension 5: Location / work mode (10 pts) ───────────────────────────────
+// ─── Dimension 4: Location / work mode (10 pts) ───────────────────────────────
 
 function scoreLocation(workMode, location) {
   const m = norm(workMode ?? '')
@@ -191,7 +165,7 @@ function scoreLocation(workMode, location) {
   return { score: Math.round(W.location * 0.4), note: `On-site in ${location || 'office'}` }
 }
 
-// ─── Dimension 6: Field of study (5 pts) ─────────────────────────────────────
+// ─── Dimension 5: Field of study (5 pts) ─────────────────────────────────────
 
 // Maps normalised field fragments → mission keywords that indicate relevance
 const FIELD_KEYWORDS = {
@@ -245,7 +219,7 @@ function scoreField(studentField, oppField, category, missionImpact) {
   return { score: 0, match: null }
 }
 
-// ─── Dimension 7: Experience + goals text (5 pts) ────────────────────────────
+// ─── Dimension 6: Experience + goals text (5 pts) ────────────────────────────
 
 function scoreText(experience, goals, description, missionImpact, title) {
   const studentToks = new Set([...tokens(experience), ...tokens(goals)])
@@ -375,7 +349,7 @@ function buildSuggestedQuestions(p, o, sk, int, lang) {
 /**
  * Compute a rich match result between a student profile and an opportunity.
  *
- * @param {object} studentProfile  - from student_profiles (skills, field, interests, languages, availability, experience, goals, name)
+ * @param {object} studentProfile  - from student_profiles (skills, field, interests, languages, experience, goals, name)
  * @param {object} opportunity     - from opportunities service (skills, category, missionImpact, description, languages, weeklyHours, workMode, location, field, title, orgName)
  * @returns {{ score, breakdown, strengths, partialMatches, missingRequirements, reasons, headline, suggestedQuestions, explanations }}
  */
@@ -386,19 +360,17 @@ export function computeMatch(studentProfile, opportunity) {
   const sk   = scoreSkills(p.skills, o.skills)
   const int  = scoreInterests(p.interests, o.category, o.missionImpact, o.description)
   const lang = scoreLanguages(p.languages, o.languages)
-  const avail = scoreAvailability(p.availability, o.weeklyHours)
   const loc  = scoreLocation(o.workMode, o.location)
   const fld  = scoreField(p.field, o.field, o.category, o.missionImpact)
   const txt  = scoreText(p.experience, p.goals, o.description, o.missionImpact, o.title)
 
-  const rawScore = sk.score + int.score + lang.score + avail.score + loc.score + fld.score + txt.score
+  const rawScore = sk.score + int.score + lang.score + loc.score + fld.score + txt.score
   const score    = Math.min(Math.max(Math.round(rawScore), 0), 100)
 
   const breakdown = {
     skills:       { score: Math.round(sk.score),    max: W.skills,       label: 'Skills' },
     interests:    { score: Math.round(int.score),   max: W.interests,    label: 'Mission fit' },
     languages:    { score: Math.round(lang.score),  max: W.languages,    label: 'Languages' },
-    availability: { score: Math.round(avail.score), max: W.availability, label: 'Availability' },
     location:     { score: Math.round(loc.score),   max: W.location,     label: 'Work mode' },
     field:        { score: Math.round(fld.score),   max: W.field,        label: 'Field of study' },
     text:         { score: Math.round(txt.score),   max: W.text,         label: 'Experience' },
@@ -423,11 +395,6 @@ export function computeMatch(studentProfile, opportunity) {
     strengths.push(`${l.lang}${lvl} — required language matched`)
   })
   lang.missing.forEach(l => missingRequirements.push(`Required language not in profile: ${l}`))
-
-  if (avail.note) {
-    if (avail.score >= W.availability * 0.7) strengths.push(avail.note)
-    else partialMatches.push(avail.note)
-  }
 
   if (loc.note) {
     if (loc.score === W.location) strengths.push(loc.note)

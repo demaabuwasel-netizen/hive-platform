@@ -78,7 +78,7 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
               className="hover:opacity-80 transition-opacity"
               type="button"
             >
-              <HiveLogo size={20} nameSize="text-sm" />
+              <HiveLogo size={20} nameSize="text-[1.3rem]" />
             </button>
             <button
               className="p-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"

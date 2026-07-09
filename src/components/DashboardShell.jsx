@@ -20,7 +20,7 @@ export default function DashboardShell({ navItems, children }) {
         style={{ borderRight: '1px solid rgba(13,24,61,0.08)' }}>
 
         <div className="px-5 py-[14px]" style={{ borderBottom: '1px solid rgba(13,24,61,0.07)' }}>
-          <Link to={user?.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'}><HiveLogo size={24} nameSize="text-base" /></Link>
+          <Link to={user?.role === 'ngo' ? '/dashboard/ngo' : '/dashboard/student'}><HiveLogo size={24} nameSize="text-[1.45rem]" /></Link>
         </div>
 
         <nav className="flex-1 p-2.5 flex flex-col gap-0.5 overflow-y-auto">

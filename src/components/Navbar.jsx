@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from './Avatar'
-import logo from '../assets/logo.PNG'
+import HiveLogo from './HiveLogo'
 
 const NAV_LINKS = [
   { label: 'Home',         to: '/'             },
@@ -42,9 +42,8 @@ export default function Navbar({ minimal = false }) {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
 
         {/* Logo */}
-        <Link to="/" aria-label="Hive home" className="shrink-0" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src={logo} alt="Hive logo" style={{ height: '70px', width: 'auto', marginTop: '20px', marginLeft: '-6px', display: 'block' }} />
-          <span style={{ fontSize: '18px', fontWeight: '900', color: '#0D183D' }}>Hive</span>
+        <Link to="/" aria-label="Hive home" className="shrink-0">
+          <HiveLogo size={48} />
         </Link>
 
         {/* Centre nav — shown when NOT logged in, desktop only */}
@@ -89,11 +88,13 @@ export default function Navbar({ minimal = false }) {
           <div className="hidden sm:flex items-center gap-3">
             {loggedIn ? (
               <>
-                <Link to="/matches"
-                  className="text-sm font-medium px-3 py-2 rounded-xl transition-all hover:bg-[#0D183D]/[0.05]"
-                  style={{ color: '#4B6382' }}>
-                  Matches
-                </Link>
+                {user.role !== 'student' && (
+                  <Link to="/matches"
+                    className="text-sm font-medium px-3 py-2 rounded-xl transition-all hover:bg-[#0D183D]/[0.05]"
+                    style={{ color: '#4B6382' }}>
+                    Matches
+                  </Link>
+                )}
 
                 <Link to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'}
                   className="flex items-center gap-2 rounded-2xl px-3 py-1.5 transition-all hover:bg-[#0D183D]/[0.05]"
@@ -153,11 +154,13 @@ export default function Navbar({ minimal = false }) {
           ))}
           {loggedIn ? (
             <>
-              <Link to="/matches" onClick={() => setMobileOpen(false)}
-                className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05]"
-                style={{ color: '#4B6382' }}>
-                Matches
-              </Link>
+              {user.role !== 'student' && (
+                <Link to="/matches" onClick={() => setMobileOpen(false)}
+                  className="text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05]"
+                  style={{ color: '#4B6382' }}>
+                  Matches
+                </Link>
+              )}
               <Link to={user.role === 'student' ? '/dashboard/student' : '/dashboard/ngo'}
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#0D183D]/[0.05]">

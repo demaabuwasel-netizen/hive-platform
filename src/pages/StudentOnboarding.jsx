@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Sparkles, Heart, Calendar, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check, X } from 'lucide-react'
+import { User, Sparkles, Heart, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
@@ -9,14 +9,14 @@ import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
-import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
+import { TextInput, SelectInput, TextArea, ChipSelector } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
 const STEPS = [
   { id: 'profile', title: 'Profile', number: 1 },
   { id: 'skills', title: 'Skills', number: 2 },
   { id: 'causes', title: 'Causes', number: 3 },
-  { id: 'availability', title: 'Availability', number: 4 },
+  { id: 'links', title: 'Links', number: 4 },
   { id: 'complete', title: 'Complete', number: 5 },
 ]
 
@@ -30,13 +30,6 @@ const CAUSES = [
   'Youth Empowerment', 'Women Empowerment', 'Education', 'Environment',
   'Health', 'Mental Health', 'Refugees', 'Community Development',
   'Technology for Good', 'Human Rights', 'Accessibility', 'Animals', 'Other'
-]
-
-const AVAILABILITY_OPTIONS = [
-  { value: '5', label: '5 hours/week' },
-  { value: '10', label: '10 hours/week' },
-  { value: '20', label: '20 hours/week' },
-  { value: 'flexible', label: 'Flexible' },
 ]
 
 const LS_KEY = (uid) => `hive_ob_student_${uid}`
@@ -244,28 +237,6 @@ export default function StudentOnboarding() {
       setSubmitting(true)
       setSubmitError('')
       try {
-        // Parse start date for profile compatibility
-        let startImmediately = false
-        let startMonth = ''
-        let startYear = ''
-        let startDate = ''
-
-        if (data.startDate === 'immediate') {
-          startImmediately = true
-        } else if (data.startDate) {
-          startDate = data.startDate
-          // Parse date string (YYYY-MM-DD) to month/year
-          const [year, month] = data.startDate.split('-')
-          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-          if (month && year) {
-            const monthIndex = parseInt(month) - 1
-            if (monthIndex >= 0 && monthIndex < 12) {
-              startMonth = monthNames[monthIndex]
-              startYear = year
-            }
-          }
-        }
-
         const skillsWithLevel = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
         const skillNames = skillsWithLevel.map(s => s.name)
 
@@ -282,24 +253,7 @@ export default function StudentOnboarding() {
           experiences: Array.isArray(data.experiences) ? data.experiences : [],
           interests: data.causes || [],
           languages: data.languages || [],
-          work_mode: data.workMode || null,
-          work_preference: data.workMode || null,
           motivation: data.motivation?.trim() || null,
-          availability: data.availability || null,
-          project_length: data.projectLength || null,
-          preferred_roles: data.preferredRoles || null,
-          start_date: startDate || null,
-          start_immediately: startImmediately,
-          start_month: startMonth || null,
-          start_year: startYear || null,
-          // Camel case versions for profile object
-          workMode: data.workMode || null,
-          projectLength: data.projectLength || null,
-          preferredRoles: data.preferredRoles || null,
-          startDate: startDate || null,
-          startImmediately: startImmediately,
-          startMonth: startMonth || null,
-          startYear: startYear || null,
           phone: data.phone?.trim() || null,
           linkedin: data.linkedin?.trim() || null,
           github: data.github?.trim() || null,
@@ -721,24 +675,6 @@ export default function StudentOnboarding() {
                   rows={3}
                 />
 
-                <FormField label="Work preference">
-                  <div className="space-y-3">
-                    {['Remote', 'In-person', 'Hybrid'].map(opt => (
-                      <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="workMode"
-                          value={opt}
-                          checked={data.workMode === opt}
-                          onChange={(e) => update('workMode', e.target.value)}
-                          className="w-4 h-4 accent-[#FFB400]"
-                        />
-                        <span className="font-medium text-[#0B163F]">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                </FormField>
-
                 <div className="flex gap-3 pt-6">
                   <SecondaryButton onClick={back}>Back</SecondaryButton>
                   <PrimaryButton onClick={next}>Continue</PrimaryButton>
@@ -751,7 +687,7 @@ export default function StudentOnboarding() {
     )
   }
 
-  // Step 3: Availability
+  // Step 3: Links
   if (step === 3) {
     return (
       <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
@@ -761,85 +697,10 @@ export default function StudentOnboarding() {
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
-                title="When can you contribute?"
-                subtitle="Help organizations understand your availability and preferences."
-                icon={Calendar}
+                title="Where can organizations learn more?"
+                subtitle="Add optional links that help organizations understand your work."
+                icon={Shield}
               >
-                <SelectInput
-                  label="Hours per week"
-                  placeholder="How much time can you dedicate?"
-                  value={data.availability || ''}
-                  onChange={(val) => update('availability', val)}
-                  options={AVAILABILITY_OPTIONS}
-                />
-
-                <SelectInput
-                  label="Preferred project length"
-                  placeholder="How long are you willing to commit?"
-                  value={data.projectLength || ''}
-                  onChange={(val) => update('projectLength', val)}
-                  options={[
-                    { value: 'short', label: 'Short-term (1-2 weeks)' },
-                    { value: 'medium', label: 'Medium-term (1-3 months)' },
-                    { value: 'long', label: 'Long-term (3+ months)' },
-                    { value: 'flexible', label: 'Flexible' },
-                  ]}
-                />
-
-                <FormField label="When can you start?">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => update('startDate', 'immediate')}
-                      className={`flex-1 p-4 rounded-[16px] border-2 transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
-                        data.startDate === 'immediate'
-                          ? 'border-[#0B163F] bg-[#0B163F] text-white'
-                          : 'border-[#E6E8EF] bg-white text-[#0B163F] hover:bg-[#FAF6EA]'
-                      }`}
-                    >
-                      <span>Immediately</span>
-                    </button>
-                    <span className="text-[#4B6382] font-semibold text-sm">or</span>
-                    <input
-                      type="date"
-                      value={data.startDate && data.startDate !== 'immediate' ? data.startDate : ''}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          update('startDate', e.target.value)
-                        }
-                      }}
-                      className={`flex-1 px-4 py-3 rounded-[16px] border-2 font-medium text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:shadow-sm transition-all ${
-                        data.startDate && data.startDate !== 'immediate'
-                          ? 'border-[#0B163F] bg-white'
-                          : 'border-[#E6E8EF] bg-white focus:border-[#0B163F]'
-                      }`}
-                      placeholder="Pick a date"
-                    />
-                  </div>
-                </FormField>
-
-                <SelectInput
-                  label="Your preferred role"
-                  placeholder="Select a preferred role"
-                  value={data.preferredRoles || ''}
-                  onChange={(val) => update('preferredRoles', val)}
-                  options={[
-                    { value: 'Designer', label: 'Designer' },
-                    { value: 'Data Analyst', label: 'Data Analyst' },
-                    { value: 'Marketing Specialist', label: 'Marketing Specialist' },
-                    { value: 'Content Writer', label: 'Content Writer' },
-                    { value: 'Frontend Developer', label: 'Frontend Developer' },
-                    { value: 'Backend Developer', label: 'Backend Developer' },
-                    { value: 'Full Stack Developer', label: 'Full Stack Developer' },
-                    { value: 'Project Manager', label: 'Project Manager' },
-                    { value: 'Business Analyst', label: 'Business Analyst' },
-                    { value: 'Social Media Manager', label: 'Social Media Manager' },
-                    { value: 'Event Coordinator', label: 'Event Coordinator' },
-                    { value: 'Research Analyst', label: 'Research Analyst' },
-                    { value: 'Fundraising Specialist', label: 'Fundraising Specialist' },
-                  ]}
-                />
-
                 <TextInput
                   label="LinkedIn (optional)"
                   placeholder="https://linkedin.com/in/yourname"
@@ -933,7 +794,7 @@ export default function StudentOnboarding() {
 
                 <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
                   <p className="text-sm text-[#4E6385]">
-                    <strong className="text-[#0B163F]">What happens next?</strong> We'll match you with opportunities that align with your skills, availability, and values. You can browse opportunities, apply to projects, and start making an impact.
+                    <strong className="text-[#0B163F]">What happens next?</strong> We'll match you with opportunities that align with your skills and values. You can browse opportunities, apply to projects, and start making an impact.
                   </p>
                 </div>
 

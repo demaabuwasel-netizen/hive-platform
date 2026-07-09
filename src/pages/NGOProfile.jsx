@@ -1,10 +1,52 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Building2, MapPin, Mail, Phone, Globe, Heart, Zap, Target, Edit2, Camera, ExternalLink, X, Check } from 'lucide-react'
+import {
+  Building2, Globe, Heart, Target, Edit2,
+  Camera, ExternalLink, X, Check
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
-import cardsBackground from '../assets/cards_background.png'
+
+const FOCUS_OPTIONS = ['Youth Empowerment', 'Education', 'Healthcare', 'Environment', 'Technology', 'Community Development']
+
+const SKILL_OPTIONS = [
+  'Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming',
+  'Project Management', 'Research', 'Writing', 'Graphic Design', 'Video Production',
+  'Public Speaking', 'Social Media', 'Fundraising', 'Mentoring', 'Curriculum Development',
+  'Data Visualization', 'Web Development', 'Mobile Development', 'Business Analysis',
+  'Grant Writing', 'Copywriting', 'SEO', 'Content Strategy', 'User Experience',
+  'Strategic Planning', 'Community Engagement', 'Accounting', 'Legal Expertise',
+  'HR Management', 'Event Management', 'Public Relations', 'Advocacy',
+  'Nonprofit Management', 'Impact Measurement', 'Finance', 'Operations',
+  'Volunteer Coordination', 'Education', 'Healthcare', 'Youth Development',
+  'Technology Support', 'AI/Machine Learning', 'Cloud Computing'
+]
+
+const PROJECT_OPTIONS = [
+  'Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning',
+  'Fundraising', 'Training', 'Consulting', 'Marketing Campaign', 'Social Media Strategy',
+  'Grant Writing', 'Policy Brief', 'Video Production', 'Newsletter',
+  'Database Development', 'Data Analysis', 'Branding', 'Curriculum Design',
+  'Workshop', 'Mentorship Program', 'Community Survey', 'Annual Report',
+  'Strategic Plan', 'Dashboard/Analytics', 'Outreach Program', 'Partnership Development',
+  'Impact Report', 'Technology Infrastructure', 'Process Improvement'
+]
+
+function SectionHeader({ title, action }) {
+  return (
+    <div className="mb-4 flex items-center justify-between gap-4">
+      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+        {title}
+      </p>
+      {action}
+    </div>
+  )
+}
+
+function EmptyText({ children = 'Not added yet' }) {
+  return <p className="text-[0.9rem] text-[#9AA0A6]">{children}</p>
+}
 
 export default function NGOProfile() {
   const { user, profile, updateProfile } = useApp()
@@ -16,6 +58,12 @@ export default function NGOProfile() {
   const [saving, setSaving] = useState(false)
 
   const displayName = profile?.name || user?.name || 'Organization'
+  const initials = displayName
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   const startEdit = (field) => {
     setEditingField(field)
@@ -28,587 +76,267 @@ export default function NGOProfile() {
   }
 
   const saveEdit = async (field) => {
-    if (!user?.id) {
-      console.error('No user ID')
-      alert('Error: No user ID')
-      return
-    }
-    if (!profile) {
-      console.error('No profile loaded')
-      alert('Error: No profile loaded')
+    if (!user?.id || !profile) {
+      alert('Profile is still loading. Please try again.')
       return
     }
 
     setSaving(true)
     try {
-      console.log(`[NGOProfile] Saving ${field}:`, editValues[field])
-      const updated = { ...profile, [field]: editValues[field] }
-      console.log('[NGOProfile] Updated profile object:', JSON.stringify(updated, null, 2))
-
-      // WAIT for save to complete
-      await updateProfile(updated)
-      console.log('[NGOProfile] Save successful! Data persisted.')
-
-      // Only close AFTER save succeeds
+      await updateProfile({ ...profile, [field]: editValues[field] })
       setEditingField(null)
       setEditValues({})
-      alert(`✓ ${field} saved successfully!`)
     } catch (err) {
-      console.error('[NGOProfile] Save failed:', err.message, err)
-      alert(`Save failed: ${err.message}. Check console for details.`)
+      console.error('[NGOProfile] Save failed:', err)
+      alert(`Save failed: ${err.message}`)
     } finally {
       setSaving(false)
     }
   }
 
+  const EditButton = ({ field }) => (
+    <button
+      onClick={() => startEdit(field)}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F5FE] hover:text-[#1A73E8]"
+      aria-label={`Edit ${field}`}
+    >
+      <Edit2 size={14} />
+    </button>
+  )
+
+  const FieldActions = ({ field }) => (
+    <div className="mt-3 flex gap-2">
+      <button
+        onClick={() => saveEdit(field)}
+        disabled={saving}
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#1A73E8] px-4 py-2 text-[0.82rem] font-semibold text-white transition-opacity disabled:opacity-50"
+      >
+        <Check size={13} />
+        Save
+      </button>
+      <button
+        onClick={cancelEdit}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-white px-4 py-2 text-[0.82rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#FBFCFE]"
+      >
+        <X size={13} />
+        Cancel
+      </button>
+    </div>
+  )
+
+  const EditableText = ({ field, title, rows = 4 }) => (
+    <section className="border-t border-[#E5EEFB] py-5 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+          {title}
+        </h3>
+        {editingField !== field && <EditButton field={field} />}
+      </div>
+      {editingField === field ? (
+        <>
+          <textarea
+            value={editValues[field] || ''}
+            onChange={(e) => setEditValues({ [field]: e.target.value })}
+            className="w-full resize-none rounded-[20px] border border-[#DDE7F7] bg-[#FBFCFE] px-4 py-3 text-[0.92rem] leading-7 text-[#202124] outline-none focus:border-[#1A73E8] focus:ring-4 focus:ring-[#1A73E8]/10"
+            rows={rows}
+          />
+          <FieldActions field={field} />
+        </>
+      ) : (
+        <p className="max-w-4xl whitespace-pre-wrap text-[0.94rem] leading-8 text-[#5F6368]">
+          {profile?.[field] || <EmptyText />}
+        </p>
+      )}
+    </section>
+  )
+
+  const EditableTopics = ({ field, title, options }) => (
+    <section className="border-t border-[#E5EEFB] py-5 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+          {title}
+        </h3>
+        {editingField !== field && <EditButton field={field} />}
+      </div>
+      {editingField === field ? (
+        <>
+          <TopicPicker
+            value={editValues[field] || []}
+            onChange={(items) => setEditValues({ [field]: items })}
+            options={options}
+            placeholder={`Search or add ${title.toLowerCase()}...`}
+          />
+          <FieldActions field={field} />
+        </>
+      ) : profile?.[field]?.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {profile[field].map((item, index) => (
+            <span
+              key={`${item}-${index}`}
+              className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.82rem] font-medium text-[#5F6368]"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <EmptyText />
+      )}
+    </section>
+  )
+
+  const links = [
+    profile?.website && { icon: Globe, label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
+    profile?.instagram && { icon: Heart, label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
+    profile?.twitter && { icon: Target, label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
+    profile?.registrationNumber && { icon: Building2, label: 'Registration', value: profile.registrationNumber },
+  ].filter(Boolean)
+
   return (
-    <main className="flex-1 overflow-y-auto bg-[#FAFBFC]">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-
-        {/* ═══════════════════════════════════════════════════════════
-            HERO SECTION - Premium Profile Header with Dark Gradient
-        ═══════════════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}
-          className="mb-12">
-          <div className="relative bg-gradient-to-br from-[#0D183D] to-[#1a2f5c] rounded-3xl p-8 overflow-hidden">
-
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-[0.08] blur-3xl pointer-events-none"
-              style={{ background: '#FFB703' }}/>
-
-            <div className="relative flex items-start gap-8">
-              {/* Logo */}
-              <div className="flex-shrink-0">
-                <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center border border-[rgba(255,255,255,0.2)]">
-                  {profile?.imageUrl ? (
-                    <img src={profile.imageUrl} alt={displayName} className="w-full h-full object-cover" />
-                  ) : (
-                    <Building2 size={48} className="text-[#FFB703]" />
-                  )}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-1 right-1 p-2 bg-[#FFB703] rounded-lg text-white hover:opacity-90 transition-opacity shadow-lg"
-                    title="Change logo">
-                    <Camera size={13} />
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          // This would need updateProfile from useApp
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    <h1 className="text-4xl font-bold text-white mb-2">{displayName}</h1>
-                    {profile?.summary && (
-                      <p className="text-[15px] text-white/80 font-medium">{profile.summary}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => navigate('/profile/ngo/edit')}
-                    className="flex-shrink-0 px-4 py-2 rounded-xl bg-[#FFB703] text-[#0D183D] text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm">
-                    <Edit2 size={14} />
-                    Edit
-                  </button>
-                </div>
-
-                {/* Meta info: location, size */}
-                <div className="flex flex-wrap items-center gap-6 mt-4 text-[14px]">
-                  {profile?.location && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <MapPin size={16} className="text-[#FFB703]" />
-                      {profile.location}
-                    </div>
-                  )}
-                  {profile?.orgSize && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <Building2 size={16} className="text-[#FFB703]" />
-                      {profile.orgSize} employees
-                    </div>
-                  )}
-                  {user?.email && (
-                    <div className="flex items-center gap-2 text-white/80">
-                      <Mail size={16} className="text-[#FFB703]" />
-                      {user.email}
-                    </div>
-                  )}
-                  {profile?.phone && (
-                    <div className="flex items-center gap-2 text-[#4B6382]">
-                      <Phone size={16} className="text-[#FFB703]" />
-                      {profile.phone}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+      <div className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
+        <motion.header
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div className="max-w-3xl">
+            <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
+              Profile
+            </h1>
+            <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
+              Keep your organization story, mission, focus areas, and links in one clear view for students and stronger matches.
+            </p>
           </div>
-        </motion.div>
+        </motion.header>
 
-        {/* ═══════════════════════════════════════════════════════════
-            MAIN CONTENT - Organized Sections
-        ═══════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="relative overflow-hidden rounded-[34px] border p-7 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+          style={{
+            borderColor: 'rgba(26,115,232,0.10)',
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #F6FAFF 48%, #E8F0FE 100%)'
+          }}
+        >
+          <div
+            className="absolute inset-x-8 top-0 h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(26,115,232,0.45), transparent)' }}
+          />
+          <div
+            className="absolute -right-20 -top-24 h-64 w-64 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(26,115,232,0.13), transparent 62%)' }}
+          />
+          <div
+            className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(66,133,244,0.10), transparent 64%)' }}
+          />
 
-        {/* SECTION 1: ABOUT & MISSION */}
-        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-          viewport={{ once:true }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382]">About</h2>
-            <button
-              onClick={() => navigate('/profile/ngo/edit')}
-              className="text-[11px] font-semibold text-[#FFB703] hover:text-[#0D183D] transition-colors flex items-center gap-1">
-              <Edit2 size={13} /> Edit
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">About the Organization</h3>
-                {editingField !== 'description' && (
-                  <button
-                    onClick={() => startEdit('description')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
-                )}
-              </div>
-              {editingField === 'description' ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editValues.description || ''}
-                    onChange={(e) => setEditValues({description: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
-                    rows="4"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('description')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[28px] border border-white bg-white shadow-[0_14px_34px_rgba(26,115,232,0.16)]">
+                {profile?.imageUrl ? (
+                  <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[#E8F0FE] text-[1.65rem] font-semibold text-[#1A73E8]">
+                    {initials || <Building2 size={30} />}
                   </div>
-                </div>
-              ) : (
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.description || 'Not added yet'}</p>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Mission</h3>
-                {editingField !== 'mission' && (
-                  <button
-                    onClick={() => startEdit('mission')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
                 )}
-              </div>
-              {editingField === 'mission' ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editValues.mission || ''}
-                    onChange={(e) => setEditValues({mission: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
-                    rows="4"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('mission')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.mission || 'Not added yet'}</p>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Communities Served</h3>
-                {editingField !== 'communities' && (
-                  <button
-                    onClick={() => startEdit('communities')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
-                )}
-              </div>
-              {editingField === 'communities' ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editValues.communities || ''}
-                    onChange={(e) => setEditValues({communities: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
-                    rows="4"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('communities')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.communities || 'Not added yet'}</p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* SECTION 2: WHAT WE NEED */}
-        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-          viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Opportunities</h2>
-          <div className="bg-gradient-to-br from-[#FFF9E6] to-white rounded-xl border border-[rgba(255,183,3,0.15)] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">What We Need Help With</h3>
-              {editingField !== 'helpNeeded' && (
                 <button
-                  onClick={() => startEdit('helpNeeded')}
-                  className="p-1 rounded-lg hover:bg-white/50 transition-colors text-[#FFB703]">
-                  <Edit2 size={12} />
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1A73E8] shadow-[0_4px_14px_rgba(26,115,232,0.18)]"
+                  title="Change logo"
+                >
+                  <Camera size={13} />
                 </button>
-              )}
-            </div>
-            {editingField === 'helpNeeded' ? (
-              <div className="space-y-2">
-                <textarea
-                  value={editValues.helpNeeded || ''}
-                  onChange={(e) => setEditValues({helpNeeded: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border border-[rgba(13,24,61,0.1)] text-[13px] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFB703]"
-                  rows="4"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => saveEdit('helpNeeded')}
-                    disabled={saving}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                    <Check size={12} /> Save
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                    <X size={12} /> Cancel
-                  </button>
-                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
               </div>
-            ) : (
-              <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile?.helpNeeded || 'Not added yet'}</p>
-            )}
-          </div>
-        </motion.div>
 
-        {/* SECTION 3: TAGS & SKILLS */}
-        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-          viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Focus & Skills</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Focus Areas */}
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Focus Areas</h3>
-                {editingField !== 'tags' && (
-                  <button
-                    onClick={() => startEdit('tags')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
-                )}
+              <div className="min-w-0">
+                <h1 className="text-[2.3rem] font-semibold tracking-[-0.04em] text-[#202124]">
+                  {displayName}
+                </h1>
+                <p className="mt-2 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
+                  {profile?.summary || 'Keep your organization profile clear, current, and ready for strong student matches.'}
+                </p>
               </div>
-              {editingField === 'tags' ? (
-                <div className="space-y-2">
-                  <TopicPicker
-                    value={editValues.tags || []}
-                    onChange={(newTags) => setEditValues({tags: newTags})}
-                    options={['Youth Empowerment', 'Education', 'Healthcare', 'Environment', 'Technology', 'Community Development']}
-                    placeholder="Search or add focus areas…"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('tags')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {profile?.tags?.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.tags.map((tag, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#FFB703]/10 text-[#92610a]">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Preferred Skills */}
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Preferred Skills</h3>
-                {editingField !== 'preferred_skills' && (
-                  <button
-                    onClick={() => startEdit('preferred_skills')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
-                )}
-              </div>
-              {editingField === 'preferred_skills' ? (
-                <div className="space-y-2">
-                  <TopicPicker
-                    value={editValues.preferred_skills || []}
-                    onChange={(newSkills) => setEditValues({preferred_skills: newSkills})}
-                    options={['Communication', 'Leadership', 'Data Analysis', 'Design', 'Marketing', 'Programming', 'Project Management', 'Research', 'Writing', 'Graphic Design', 'Video Production', 'Public Speaking', 'Social Media', 'Fundraising', 'Mentoring', 'Curriculum Development', 'Data Visualization', 'Web Development', 'Mobile Development', 'Business Analysis', 'Grant Writing', 'Copywriting', 'SEO', 'Content Strategy', 'User Experience', 'Strategic Planning', 'Community Engagement', 'Accounting', 'Legal Expertise', 'HR Management', 'Event Management', 'Public Relations', 'Advocacy', 'Nonprofit Management', 'Impact Measurement', 'Finance', 'Operations', 'Volunteer Coordination', 'Diversity & Inclusion', 'Sustainability', 'Education', 'Healthcare', 'Youth Development', 'Emergency Response', 'Technology Support', 'Cybersecurity', 'Network Administration', 'IT Infrastructure', 'DevOps', 'AI/Machine Learning', 'Cloud Computing']}
-                    placeholder="Search or add preferred skills…"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('preferred_skills')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {profile?.preferred_skills?.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.preferred_skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#3B82F6]/10 text-[#1E40AF]">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Project Types */}
-            <div className="bg-white rounded-xl border border-[rgba(13,24,61,0.08)] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#0D183D]">Project Types</h3>
-                {editingField !== 'project_types' && (
-                  <button
-                    onClick={() => startEdit('project_types')}
-                    className="p-1 rounded-lg hover:bg-[#F8F9FB] transition-colors text-[#FFB703]">
-                    <Edit2 size={12} />
-                  </button>
-                )}
-              </div>
-              {editingField === 'project_types' ? (
-                <div className="space-y-2">
-                  <TopicPicker
-                    value={editValues.project_types || []}
-                    onChange={(newTypes) => setEditValues({project_types: newTypes})}
-                    options={['Website', 'Mobile App', 'Research', 'Content Creation', 'Event Planning', 'Fundraising', 'Training', 'Consulting', 'Marketing Campaign', 'Social Media Strategy', 'Grant Writing', 'Policy Brief', 'Video Production', 'Podcast', 'Newsletter', 'Database Development', 'Data Analysis', 'Branding', 'Curriculum Design', 'Workshop', 'Mentorship Program', 'Community Survey', 'Annual Report', 'Strategic Plan', 'Budget Analysis', 'Case Study', 'Impact Assessment', 'Advocacy Campaign', 'Volunteer Recruitment', 'Impact Report', 'Dashboard/Analytics', 'Helpline/Hotline', 'Outreach Program', 'Partnership Development', 'Donor Communications', 'Staff Training', 'Policy Change Initiative', 'Community Center', 'Resource Hub', 'Mobile Clinic', 'Emergency Response', 'Scholarship Program', 'Internship Program', 'Fellowship Program', 'Research Study', 'Pilot Program', 'Sustainability Initiative', 'Technology Infrastructure', 'Security Audit', 'Process Improvement']}
-                    placeholder="Search or add project types…"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit('project_types')}
-                      disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#FFB703] text-white text-[12px] font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
-                      <Check size={12} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(13,24,61,0.1)] text-[#4B6382] text-[12px] font-semibold rounded-lg hover:bg-[#F8F9FB] transition-colors">
-                      <X size={12} /> Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {profile?.project_types?.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.project_types.map((type, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#10B981]/10 text-[#065F46]">
-                          {type}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  )}
-                </>
-              )}
             </div>
           </div>
-        </motion.div>
+        </motion.section>
 
-        {/* SECTION 4: LINKS & SOCIAL */}
-        <motion.div initial={{ opacity:0, y:12 }} whileInView={{ opacity:1, y:0 }}
-          viewport={{ once:true }} className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#4B6382] mb-4">Connect</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {profile?.website ? (
-              <a href={profile.website} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                    <Globe size={18} className="text-[#3B82F6]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Website</p>
-                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.website.replace(/^https?:\/\/(www\.)?/, '')}</p>
-                  </div>
-                </div>
-                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
-              </a>
-            ) : (
-              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                    <Globe size={18} className="text-[#3B82F6]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Website</p>
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  </div>
-                </div>
-              </div>
-            )}
+        <div className="mt-7 space-y-6">
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+            className="rounded-[30px] border bg-white p-6"
+            style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+          >
+            <SectionHeader title="About" />
+            <EditableText field="description" title="About the organization" />
+            <EditableText field="mission" title="Mission" />
+            <EditableText field="helpNeeded" title="What we need help with" />
+          </motion.section>
 
-            {profile?.instagram ? (
-              <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
-                    <Heart size={18} className="text-[#EC4899]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Instagram</p>
-                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.instagram.replace(/^https?:\/\/(www\.)?/, '')}</p>
-                  </div>
-                </div>
-                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
-              </a>
-            ) : (
-              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#EC4899]/10 flex items-center justify-center">
-                    <Heart size={18} className="text-[#EC4899]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Instagram</p>
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  </div>
-                </div>
-              </div>
-            )}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            className="rounded-[30px] border bg-white p-6"
+            style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+          >
+            <SectionHeader title="Focus" />
+            <EditableTopics field="tags" title="Focus areas" options={FOCUS_OPTIONS} />
+            <EditableTopics field="preferred_skills" title="Preferred skills" options={SKILL_OPTIONS} />
+            <EditableTopics field="project_types" title="Project types" options={PROJECT_OPTIONS} />
+          </motion.section>
 
-            {profile?.twitter ? (
-              <a href={profile.twitter} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white hover:bg-[#FAFBFC] transition-colors group">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
-                    <Target size={18} className="text-[#0891B2]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Twitter / X</p>
-                    <p className="text-[13px] font-semibold text-[#0D183D] truncate">{profile.twitter.replace(/^https?:\/\/(www\.)?/, '')}</p>
-                  </div>
-                </div>
-                <ExternalLink size={14} className="text-[#4B6382] group-hover:text-[#0D183D] opacity-50 flex-shrink-0" />
-              </a>
-            ) : (
-              <div className="flex items-center justify-between p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#0891B2]/10 flex items-center justify-center">
-                    <Target size={18} className="text-[#0891B2]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#4B6382] uppercase">Twitter / X</p>
-                    <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                  </div>
-                </div>
-              </div>
-            )}
+          {links.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.15 }}
+              className="rounded-[30px] border bg-white p-6"
+              style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+            >
+              <SectionHeader title="Connect" />
+              <div className="space-y-3">
+                {links.map(({ icon: Icon, label, value, href }) => {
+                  const content = (
+                    <>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                        <Icon size={17} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{label}</p>
+                        <p className="truncate text-[0.88rem] font-semibold text-[#202124]">{value}</p>
+                      </div>
+                      {href && <ExternalLink size={14} className="text-[#9AA0A6]" />}
+                    </>
+                  )
 
-            {profile?.registrationNumber ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
-                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 size={18} className="text-[#6366F1]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-[#4B6382] uppercase">Registration</p>
-                  <p className="text-[13px] font-semibold text-[#0D183D]">{profile.registrationNumber}</p>
-                </div>
+                  return href ? (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE] p-3 transition-colors hover:bg-white"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div key={label} className="flex items-center gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE] p-3">
+                      {content}
+                    </div>
+                  )
+                })}
               </div>
-            ) : (
-              <div className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(13,24,61,0.08)] bg-white">
-                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 size={18} className="text-[#6366F1]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-[#4B6382] uppercase">Registration</p>
-                  <p className="text-[13px] text-[#4B6382]">Not added yet</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Footer spacing */}
-        <div className="h-8" />
+            </motion.section>
+          )}
+        </div>
       </div>
     </main>
   )

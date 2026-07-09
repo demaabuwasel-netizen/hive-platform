@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle2, Sparkles, MessageCircle, Send, Search, Target, Brain } from 'lucide-react'
+import {
+  X, CheckCircle2, Sparkles, MessageCircle, Send, Search, Target, Brain,
+  Briefcase, Users, ChevronRight, Mail, GraduationCap, MapPin, Layers,
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
 import EmptyState from '../components/EmptyState'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchActiveOpportunities } from '../services/opportunities'
+import { fetchActiveOpportunities, fetchNgoOpportunities, parseSkillString } from '../services/opportunities'
 import { computeMatch } from '../services/matching'
+import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
@@ -34,6 +39,34 @@ function oppToCard(opp, matchResult, userName, userField) {
     studentName:  userName,
     studentField: userField,
   }
+}
+
+function normalizeStudentProfile(row) {
+  const userRecord = Array.isArray(row.users) ? row.users[0] : row.users
+  const skills = (row.skills ?? [])
+    .map(skill => (skill ? parseSkillString(skill) : { name: '', level: '' }))
+    .filter(skill => skill.name)
+
+  return {
+    id: row.user_id,
+    name: userRecord?.name || row.name || 'Student',
+    field: row.field || '',
+    university: row.university || '',
+    bio: row.bio || '',
+    skills,
+    languages: row.languages ?? [],
+    interests: row.interests ?? [],
+    experience: row.experience || '',
+    goals: row.goals || '',
+    links: row.links ?? {},
+  }
+}
+
+function topSkills(skills, limit = 4) {
+  return (skills ?? [])
+    .map(skill => (typeof skill === 'string' ? skill : skill?.name))
+    .filter(Boolean)
+    .slice(0, limit)
 }
 
 // ─── Match ring ───────────────────────────────────────────────────────────────
@@ -275,19 +308,335 @@ function PersonalizedMatchCard({ match, index, userName, userField, onOpen }) {
   )
 }
 
+function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loading = false }) {
+  return (
+    <aside
+      className="sticky top-6 flex max-h-[calc(100vh-120px)] min-h-[600px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+    >
+      <div className="shrink-0 border-b px-5 py-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+          <Briefcase size={18} strokeWidth={2.3} />
+        </div>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Opportunities</p>
+        <p className="mt-1 text-[0.95rem] font-semibold text-[#202124]">Choose a role</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="space-y-2.5 px-3 py-3">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="h-[112px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-4">
+                <div className="h-4 w-2/3 rounded-full bg-[#EEF4FF]" />
+                <div className="mt-3 h-3 w-1/2 rounded-full bg-[#F1F4F9]" />
+                <div className="mt-4 h-6 w-28 rounded-full bg-[#EEF4FF]" />
+              </div>
+            ))}
+          </div>
+        ) : roles.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F1F4F9] text-[#5F6368]">
+              <Layers size={22} />
+            </div>
+            <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No roles yet</p>
+            <p className="text-[0.8rem] leading-5 text-[#5F6368]">Create an opportunity first, then Hive can rank students for it.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5 px-3 py-3">
+            {roles.map((role, i) => {
+              const isActive = String(selectedRoleId) === String(role.id)
+              const summary = roleSummaries[String(role.id)] ?? { topScore: 0, count: 0 }
+              return (
+                <motion.button
+                  key={role.id}
+                  initial={false}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.12 }}
+                  onClick={() => onSelectRole(role.id)}
+                  className={`min-h-[112px] w-full rounded-[22px] border px-4 py-4 text-left transition-all ${
+                    isActive
+                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_10px_24px_rgba(26,115,232,0.12)]'
+                      : 'border-[#E5EEFB] bg-white hover:border-[#D7E6FF] hover:bg-[#FBFCFE]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`truncate text-[0.92rem] font-semibold ${isActive ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {role.title || 'Untitled role'}
+                      </p>
+                      <p className="mt-1 truncate text-[0.76rem] text-[#5F6368]">
+                        {role.category || role.field || role.workMode || 'General opportunity'}
+                      </p>
+                    </div>
+                    <ChevronRight size={16} className={isActive ? 'text-[#1A73E8]' : 'text-[#9AA0A6]'} />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${
+                      isActive ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F4F9] text-[#5F6368]'
+                    }`}>
+                      {summary.count} top matches
+                    </span>
+                    {summary.topScore > 0 && (
+                      <span className="text-[0.72rem] font-semibold text-[#188038]">
+                        Best {summary.topScore}%
+                      </span>
+                    )}
+                  </div>
+                </motion.button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </aside>
+  )
+}
+
+function NgoStudentMatchCard({ match, index, onViewProfile, onReachOut }) {
+  const { student, result } = match
+  const skills = topSkills(student.skills)
+  const reasons = result.reasons?.slice(0, 2) ?? []
+
+  return (
+    <motion.article
+      initial={false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
+      className="min-h-[254px] rounded-[28px] border border-[#E5EEFB] bg-white p-5 shadow-[0_12px_34px_rgba(17,24,39,0.035)] transition-all hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:shadow-[0_18px_40px_rgba(17,24,39,0.065)]"
+    >
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 gap-4">
+          <GradientAvatar name={student.name} size={56} radius="1rem" />
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <h3 className="truncate text-[1.05rem] font-semibold text-[#202124]">{student.name}</h3>
+              <MatchScoreBadge score={result.score} />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[#5F6368]">
+              {student.field && (
+                <span className="inline-flex items-center gap-1.5">
+                  <GraduationCap size={14} className="text-[#1A73E8]" />
+                  {student.field}
+                </span>
+              )}
+              {student.university && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin size={14} className="text-[#188038]" />
+                  {student.university}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => onViewProfile(student.id)}
+            className="rounded-full border border-[#D7E6FF] px-4 py-2 text-[0.8rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+          >
+            View profile
+          </button>
+          <button
+            onClick={() => onReachOut(student.id)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2 text-[0.8rem] font-semibold text-white shadow-[0_10px_22px_rgba(26,115,232,0.22)] transition-all hover:bg-[#1765CC]"
+          >
+            <Mail size={14} />
+            Reach out
+          </button>
+        </div>
+      </div>
+
+      <p className="mt-4 text-[0.9rem] leading-6 text-[#5F6368]">
+        {result.headline}
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {skills.map(skill => (
+          <span key={skill} className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#3C4043]">
+            {skill}
+          </span>
+        ))}
+        {skills.length === 0 && (
+          <span className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#5F6368]">
+            Skills not listed yet
+          </span>
+        )}
+      </div>
+
+      {reasons.length > 0 && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {reasons.map(reason => (
+            <div
+              key={reason.label}
+              className="rounded-2xl border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3"
+            >
+              <p className="text-[0.76rem] font-semibold text-[#202124]">{reason.label}</p>
+              <p className="mt-1 line-clamp-2 text-[0.75rem] leading-5 text-[#5F6368]">{reason.detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </motion.article>
+  )
+}
+
+function NgoMatchesView({
+  roles,
+  loading,
+  error,
+  selectedRoleId,
+  onSelectRole,
+  selectedRole,
+  selectedMatches,
+  roleSummaries,
+  onViewProfile,
+  onReachOut,
+}) {
+  return (
+    <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
+      <NgoRoleRail
+        roles={roles}
+        selectedRoleId={selectedRoleId}
+        onSelectRole={onSelectRole}
+        roleSummaries={roleSummaries}
+        loading={loading}
+      />
+
+      <section className="min-w-0 space-y-5">
+        {error && (
+          <div className="rounded-[22px] border border-red-200 bg-red-50 px-5 py-4 text-[0.9rem] font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <>
+            <div className="rounded-[28px] border border-[#E5EEFB] bg-white p-6 shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="h-7 w-40 animate-pulse rounded-full bg-[#E8F0FE]" />
+                  <div className="mt-4 h-10 w-3/5 animate-pulse rounded-2xl bg-[#EEF4FF]" />
+                  <div className="mt-4 h-4 w-2/3 animate-pulse rounded-full bg-[#F1F4F9]" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:flex">
+                  {[0, 1].map(i => (
+                    <div key={i} className="h-[74px] w-[108px] animate-pulse rounded-2xl bg-[#F8FAFF]" />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="min-h-[254px] animate-pulse rounded-[28px] border border-[#E5EEFB] bg-white p-5 shadow-[0_12px_34px_rgba(17,24,39,0.035)]">
+                  <div className="flex items-start gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-[#E8F0FE]" />
+                    <div className="flex-1">
+                      <div className="h-5 w-1/3 rounded-full bg-[#EEF4FF]" />
+                      <div className="mt-3 h-4 w-1/2 rounded-full bg-[#F1F4F9]" />
+                    </div>
+                    <div className="h-9 w-28 rounded-full bg-[#E8F0FE]" />
+                  </div>
+                  <div className="mt-5 h-4 w-full rounded-full bg-[#F1F4F9]" />
+                  <div className="mt-3 h-4 w-4/5 rounded-full bg-[#F1F4F9]" />
+                  <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                    <div className="h-16 rounded-2xl bg-[#FBFCFE]" />
+                    <div className="h-16 rounded-2xl bg-[#FBFCFE]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : !selectedRole ? (
+          <div className="flex min-h-[520px] flex-col items-center justify-center rounded-[28px] border border-[#E5EEFB] bg-white px-6 text-center shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
+              <Users size={26} />
+            </div>
+            <h2 className="text-[1.2rem] font-semibold text-[#202124]">Pick a role to see matches</h2>
+            <p className="mt-2 max-w-md text-[0.9rem] leading-6 text-[#5F6368]">
+              Hive will rank student profiles by skills, mission fit, field, language, and role details.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-[28px] border border-[#E5EEFB] bg-white p-6 shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="mb-3 inline-flex rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8]">
+                    Ranked student matches
+                  </p>
+                  <h2 className="text-[clamp(1.6rem,3vw,2.35rem)] font-semibold leading-tight tracking-[-0.04em] text-[#202124]">
+                    {selectedRole.title || 'Selected role'}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-[0.92rem] leading-6 text-[#5F6368]">
+                    Top students are sorted by compatibility, so you can quickly find people worth inviting into a conversation.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:flex">
+                  <div className="rounded-2xl bg-[#F8FAFF] px-4 py-3 text-center">
+                    <p className="text-[1.25rem] font-semibold text-[#202124]">{selectedMatches.length}</p>
+                    <p className="text-[0.72rem] font-semibold text-[#5F6368]">Top matches</p>
+                  </div>
+                  <div className="rounded-2xl bg-[#F0FBF4] px-4 py-3 text-center">
+                    <p className="text-[1.25rem] font-semibold text-[#188038]">
+                      {selectedMatches[0]?.result.score ?? 0}%
+                    </p>
+                    <p className="text-[0.72rem] font-semibold text-[#5F6368]">Best fit</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {selectedMatches.length === 0 ? (
+              <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-[#E5EEFB] bg-white px-6 text-center shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+                <Search size={28} className="mb-4 text-[#9AA0A6]" />
+                <h3 className="text-[1.05rem] font-semibold text-[#202124]">No student profiles to match yet</h3>
+                <p className="mt-2 max-w-md text-[0.88rem] leading-6 text-[#5F6368]">
+                  Once students complete their profiles, this role will show ranked recommendations here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4" role="list" aria-label="Student matches for selected role">
+                {selectedMatches.map((match, index) => (
+                  <div key={match.student.id} role="listitem">
+                    <NgoStudentMatchCard
+                      match={match}
+                      index={index}
+                      onViewProfile={onViewProfile}
+                      onReachOut={onReachOut}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    </div>
+  )
+}
+
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MatchResults() {
   const { user, profile } = useApp()
+  const navigate = useNavigate()
   const [matches, setMatches]   = useState([])
   const [loading, setLoading]   = useState(true)
   const [activeMatch, setActiveMatch] = useState(null)
+  const [ngoRoles, setNgoRoles] = useState([])
+  const [ngoStudents, setNgoStudents] = useState([])
+  const [ngoLoading, setNgoLoading] = useState(true)
+  const [ngoError, setNgoError] = useState(null)
+  const [selectedNgoRoleId, setSelectedNgoRoleId] = useState(null)
+
+  const isNgo = user?.role === 'ngo'
 
   const userName = profile?.name || user?.name || 'You'
   const userField = profile?.field || ''
 
   useEffect(() => {
+    if (isNgo) return
     if (!profile) { setLoading(false); return }
     withTimeout(fetchActiveOpportunities(), 10000, 'fetchActiveOpportunities')
       .then(opps => {
@@ -298,7 +647,134 @@ export default function MatchResults() {
       })
       .catch(err => console.error('Failed to fetch matches:', err.message))
       .finally(() => setLoading(false))
-  }, [user?.id])
+  }, [isNgo, profile, user?.id, userField, userName])
+
+  useEffect(() => {
+    if (!isNgo || !user?.id) {
+      setNgoLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setNgoLoading(true)
+    setNgoError(null)
+
+    Promise.all([
+      withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunitiesForMatches'),
+      withTimeout(
+        supabase
+          .from('student_profiles')
+          .select('user_id, field, university, skills, languages, bio, interests, links, experience, goals, users(id, name)')
+          .then(({ data, error }) => {
+            if (error) throw new Error(error.message)
+            return data ?? []
+          }),
+        10000,
+        'fetchStudentProfilesForNgoMatches'
+      ),
+    ])
+      .then(([roles, studentRows]) => {
+        if (cancelled) return
+        setNgoRoles(roles)
+        setNgoStudents(studentRows.map(normalizeStudentProfile))
+        setSelectedNgoRoleId(current => {
+          if (current && roles.some(role => String(role.id) === String(current))) return current
+          return roles[0]?.id ?? null
+        })
+      })
+      .catch(err => {
+        if (!cancelled) setNgoError('Could not load matches. ' + err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setNgoLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isNgo, user?.id])
+
+  const roleMatches = useMemo(() => {
+    if (!isNgo) return {}
+
+    return Object.fromEntries(
+      ngoRoles.map(role => {
+        const ranked = ngoStudents
+          .map(student => ({ student, result: computeMatch(student, role) }))
+          .sort((a, b) => b.result.score - a.result.score)
+          .slice(0, 10)
+        return [String(role.id), ranked]
+      })
+    )
+  }, [isNgo, ngoRoles, ngoStudents])
+
+  const selectedNgoRole = useMemo(
+    () => ngoRoles.find(role => String(role.id) === String(selectedNgoRoleId)) ?? null,
+    [ngoRoles, selectedNgoRoleId]
+  )
+
+  const selectedNgoMatches = selectedNgoRole ? (roleMatches[String(selectedNgoRole.id)] ?? []) : []
+
+  const roleSummaries = useMemo(() => (
+    Object.fromEntries(
+      ngoRoles.map(role => {
+        const ranked = roleMatches[String(role.id)] ?? []
+        return [
+          String(role.id),
+          {
+            count: ranked.length,
+            topScore: ranked[0]?.result.score ?? 0,
+          },
+        ]
+      })
+    )
+  ), [ngoRoles, roleMatches])
+
+  function handleViewStudentProfile(studentId) {
+    navigate(`/student-profile/${studentId}?backTo=matches`)
+  }
+
+  function handleReachOut(studentId) {
+    navigate(`/interview-message/${studentId}`, {
+      state: {
+        fromMatches: true,
+        roleId: selectedNgoRole?.id,
+        roleTitle: selectedNgoRole?.title,
+      },
+    })
+  }
+
+  if (isNgo) {
+    const totalRanked = Object.values(roleSummaries).reduce((sum, item) => sum + item.count, 0)
+
+    return (
+      <div className="mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
+        <div className="mb-8">
+          <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
+            Matches
+          </h1>
+          <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
+            {ngoLoading
+              ? 'Finding compatible students for your posted roles...'
+              : `Review ${totalRanked} ranked student recommendation${totalRanked !== 1 ? 's' : ''} across your opportunities.`}
+          </p>
+        </div>
+
+        <NgoMatchesView
+          roles={ngoRoles}
+          loading={ngoLoading}
+          error={ngoError}
+          selectedRoleId={selectedNgoRoleId}
+          onSelectRole={setSelectedNgoRoleId}
+          selectedRole={selectedNgoRole}
+          selectedMatches={selectedNgoMatches}
+          roleSummaries={roleSummaries}
+          onViewProfile={handleViewStudentProfile}
+          onReachOut={handleReachOut}
+        />
+      </div>
+    )
+  }
 
   if (user && !user.onboardingComplete) {
     return (
@@ -316,24 +792,23 @@ export default function MatchResults() {
 
   return (
     <>
-    <div className="w-full px-8 py-7 bg-white">
-      <div className="max-w-7xl mx-auto">
-
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }} className="mb-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-[#FFB703]/10 flex items-center justify-center">
-              <Sparkles size={20} className="text-[#FFB703]" />
-            </div>
-            <h1 className="text-3xl font-bold text-[#0D183D]">
-              {loading ? 'Finding your matches…' : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} found for you`}
+      <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+        <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+          <motion.header
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-8"
+          >
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              Matches
             </h1>
-          </div>
-          <p className="text-[#4B6382] text-sm">
-            Ranked by compatibility — skills, experience, language, and mission alignment.
-          </p>
-        </motion.div>
+            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+              {loading
+                ? 'Finding compatible roles for your profile.'
+                : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} ranked by skills, experience, language, and mission alignment.`}
+            </p>
+          </motion.header>
 
         {/* Personalisation notice */}
         {profile && (
@@ -408,8 +883,8 @@ export default function MatchResults() {
             ))}
           </div>
         )}
-      </div>
-      </div>
+        </div>
+      </main>
 
       {/* Inline explanation modal */}
       <AnimatePresence>
