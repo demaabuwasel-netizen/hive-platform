@@ -21,7 +21,6 @@ const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'For Students', to: '/for-students' },
   { label: 'For NGOs', to: '/for-ngos' },
-  { label: 'How It Works', to: '/how-it-works' },
   { label: 'About Us', to: '/about' },
 ]
 
