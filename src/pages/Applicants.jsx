@@ -307,7 +307,7 @@ export default function Applicants() {
           selectedRoleTitle={selectedRole?.title ?? null}
         />
 
-        <div className="min-w-0 self-start xl:col-start-2 xl:row-start-2">
+        <div className="min-w-0 self-start xl:col-start-2 xl:row-start-1 xl:row-span-2">
           <ApplicantDetail
             applicant={selected}
             status={selectedStatus}
