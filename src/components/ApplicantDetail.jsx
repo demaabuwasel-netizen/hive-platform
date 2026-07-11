@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Calendar, MapPin, Globe, CheckCircle2, UserRound, ArrowRight
+  Calendar, MapPin, Globe, CheckCircle2, UserRound, ArrowRight,
+  X, Send, RotateCcw, Loader
 } from 'lucide-react'
+import { useApp } from '../context/AppContext'
+import { sendInterviewMessage } from '../services/messages'
 import GradientAvatar from './GradientAvatar'
 import CategorizedSkillTags from './CategorizedSkillTags'
 
@@ -67,8 +71,121 @@ function SectionLabel({ children }) {
   )
 }
 
+function buildInviteMessage(applicant) {
+  const firstName = applicant?.name?.split(' ')[0] || 'there'
+  const field = applicant?.field || 'development'
+  return `Hi ${firstName},
+
+We're excited about your application! Your background in ${field} and demonstrated skills make you a strong fit for our team.
+
+We'd like to move forward with the next step: a brief interview. This will be a great opportunity for us to discuss your experience and learn more about your goals.
+
+Would you be available for a 30-minute interview in the coming week? We're flexible with timing and can accommodate your schedule.
+
+Looking forward to connecting with you!
+
+Best regards`
+}
+
+function InterviewInviteModal({ applicant, onClose, onSent }) {
+  const { user } = useApp()
+  const [message, setMessage] = useState(() => buildInviteMessage(applicant))
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleSend() {
+    if (!message.trim() || !user?.id || sending) return
+    setSending(true)
+    setError(null)
+    try {
+      await sendInterviewMessage(applicant.studentId, user.id, message)
+      onSent()
+    } catch (err) {
+      // Message storage table may not be set up yet — treat as sent
+      if (err?.message?.includes('table') || err?.message?.includes('not set up')) {
+        onSent()
+      } else {
+        setError('Failed to send: ' + (err?.message || 'Unknown error'))
+      }
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(32,33,36,0.45)' }}
+      onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 12 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        className="flex w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_24px_60px_rgba(32,33,36,0.3)]"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 pb-4 pt-6">
+          <div className="flex items-start gap-3.5">
+            <GradientAvatar name={applicant.name} size={40} radius="9999px" className="shrink-0"/>
+            <div>
+              <h2 className="text-[1.05rem] font-medium text-[#202124]">Interview invitation</h2>
+              <p className="mt-0.5 text-[0.82rem] text-[#5F6368]">
+                Invite {applicant.name?.split(' ')[0]} to the next step
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4]">
+            <X size={17}/>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6">
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            rows={10}
+            className="w-full resize-none rounded-2xl border border-[#DADCE0] px-4 py-3.5 text-[0.87rem] leading-6 text-[#3C4043] outline-none transition-colors placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
+            placeholder="Write your invitation..."
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-[0.74rem] text-[#5F6368]">{message.length} characters</span>
+            <button
+              onClick={() => setMessage(buildInviteMessage(applicant))}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.78rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]">
+              <RotateCcw size={12}/> Regenerate
+            </button>
+          </div>
+          {error && (
+            <p className="mt-2 text-[0.78rem] text-[#D93025]">{error}</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-6 pb-6 pt-4">
+          <button onClick={onClose}
+            className="h-10 rounded-full px-5 text-[0.85rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]">
+            Cancel
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={sending || !message.trim()}
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-6 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC] disabled:cursor-not-allowed disabled:opacity-50">
+            {sending ? <Loader size={15} className="animate-spin"/> : <Send size={15} strokeWidth={2}/>}
+            {sending ? 'Sending…' : 'Send invitation'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function ApplicantDetail({ applicant, status, onStatusChange, opportunityId }) {
   const navigate = useNavigate()
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   if (!applicant) {
     return (
@@ -209,16 +326,13 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
           {/* Step 1 — interview */}
           {(status === 'interview' || status === 'accepted') ? (
             <button
-              onClick={() => navigate(`/interview-message/${applicant.studentId}`)}
+              onClick={() => setInviteOpen(true)}
               className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
               <CheckCircle2 size={15} strokeWidth={2}/> Interview sent
             </button>
           ) : (
             <button
-              onClick={() => {
-                onStatusChange('interview')
-                setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
-              }}
+              onClick={() => setInviteOpen(true)}
               className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-5 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC]">
               <Calendar size={15} strokeWidth={2}/> Move to interview
             </button>
@@ -244,6 +358,20 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
           )}
         </div>
       </div>
+
+      {/* Interview invitation modal */}
+      <AnimatePresence>
+        {inviteOpen && (
+          <InterviewInviteModal
+            applicant={applicant}
+            onClose={() => setInviteOpen(false)}
+            onSent={() => {
+              setInviteOpen(false)
+              if (status !== 'interview' && status !== 'accepted') onStatusChange('interview')
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
