@@ -252,6 +252,20 @@ export default function CreateOpportunity() {
     return () => clearTimeout(autoSaveRef.current)
   }, [form]) // eslint-disable-line
 
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const update = () => setCanScroll(el.scrollHeight > el.clientHeight + 8)
+    const raf = requestAnimationFrame(update)
+    window.addEventListener('resize', update)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', update)
+    }
+  }, [step, form, aiOpen])
+
   if (loadingEdit) {
     return (
       <div className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
@@ -393,20 +407,6 @@ export default function CreateOpportunity() {
     setErrors({})
     setPublished(false)
   }
-
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-
-    const update = () => setCanScroll(el.scrollHeight > el.clientHeight + 8)
-    const raf = requestAnimationFrame(update)
-    window.addEventListener('resize', update)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', update)
-    }
-  }, [step, form, aiOpen])
 
   // ── Success screen ──────────────────────────────────────────────────────────
   if (published) {
