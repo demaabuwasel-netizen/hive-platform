@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Briefcase,
@@ -63,7 +63,7 @@ function normalizeSkills(profile) {
 function Card({ children, className = '' }) {
   return (
     <section
-      className={`rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_10px_30px_rgba(17,24,39,0.03)] ${className}`}
+      className={`rounded-[32px] bg-white border border-[#E5EEFB] shadow-[0_10px_30px_rgba(17,24,39,0.03)] ${className}`}
     >
       {children}
     </section>
@@ -178,6 +178,13 @@ export default function StudentProfile() {
   const [editingEducation, setEditingEducation] = useState(false)
   const [editingEducationIndex, setEditingEducationIndex] = useState(null)
 
+  const [projects, setProjects] = useState(
+    Array.isArray(profile?.projects) ? profile.projects : []
+  )
+  const [projectDraft, setProjectDraft] = useState({ title: '', description: '', link: '' })
+  const [editingProjects, setEditingProjects] = useState(false)
+  const [editingProjectIndex, setEditingProjectIndex] = useState(null)
+
   const [languagesDraft, setLanguagesDraft] = useState(() => toArray(profile?.languages))
   const [languageDraft, setLanguageDraft] = useState({ lang: '', level: 'Fluent' })
   const [editingLanguages, setEditingLanguages] = useState(false)
@@ -192,6 +199,15 @@ export default function StudentProfile() {
     portfolio: profile?.links?.portfolio || '',
   })
   const [editingLinks, setEditingLinks] = useState(false)
+
+  // Refs for auto-scroll
+  const skillsCardRef = useRef(null)
+  const projectsCardRef = useRef(null)
+  const educationCardRef = useRef(null)
+  const languagesCardRef = useRef(null)
+  const causesCardRef = useRef(null)
+  const linksCardRef = useRef(null)
+  const skillDropdownRef = useRef(null)
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -209,6 +225,54 @@ export default function StudentProfile() {
       if (Array.isArray(profile?.educations)) setEducations(profile.educations)
     })
   }, [profile])
+
+  useEffect(() => {
+    if (editingSkills && skillsCardRef.current) {
+      setTimeout(() => {
+        skillsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingSkills])
+
+  useEffect(() => {
+    if (editingEducation && educationCardRef.current) {
+      setTimeout(() => {
+        educationCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingEducation])
+
+  useEffect(() => {
+    if (editingProjects && projectsCardRef.current) {
+      setTimeout(() => {
+        projectsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingProjects])
+
+  useEffect(() => {
+    if (editingLanguages && languagesCardRef.current) {
+      setTimeout(() => {
+        languagesCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingLanguages])
+
+  useEffect(() => {
+    if (editingInterests && causesCardRef.current) {
+      setTimeout(() => {
+        causesCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingInterests])
+
+  useEffect(() => {
+    if (editingLinks && linksCardRef.current) {
+      setTimeout(() => {
+        linksCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [editingLinks])
 
   const visibleSkills = editingSkills ? skillsDraft : skills
 
@@ -333,6 +397,36 @@ export default function StudentProfile() {
     await updateProfile({ ...profile, educations: updated })
   }
 
+  const handleSaveProjects = async () => {
+    const hasContent = projectDraft.title || projectDraft.description
+    if (!hasContent) {
+      setEditingProjects(false)
+      return
+    }
+
+    const updated = editingProjectIndex !== null
+      ? projects.map((project, index) => index === editingProjectIndex ? projectDraft : project)
+      : [...projects, projectDraft]
+
+    setProjects(updated)
+    await updateProfile({ ...profile, projects: updated })
+    setProjectDraft({ title: '', description: '', link: '' })
+    setEditingProjectIndex(null)
+    setEditingProjects(false)
+  }
+
+  const handleDeleteProject = async index => {
+    const updated = projects.filter((_, itemIndex) => itemIndex !== index)
+    setProjects(updated)
+    await updateProfile({ ...profile, projects: updated })
+  }
+
+  const startProjectEdit = (project = { title: '', description: '', link: '' }, index = null) => {
+    setProjectDraft(project)
+    setEditingProjectIndex(index)
+    setEditingProjects(true)
+  }
+
   const handleSaveLanguages = async () => {
     await updateProfile({ ...profile, languages: languagesDraft })
     setEditingLanguages(false)
@@ -441,7 +535,7 @@ export default function StudentProfile() {
           </div>
         </motion.section>
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-6">
           <div className="space-y-6">
 
           <Card className="p-5 sm:p-6">
@@ -480,10 +574,11 @@ export default function StudentProfile() {
             )}
           </Card>
 
-          <Card className="p-5 sm:p-6">
-            <SectionHeader
-              icon={Code}
-              title="Skills"
+          <div ref={skillsCardRef}>
+            <Card className="p-5 sm:p-6">
+              <SectionHeader
+                icon={Code}
+                title="Skills"
               description={editingSkills ? 'Add or remove skills, then save when everything looks right.' : 'Saved skills are organized by category so NGOs can scan them quickly.'}
               action={editingSkills ? (
                 <div className="flex flex-wrap gap-2">
@@ -604,12 +699,86 @@ export default function StudentProfile() {
               </div>
             </div>
             )}
-          </Card>
+            </Card>
+          </div>
 
-          <Card className="p-5 sm:p-6">
-            <SectionHeader
-              icon={GraduationCap}
-              title="Education"
+          <div ref={projectsCardRef}>
+            <Card className="p-5 sm:p-6">
+              <SectionHeader
+                icon={Briefcase}
+                title="Projects"
+                description="Showcase projects you've worked on to demonstrate your skills."
+                action={!editingProjects && (
+                  <button className={softButtonClass} onClick={() => startProjectEdit()}>
+                    <Plus size={14} />
+                    Add project
+                  </button>
+                )}
+              />
+
+              {projects.length > 0 ? (
+                <div className="mb-4 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+                  {projects.map((project, index) => (
+                    <div key={`${project.title}-${index}`} className="flex gap-4 border-b border-[#E5EEFB] p-4 last:border-b-0">
+                      <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                        <Briefcase size={18} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-[1rem] font-semibold text-[#202124]">{project.title || 'Project'}</p>
+                            {project.link && (
+                              <a href={project.link} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-[0.84rem] text-[#1A73E8] hover:underline">
+                                View project →
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <button className="rounded-full p-2 text-[#5F6368] transition hover:bg-[#E8F0FE] hover:text-[#1A73E8]" onClick={() => startProjectEdit(project, index)}><Edit3 size={14} /></button>
+                            <button className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6]" onClick={() => handleDeleteProject(index)}><Trash2 size={14} /></button>
+                          </div>
+                        </div>
+                        {project.description && <p className="mt-3 text-[0.84rem] leading-6 text-[#5F6368]">{project.description}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !editingProjects ? (
+                <div className="mb-4">
+                  <EmptyState title="No projects yet" description="Add projects to showcase what you've built." />
+                </div>
+              ) : null}
+
+              {editingProjects && (
+                <div className="rounded-[24px] border border-[#E5EEFB] bg-[#F8FBFF] p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <FieldLabel>Project title</FieldLabel>
+                      <input className={inputClass} value={projectDraft.title} onChange={event => setProjectDraft(prev => ({ ...prev, title: event.target.value }))} placeholder="e.g., Mobile App for Community" />
+                    </div>
+                    <div>
+                      <FieldLabel>Description</FieldLabel>
+                      <textarea className={`${inputClass} resize-none`} rows={3} value={projectDraft.description} onChange={event => setProjectDraft(prev => ({ ...prev, description: event.target.value }))} placeholder="What did you build and what was your role?" />
+                    </div>
+                    <div>
+                      <FieldLabel>Project link (optional)</FieldLabel>
+                      <input className={inputClass} value={projectDraft.link} onChange={event => setProjectDraft(prev => ({ ...prev, link: event.target.value }))} placeholder="https://example.com/project" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button className={primaryButtonClass} onClick={handleSaveProjects}><Check size={14} />Save project</button>
+                      <button className={softButtonClass} onClick={() => { setEditingProjects(false); setEditingProjectIndex(null); setProjectDraft({ title: '', description: '', link: '' }) }}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <div ref={educationCardRef}>
+            <Card className="p-5 sm:p-6">
+              <SectionHeader
+                icon={GraduationCap}
+                title="Education"
               description="Add your field of study, school, and degree information."
               action={!editingEducation && (
                 <button className={softButtonClass} onClick={() => startEducationEdit()}>
@@ -686,7 +855,8 @@ export default function StudentProfile() {
                 </div>
               </div>
             )}
-          </Card>
+            </Card>
+          </div>
 
           </div>
         </div>
@@ -703,9 +873,10 @@ export default function StudentProfile() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <SmallProfileCard
-              icon={Globe}
-              title="Languages"
+            <div ref={languagesCardRef}>
+              <SmallProfileCard
+                icon={Globe}
+                title="Languages"
               summary={languagesDraft.length ? `${languagesDraft.length} added` : 'Languages you can work in'}
               action={!editingLanguages && <button className={softButtonClass} onClick={() => setEditingLanguages(true)}>{languagesDraft.length ? 'Edit' : 'Add'}</button>}
               forceOpen={editingLanguages}
@@ -748,11 +919,13 @@ export default function StudentProfile() {
               ) : (
                 <EmptyState title="No languages yet" description="Add the languages you can work in." />
               )}
-            </SmallProfileCard>
+              </SmallProfileCard>
+            </div>
 
-            <SmallProfileCard
-              icon={Heart}
-              title="Causes"
+            <div ref={causesCardRef}>
+              <SmallProfileCard
+                icon={Heart}
+                title="Causes"
               summary={interestsDraft.length ? `${interestsDraft.length} interests` : 'Causes you care about'}
               action={!editingInterests && <button className={softButtonClass} onClick={() => setEditingInterests(true)}>{interestsDraft.length ? 'Edit' : 'Add'}</button>}
               forceOpen={editingInterests}
@@ -780,11 +953,13 @@ export default function StudentProfile() {
               ) : (
                 <EmptyState title="No causes yet" description="Pick causes that match the kind of impact you want." />
               )}
-            </SmallProfileCard>
+              </SmallProfileCard>
+            </div>
 
-            <SmallProfileCard
-              icon={ExternalLink}
-              title="Links"
+            <div ref={linksCardRef}>
+              <SmallProfileCard
+                icon={ExternalLink}
+                title="Links"
               summary={[linksDraft.linkedin && 'LinkedIn', linksDraft.github && 'GitHub', linksDraft.portfolio && 'Portfolio'].filter(Boolean).join(' · ') || 'Optional public links'}
               action={!editingLinks && <button className={softButtonClass} onClick={() => setEditingLinks(true)}>{linksDraft.linkedin || linksDraft.github || linksDraft.portfolio ? 'Edit' : 'Add'}</button>}
               forceOpen={editingLinks}
@@ -809,7 +984,8 @@ export default function StudentProfile() {
                   {!linksDraft.linkedin && !linksDraft.github && !linksDraft.portfolio && <EmptyState title="No links yet" description="Add only links that help NGOs trust your work." />}
                 </div>
               )}
-            </SmallProfileCard>
+              </SmallProfileCard>
+            </div>
           </div>
         </section>
       </div>

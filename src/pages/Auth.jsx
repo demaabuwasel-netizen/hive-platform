@@ -130,11 +130,45 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAF6EA] via-[#FFFBF5] to-[#FCF8EF]">
-      {/* Subtle radial glow */}
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#FAFCFF] to-[#F0F7FF]">
+      {/* Animated soft blue balloon bloom background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-1/4 w-96 h-96 bg-[#FFB400] rounded-full opacity-5 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#0B163F] rounded-full opacity-3 blur-3xl" />
+        <motion.div
+          animate={{
+            x: [0, 30, -20, 0],
+            y: [0, -40, 20, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute top-12 right-1/3 w-[600px] h-[600px] bg-[#C5E5FF] rounded-full opacity-12 blur-[150px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, -25, 35, 0],
+            y: [0, 50, -30, 0],
+          }}
+          transition={{
+            duration: 14,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#A8D8F0] rounded-full opacity-10 blur-[150px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, 40, -30, 0],
+            y: [0, -30, 40, 0],
+          }}
+          transition={{
+            duration: 16,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-[#D0E8FF] rounded-full opacity-8 blur-[140px]"
+        />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -151,13 +185,13 @@ export default function Auth() {
             transition={{ duration: 0.4 }}
             className="w-full max-w-md"
           >
-            <div className="bg-white rounded-3xl p-8 border border-[#E6E8EF] shadow-sm">
+            <div className="bg-white rounded-3xl p-8 border border-[#E6EAF0] shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
               {/* Header */}
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-[#0B163F] mb-2">
+                <h1 className="text-2xl font-bold text-[#202124] mb-2">
                   {mode === 'signup' ? 'Create your account' : 'Welcome back'}
                 </h1>
-                <p className="text-[#4E6385] text-xs">
+                <p className="text-[#5F6368] text-xs">
                   {mode === 'signup'
                     ? 'Join students and NGOs doing real work around the world.'
                     : "Good to see you again — let's pick up where you left off."}
@@ -165,13 +199,13 @@ export default function Auth() {
               </div>
 
               {/* Mode toggle */}
-              <div className="flex bg-[#F5F7FB] rounded-2xl p-1 mb-6">
+              <div className="flex bg-[#F0F3F8] rounded-2xl p-1 mb-6 gap-1">
                 {['signup', 'login'].map(m => (
                   <button
                     key={m}
                     onClick={() => { setMode(m); setError('') }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                      mode === m ? 'bg-white text-[#0B163F] shadow-sm' : 'text-[#4E6385] hover:text-[#0B163F]'
+                    className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                      mode === m ? 'bg-white text-[#0B84FF] shadow-[0_2px_8px_rgba(11,132,255,0.12)] border border-[#E6EAF0]' : 'text-[#5F6368] hover:text-[#202124]'
                     }`}
                   >
                     {m === 'signup' ? 'Sign up' : 'Log in'}
@@ -183,14 +217,14 @@ export default function Auth() {
               <button
                 onClick={handleGoogleClick}
                 disabled={submitting || googleLoading}
-                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-[#E6E8EF] rounded-[16px] px-4 py-3 text-[#0B163F] font-semibold text-xs hover:border-[#D4D8E0] hover:shadow-sm active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                className="w-full flex items-center justify-center gap-2 bg-white border border-[#E6EAF0] rounded-[16px] px-4 py-3 text-[#202124] font-semibold text-xs hover:border-[#D5DCE6] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               >
                 {googleLoading ? (
                   <>
                     <motion.span
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-                      className="inline-block w-4 h-4 border-2 border-[#E6E8EF] border-t-[#0B163F] rounded-full"
+                      className="inline-block w-4 h-4 border-2 border-[#E6EAF0] border-t-[#0B84FF] rounded-full"
                     />
                     Redirecting…
                   </>
@@ -204,9 +238,9 @@ export default function Auth() {
 
             {/* Divider */}
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-[#E6E8EF]" />
-              <span className="text-[10px] text-[#9CA3AF] font-medium tracking-wide">or continue with email</span>
-              <div className="flex-1 h-px bg-[#E6E8EF]" />
+              <div className="flex-1 h-px bg-[#E6EAF0]" />
+              <span className="text-[10px] text-[#8A8F98] font-medium tracking-wide">or continue with email</span>
+              <div className="flex-1 h-px bg-[#E6EAF0]" />
             </div>
 
             {/* Email form */}
@@ -219,11 +253,11 @@ export default function Auth() {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <label className="block text-xs font-semibold text-[#0B163F] mb-2">Full name</label>
+                    <label className="block text-xs font-semibold text-[#202124] mb-2">Full name</label>
                     <input
                       name="name" value={form.name} onChange={handleChange}
                       placeholder="Your name" autoComplete="name"
-                      className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+                      className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6EAF0] bg-white font-medium text-sm text-[#202124] placeholder-[#8A8F98] focus:outline-none focus:border-[#0B84FF] focus:ring-3 focus:ring-[#0B84FF]/10 transition-all"
                     />
                   </motion.div>
                 )}
@@ -245,7 +279,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => { setForgotOpen(true); setResetEmail(form.email) }}
-                      className="text-[10px] text-[#9CA3AF] hover:text-[#0B163F] transition-colors"
+                      className="text-[10px] text-[#8A8F98] hover:text-[#0B84FF] transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -264,7 +298,7 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShow(s => !s)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#0B163F] transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8A8F98] hover:text-[#0B84FF] transition-colors"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -286,7 +320,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={submitting || googleLoading}
-                className="px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs mt-1 transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
+                className="px-6 py-3 rounded-[14px] bg-[#0B84FF] text-white font-semibold text-xs mt-1 transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,132,255,0.2)]"
               >
                 {submitting ? (
                   <>
@@ -306,18 +340,18 @@ export default function Auth() {
               </button>
             </form>
 
-            <p className="text-center text-xs text-[#4E6385] mt-5">
+            <p className="text-center text-xs text-[#5F6368] mt-5">
               {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError('') }}
-                className="text-[#0B163F] font-semibold hover:underline"
+                className="text-[#0B84FF] font-semibold hover:underline"
               >
                 {mode === 'signup' ? 'Log in' : 'Sign up'}
               </button>
             </p>
 
             {mode === 'signup' && (
-              <p className="text-center text-[10px] text-[#9CA3AF] mt-4 leading-relaxed">
+              <p className="text-center text-[10px] text-[#8A8F98] mt-4 leading-relaxed">
                 By creating an account you agree to our terms. We'll never share your data.
               </p>
             )}
@@ -347,21 +381,21 @@ export default function Auth() {
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className="fixed inset-0 z-50 flex items-center justify-center px-6 pointer-events-none"
             >
-              <div className="w-full max-w-sm pointer-events-auto bg-white rounded-3xl p-8 border border-[#E6E8EF] shadow-lg">
+              <div className="w-full max-w-sm pointer-events-auto bg-white rounded-3xl p-8 border border-[#E6EAF0] shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
                 {resetState === 'sent' ? (
                   <div className="text-center">
                     <div className="w-12 h-12 bg-[#E6F2FF] rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <Mail size={24} className="text-[#0B163F]" />
                     </div>
-                    <h2 className="text-lg font-bold text-[#0B163F] mb-2">Check your email</h2>
-                    <p className="text-xs text-[#4E6385] leading-relaxed mb-6">
+                    <h2 className="text-lg font-bold text-[#202124] mb-2">Check your email</h2>
+                    <p className="text-xs text-[#5F6368] leading-relaxed mb-6">
                       We sent a password reset link to{' '}
-                      <span className="font-semibold text-[#0B163F]">{resetEmail}</span>.
+                      <span className="font-semibold text-[#202124]">{resetEmail}</span>.
                       It may take a minute to arrive.
                     </p>
                     <button
                       onClick={closeForgot}
-                      className="w-full px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs transition-all hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
+                      className="w-full px-6 py-3 rounded-[14px] bg-[#0B84FF] text-white font-semibold text-xs transition-all hover:shadow-lg hover:shadow-[rgba(11,132,255,0.2)]"
                     >
                       Back to login
                     </button>
@@ -369,8 +403,8 @@ export default function Auth() {
                 ) : (
                   <>
                     <div className="text-center mb-6">
-                      <h2 className="text-lg font-bold text-[#0B163F] mb-2">Reset your password</h2>
-                      <p className="text-xs text-[#4E6385]">
+                      <h2 className="text-lg font-bold text-[#202124] mb-2">Reset your password</h2>
+                      <p className="text-xs text-[#5F6368]">
                         Enter your email and we'll send you a reset link.
                       </p>
                     </div>
@@ -386,7 +420,7 @@ export default function Auth() {
                           onChange={e => { setResetEmail(e.target.value); setResetError('') }}
                           placeholder="you@example.com"
                           autoComplete="email"
-                          className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6E8EF] bg-white font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0B163F] focus:shadow-sm transition-all"
+                          className="w-full px-4 py-3 rounded-[16px] border-2 border-[#E6EAF0] bg-white font-medium text-sm text-[#202124] placeholder-[#8A8F98] focus:outline-none focus:border-[#0B84FF] focus:ring-3 focus:ring-[#0B84FF]/10 transition-all"
                         />
                       </div>
 
@@ -404,7 +438,7 @@ export default function Auth() {
                       <button
                         type="submit"
                         disabled={resetState === 'sending'}
-                        className="w-full px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]"
+                        className="w-full px-6 py-3 rounded-[14px] bg-[#0B84FF] text-white font-semibold text-xs transition-all flex items-center gap-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[rgba(11,132,255,0.2)]"
                       >
                         {resetState === 'sending' ? (
                           <>
@@ -426,7 +460,7 @@ export default function Auth() {
                       <button
                         type="button"
                         onClick={closeForgot}
-                        className="text-xs text-[#4E6385] hover:text-[#0B163F] transition-colors text-center font-medium"
+                        className="text-xs text-[#5F6368] hover:text-[#0B84FF] transition-colors text-center font-medium"
                       >
                         Cancel
                       </button>

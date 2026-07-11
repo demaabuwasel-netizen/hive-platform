@@ -7,8 +7,9 @@ function getInitials(name = '') {
 }
 
 const INIT_COLORS = [
-  'bg-navy-500', 'bg-orange-500', 'bg-emerald-500',
-  'bg-purple-500', 'bg-blue-400', 'bg-rose-400',
+  'bg-rose-100', 'bg-blue-100', 'bg-emerald-100',
+  'bg-purple-100', 'bg-amber-100', 'bg-pink-100',
+  'bg-cyan-100', 'bg-stone-100', 'bg-slate-100', 'bg-red-100',
 ]
 function initialsColor(name = '') {
   const n = [...name].reduce((a, c) => a + c.charCodeAt(0), 0)
@@ -63,7 +64,7 @@ export function AvatarDisplay({ src, name = '', size = 'md', className = '' }) {
 
   return (
     <div className={`${SIZE[size] ?? SIZE.md} ${initialsColor(name)} flex items-center justify-center shrink-0 ${className}`}>
-      <span className="text-white font-bold leading-none select-none">{getInitials(name)}</span>
+      <span className="text-[#4B6382] font-bold leading-none select-none">{getInitials(name)}</span>
     </div>
   )
 }

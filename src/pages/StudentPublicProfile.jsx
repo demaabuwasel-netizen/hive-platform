@@ -77,13 +77,13 @@ function AvatarInitials({ name, size = 64 }) {
     .slice(0, 2)
 
   const colors = [
-    'bg-teal-500',
-    'bg-blue-500',
-    'bg-indigo-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-rose-500',
-    'bg-orange-500',
+    'bg-rose-100',
+    'bg-blue-100',
+    'bg-emerald-100',
+    'bg-purple-100',
+    'bg-amber-100',
+    'bg-pink-100',
+    'bg-cyan-100',
   ]
 
   const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
@@ -91,7 +91,7 @@ function AvatarInitials({ name, size = 64 }) {
 
   return (
     <div
-      className={`${bgColor} rounded-2xl flex items-center justify-center text-white font-bold`}
+      className={`${bgColor} rounded-2xl flex items-center justify-center text-[#4B6382] font-bold`}
       style={{ width: size, height: size, fontSize: size * 0.35 }}
     >
       {initials}

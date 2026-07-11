@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
+  ArrowRight,
   Briefcase,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Clock,
   Sparkles,
+  Trash2,
   XCircle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -142,65 +144,49 @@ export default function Applications() {
           </p>
         </motion.header>
 
-        <section className="grid items-start gap-6 md:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="grid items-start gap-6 md:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
           <motion.aside
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.28 }}
-            className="flex flex-col overflow-hidden rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)] md:sticky md:top-6"
-            style={{
-              borderColor: 'rgba(209,224,255,0.95)',
-              height: '1000px',
-            }}
+            className="rounded-[30px] border border-[#E5EEFB] bg-white p-4 shadow-[0_12px_34px_rgba(17,24,39,0.04)] overflow-y-auto md:sticky md:top-6"
+            style={{ height: '600px' }}
           >
-            <div className="flex items-start justify-between gap-4 px-7 py-7">
+            <div className="mb-4 flex items-center justify-between gap-3 px-1">
               <div>
-                <h2 className="text-[1.5rem] font-semibold text-[#202124]">
-                  Your applications
-                </h2>
-                <p className="mt-2 text-[0.92rem] text-[#5F6368]">
-                  {loading ? 'Loading your applications...' : `${apps.length} total`}
+                <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Your applications</p>
+                <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+                  {loading ? 'Loading...' : `${apps.length} application${apps.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
-
               <Link
                 to="/opportunities"
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8] transition-transform hover:-translate-y-0.5"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8] transition-transform hover:-translate-y-0.5"
                 aria-label="Browse opportunities"
               >
-                <ChevronRight size={22} />
+                <ChevronRight size={18} />
               </Link>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
+            <div className="space-y-3">
               {loading ? (
                 <div className="space-y-3">
                   {[0, 1, 2].map(i => (
                     <div
                       key={i}
-                      className="h-28 animate-pulse rounded-[26px] border bg-[#FBFCFE]"
-                      style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+                      className="h-24 animate-pulse rounded-[24px] border border-[#E5EEFB] bg-white"
                     />
                   ))}
                 </div>
               ) : apps.length === 0 ? (
-                <div
-                  className="rounded-[28px] border bg-[#FBFCFE] px-5 py-10 text-center"
-                  style={{ borderColor: 'rgba(26,115,232,0.08)' }}
-                >
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                    <Briefcase size={24} />
+                <div className="rounded-[24px] border border-[#E5EEFB] bg-white px-4 py-6 text-center">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                    <Briefcase size={18} />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#202124]">No applications yet</h3>
-                  <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[#5F6368]">
-                    Apply to opportunities and they will appear in this list.
+                  <h3 className="text-sm font-semibold text-[#202124]">No applications</h3>
+                  <p className="mx-auto mt-1.5 max-w-xs text-[0.75rem] leading-5 text-[#5F6368]">
+                    Apply to opportunities to see them here.
                   </p>
-                  <Link
-                    to="/opportunities"
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition-transform hover:-translate-y-0.5"
-                  >
-                    Browse opportunities
-                  </Link>
                 </div>
               ) : (
                 apps.map((app, index) => {
@@ -215,47 +201,31 @@ export default function Applications() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
-                      className="mb-4 w-full rounded-[28px] border p-4 text-left transition-colors"
-                      style={
+                      className={`group w-full rounded-[24px] border p-4 text-left transition-all ${
                         selected
-                          ? {
-                              background: '#EAF1FF',
-                              borderColor: '#C8D9FF',
-                              boxShadow: '0 10px 28px rgba(26,115,232,0.08)',
-                            }
-                          : {
-                              background: '#FFFFFF',
-                              borderColor: 'rgba(209,224,255,0.95)',
-                            }
-                      }
+                          ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
+                          : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
+                      }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <GradientAvatar name={app.ngoName || 'Organization'} size={52} radius="1rem" className="shrink-0" />
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                            <p className="truncate text-[1.05rem] font-semibold text-[#202124]">
-                              {app.role || 'Position'}
-                            </p>
-                              <p className="mt-1 truncate text-[0.9rem] text-[#5F6368]">
-                                {app.ngoName || 'Organization'}
-                              </p>
-                            </div>
-
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${cfg.bg} ${cfg.color}`}>
-                              <Icon size={11} />
-                              {cfg.label}
-                            </span>
-                          </div>
-
-                          <div className="mt-4 flex justify-end">
-                            <span className="inline-flex items-center gap-1 text-[0.88rem] font-semibold text-[#1A73E8]">
-                              View
-                              <ChevronRight size={14} />
-                            </span>
-                          </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                            {app.role || 'Position'}
+                          </p>
+                          <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
+                            {app.ngoName || 'Organization'}
+                          </p>
                         </div>
+                        <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${selected ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] ${cfg.bg} ${cfg.color}`}>
+                          <Icon size={9} />
+                          {cfg.label}
+                        </span>
+                        <span className="text-[0.76rem] font-semibold text-[#1A73E8]">
+                          View
+                        </span>
                       </div>
                     </motion.button>
                   )
@@ -269,10 +239,9 @@ export default function Applications() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col overflow-hidden rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+            className="flex flex-col rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
             style={{
               borderColor: 'rgba(209,224,255,0.95)',
-              height: '1000px',
             }}
           >
             {!selectedApp ? (
@@ -298,12 +267,23 @@ export default function Applications() {
                       Opportunity details
                     </div>
 
-                    {statusMeta && (
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.82rem] font-semibold ${statusMeta.bg} ${statusMeta.color}`}>
-                        <StatusIcon size={14} />
-                        {statusMeta.label}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {statusMeta && (
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.82rem] font-semibold ${statusMeta.bg} ${statusMeta.color}`}>
+                          <StatusIcon size={14} />
+                          {statusMeta.label}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this application?')) {
+                            setSelectedAppId(null)
+                          }
+                        }}
+                        className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6]">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
 
                   <h2 className="text-[2.25rem] font-semibold leading-tight text-[#202124] sm:text-[2.75rem]">
@@ -314,7 +294,7 @@ export default function Applications() {
                   </p>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-8 py-6 [scrollbar-gutter:stable]">
+                <div className="px-8 py-6">
                   {!selectedApp.opportunityId ? (
                     <NoticeCard>This application is not linked to a published opportunity yet.</NoticeCard>
                   ) : isDetailLoading ? (

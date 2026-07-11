@@ -365,6 +365,7 @@ function StudentView() {
   const [roleDetails, setRoleDetails] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedAppId, setSelectedAppId] = useState(null)
+  const [practiceStarted, setPracticeStarted] = useState(false)
   const [activeCategory, setActiveCategory] = useState('opening')
   const [transcript, setTranscript] = useState([])
   const [draftAnswer, setDraftAnswer] = useState('')
@@ -414,13 +415,25 @@ function StudentView() {
     return `${prefix}-${messageIdRef.current}`
   }
 
-  function openPractice(appId) {
-    const app = apps.find(item => item.id === appId)
+  function selectRole(appId) {
+    setSelectedAppId(appId)
+    setPracticeStarted(false)
+    setActiveCategory('opening')
+    setTranscript([])
+    setDraftAnswer('')
+    setInputMode('type')
+    setIsRecording(false)
+    setExplainOpen(false)
+  }
+
+  function openPractice() {
+    if (!selectedAppId) return
+    const app = apps.find(item => item.id === selectedAppId)
     if (!app) return
     const role = buildStudentRole(app, roleDetails[app.id])
     const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0)
 
-    setSelectedAppId(appId)
+    setPracticeStarted(true)
     setActiveCategory('opening')
     setTranscript([{ id: nextMessageId('ai'), from: 'ai', category: 'opening', text: opening }])
     setDraftAnswer('')
@@ -522,66 +535,147 @@ function StudentView() {
     )
   }
 
-  if (!selectedRole) {
+  if (!practiceStarted) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8]">
-              <Sparkles size={14} />
-              AI interview practice
+        transition={{ duration: 0.24 }}
+        className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="rounded-[30px] border border-[#E5EEFB] bg-white p-4 shadow-[0_12px_34px_rgba(17,24,39,0.04)] overflow-y-auto" style={{ height: '600px' }}>
+          <div className="mb-4 flex items-center justify-between gap-3 px-1">
+            <div>
+              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Applied roles</p>
+              <p className="mt-1 text-[0.84rem] text-[#5F6368]">{apps.length} role{apps.length !== 1 ? 's' : ''} available</p>
             </div>
-            <h2 className="text-[1.35rem] font-semibold text-[#202124]">Pick a role to practice</h2>
-            <p className="mt-1 max-w-2xl text-[0.84rem] leading-6 text-[#5F6368]">
-              Each card opens a fake AI interview based on the opportunity and your student profile.
-            </p>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+              <Briefcase size={18} />
+            </div>
           </div>
-          <span className="w-fit rounded-full border border-[#D7E6FF] bg-[#FBFCFE] px-3 py-2 text-[0.82rem] font-semibold text-[#5F6368]">
-            {apps.length} applied roles
-          </span>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {apps.map((app, index) => {
-            const role = buildStudentRole(app, roleDetails[app.id])
-            const skills = role.skills.slice(0, 3)
-            return (
-            <motion.button
-              key={app.id}
-              onClick={() => openPractice(app.id)}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="group flex min-h-[260px] flex-col rounded-[28px] border border-[#E5EEFB] bg-[#FBFCFE] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-[#C8DCF8] hover:bg-white hover:shadow-[0_16px_34px_rgba(17,24,39,0.055)]">
-              <div className="mb-5 flex items-start justify-between gap-3">
-                <GradientAvatar name={role.orgName} size={54} radius="1rem" className="shrink-0" />
-                <span className="rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.72rem] font-bold uppercase tracking-[0.12em] text-[#1A73E8]">
-                  Practice
-                </span>
+          <div className="space-y-3">
+            {apps.map(app => {
+              const role = buildStudentRole(app, roleDetails[app.id])
+              const active = String(app.id) === String(selectedAppId)
+              const skills = getSkillNames(role.skills).slice(0, 2)
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => selectRole(app.id)}
+                  className={`group w-full rounded-[24px] border p-4 text-left transition-all ${
+                    active
+                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
+                      : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
+                  }`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {role.title}
+                      </p>
+                      <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
+                        {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                      </p>
+                    </div>
+                    <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {(skills.length ? skills : ['Interview']).map(skill => (
+                      <span key={skill} className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${active ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368]'}`}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+
+        <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+          {!selectedRole ? (
+            <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                <Briefcase size={22} />
               </div>
-              <p className="line-clamp-2 text-[1.08rem] font-semibold leading-snug text-[#202124]">{role.title}</p>
-              <p className="mt-2 truncate text-[0.88rem] text-[#5F6368]">{role.orgName}</p>
-              <p className="mt-3 line-clamp-2 text-[0.8rem] leading-6 text-[#5F6368]">
-                {role.category} {role.weeklyHours ? `· ${role.weeklyHours}` : ''} {role.workMode ? `· ${role.workMode}` : ''}
+              <p className="text-[1rem] font-semibold text-[#202124]">Choose a role</p>
+              <p className="mt-2 max-w-sm text-[0.86rem] leading-6 text-[#5F6368]">
+                Select an applied role on the left to start practicing interviews.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {(skills.length ? skills : ['General interview']).map(skill => (
-                  <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-[#5F6368] shadow-[0_4px_12px_rgba(17,24,39,0.025)]">
-                    {skill}
-                  </span>
-                ))}
+            </div>
+          ) : (
+            <div className="p-6 lg:p-8">
+              <div className="rounded-[30px] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_52%,#EEF4FF_100%)] px-6 py-8">
+                <div className="flex flex-col gap-6 items-center text-center">
+                  <div className="min-w-0">
+                    <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">
+                      Interview prep
+                    </p>
+                    <h2 className="text-[clamp(1.65rem,3vw,2.45rem)] font-semibold leading-tight text-[#202124]">
+                      {selectedRole.title}
+                    </h2>
+                    <p className="mt-3 max-w-3xl text-[0.95rem] leading-7 text-[#5F6368] mx-auto">
+                      Get ready for your interview with {selectedRole.orgName}. Review what to expect and practice with our AI interviewer.
+                    </p>
+                  </div>
+                  <button
+                    onClick={openPractice}
+                    className="inline-flex items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    <PlayCircle size={20} />
+                    Practice interview
+                  </button>
+                </div>
               </div>
-              <div className="mt-auto flex items-center gap-2 pt-5 text-[0.84rem] font-semibold text-[#1A73E8]">
-                Start practice
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+
+              <div className="mt-6 space-y-6">
+                <section className="max-w-4xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                    <Sparkles size={19} />
+                  </div>
+                  <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to expect</h3>
+                  <p className="mt-3 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
+                    The interview will cover 6 key areas: opening to warm up, motivation to understand why you applied, skills to show your abilities, mission fit to connect your values, real scenarios to test your judgment, and closing questions to clarify next steps.
+                  </p>
+                </section>
+
+                <section className="max-w-3xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                    <Target size={19} />
+                  </div>
+                  <h3 className="text-[1.25rem] font-semibold text-[#202124]">Interview focus areas</h3>
+                  <div className="mt-5 divide-y divide-[#E5EEFB]">
+                    {[
+                      'Introduction and understanding of the opportunity',
+                      'Your relevant skills and past experience',
+                      "Alignment with the organization's mission",
+                      'How you handle ambiguity and challenges',
+                      'Questions and enthusiasm for the role',
+                    ].map(item => (
+                      <div key={item} className="flex items-start gap-3 py-4">
+                        <CheckCircle2 size={16} className="mt-1 shrink-0 text-[#188038]" />
+                        <p className="text-[0.9rem] leading-7 text-[#5F6368]">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    onClick={() => setSelectedAppId(null)}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+                    Go back
+                    <ArrowLeft size={15} />
+                  </button>
+                  <button
+                    onClick={openPractice}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    Start practice
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
               </div>
-            </motion.button>
-            )
-          })}
-        </div>
+            </div>
+          )}
+        </section>
       </motion.div>
     )
   }
@@ -599,14 +693,14 @@ function StudentView() {
             <div className="min-w-0">
               <button
                 onClick={() => {
-                  setSelectedAppId(null)
+                  setPracticeStarted(false)
                   setTranscript([])
                   setDraftAnswer('')
                   setExplainOpen(false)
                 }}
                 className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#F1F5FE] px-3 py-2 text-[0.8rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
                 <ArrowLeft size={14} />
-                All applied roles
+                Interview prep
               </button>
               <div className="flex min-w-0 items-center gap-4">
                 <GradientAvatar name={selectedRole.orgName} size={62} radius="1.15rem" className="shrink-0 shadow-[0_12px_28px_rgba(26,115,232,0.12)]" />
@@ -878,7 +972,6 @@ function NGOView() {
     { id: 'summary', label: 'Summary', icon: Sparkles },
     { id: 'goals', label: 'What to learn', icon: Target },
     { id: 'signals', label: 'Signals', icon: CheckCircle2 },
-    { id: 'context', label: 'Role context', icon: FileText },
   ] : []
   const stageGuidance = selectedOpp && mockStudent ? makeStageGuidance(selectedOpp, mockStudent, activeStage) : ''
   const stageQuestions = selectedOpp && mockStudent ? makeStageQuestions(selectedOpp, mockStudent, activeStage) : []
@@ -1085,7 +1178,7 @@ function NGOView() {
           ) : (
             <div className="p-6 lg:p-8">
               <div className="rounded-[30px] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_52%,#EEF4FF_100%)] px-6 py-6">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">
                       Interview guide
@@ -1099,23 +1192,10 @@ function NGOView() {
                   </div>
                   <button
                     onClick={openPracticeRoom}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
-                    <PlayCircle size={16} />
+                    className="flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    <PlayCircle size={20} />
                     Practice interview
                   </button>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-[#D7E6FF] pt-4">
-                  {[
-                    { label: 'Area', value: selectedOpp.category || selectedOpp.field || 'Not set' },
-                    { label: 'Time', value: selectedOpp.weeklyHours || 'Not set' },
-                    { label: 'Place', value: [selectedOpp.workMode, selectedOpp.location].filter(Boolean).join(' · ') || 'Flexible' },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center gap-2 text-[0.8rem]">
-                      <span className="font-semibold text-[#202124]">{item.label}</span>
-                      <span className="text-[#5F6368]">{item.value}</span>
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -1197,26 +1277,6 @@ function NGOView() {
                     </section>
                   )}
 
-                  {activeGuideSection === 'context' && (
-                    <section className="max-w-4xl">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FEF7E0] text-[#C88700]">
-                        <FileText size={19} />
-                      </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Role context</h3>
-                      <p className="mt-3 text-[0.95rem] leading-8 text-[#5F6368]">
-                        {prepSections[2]?.text}
-                      </p>
-                      {roleSkills.length > 0 && (
-                        <div className="mt-6 flex flex-wrap gap-2">
-                          {roleSkills.slice(0, 6).map(skill => (
-                            <span key={skill} className="rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.76rem] font-semibold text-[#1A73E8]">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </section>
-                  )}
                 </motion.div>
               </AnimatePresence>
 
