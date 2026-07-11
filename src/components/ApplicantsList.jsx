@@ -27,65 +27,63 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
     const matchSearch = (a.name || '').toLowerCase().includes(q.toLowerCase()) ||
                        (a.field || '').toLowerCase().includes(q.toLowerCase())
     const currentStatus = statusFor(a)
-    const matchFilter = filter === 'all'
-      ? currentStatus !== 'rejected'
-      : currentStatus === filter
+    // Rejected students are removed from the queue entirely
+    const matchFilter = currentStatus !== 'rejected' &&
+      (filter === 'all' || currentStatus === filter)
     return matchSearch && matchFilter
   })
 
   const statusCounts = {
-    all:      activeApplicants.length,
-    new:      applicants.filter(a => statusFor(a) === 'new').length,
-    rejected: applicants.filter(a => statusFor(a) === 'rejected').length,
+    all:       activeApplicants.length,
+    new:       applicants.filter(a => statusFor(a) === 'new').length,
+    interview: applicants.filter(a => statusFor(a) === 'interview').length,
   }
 
   return (
     <section className="flex min-w-0 flex-col xl:h-full xl:min-h-0">
       <div className="mb-4 shrink-0 rounded-[28px] bg-[#F8FAFF]/70 p-4">
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            {loading ? (
-              <>
-                <div className="h-8 w-56 animate-pulse rounded-2xl bg-[#EEF4FF]" />
-                <div className="mt-2 h-4 w-36 animate-pulse rounded-full bg-[#F1F4F9]" />
-              </>
-            ) : (
-              <>
-                <h2 className="truncate text-[1.35rem] font-semibold tracking-[-0.04em] text-[#202124]">
-                  {selectedRoleTitle || 'Select a role'}
-                </h2>
-                <p className="mt-1 text-[0.84rem] text-[#5F6368]">
-                  {activeApplicants.length} applicant{activeApplicants.length !== 1 ? 's' : ''} in this role
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="grid h-10 w-full grid-cols-3 gap-1 rounded-[15px] bg-[#EEF3FB] p-1 lg:w-[320px]">
-            {[
-              { key: 'all', label: 'All', count: statusCounts.all },
-              { key: 'new', label: 'New', count: statusCounts.new },
-              { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
-            ].map(({ key, label, count }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={`h-8 rounded-[12px] px-2.5 text-[0.73rem] font-semibold transition-colors ${
-                  filter === key
-                    ? 'bg-white text-[#1A73E8] shadow-[0_1px_4px_rgba(60,64,67,0.12)]'
-                    : 'text-[#5F6368] hover:text-[#202124]'
-                }`}
-              >
-                {label} <span className="ml-1 text-[0.66rem] opacity-70">{count}</span>
-              </button>
-            ))}
-          </div>
+        <div className="mb-4 min-w-0">
+          {loading ? (
+            <>
+              <div className="h-8 w-56 animate-pulse rounded-2xl bg-[#EEF4FF]" />
+              <div className="mt-2 h-4 w-36 animate-pulse rounded-full bg-[#F1F4F9]" />
+            </>
+          ) : (
+            <>
+              <h2 className="truncate text-[1.35rem] font-semibold tracking-[-0.04em] text-[#202124]">
+                {selectedRoleTitle || 'Select a role'}
+              </h2>
+              <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+                {activeApplicants.length} applicant{activeApplicants.length !== 1 ? 's' : ''} in this role
+              </p>
+            </>
+          )}
         </div>
 
         <div className="flex h-12 items-center gap-2 rounded-[18px] border border-[#E5EEFB] bg-white px-3 shadow-[0_8px_20px_rgba(60,64,67,0.035)]">
           <Search size={14} className="shrink-0 text-[#5F6368]"/>
           <input value={q} onChange={e => setLocalQ(e.target.value)} placeholder="Search applicants"
             className="min-w-0 flex-1 bg-transparent text-[0.84rem] text-[#202124] outline-none placeholder:text-[#9AA0A6]"/>
+        </div>
+
+        <div className="mt-3 grid h-10 w-full grid-cols-3 gap-1 rounded-[15px] bg-[#EEF3FB] p-1">
+          {[
+            { key: 'all', label: 'All', count: statusCounts.all },
+            { key: 'new', label: 'New', count: statusCounts.new },
+            { key: 'interview', label: 'Interview', count: statusCounts.interview },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`h-8 rounded-[12px] px-2.5 text-[0.73rem] font-semibold transition-colors ${
+                filter === key
+                  ? 'bg-white text-[#1A73E8] shadow-[0_1px_4px_rgba(60,64,67,0.12)]'
+                  : 'text-[#5F6368] hover:text-[#202124]'
+              }`}
+            >
+              {label} <span className="ml-1 text-[0.66rem] opacity-70">{count}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -128,7 +126,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
       {/* Applicant cards */}
       {!loading && visible.length > 0 && (
         <div className="space-y-3">
-          {visible.map((a, i) => {
+          {visible.map(a => {
             const currentStatus = statusFor(a)
             const st = STATUS_CONFIG[currentStatus] ?? STATUS_CONFIG.new
             const isActive = selectedId === a.id
