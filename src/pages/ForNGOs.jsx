@@ -1,12 +1,51 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Target, Users, Zap, Search, BarChart3 } from 'lucide-react'
-import Navbar from '../components/Navbar'
+import HiveLogo from '../components/HiveLogo'
+
+const NAV_LINKS = [
+  { label: 'Home', to: '/' },
+  { label: 'For Students', to: '/for-students' },
+  { label: 'For NGOs', to: '/for-ngos' },
+  { label: 'About Us', to: '/about' },
+]
 
 export default function ForNGOs() {
   return (
     <div className="min-h-screen overflow-hidden bg-white text-[#0D183D]">
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-xl">
-        <Navbar />
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-10">
+          <Link to="/" className="shrink-0" aria-label="Hive home">
+            <HiveLogo size={44} />
+          </Link>
+
+          <nav className="hidden items-center gap-12 lg:flex">
+            {NAV_LINKS.map(link => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden items-center gap-3 sm:flex">
+            <Link
+              to="/auth"
+              className="rounded-2xl px-5 py-2.5 text-sm font-medium text-[#202124] transition-colors hover:bg-black/[0.06]"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/auth?mode=signup"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
+            >
+              Sign up
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       </header>
 
       <main>
