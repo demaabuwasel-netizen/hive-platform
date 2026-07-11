@@ -71,6 +71,12 @@ function SectionLabel({ children }) {
   )
 }
 
+function fitLabel(score) {
+  if (score >= 80) return { text: 'Strong fit', color: '#188038' }
+  if (score >= 60) return { text: 'Good fit', color: '#1A73E8' }
+  return { text: 'Possible fit', color: '#5F6368' }
+}
+
 function buildInviteMessage(applicant) {
   const firstName = applicant?.name?.split(' ')[0] || 'there'
   const field = applicant?.field || 'development'
@@ -189,7 +195,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
 
   if (!applicant) {
     return (
-      <div className="flex min-h-[620px] flex-col overflow-hidden rounded-[24px] border border-[#DADCE0] bg-white">
+      <div className="flex min-h-[620px] flex-col overflow-hidden rounded-[24px] border border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)]">
         <div className="border-b border-[#E8EAED] px-6 py-4">
           <h2 className="text-[0.95rem] font-medium text-[#202124]">Student details</h2>
         </div>
@@ -208,47 +214,54 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
 
   const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
   const skills = (applicant.skills || []).map(skillName).filter(Boolean)
+  const fit = fitLabel(applicant.match ?? 0)
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-[24px] border border-[#DADCE0] bg-white">
+    <div className="flex flex-col overflow-hidden rounded-[24px] border border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)]">
 
       {/* Panel title */}
-      <div className="border-b border-[#E8EAED] px-6 py-4">
+      <div className="flex items-center justify-between gap-4 border-b border-[#E8EAED] px-6 py-3.5">
         <h2 className="text-[0.95rem] font-medium text-[#202124]">Student details</h2>
+        <button
+          onClick={() => navigate(`/student-profile/${applicant.studentId}${opportunityId ? `?backTo=applicants&opportunity=${opportunityId}` : ''}`)}
+          className="rounded-full px-3 py-1.5 text-[0.8rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+        >
+          View full profile
+        </button>
       </div>
 
       {/* Identity header */}
-      <div className="flex items-start justify-between gap-6 px-6 pb-5 pt-6">
+      <div className="flex items-start justify-between gap-6 px-6 pb-6 pt-6">
         <div className="flex min-w-0 items-start gap-4">
-          <GradientAvatar name={applicant.name} size={56} radius="9999px" className="shrink-0"/>
+          <GradientAvatar name={applicant.name} size={64} radius="9999px" className="shrink-0 ring-1 ring-[#E8EAED]"/>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <button onClick={() => navigate(`/student-profile/${applicant.studentId}${opportunityId ? `?backTo=applicants&opportunity=${opportunityId}` : ''}`)}
-                className="text-left text-[1.25rem] font-medium tracking-[-0.01em] text-[#202124] transition-colors hover:text-[#1A73E8]">
+                className="text-left text-[1.3rem] font-medium tracking-[-0.01em] text-[#202124] transition-colors hover:text-[#1A73E8]">
                 {applicant.name}
               </button>
               <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium ${st.bg} ${st.color}`}>
                 {st.label}
               </span>
             </div>
-            <p className="mt-0.5 text-[0.85rem] text-[#5F6368]">
+            <p className="mt-1 text-[0.85rem] text-[#5F6368]">
               {applicant.field}{applicant.uni ? ` · ${applicant.uni}` : ''}
               {applicant.opportunityTitle ? ` · ${applicant.opportunityTitle}` : ''}
             </p>
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.8rem] text-[#5F6368]">
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.8rem] text-[#5F6368]">
               <span className="inline-flex items-center gap-1.5">
-                <Calendar size={13} strokeWidth={1.8}/>
+                <Calendar size={13} strokeWidth={1.8} className="text-[#9AA0A6]"/>
                 Applied {formatDate(applicant.submittedAt) || '—'}
               </span>
               {applicant.location && (
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin size={13} strokeWidth={1.8}/>
+                  <MapPin size={13} strokeWidth={1.8} className="text-[#9AA0A6]"/>
                   {applicant.location}
                 </span>
               )}
               {applicant.languages?.length > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Globe size={13} strokeWidth={1.8}/>
+                  <Globe size={13} strokeWidth={1.8} className="text-[#9AA0A6]"/>
                   {applicant.languages.join(', ')}
                 </span>
               )}
@@ -256,9 +269,9 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-center">
+        <div className="flex shrink-0 flex-col items-center gap-1">
           <MatchRing score={applicant.match}/>
-          <span className="mt-1 text-[0.68rem] font-medium text-[#5F6368]">Match</span>
+          <span className="text-[0.76rem] font-medium" style={{ color: fit.color }}>{fit.text}</span>
         </div>
       </div>
 
@@ -288,9 +301,11 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
         {applicant.message && (
           <div>
             <SectionLabel>Application message</SectionLabel>
-            <p className="whitespace-pre-line border-l-2 border-[#E8EAED] pl-4 text-[0.88rem] leading-7 text-[#3C4043]">
-              {applicant.message}
-            </p>
+            <div className="rounded-r-xl border-l-2 border-[#1A73E8]/30 bg-[#F8F9FA] px-4 py-3.5">
+              <p className="whitespace-pre-line text-[0.88rem] leading-7 text-[#3C4043]">
+                {applicant.message}
+              </p>
+            </div>
           </div>
         )}
 
