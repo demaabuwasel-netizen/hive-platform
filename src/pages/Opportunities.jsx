@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Briefcase, Users, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2, PencilLine,
+  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -945,16 +945,6 @@ export default function Opportunities() {
 		                          </span>
 	                          <ChevronRight size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
 	                        </button>
-	                        <button
-	                          onClick={() => navigate(`/opportunities/new?edit=${selectedOpp.id}`)}
-	                          className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 transition-colors hover:bg-[#FBFCFE]"
-	                          style={{ borderColor: selectedOppFilled ? 'rgba(24,128,56,0.16)' : 'rgba(26,115,232,0.10)' }}
-	                        >
-	                          <PencilLine size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
-	                          <span className="text-[0.78rem] font-semibold text-[#202124]">
-	                            Edit
-                          </span>
-                        </button>
                       </div>
                     </div>
 
