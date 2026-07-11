@@ -146,8 +146,10 @@ export default function Applicants() {
       .then(data => {
         setApplicants(data)
         setStatuses(Object.fromEntries(data.map(a => [a.id, toUiStatus(a.status)])))
-        setSelected(null)
-        setSelectedStatus(null)
+        // Auto-open the first applicant in the queue
+        const first = data.find(a => toUiStatus(a.status) !== 'rejected') ?? null
+        setSelected(first)
+        setSelectedStatus(first ? toUiStatus(first.status) : null)
       })
       .catch(err => setError('Could not load applicants for this role. ' + err.message))
       .finally(() => setApplicantsLoading(false))

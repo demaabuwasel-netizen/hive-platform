@@ -4,6 +4,7 @@ import {
   Calendar, MapPin, Globe, CheckCircle2, UserRound
 } from 'lucide-react'
 import GradientAvatar from './GradientAvatar'
+import CategorizedSkillTags from './CategorizedSkillTags'
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -162,14 +163,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
         {skills.length > 0 && (
           <div>
             <SectionLabel>Skills</SectionLabel>
-            <div className="flex flex-wrap gap-2">
-              {skills.map(name => (
-                <span key={name}
-                  className="rounded-lg border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.8rem] text-[#3C4043]">
-                  {name}
-                </span>
-              ))}
-            </div>
+            <CategorizedSkillTags skills={applicant.skills} />
           </div>
         )}
 
