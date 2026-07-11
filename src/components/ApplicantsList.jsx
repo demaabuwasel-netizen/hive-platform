@@ -40,8 +40,8 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
   }
 
   return (
-    <section className="flex min-w-0 flex-col xl:h-full xl:min-h-0">
-      <div className="mb-4 shrink-0 rounded-[28px] bg-[#F8FAFF]/70 p-4">
+    <section className="contents">
+      <div className="min-w-0 rounded-[28px] bg-[#F8FAFF]/70 p-4 xl:col-start-1 xl:row-start-1">
         <div className="mb-4 min-w-0">
           {loading ? (
             <>
@@ -87,7 +87,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 xl:pb-1">
+      <div className="min-w-0 space-y-3 overflow-y-auto pr-1 xl:col-start-1 xl:row-start-2 xl:h-[620px] xl:pb-1">
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-3">

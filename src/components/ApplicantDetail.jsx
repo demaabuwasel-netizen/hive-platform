@@ -74,7 +74,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
 
   if (!applicant) {
     return (
-      <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
+      <div className="flex min-h-[620px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center"
           style={{ background: 'linear-gradient(165deg, #F8FBFF 0%, #FFFFFF 60%)' }}>
@@ -93,7 +93,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
   const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
+    <div className="flex flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
 
       {/* Header */}
@@ -150,8 +150,8 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
         </div>
       </div>
 
-      {/* Scrollable body */}
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-7 py-6">
+      {/* Body — shown in full, no internal scrolling */}
+      <div className="flex flex-col gap-6 px-7 py-6">
         {/* About */}
         {applicant.bio && (
           <div>

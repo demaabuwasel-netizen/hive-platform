@@ -296,7 +296,7 @@ export default function Applicants() {
       />
 
       {/* Main layout */}
-      <div className="mx-auto grid w-full max-w-[1760px] items-stretch gap-6 xl:h-[700px] xl:grid-cols-[minmax(0,1fr)_780px]">
+      <div className="mx-auto grid w-full max-w-[1760px] gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_780px] xl:grid-rows-[auto_minmax(0,auto)]">
         <ApplicantsList
           applicants={applicants}
           selectedId={selected?.id}
@@ -307,12 +307,23 @@ export default function Applicants() {
           selectedRoleTitle={selectedRole?.title ?? null}
         />
 
-        <ApplicantDetail
-          applicant={selected}
-          status={selectedStatus}
-          onStatusChange={handleStatusChange}
-          opportunityId={selectedRoleId}
-        />
+        <div className="hidden rounded-[28px] bg-[#F8FAFF]/70 p-4 xl:col-start-2 xl:row-start-1 xl:block">
+          <h2 className="text-[1.35rem] font-semibold tracking-[-0.04em] text-[#202124]">
+            Student details
+          </h2>
+          <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+            Profile, fit, and next action for the selected applicant
+          </p>
+        </div>
+
+        <div className="min-w-0 self-start xl:col-start-2 xl:row-start-2">
+          <ApplicantDetail
+            applicant={selected}
+            status={selectedStatus}
+            onStatusChange={handleStatusChange}
+            opportunityId={selectedRoleId}
+          />
+        </div>
       </div>
 
       {/* Toast */}
