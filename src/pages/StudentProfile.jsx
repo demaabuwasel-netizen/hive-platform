@@ -117,9 +117,19 @@ function Chip({ children, onRemove }) {
 function SmallProfileCard({ icon: Icon, title, summary, children, action, defaultOpen = false, forceOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const isOpen = forceOpen || open
+  const sectionRef = useRef(null)
+
+  const handleToggle = (value) => {
+    setOpen(value)
+    if (value && sectionRef.current) {
+      setTimeout(() => {
+        sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
+    }
+  }
 
   return (
-    <section className="rounded-[28px] border border-[#D7E6FF] bg-white p-4 shadow-[0_10px_30px_rgba(17,24,39,0.025)] transition hover:border-[#C8DCF8] sm:p-5">
+    <section ref={sectionRef} className="rounded-[28px] border border-[#D7E6FF] bg-white p-4 shadow-[0_10px_30px_rgba(17,24,39,0.025)] transition hover:border-[#C8DCF8] sm:p-5">
       <div className={`${isOpen ? 'mb-4 border-b border-[#E5EEFB] pb-3' : ''} flex items-start justify-between gap-3`}>
         <div className="flex min-w-0 gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -134,7 +144,7 @@ function SmallProfileCard({ icon: Icon, title, summary, children, action, defaul
           {action}
           <button
             type="button"
-            onClick={() => setOpen(value => !value)}
+            onClick={() => handleToggle(!open)}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] transition hover:border-[#1A73E8] hover:bg-[#F8FBFF] hover:text-[#1A73E8]"
             aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
           >
