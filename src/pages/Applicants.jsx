@@ -296,7 +296,7 @@ export default function Applicants() {
       />
 
       {/* Main layout */}
-      <div className="mx-auto grid w-full max-w-[1760px] gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_780px] xl:grid-rows-[auto_minmax(0,auto)]">
+      <div className="mx-auto grid w-full max-w-[1760px] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_780px]">
         <ApplicantsList
           applicants={applicants}
           selectedId={selected?.id}
@@ -307,7 +307,7 @@ export default function Applicants() {
           selectedRoleTitle={selectedRole?.title ?? null}
         />
 
-        <div className="min-w-0 self-start xl:col-start-2 xl:row-start-1 xl:row-span-2">
+        <div className="min-w-0">
           <ApplicantDetail
             applicant={selected}
             status={selectedStatus}
