@@ -199,7 +199,6 @@ export default function NGODashboard() {
   const [topMatches, setTopMatches] = useState([])
 
   const orgName = profile?.name || user?.name || 'Organization'
-  const headerLine = 'Manage connections, roles, and hiring momentum from one clean workspace.'
 
   const interviewCount = applicants.filter(app => app?.status === 'interview').length
 
@@ -329,14 +328,16 @@ export default function NGODashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="relative z-0 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          className="relative z-0 mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
         >
-          <div className="max-w-3xl">
+          <div className="max-w-3xl lg:pt-3">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
               {orgName}
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
-              {headerLine}
+              Manage connections, roles, and hiring momentum
+              <br />
+              from one clean workspace.
             </p>
           </div>
 
