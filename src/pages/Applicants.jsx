@@ -296,7 +296,7 @@ export default function Applicants() {
       />
 
       {/* Main layout */}
-      <div className="mx-auto grid w-full max-w-[1360px] gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+      <div className="mx-auto grid w-full max-w-[1760px] gap-6 xl:grid-cols-[minmax(0,1fr)_780px]">
         <ApplicantsList
           applicants={applicants}
           selectedId={selected?.id}

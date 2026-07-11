@@ -61,7 +61,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
 
   if (!applicant) {
     return (
-      <div className="sticky top-6 flex max-h-[calc(100vh-120px)] min-h-[540px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
+      <div className="flex h-full flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
         <div className="flex-1 flex flex-col items-center justify-center py-16 px-6 text-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -77,7 +77,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
   const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
 
   return (
-    <div className="sticky top-6 flex max-h-[calc(100vh-120px)] min-h-[540px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
 
       {/* Header */}
@@ -187,24 +187,24 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
       </div>
 
       {/* Footer actions */}
-      <div className="shrink-0 border-t px-6 py-4 flex flex-col gap-3"
+      <div className="shrink-0 border-t px-6 py-3 flex flex-row gap-2"
         style={{ borderColor:'rgba(26,115,232,0.10)', background:'#FBFCFE' }}>
         {status === 'interview' ? (
           <>
             <button
               onClick={() => onStatusChange('accepted')}
-              className="flex items-center justify-center gap-1.5 rounded-[16px] py-2.5 text-[0.78rem] font-semibold text-white transition-all hover:opacity-90"
+              className="flex-1 flex items-center justify-center gap-1 rounded-[12px] py-2 text-[0.75rem] font-semibold text-white transition-all hover:opacity-90"
               style={{ background:'#188038' }}>
-              <CheckCircle2 size={13} /> Accept
+              <CheckCircle2 size={12} /> Accept
             </button>
             <button
               onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-              className={`flex items-center justify-center gap-1.5 rounded-[16px] py-2.5 text-[0.78rem] font-semibold transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 rounded-[12px] py-2 text-[0.75rem] font-semibold transition-colors ${
                 status === 'rejected'
                   ? 'border border-[#E5EEFB] text-[#5F6368] hover:bg-white'
                   : 'border border-[#FAD2CF] text-[#C5221F] hover:bg-[#FCE8E6]'
               }`}>
-              <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Reject'}
+              <XCircle size={11}/> {status === 'rejected' ? 'Undo' : 'Reject'}
             </button>
           </>
         ) : (
@@ -214,18 +214,18 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
                 onStatusChange('interview')
                 setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
               }}
-              className="flex items-center justify-center gap-1.5 rounded-[16px] py-2.5 text-[0.78rem] font-semibold text-white transition-all hover:opacity-90"
+              className="flex-1 flex items-center justify-center gap-1 rounded-[12px] py-2 text-[0.75rem] font-semibold text-white transition-all hover:opacity-90"
               style={{ background:'#1A73E8' }}>
-              <Calendar size={13}/> Interview
+              <Calendar size={12}/> Interview
             </button>
             <button
               onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-              className={`flex items-center justify-center gap-1.5 rounded-[16px] py-2.5 text-[0.78rem] font-semibold transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 rounded-[12px] py-2 text-[0.75rem] font-semibold transition-colors ${
                 status === 'rejected'
                   ? 'border border-[#E5EEFB] text-[#5F6368] hover:bg-white'
                   : 'border border-[#FAD2CF] text-[#C5221F] hover:bg-[#FCE8E6]'
               }`}>
-              <XCircle size={12}/> {status === 'rejected' ? 'Undo' : 'Reject'}
+              <XCircle size={11}/> {status === 'rejected' ? 'Undo' : 'Reject'}
             </button>
           </>
         )}
