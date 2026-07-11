@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, CheckCircle2, Sparkles, MessageCircle, Send, Search, Target, Brain,
-  Briefcase, Users, ChevronRight, Mail, GraduationCap, MapPin, Layers,
+  Briefcase, Users, ChevronRight, ChevronDown, ChevronUp, Mail, GraduationCap, MapPin, Layers,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
@@ -374,7 +374,7 @@ function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loadi
                     <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${
                       isActive ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F4F9] text-[#5F6368]'
                     }`}>
-                      {summary.count} top matches
+                      {summary.count} match{summary.count !== 1 ? 'es' : ''}
                     </span>
                     {summary.topScore > 0 && (
                       <span className="text-[0.72rem] font-semibold text-[#188038]">
@@ -392,7 +392,8 @@ function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loadi
   )
 }
 
-function NgoStudentMatchCard({ match, index, onViewProfile, onReachOut }) {
+function NgoStudentMatchCard({ match, onViewProfile, onReachOut }) {
+  const [expanded, setExpanded] = useState(false)
   const { student, result } = match
   const skills = topSkills(student.skills)
   const reasons = result.reasons?.slice(0, 2) ?? []
@@ -402,83 +403,104 @@ function NgoStudentMatchCard({ match, index, onViewProfile, onReachOut }) {
       initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.12 }}
-      className="min-h-[254px] rounded-[28px] border border-[#E5EEFB] bg-white p-5 shadow-[0_12px_34px_rgba(17,24,39,0.035)] transition-all hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:shadow-[0_18px_40px_rgba(17,24,39,0.065)]"
+      className={`overflow-hidden rounded-[28px] border bg-white transition-all ${
+        expanded
+          ? 'border-[#BFD7FF] shadow-[0_18px_40px_rgba(26,115,232,0.10)]'
+          : 'border-[#E5EEFB] shadow-[0_12px_34px_rgba(17,24,39,0.035)] hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:shadow-[0_18px_40px_rgba(17,24,39,0.065)]'
+      }`}
     >
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 gap-4">
-          <GradientAvatar name={student.name} size={56} radius="1rem" />
-          <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-[1.05rem] font-semibold text-[#202124]">{student.name}</h3>
-              <MatchScoreBadge score={result.score} />
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[#5F6368]">
-              {student.field && (
-                <span className="inline-flex items-center gap-1.5">
-                  <GraduationCap size={14} className="text-[#1A73E8]" />
-                  {student.field}
-                </span>
-              )}
-              {student.university && (
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin size={14} className="text-[#188038]" />
-                  {student.university}
-                </span>
-              )}
-            </div>
+      {/* Clickable summary row */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center gap-4 p-5 text-left"
+      >
+        <GradientAvatar name={student.name} size={52} radius="1rem" className="shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-[1rem] font-semibold text-[#202124]">{student.name}</h3>
+            <MatchScoreBadge score={result.score} />
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-[#5F6368]">
+            {student.field && (
+              <span className="inline-flex items-center gap-1.5">
+                <GraduationCap size={14} className="text-[#1A73E8]" />
+                {student.field}
+              </span>
+            )}
+            {student.university && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={14} className="text-[#188038]" />
+                {student.university}
+              </span>
+            )}
           </div>
         </div>
+        <span className="hidden shrink-0 text-[0.78rem] font-semibold text-[#1A73E8] sm:block">
+          {expanded ? 'Hide details' : 'View details'}
+        </span>
+        <ChevronDown
+          size={17}
+          className={`shrink-0 text-[#5F6368] transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
 
-        <div className="flex shrink-0 gap-2">
-          <button
-            onClick={() => onViewProfile(student.id)}
-            className="rounded-full border border-[#D7E6FF] px-4 py-2 text-[0.8rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
-          >
-            View profile
-          </button>
-          <button
-            onClick={() => onReachOut(student.id)}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2 text-[0.8rem] font-semibold text-white shadow-[0_10px_22px_rgba(26,115,232,0.22)] transition-all hover:bg-[#1765CC]"
-          >
-            <Mail size={14} />
-            Reach out
-          </button>
-        </div>
-      </div>
+      {/* Expanded details */}
+      {expanded && (
+        <div className="border-t border-[#EEF3FB] px-5 pb-5">
+          <p className="mt-4 text-[0.9rem] leading-6 text-[#5F6368]">
+            {result.headline}
+          </p>
 
-      <p className="mt-4 text-[0.9rem] leading-6 text-[#5F6368]">
-        {result.headline}
-      </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {skills.map(skill => (
+              <span key={skill} className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#3C4043]">
+                {skill}
+              </span>
+            ))}
+            {skills.length === 0 && (
+              <span className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#5F6368]">
+                Skills not listed yet
+              </span>
+            )}
+          </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {skills.map(skill => (
-          <span key={skill} className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#3C4043]">
-            {skill}
-          </span>
-        ))}
-        {skills.length === 0 && (
-          <span className="rounded-full bg-[#F1F4F9] px-3 py-1.5 text-[0.75rem] font-semibold text-[#5F6368]">
-            Skills not listed yet
-          </span>
-        )}
-      </div>
-
-      {reasons.length > 0 && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          {reasons.map(reason => (
-            <div
-              key={reason.label}
-              className="rounded-2xl border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3"
-            >
-              <p className="text-[0.76rem] font-semibold text-[#202124]">{reason.label}</p>
-              <p className="mt-1 line-clamp-2 text-[0.75rem] leading-5 text-[#5F6368]">{reason.detail}</p>
+          {reasons.length > 0 && (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {reasons.map(reason => (
+                <div
+                  key={reason.label}
+                  className="rounded-2xl border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3"
+                >
+                  <p className="text-[0.76rem] font-semibold text-[#202124]">{reason.label}</p>
+                  <p className="mt-1 line-clamp-2 text-[0.75rem] leading-5 text-[#5F6368]">{reason.detail}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          <div className="mt-5 flex flex-wrap justify-end gap-2">
+            <button
+              onClick={() => onViewProfile(student.id)}
+              className="rounded-full border border-[#D7E6FF] px-4 py-2 text-[0.8rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+            >
+              View profile
+            </button>
+            <button
+              onClick={() => onReachOut(student.id)}
+              className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2 text-[0.8rem] font-semibold text-white shadow-[0_10px_22px_rgba(26,115,232,0.22)] transition-all hover:bg-[#1765CC]"
+            >
+              <Mail size={14} />
+              Reach out
+            </button>
+          </div>
         </div>
       )}
     </motion.article>
   )
 }
+
+const TOP_MATCHES_SHOWN = 6
 
 function NgoMatchesView({
   roles,
@@ -492,6 +514,26 @@ function NgoMatchesView({
   onViewProfile,
   onReachOut,
 }) {
+  const [showAll, setShowAll] = useState(false)
+  const [lastRoleId, setLastRoleId] = useState(selectedRoleId)
+  const listTopRef = useRef(null)
+
+  // Collapse back to the top 6 whenever a different role is selected
+  if (lastRoleId !== selectedRoleId) {
+    setLastRoleId(selectedRoleId)
+    setShowAll(false)
+  }
+
+  const visibleMatches = showAll ? selectedMatches : selectedMatches.slice(0, TOP_MATCHES_SHOWN)
+  const hiddenCount = selectedMatches.length - TOP_MATCHES_SHOWN
+
+  function collapseToTop() {
+    setShowAll(false)
+    setTimeout(() => {
+      listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
+
   return (
     <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
       <NgoRoleRail
@@ -574,7 +616,7 @@ function NgoMatchesView({
                 <div className="grid grid-cols-2 gap-3 sm:flex">
                   <div className="rounded-2xl bg-[#F8FAFF] px-4 py-3 text-center">
                     <p className="text-[1.25rem] font-semibold text-[#202124]">{selectedMatches.length}</p>
-                    <p className="text-[0.72rem] font-semibold text-[#5F6368]">Top matches</p>
+                    <p className="text-[0.72rem] font-semibold text-[#5F6368]">Total matches</p>
                   </div>
                   <div className="rounded-2xl bg-[#F0FBF4] px-4 py-3 text-center">
                     <p className="text-[1.25rem] font-semibold text-[#188038]">
@@ -595,18 +637,41 @@ function NgoMatchesView({
                 </p>
               </div>
             ) : (
-              <div className="space-y-4" role="list" aria-label="Student matches for selected role">
-                {selectedMatches.map((match, index) => (
-                  <div key={match.student.id} role="listitem">
-                    <NgoStudentMatchCard
-                      match={match}
-                      index={index}
-                      onViewProfile={onViewProfile}
-                      onReachOut={onReachOut}
-                    />
+              <>
+                <div ref={listTopRef} className="scroll-mt-6 space-y-4" role="list" aria-label="Student matches for selected role">
+                  {visibleMatches.map(match => (
+                    <div key={match.student.id} role="listitem">
+                      <NgoStudentMatchCard
+                        match={match}
+                        onViewProfile={onViewProfile}
+                        onReachOut={onReachOut}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {hiddenCount > 0 && (
+                  <div className="flex justify-center pt-1">
+                    {showAll ? (
+                      <button
+                        onClick={collapseToTop}
+                        className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-2.5 text-[0.85rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+                      >
+                        <ChevronUp size={15} />
+                        Back to top {TOP_MATCHES_SHOWN}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowAll(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-2.5 text-[0.85rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+                      >
+                        <ChevronDown size={15} />
+                        View more ({hiddenCount})
+                      </button>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -702,7 +767,6 @@ export default function MatchResults() {
         const ranked = ngoStudents
           .map(student => ({ student, result: computeMatch(student, role) }))
           .sort((a, b) => b.result.score - a.result.score)
-          .slice(0, 10)
         return [String(role.id), ranked]
       })
     )
