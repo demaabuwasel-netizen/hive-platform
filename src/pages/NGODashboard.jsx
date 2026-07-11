@@ -346,7 +346,7 @@ export default function NGODashboard() {
             transition={{ duration: 0.35, delay: 0.1 }}
             src={dashboardIllustration}
             alt=""
-            className="w-[280px] max-w-full self-end lg:-mb-14 lg:mr-8"
+            className="w-[380px] max-w-full self-end lg:-mb-14 lg:mr-8"
           />
         </motion.header>
 
