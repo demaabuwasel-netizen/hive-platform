@@ -40,8 +40,8 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
   }
 
   return (
-    <section className="min-w-0">
-      <div className="mb-4 rounded-[28px] bg-[#F8FAFF]/70 p-4">
+    <section className="flex min-w-0 flex-col xl:h-full xl:min-h-0">
+      <div className="mb-4 shrink-0 rounded-[28px] bg-[#F8FAFF]/70 p-4">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             {loading ? (
@@ -89,6 +89,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         </div>
       </div>
 
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 xl:pb-1">
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-3">
@@ -108,7 +109,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
       <AnimatePresence>
         {!loading && applicants.length === 0 && (
           <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
             <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants for this role yet</p>
             <p className="text-[0.82rem] text-[#5F6368]">Students will appear here once they apply.</p>
           </motion.div>
@@ -117,7 +118,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         {/* No filter results */}
         {!loading && applicants.length > 0 && visible.length === 0 && (
           <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
             <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants found</p>
             <p className="text-[0.82rem] text-[#5F6368]">Try adjusting your search or filter.</p>
           </motion.div>
@@ -178,6 +179,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
           })}
         </div>
       )}
+      </div>
     </section>
   )
 }
