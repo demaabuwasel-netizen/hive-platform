@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Calendar, MapPin, Globe, CheckCircle2, UserRound
+  Calendar, MapPin, Globe, CheckCircle2, UserRound, ArrowRight
 } from 'lucide-react'
 import GradientAvatar from './GradientAvatar'
 import CategorizedSkillTags from './CategorizedSkillTags'
@@ -193,42 +193,56 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
         )}
       </div>
 
-      {/* Footer actions */}
-      <div className="flex items-center justify-end gap-2 border-t border-[#E8EAED] px-6 py-4">
-        {status === 'interview' ? (
-          <>
+      {/* Footer actions — hiring flow: reject | step 1 interview → step 2 accept */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E8EAED] px-6 py-4">
+        <button
+          onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
+          className={`h-10 rounded-full px-5 text-[0.85rem] font-medium transition-colors ${
+            status === 'rejected'
+              ? 'text-[#5F6368] hover:bg-[#F1F3F4]'
+              : 'text-[#D93025] hover:bg-[#FCE8E6]'
+          }`}>
+          {status === 'rejected' ? 'Undo reject' : 'Reject'}
+        </button>
+
+        <div className="flex items-center gap-2.5">
+          {/* Step 1 — interview */}
+          {(status === 'interview' || status === 'accepted') ? (
             <button
-              onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-              className="h-10 rounded-full px-5 text-[0.85rem] font-medium text-[#D93025] transition-colors hover:bg-[#FCE8E6]">
-              {status === 'rejected' ? 'Undo' : 'Reject'}
+              onClick={() => navigate(`/interview-message/${applicant.studentId}`)}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+              <CheckCircle2 size={15} strokeWidth={2}/> Interview sent
             </button>
-            <button
-              onClick={() => onStatusChange('accepted')}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#188038] px-6 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#137333]">
-              <CheckCircle2 size={15} strokeWidth={2}/> Accept
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-              className={`h-10 rounded-full px-5 text-[0.85rem] font-medium transition-colors ${
-                status === 'rejected'
-                  ? 'text-[#5F6368] hover:bg-[#F1F3F4]'
-                  : 'text-[#D93025] hover:bg-[#FCE8E6]'
-              }`}>
-              {status === 'rejected' ? 'Undo' : 'Reject'}
-            </button>
+          ) : (
             <button
               onClick={() => {
                 onStatusChange('interview')
                 setTimeout(() => navigate(`/interview-message/${applicant.studentId}`), 200)
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-6 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC]">
-              <Calendar size={15} strokeWidth={2}/> Interview
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-5 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC]">
+              <Calendar size={15} strokeWidth={2}/> Move to interview
             </button>
-          </>
-        )}
+          )}
+
+          <ArrowRight size={15} className="shrink-0 text-[#9AA0A6]"/>
+
+          {/* Step 2 — accept */}
+          {status === 'accepted' ? (
+            <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E6F4EA] px-5 text-[0.85rem] font-medium text-[#188038]">
+              <CheckCircle2 size={15} strokeWidth={2}/> Accepted
+            </span>
+          ) : (
+            <button
+              onClick={() => onStatusChange('accepted')}
+              className={`inline-flex h-10 items-center gap-2 rounded-full px-5 text-[0.85rem] font-medium transition-colors ${
+                status === 'interview'
+                  ? 'bg-[#188038] text-white hover:bg-[#137333]'
+                  : 'border border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F8F9FA] hover:text-[#188038]'
+              }`}>
+              <CheckCircle2 size={15} strokeWidth={2}/> Accept
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
