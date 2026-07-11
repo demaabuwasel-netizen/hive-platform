@@ -372,6 +372,7 @@ function StudentView() {
   const [inputMode, setInputMode] = useState('type')
   const [isRecording, setIsRecording] = useState(false)
   const [explainOpen, setExplainOpen] = useState(false)
+  const [descriptionOpen, setDescriptionOpen] = useState(false)
   const recognitionRef = useRef(null)
   const messageIdRef = useRef(0)
 
@@ -884,7 +885,18 @@ function StudentView() {
                   <p className="text-[1rem] font-semibold text-[#202124]">{selectedRole.title}</p>
                   <p className="mt-1 text-[0.84rem] text-[#5F6368]">{selectedRole.orgName}</p>
                 </div>
-                <p className="text-[0.84rem] leading-6 text-[#5F6368]">{selectedRole.description}</p>
+                <button
+                  onClick={() => setDescriptionOpen(!descriptionOpen)}
+                  className="flex w-full items-start justify-between gap-3 rounded-[20px] border border-[#E5EEFB] bg-[#FBFCFE] px-3.5 py-3 text-left transition hover:border-[#D7E6FF] hover:bg-white"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Job description</p>
+                  </div>
+                  <ChevronDown size={16} className={`shrink-0 text-[#5F6368] transition-transform ${descriptionOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {descriptionOpen && (
+                  <p className="text-[0.84rem] leading-6 text-[#5F6368] rounded-[20px] border border-[#E5EEFB] bg-white px-4 py-3">{selectedRole.description}</p>
+                )}
                 <div className="grid gap-2 text-[0.8rem] text-[#5F6368]">
                   <div className="rounded-[18px] border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-2">
                     <span className="font-semibold text-[#202124]">Work mode:</span> {selectedRole.workMode || 'Flexible'}
