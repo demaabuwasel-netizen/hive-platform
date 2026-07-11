@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles, Users, Award, BarChart3, Search } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
+import forStudentImage from '../assets/for student.png'
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -53,38 +54,48 @@ export default function ForStudents() {
         <section className="relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(11,132,255,0.06),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.04),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(11,132,255,0.03),transparent_26%)]" />
           <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
-            <div className="max-w-3xl">
-              <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
-                Opportunities for students
-              </p>
+            <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10">
+              <div className="max-w-2xl">
+                <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
+                  <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
+                  Opportunities for students
+                </p>
 
-              <h1 className="max-w-2xl text-4xl font-bold leading-[1.15] tracking-[-0.01em] text-[#202124] sm:text-5xl lg:text-[3.5rem]">
-                Build your career
-                <br />
-                while making a
-                <br />
-                <span className="text-[#0B84FF]">real difference.</span>
-              </h1>
+                <h1 className="max-w-2xl text-4xl font-bold leading-[1.15] tracking-[-0.01em] text-[#202124] sm:text-5xl lg:text-[3.5rem]">
+                  Build your career
+                  <br />
+                  while making a
+                  <br />
+                  <span className="text-[#0B84FF]">real difference.</span>
+                </h1>
 
-              <p className="mt-6 max-w-xl text-base leading-7 text-[#5F6368] sm:text-lg">
-                Find meaningful opportunities that match your skills and values. Work on real projects that matter.
-              </p>
+                <p className="mt-6 max-w-xl text-base leading-7 text-[#5F6368] sm:text-lg">
+                  Find meaningful opportunities that match your skills and values. Work on real projects that matter.
+                </p>
 
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link
-                  to="/auth?mode=signup&role=student"
-                  className="inline-flex items-center justify-center rounded-2xl bg-[#0B84FF] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(11,132,255,0.25)] transition-all hover:shadow-[0_16px_40px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
-                >
-                  Get started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-                <Link
-                  to="/auth"
-                  className="inline-flex items-center justify-center rounded-2xl border border-[#E6EAF0] bg-white px-8 py-4 text-base font-semibold text-[#202124] shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-all hover:border-[#D5DCE6] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
-                >
-                  Log in
-                </Link>
+                <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                  <Link
+                    to="/auth?mode=signup&role=student"
+                    className="inline-flex items-center justify-center rounded-2xl bg-[#0B84FF] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(11,132,255,0.25)] transition-all hover:shadow-[0_16px_40px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
+                  >
+                    Get started
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="inline-flex items-center justify-center rounded-2xl border border-[#E6EAF0] bg-white px-8 py-4 text-base font-semibold text-[#202124] shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-all hover:border-[#D5DCE6] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+                  >
+                    Log in
+                  </Link>
+                </div>
+              </div>
+
+              <div className="relative mx-auto w-full">
+                <img
+                  src={forStudentImage}
+                  alt="For students"
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
