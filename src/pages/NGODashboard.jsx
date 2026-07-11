@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  MessageCircle,
   MessageSquare,
   Sparkles,
   Users,
@@ -54,7 +53,7 @@ const QUICK_ACTIONS = [
   },
 ]
 
-function QuickActionCard({ action, delay = 0 }) {
+function QuickActionCard({ action, delay = 0, count = null }) {
   const Icon = action.icon
 
   return (
@@ -62,21 +61,27 @@ function QuickActionCard({ action, delay = 0 }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, delay }}
-      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]"
+      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
+      {/* Accent strip revealed on hover */}
+      <span
+        className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{ background: `linear-gradient(90deg, ${action.accent}, ${action.tint})` }}
+      />
+
       <Link to={action.to} className="absolute inset-0" aria-label={action.title} />
 
       <div className="flex items-start justify-between gap-4">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
           style={{ background: action.tint, color: action.accent }}
         >
           <Icon size={18} strokeWidth={2.15} />
         </div>
 
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-transform duration-200 group-hover:translate-x-0.5"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#1A73E8]"
           style={{ boxShadow: 'inset 0 0 0 1px rgba(17,24,39,0.05)' }}
         >
           <ChevronRight size={16} />
@@ -84,7 +89,17 @@ function QuickActionCard({ action, delay = 0 }) {
       </div>
 
       <div className="mt-10">
-        <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.title}</h3>
+          {typeof count === 'number' && count > 0 && (
+            <span
+              className="rounded-full px-2 py-0.5 text-[0.7rem] font-bold"
+              style={{ background: action.tint, color: action.accent }}
+            >
+              {count}
+            </span>
+          )}
+        </div>
         <p className="mt-1.5 text-[0.88rem] text-[#5F6368]">{action.description}</p>
       </div>
     </motion.div>
@@ -101,7 +116,7 @@ function RoleCard({ opportunity, applicantCount, index, onOpen }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.06 * index }}
-      className="snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[260px] min-h-[190px] rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_10px_26px_rgba(17,24,39,0.04)]"
+      className="group snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[260px] min-h-[190px] cursor-pointer rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_10px_26px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_18px_40px_rgba(26,115,232,0.10)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
       role="button"
       tabIndex={0}
@@ -114,19 +129,30 @@ function RoleCard({ opportunity, applicantCount, index, onOpen }) {
       }}
       aria-label={`Open role ${title}`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-2xl text-[#1A73E8] transition-transform duration-200 group-hover:scale-110"
+            style={{ background: 'linear-gradient(135deg, #E8F0FE 0%, #D2E3FC 100%)' }}
+          >
             <Briefcase size={18} strokeWidth={2.15} />
           </div>
           <div>
-            <p className="text-[0.92rem] font-semibold text-[#202124]">{title}</p>
+            <p className="text-[0.92rem] font-semibold text-[#202124] transition-colors group-hover:text-[#1A73E8]">{title}</p>
             <p className="mt-0.5 text-[0.76rem] text-[#5F6368]">{tag}</p>
           </div>
         </div>
+
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-1 text-[0.68rem] font-semibold text-[#188038]">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+          </span>
+          Open
+        </span>
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-3 py-3">
+      <div className="mt-4 rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-3 py-3 transition-colors group-hover:border-[#D7E6FF] group-hover:bg-[#F8FBFF]">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
           Overview
         </p>
@@ -148,10 +174,15 @@ function RoleCard({ opportunity, applicantCount, index, onOpen }) {
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
             Applicants
           </p>
-          <p className="mt-1 text-[1.05rem] font-semibold text-[#202124]">
+          <p className="mt-1 inline-flex items-center gap-2 text-[1.05rem] font-semibold text-[#202124]">
+            <Users size={15} className="text-[#1A73E8]" />
             {applicantCount}
           </p>
         </div>
+
+        <span className="text-[0.78rem] font-semibold text-[#1A73E8] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          View role →
+        </span>
       </div>
     </motion.article>
   )
@@ -169,6 +200,21 @@ export default function NGODashboard() {
 
   const orgName = profile?.name || user?.name || 'Organization'
   const headerLine = 'Manage connections, roles, and hiring momentum from one clean workspace.'
+
+  const [{ greeting, weekCutoff }] = useState(() => {
+    const now = new Date()
+    const hour = now.getHours()
+    return {
+      greeting: hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening',
+      weekCutoff: now.getTime() - 7 * 24 * 60 * 60 * 1000,
+    }
+  })
+
+  const newThisWeek = applicants.filter(app => {
+    const submitted = new Date(app?.submittedAt ?? app?.submitted_at ?? app?.created_at ?? 0)
+    return submitted.getTime() > weekCutoff
+  }).length
+  const interviewCount = applicants.filter(app => app?.status === 'interview').length
 
   useEffect(() => {
     if (!user?.id) return
@@ -287,22 +333,64 @@ export default function NGODashboard() {
   })
 
   return (
-    <main className="min-h-screen bg-[#F5F7FB]">
-      <div className="mx-auto max-w-[1440px] px-6 py-10 lg:px-10">
+    <main className="relative min-h-screen bg-[#F5F7FB]">
+      {/* Soft ambient gradients */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+
+      <div className="relative mx-auto max-w-[1440px] px-6 py-10 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+          className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
         >
           <div className="max-w-3xl">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-white/85 px-3.5 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_4px_14px_rgba(26,115,232,0.06)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#34A853]" />
+              </span>
+              {greeting} — your workspace is live
+            </p>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
               {orgName}
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
               {headerLine}
             </p>
+
+            {!loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="mt-5 flex flex-wrap gap-2.5"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#E5EEFB] bg-white px-3.5 py-2 text-[0.8rem] font-semibold text-[#202124] shadow-[0_4px_14px_rgba(17,24,39,0.04)]">
+                  <Briefcase size={13} className="text-[#1A73E8]" />
+                  {opportunities.length} open role{opportunities.length !== 1 ? 's' : ''}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#E5EEFB] bg-white px-3.5 py-2 text-[0.8rem] font-semibold text-[#202124] shadow-[0_4px_14px_rgba(17,24,39,0.04)]">
+                  <Users size={13} className="text-[#A142F4]" />
+                  {applicants.length} applicant{applicants.length !== 1 ? 's' : ''}
+                </span>
+                {newThisWeek > 0 && (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#CDEBD8] bg-[#F1FBF6] px-3.5 py-2 text-[0.8rem] font-semibold text-[#188038] shadow-[0_4px_14px_rgba(24,128,56,0.06)]">
+                    <Sparkles size={13} />
+                    {newThisWeek} new this week
+                  </span>
+                )}
+              </motion.div>
+            )}
           </div>
+
+          <Link
+            to="/opportunities/new"
+            className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-[#1A73E8] px-6 text-[0.9rem] font-semibold text-white shadow-[0_10px_26px_rgba(26,115,232,0.25)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_14px_32px_rgba(26,115,232,0.32)] lg:self-end"
+          >
+            <Briefcase size={16} />
+            Create role
+          </Link>
         </motion.header>
 
         <section className="rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
@@ -322,9 +410,21 @@ export default function NGODashboard() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-4">
-            {QUICK_ACTIONS.map((action, index) => (
-              <QuickActionCard key={action.title} action={action} delay={index * 0.04} />
-            ))}
+            {QUICK_ACTIONS.map((action, index) => {
+              const liveCounts = {
+                Applicants: applicants.length,
+                Matches: topMatches.length,
+                Interviews: interviewCount,
+              }
+              return (
+                <QuickActionCard
+                  key={action.title}
+                  action={action}
+                  delay={index * 0.04}
+                  count={loading ? null : liveCounts[action.title] ?? null}
+                />
+              )
+            })}
           </div>
         </section>
 
