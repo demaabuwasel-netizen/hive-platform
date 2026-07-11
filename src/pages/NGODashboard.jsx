@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ExternalLink,
   MessageSquare,
-  Sparkles,
   Users,
   Zap,
 } from 'lucide-react'
@@ -201,19 +200,6 @@ export default function NGODashboard() {
   const orgName = profile?.name || user?.name || 'Organization'
   const headerLine = 'Manage connections, roles, and hiring momentum from one clean workspace.'
 
-  const [{ greeting, weekCutoff }] = useState(() => {
-    const now = new Date()
-    const hour = now.getHours()
-    return {
-      greeting: hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening',
-      weekCutoff: now.getTime() - 7 * 24 * 60 * 60 * 1000,
-    }
-  })
-
-  const newThisWeek = applicants.filter(app => {
-    const submitted = new Date(app?.submittedAt ?? app?.submitted_at ?? app?.created_at ?? 0)
-    return submitted.getTime() > weekCutoff
-  }).length
   const interviewCount = applicants.filter(app => app?.status === 'interview').length
 
   useEffect(() => {
@@ -342,55 +328,16 @@ export default function NGODashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+          className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
         >
           <div className="max-w-3xl">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-white/85 px-3.5 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_4px_14px_rgba(26,115,232,0.06)]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#34A853]" />
-              </span>
-              {greeting} — your workspace is live
-            </p>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
               {orgName}
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
               {headerLine}
             </p>
-
-            {!loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-                className="mt-5 flex flex-wrap gap-2.5"
-              >
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#E5EEFB] bg-white px-3.5 py-2 text-[0.8rem] font-semibold text-[#202124] shadow-[0_4px_14px_rgba(17,24,39,0.04)]">
-                  <Briefcase size={13} className="text-[#1A73E8]" />
-                  {opportunities.length} open role{opportunities.length !== 1 ? 's' : ''}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#E5EEFB] bg-white px-3.5 py-2 text-[0.8rem] font-semibold text-[#202124] shadow-[0_4px_14px_rgba(17,24,39,0.04)]">
-                  <Users size={13} className="text-[#A142F4]" />
-                  {applicants.length} applicant{applicants.length !== 1 ? 's' : ''}
-                </span>
-                {newThisWeek > 0 && (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#CDEBD8] bg-[#F1FBF6] px-3.5 py-2 text-[0.8rem] font-semibold text-[#188038] shadow-[0_4px_14px_rgba(24,128,56,0.06)]">
-                    <Sparkles size={13} />
-                    {newThisWeek} new this week
-                  </span>
-                )}
-              </motion.div>
-            )}
           </div>
-
-          <Link
-            to="/opportunities/new"
-            className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-[#1A73E8] px-6 text-[0.9rem] font-semibold text-white shadow-[0_10px_26px_rgba(26,115,232,0.25)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_14px_32px_rgba(26,115,232,0.32)] lg:self-end"
-          >
-            <Briefcase size={16} />
-            Create role
-          </Link>
         </motion.header>
 
         <section className="rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
