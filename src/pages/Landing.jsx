@@ -13,14 +13,16 @@ import {
   BarChart3,
   Heart,
   Globe2,
+  Target,
+  Zap,
 } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
 import chatgptImage from '../assets/ChatGPT Image Jul 11, 2026, 04_03_41 AM.png'
 
 const NAV_LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'For Students', to: '/for-students' },
-  { label: 'For NGOs', to: '/for-ngos' },
+  { label: 'Home', to: '#hero' },
+  { label: 'For Students', to: '#for-students' },
+  { label: 'For NGOs', to: '#for-ngos' },
   { label: 'About Us', to: '/about' },
 ]
 
@@ -144,13 +146,23 @@ function Landing() {
 
           <nav className="hidden items-center gap-12 lg:flex">
             {NAV_LINKS.map(link => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
-              >
-                {link.label}
-              </Link>
+              link.to.startsWith('#') ? (
+                <a
+                  key={link.label}
+                  href={link.to}
+                  className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -173,7 +185,7 @@ function Landing() {
       </header>
 
       <main>
-        <section className="relative">
+        <section id="hero" className="relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(11,132,255,0.06),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.04),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(11,132,255,0.03),transparent_26%)]" />
           <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
             <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10">
@@ -295,6 +307,146 @@ function Landing() {
                   {name}
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* For Students Section */}
+        <section id="for-students" className="px-5 pb-20 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
+                Opportunities for students
+              </p>
+              <h2 className="text-3xl font-bold tracking-[-0.01em] text-[#202124] sm:text-4xl">
+                Build your career while making a <span className="text-[#0B84FF]">real difference.</span>
+              </h2>
+              <p className="mt-4 text-base text-[#5F6368]">
+                Find meaningful opportunities that match your skills and values. Work on real projects that matter.
+              </p>
+            </div>
+
+            <div className="rounded-[2.5rem] border border-[#E6EAF0] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:p-8">
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  {
+                    icon: Sparkles,
+                    title: 'Meaningful opportunities',
+                    desc: 'Work with organizations aligned with your values.',
+                    accent: 'blue',
+                  },
+                  {
+                    icon: BarChart3,
+                    title: 'Build real portfolio',
+                    desc: 'Create projects you can show employers.',
+                    accent: 'green',
+                  },
+                  {
+                    icon: Users,
+                    title: 'Professional mentoring',
+                    desc: 'Learn from experienced professionals.',
+                    accent: 'amber',
+                  },
+                ].map(({ icon: Icon, title, desc, accent }) => {
+                  const styles = {
+                    blue: 'bg-[#EAF2FF] text-[#0B84FF]',
+                    green: 'bg-[#E5F6EA] text-[#10B981]',
+                    amber: 'bg-[#FFF4D8] text-[#F59E0B]',
+                  }
+                  return (
+                    <div key={title} className="flex gap-4 rounded-[1.75rem] p-5 transition-all hover:shadow-[0_12px_32px_rgba(11,132,255,0.08)]">
+                      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${styles[accent]}`}>
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-[#202124]">{title}</h3>
+                        <p className="mt-1.5 text-sm leading-5 text-[#5F6368]">{desc}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <Link
+                to="/auth?mode=signup&role=student"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-8 py-3 text-base font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)]"
+              >
+                Get started
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* For NGOs Section */}
+        <section id="for-ngos" className="px-5 pb-20 sm:px-8 lg:px-10 bg-slate-50">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
+                Solutions for NGOs
+              </p>
+              <h2 className="text-3xl font-bold tracking-[-0.01em] text-[#202124] sm:text-4xl">
+                Find volunteers who actually fit <span className="text-[#0B84FF]">your mission.</span>
+              </h2>
+              <p className="mt-4 text-base text-[#5F6368]">
+                Connect with motivated students who understand your cause and have the skills you need.
+              </p>
+            </div>
+
+            <div className="rounded-[2.5rem] border border-[#E6EAF0] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:p-8">
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  {
+                    icon: Target,
+                    title: 'Mission-aligned matching',
+                    desc: 'Find volunteers who care about your cause.',
+                    accent: 'blue',
+                  },
+                  {
+                    icon: Zap,
+                    title: 'Smart skill matching',
+                    desc: 'Surface candidates with the skills you need.',
+                    accent: 'green',
+                  },
+                  {
+                    icon: Users,
+                    title: 'Verified students',
+                    desc: 'Work with real, motivated volunteers.',
+                    accent: 'amber',
+                  },
+                ].map(({ icon: Icon, title, desc, accent }) => {
+                  const styles = {
+                    blue: 'bg-[#EAF2FF] text-[#0B84FF]',
+                    green: 'bg-[#E5F6EA] text-[#10B981]',
+                    amber: 'bg-[#FFF4D8] text-[#F59E0B]',
+                  }
+                  return (
+                    <div key={title} className="flex gap-4 rounded-[1.75rem] p-5 transition-all hover:shadow-[0_12px_32px_rgba(11,132,255,0.08)]">
+                      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${styles[accent]}`}>
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-[#202124]">{title}</h3>
+                        <p className="mt-1.5 text-sm leading-5 text-[#5F6368]">{desc}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <Link
+                to="/auth?mode=signup&role=ngo"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-8 py-3 text-base font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)]"
+              >
+                Get started
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </section>
