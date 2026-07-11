@@ -69,6 +69,25 @@ function SectionLabel({ icon: Icon, children }) {
   )
 }
 
+function PanelTitle() {
+  return (
+    <div className="flex shrink-0 items-center justify-between border-b px-7 py-4"
+      style={{ borderColor: 'rgba(26,115,232,0.10)', background: '#FBFCFE' }}>
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#E8F0FE] text-[#1A73E8]">
+          <UserRound size={15} strokeWidth={2.3} />
+        </span>
+        <h2 className="text-[1rem] font-semibold tracking-[-0.02em] text-[#202124]">
+          Student details
+        </h2>
+      </div>
+      <span className="hidden text-[0.74rem] font-medium text-[#9AA0A6] sm:block">
+        Profile, fit &amp; next action
+      </span>
+    </div>
+  )
+}
+
 export default function ApplicantDetail({ applicant, status, onStatusChange, opportunityId }) {
   const navigate = useNavigate()
 
@@ -76,6 +95,7 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
     return (
       <div className="flex min-h-[620px] flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+        <PanelTitle />
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center"
           style={{ background: 'linear-gradient(165deg, #F8FBFF 0%, #FFFFFF 60%)' }}>
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#E8F0FE] text-[#1A73E8] shadow-[0_10px_26px_rgba(26,115,232,0.14)]">
@@ -95,6 +115,8 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
   return (
     <div className="flex flex-col overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+
+      <PanelTitle />
 
       {/* Header */}
       <div className="shrink-0 border-b px-7 pb-6 pt-6"

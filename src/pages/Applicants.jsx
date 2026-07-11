@@ -307,15 +307,6 @@ export default function Applicants() {
           selectedRoleTitle={selectedRole?.title ?? null}
         />
 
-        <div className="hidden rounded-[28px] bg-[#F8FAFF]/70 p-4 xl:col-start-2 xl:row-start-1 xl:block">
-          <h2 className="text-[1.35rem] font-semibold tracking-[-0.04em] text-[#202124]">
-            Student details
-          </h2>
-          <p className="mt-1 text-[0.84rem] text-[#5F6368]">
-            Profile, fit, and next action for the selected applicant
-          </p>
-        </div>
-
         <div className="min-w-0 self-start xl:col-start-2 xl:row-start-2">
           <ApplicantDetail
             applicant={selected}
