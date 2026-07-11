@@ -16,6 +16,7 @@ import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
 import { supabase } from '../services/supabase'
 import { computeMatch } from '../services/matching'
+import dashboardIllustration from '../assets/Subject 2.png'
 
 const QUICK_ACTIONS = [
   {
@@ -339,6 +340,15 @@ export default function NGODashboard() {
             </p>
           </div>
         </motion.header>
+
+        <motion.img
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          src={dashboardIllustration}
+          alt=""
+          className="mb-2 w-[280px] max-w-full"
+        />
 
         <section className="rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
           style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
