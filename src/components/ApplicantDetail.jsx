@@ -1,14 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, MapPin, Globe, CheckCircle2, UserRound, ArrowRight,
-  X, Send, RotateCcw, Loader
+  X, Send, RotateCcw, Loader, Mail, Link2
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { sendInterviewMessage } from '../services/messages'
+import { groupSkills } from '../data/skills'
 import GradientAvatar from './GradientAvatar'
-import CategorizedSkillTags from './CategorizedSkillTags'
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -189,8 +188,7 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
   )
 }
 
-export default function ApplicantDetail({ applicant, status, onStatusChange, opportunityId }) {
-  const navigate = useNavigate()
+export default function ApplicantDetail({ applicant, status, onStatusChange }) {
   const [inviteOpen, setInviteOpen] = useState(false)
 
   if (!applicant) {
@@ -220,14 +218,8 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
     <div className="flex flex-col overflow-hidden rounded-[24px] border border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)]">
 
       {/* Panel title */}
-      <div className="flex items-center justify-between gap-4 border-b border-[#E8EAED] px-6 py-3.5">
+      <div className="border-b border-[#E8EAED] px-6 py-4">
         <h2 className="text-[0.95rem] font-medium text-[#202124]">Student details</h2>
-        <button
-          onClick={() => navigate(`/student-profile/${applicant.studentId}${opportunityId ? `?backTo=applicants&opportunity=${opportunityId}` : ''}`)}
-          className="rounded-full px-3 py-1.5 text-[0.8rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
-        >
-          View full profile
-        </button>
       </div>
 
       {/* Identity header */}
@@ -236,10 +228,9 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
           <GradientAvatar name={applicant.name} size={64} radius="9999px" className="shrink-0 ring-1 ring-[#E8EAED]"/>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <button onClick={() => navigate(`/student-profile/${applicant.studentId}${opportunityId ? `?backTo=applicants&opportunity=${opportunityId}` : ''}`)}
-                className="text-left text-[1.3rem] font-medium tracking-[-0.01em] text-[#202124] transition-colors hover:text-[#1A73E8]">
+              <h3 className="text-[1.3rem] font-medium tracking-[-0.01em] text-[#202124]">
                 {applicant.name}
-              </button>
+              </h3>
               <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium ${st.bg} ${st.color}`}>
                 {st.label}
               </span>
@@ -289,11 +280,99 @@ export default function ApplicantDetail({ applicant, status, onStatusChange, opp
           </div>
         )}
 
-        {/* Skills */}
+        {/* Skills — grouped by category, colored dot carries identity */}
         {skills.length > 0 && (
           <div>
             <SectionLabel>Skills</SectionLabel>
-            <CategorizedSkillTags skills={applicant.skills} />
+            <div className="flex flex-col gap-4">
+              {groupSkills(applicant.skills).map(({ cat, items }) => (
+                <div key={cat.cat}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
+                    <p className="text-[0.76rem] font-medium text-[#5F6368]">{cat.cat}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map(item => (
+                      <span
+                        key={item.name}
+                        className="rounded-lg border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.8rem] text-[#3C4043]"
+                      >
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Experience */}
+        {applicant.experience && (
+          <div>
+            <SectionLabel>Experience</SectionLabel>
+            <p className="whitespace-pre-line text-[0.88rem] leading-7 text-[#3C4043]">
+              {applicant.experience}
+            </p>
+          </div>
+        )}
+
+        {/* Goals */}
+        {applicant.goals && (
+          <div>
+            <SectionLabel>Goals</SectionLabel>
+            <p className="whitespace-pre-line text-[0.88rem] leading-7 text-[#3C4043]">
+              {applicant.goals}
+            </p>
+          </div>
+        )}
+
+        {/* Interests */}
+        {applicant.interests?.length > 0 && (
+          <div>
+            <SectionLabel>Interests</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {applicant.interests.map(interest => (
+                <span
+                  key={interest}
+                  className="rounded-lg border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.8rem] text-[#3C4043]"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contact & links */}
+        {(applicant.email || Object.values(applicant.links || {}).some(Boolean)) && (
+          <div>
+            <SectionLabel>Contact &amp; links</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {applicant.email && (
+                <a
+                  href={`mailto:${applicant.email}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.8rem] text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]"
+                >
+                  <Mail size={13} strokeWidth={1.8} />
+                  {applicant.email}
+                </a>
+              )}
+              {Object.entries(applicant.links || {}).map(([label, href]) =>
+                href ? (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.8rem] capitalize text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]"
+                  >
+                    <Link2 size={13} strokeWidth={1.8} />
+                    {label}
+                  </a>
+                ) : null
+              )}
+            </div>
           </div>
         )}
 
