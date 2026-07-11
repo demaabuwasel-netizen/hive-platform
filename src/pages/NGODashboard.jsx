@@ -347,10 +347,10 @@ export default function NGODashboard() {
           transition={{ duration: 0.35, delay: 0.1 }}
           src={dashboardIllustration}
           alt=""
-          className="mb-2 w-[280px] max-w-full"
+          className="relative z-0 -mb-10 ml-auto mr-8 w-[280px] max-w-full"
         />
 
-        <section className="rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+        <section className="relative z-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
           style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
