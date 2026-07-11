@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: 'Home',         to: '/'             },
   { label: 'For Students', to: '/for-students' },
   { label: 'For NGOs',     to: '/for-ngos'     },
-  { label: 'About',        to: '/about'        },
+  { label: 'About Us',     to: '/about'        },
 ]
 
 export default function Navbar({ minimal = false }) {
