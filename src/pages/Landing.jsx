@@ -18,6 +18,7 @@ import HiveLogo from '../components/HiveLogo'
 import chatgptImage from '../assets/ChatGPT Image Jul 11, 2026, 04_03_41 AM.png'
 
 const NAV_LINKS = [
+  { label: 'Home', to: '/' },
   { label: 'For Students', to: '/for-students' },
   { label: 'For NGOs', to: '/for-ngos' },
   { label: 'How It Works', to: '/how-it-works' },
