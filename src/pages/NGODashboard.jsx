@@ -329,7 +329,7 @@ export default function NGODashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+          className="relative z-0 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
           <div className="max-w-3xl">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
@@ -339,16 +339,16 @@ export default function NGODashboard() {
               {headerLine}
             </p>
           </div>
-        </motion.header>
 
-        <motion.img
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.1 }}
-          src={dashboardIllustration}
-          alt=""
-          className="relative z-0 -mb-10 ml-auto mr-8 w-[280px] max-w-full"
-        />
+          <motion.img
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            src={dashboardIllustration}
+            alt=""
+            className="w-[280px] max-w-full self-end lg:-mb-14 lg:mr-8"
+          />
+        </motion.header>
 
         <section className="relative z-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
           style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
