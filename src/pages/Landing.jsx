@@ -15,6 +15,7 @@ import {
   Globe2,
 } from 'lucide-react'
 import HiveLogo from '../components/HiveLogo'
+import chatgptImage from '../assets/ChatGPT Image Jul 11, 2026, 04_03_41 AM.png'
 
 const NAV_LINKS = [
   { label: 'For Students', to: '/for-students' },
@@ -122,85 +123,61 @@ function PlaceholderImage({ label, sublabel, gradient, icon: Icon }) {
 
 function HeroVisual() {
   return (
-    <div className="relative mx-auto w-full max-w-2xl h-[450px] sm:h-[520px] md:h-[580px]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-10 h-28 w-28 rounded-full bg-blue-200/25 blur-3xl" />
-        <div className="absolute right-14 top-20 h-32 w-32 rounded-full bg-emerald-200/25 blur-3xl" />
-        <div className="absolute bottom-4 left-[24%] h-28 w-28 rounded-full bg-amber-200/20 blur-3xl" />
+    <div className="relative w-full h-[480px] flex items-center justify-center">
+      <div className="absolute inset-0 opacity-40">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-100 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-20 w-32 h-32 bg-green-100 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-1/4 w-28 h-28 bg-amber-100 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full h-full flex items-center justify-center">
-        {/* Top Left */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{left: '5%', top: '0%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="blue" image>
-            <PlaceholderImage
-              label="Students"
-              sublabel="Discover"
-              gradient="bg-gradient-to-br from-white/90 to-blue-100/75"
-              icon={GraduationCap}
-            />
-          </HexTile>
-        </div>
+      <div className="relative w-full h-full perspective" style={{ perspective: '1000px' }}>
+        {/* Large hexagon - top center with image */}
+        <HexTile className="absolute top-0 right-1/3 w-32 h-32 lg:w-40 lg:h-40" tone="slate" image>
+          <div className="w-full h-full bg-gradient-to-br from-yellow-200 to-orange-200 flex items-center justify-center overflow-hidden">
+            <div className="text-4xl">👩‍💼</div>
+          </div>
+        </HexTile>
 
-        {/* Top Center */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{left: '50%', transform: 'translateX(-50%)', top: '5%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="green" image>
-            <PlaceholderImage
-              label="NGOs"
-              sublabel="Find help"
-              gradient="bg-gradient-to-br from-white/90 to-emerald-100/80"
-              icon={HeartHandshake}
-            />
-          </HexTile>
-        </div>
+        {/* Right side hexagon - team image */}
+        <HexTile className="absolute top-1/4 right-0 w-28 h-28 lg:w-36 lg:h-36" tone="blue" image>
+          <div className="w-full h-full bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center overflow-hidden">
+            <div className="text-3xl">🤝</div>
+          </div>
+        </HexTile>
 
-        {/* Top Right */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{right: '5%', top: '0%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="amber" image>
-            <PlaceholderImage
-              label="Opportunities"
-              sublabel="Create"
-              gradient="bg-gradient-to-br from-white/90 to-amber-100/70"
-              icon={Star}
-            />
-          </HexTile>
-        </div>
+        {/* Bottom left - Students card */}
+        <HexTile className="absolute bottom-16 left-0 w-32 h-24" tone="blue">
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <GraduationCap size={24} />
+            <p className="text-xs font-semibold text-center">Students</p>
+            <p className="text-[10px] text-center leading-tight">Discover opportunities</p>
+          </div>
+        </HexTile>
 
-        {/* Middle Left */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{left: '12%', top: '42%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="slate" image>
-            <PlaceholderImage
-              label="Hands together"
-              sublabel="Collaborate"
-              gradient="bg-gradient-to-br from-white to-slate-100"
-              icon={Heart}
-            />
-          </HexTile>
-        </div>
+        {/* Center card - Opportunities */}
+        <HexTile className="absolute bottom-2 left-1/3 w-36 h-28" tone="amber">
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <Heart size={24} />
+            <p className="text-xs font-semibold">Opportunities</p>
+            <p className="text-[10px] text-center leading-tight">Create impact</p>
+          </div>
+        </HexTile>
 
-        {/* Middle Center */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{left: '50%', transform: 'translateX(-50%)', top: '50%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="blue" image>
-            <PlaceholderImage
-              label="Impact"
-              sublabel="Real growth"
-              gradient="bg-gradient-to-br from-white/90 to-blue-50"
-              icon={Globe2}
-            />
-          </HexTile>
-        </div>
+        {/* Right side - NGOs card */}
+        <HexTile className="absolute bottom-20 right-0 w-28 h-28" tone="green">
+          <div className="flex flex-col items-center justify-center h-full gap-1.5">
+            <HeartHandshake size={20} />
+            <p className="text-xs font-semibold">NGOs</p>
+            <p className="text-[9px] text-center leading-tight">Find help</p>
+          </div>
+        </HexTile>
 
-        {/* Middle Right */}
-        <div className="absolute w-[120px] sm:w-[140px] md:w-[160px]" style={{right: '12%', top: '42%'}}>
-          <HexTile className="h-[120px] sm:h-[140px] md:h-[160px]" tone="slate" image>
-            <PlaceholderImage
-              label="Story"
-              sublabel="A mission"
-              gradient="bg-gradient-to-br from-white to-slate-100"
-              icon={Sparkles}
-            />
-          </HexTile>
-        </div>
+        {/* Bottom right landscape image */}
+        <HexTile className="absolute bottom-0 right-1/4 w-40 h-24" tone="slate" image>
+          <div className="w-full h-full bg-gradient-to-br from-green-200 to-teal-200 flex items-center justify-center overflow-hidden">
+            <div className="text-3xl">🌍</div>
+          </div>
+        </HexTile>
       </div>
     </div>
   )
