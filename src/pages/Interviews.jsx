@@ -1230,7 +1230,7 @@ function NGOView({ onPracticeChange }) {
                 </div>
               </div>
 
-              <div className="mt-9 flex flex-wrap gap-2.5">
+              <div className="mt-11 flex flex-wrap gap-3">
                 {guideSections.map(section => {
                   const Icon = section.icon
                   const active = activeGuideSection === section.id
@@ -1238,10 +1238,10 @@ function NGOView({ onPracticeChange }) {
                     <button
                       key={section.id}
                       onClick={() => setActiveGuideSection(section.id)}
-                      className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.84rem] font-semibold transition-all duration-200 ${
+                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-[0.85rem] font-semibold tracking-[0.01em] transition-all duration-300 ${
                         active
-                          ? 'bg-[#1A73E8] text-white shadow-[0_4px_14px_rgba(26,115,232,0.22)]'
-                          : 'border border-[#E5EEFB] bg-white text-[#5F6368] hover:border-[#BFD7FF] hover:text-[#1A73E8]'
+                          ? 'bg-gradient-to-b from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_8px_20px_rgba(26,115,232,0.28)]'
+                          : 'border border-[#E5EEFB] bg-white text-[#5F6368] shadow-[0_1px_3px_rgba(16,24,40,0.04)] hover:border-[#BFD7FF] hover:text-[#1A73E8] hover:shadow-[0_4px_14px_rgba(26,115,232,0.12)]'
                       }`}>
                       <Icon size={15} />
                       {section.label}
@@ -1260,11 +1260,15 @@ function NGOView({ onPracticeChange }) {
                   className="min-h-[300px] py-7">
                   {activeGuideSection === 'summary' && (
                     <section className="max-w-4xl">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                        <Sparkles size={19} />
+                      <div className="mb-5 flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                          <Sparkles size={19} />
+                        </div>
+                        <div>
+                          <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI role summary</h3>
+                          <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A quick AI-generated summary of the role — read this if you only have a minute.</p>
+                        </div>
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI role summary</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A quick AI-generated summary of the role — read this if you only have a minute.</p>
                       <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
                       </p>
@@ -1278,11 +1282,15 @@ function NGOView({ onPracticeChange }) {
 
                   {activeGuideSection === 'phases' && (
                     <section className="max-w-3xl">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                        <Lightbulb size={19} />
+                      <div className="mb-5 flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                          <Lightbulb size={19} />
+                        </div>
+                        <div>
+                          <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to know</h3>
+                          <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">What you need to understand from the student in each part of the conversation.</p>
+                        </div>
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to know</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">What you need to understand from the student in each part of the conversation.</p>
                       <div className="mt-5 space-y-3">
                         {NGO_INTERVIEW_STAGES.map((stage, i) => (
                           <div key={stage.id} className="flex gap-4 rounded-[22px] border border-[#E5EEFB] bg-white p-5 shadow-[0_2px_10px_rgba(17,24,39,0.03)]">
@@ -1303,11 +1311,15 @@ function NGOView({ onPracticeChange }) {
 
                   {activeGuideSection === 'questions' && (
                     <section className="max-w-3xl">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                        <MessageCircle size={19} />
+                      <div className="mb-5 flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                          <MessageCircle size={19} />
+                        </div>
+                        <div>
+                          <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
+                          <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
+                        </div>
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
                       <div className="mt-5 space-y-4">
                         {NGO_INTERVIEW_STAGES.map((stage, i) => {
                           const isOpen = openQuestionStage === stage.id
