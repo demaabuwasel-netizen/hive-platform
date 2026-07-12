@@ -1549,11 +1549,19 @@ function NGOView({ onPracticeChange }) {
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {transcript.length === 0 ? (
               <div className="mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center text-center">
-                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)]">
-                  <Mic size={24} strokeWidth={1.8} />
-                </div>
+                <button
+                  onClick={handleVoiceToggle}
+                  aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                  title={isRecording ? 'Stop recording' : 'Start recording'}
+                  className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)] transition-transform hover:scale-105 ${
+                    isRecording ? 'animate-pulse ring-4 ring-[#1A73E8]/20' : ''
+                  }`}>
+                  {isRecording ? <StopCircle size={24} strokeWidth={1.8} /> : <Mic size={24} strokeWidth={1.8} />}
+                </button>
                 <p className="text-[1.1rem] font-semibold text-[#202124]">Start the interview</p>
-                <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">Type or speak your opening question below.</p>
+                <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">
+                  {isRecording ? 'Listening — tap again to stop.' : 'Type or tap the mic to speak your opening question.'}
+                </p>
               </div>
             ) : (
               <div className="mx-auto flex min-h-[300px] max-w-2xl flex-col items-center justify-center">
@@ -1741,9 +1749,14 @@ export default function Interviews() {
   const isNGO = user?.role === 'ngo'
   const [practiceInfo, setPracticeInfo] = useState({ active: false, title: '' })
   const inPractice = isNGO && practiceInfo.active
+  const mainRef = useRef(null)
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [practiceInfo.active])
 
   return (
-    <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
+    <main ref={mainRef} className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
       {/* Soft ambient gradients — same treatment as the dashboard */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
       <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
