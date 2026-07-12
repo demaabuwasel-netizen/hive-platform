@@ -1453,21 +1453,21 @@ function NGOView({ onPracticeChange }) {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
         {/* Stage stepper — pills connected by arrows to read as a sequence, centered */}
-        <div className="flex items-center justify-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
+        <div className="flex items-center justify-center gap-2.5 overflow-x-auto bg-[#FBFCFE] px-5 pb-5 pt-7">
           {NGO_INTERVIEW_STAGES.map((stage, index) => {
             const isActive = activeStage === stage.id
             const isDone = askedStages.has(stage.id) && !isActive
             return (
-              <div key={stage.id} className="flex shrink-0 items-center gap-2">
-                {index > 0 && <ArrowRight size={13} className="shrink-0 text-[#D7DCE3]" />}
+              <div key={stage.id} className="flex shrink-0 items-center gap-2.5">
+                {index > 0 && <ArrowRight size={13} className="shrink-0 text-[#D2D8E0]" />}
                 <button
                   onClick={() => setActiveStage(stage.id)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[0.76rem] font-semibold transition-all ${
                     isActive
-                      ? 'border-[#1A73E8] bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.16)]'
+                      ? 'border-[#1A73E8] bg-[#1A73E8] text-white shadow-[0_10px_22px_rgba(26,115,232,0.22)]'
                       : isDone
                       ? 'border-[#BFE5CC] bg-[#F1FBF6] text-[#188038]'
-                      : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:bg-[#FBFCFE]'
+                      : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:border-[#D7E6FF] hover:bg-white'
                   }`}>
                   {isDone && <CheckCircle2 size={13} />}
                   {stage.label}
@@ -1482,16 +1482,11 @@ function NGOView({ onPracticeChange }) {
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {transcript.length === 0 ? (
               <div className="mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center text-center">
-                <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
-                  </span>
-                  Your turn to talk
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                  <Mic size={22} strokeWidth={1.8} />
                 </div>
-                <p className="text-[0.95rem] leading-7 text-[#5F6368]">
-                  Nothing&apos;s been said yet — go ahead and open the conversation.
-                </p>
+                <p className="text-[1.05rem] font-semibold text-[#202124]">Start the interview</p>
+                <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">Type or speak your opening question below.</p>
               </div>
             ) : (
               <div className="mx-auto max-w-2xl space-y-6">
@@ -1523,35 +1518,21 @@ function NGOView({ onPracticeChange }) {
           </div>
 
           <div className="border-t border-[#E5EEFB] bg-white px-5 py-4">
-            {transcript.length > 0 && !isStudentResponding && (
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
-                </span>
-                Your turn to talk
-              </div>
-            )}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={handleVoiceToggle}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
-                    isRecording ? 'bg-[#E6F4EA] text-[#188038]' : 'bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED]'
-                  }`}>
-                  {isRecording ? <StopCircle size={13} /> : <Mic size={13} />}
-                  {isRecording ? 'Recording...' : 'Start recording'}
-                </button>
-                <button
-                  onClick={suggestQuestion}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3.5 py-2 text-[0.76rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#E8EAED]">
-                  <Lightbulb size={13} />
-                  Suggest a question
-                </button>
+                {transcript.length > 0 && !isStudentResponding && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+                    </span>
+                    Your turn to talk
+                  </div>
+                )}
                 <button
                   onClick={() => setAiGuidanceOpen(open => !open)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
-                    aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED]'
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold transition-colors ${
+                    aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
                   }`}>
                   <Sparkles size={13} />
                   AI assistant
@@ -1565,6 +1546,7 @@ function NGOView({ onPracticeChange }) {
                 <ArrowRight size={13} />
               </button>
             </div>
+
             <AnimatePresence initial={false}>
               {aiGuidanceOpen && (
                 <motion.div
@@ -1585,11 +1567,33 @@ function NGOView({ onPracticeChange }) {
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="flex gap-3">
+
+            {/* Unified composer — mic and suggest live inside the input, not as separate pills */}
+            <div className={`flex items-end gap-1 rounded-[22px] border bg-[#FBFCFE] p-2 pl-2.5 transition-colors focus-within:border-[#1A73E8] focus-within:bg-white ${
+              isStudentResponding ? 'border-[#E5EEFB] opacity-60' : 'border-[#E5EEFB]'
+            }`}>
+              <button
+                onClick={handleVoiceToggle}
+                disabled={isStudentResponding}
+                aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                title={isRecording ? 'Stop recording' : 'Start recording'}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
+                  isRecording ? 'bg-[#E6F4EA] text-[#188038]' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
+                }`}>
+                {isRecording ? <StopCircle size={16} /> : <Mic size={16} />}
+              </button>
+              <button
+                onClick={suggestQuestion}
+                disabled={isStudentResponding}
+                aria-label="Suggest a question"
+                title="Suggest a question"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4]">
+                <Lightbulb size={16} />
+              </button>
               <textarea
                 value={draftQuestion}
                 onChange={e => setDraftQuestion(e.target.value)}
-                rows={2}
+                rows={1}
                 disabled={isStudentResponding}
                 placeholder={
                   isStudentResponding
@@ -1598,14 +1602,14 @@ function NGOView({ onPracticeChange }) {
                     ? 'Listening...'
                     : 'Ask the next interview question...'
                 }
-                className="min-h-[48px] flex-1 resize-none rounded-[18px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3 text-[0.84rem] leading-5 text-[#202124] outline-none transition-colors placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:bg-white disabled:opacity-60"
+                className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent py-1.5 text-[0.88rem] leading-6 text-[#202124] outline-none placeholder:text-[#9AA0A6] disabled:opacity-60"
               />
               <button
                 onClick={sendQuestion}
                 disabled={!draftQuestion.trim() || isStudentResponding}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-opacity hover:opacity-95 disabled:opacity-40"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white transition-opacity hover:opacity-95 disabled:opacity-30"
                 aria-label="Send question">
-                <Send size={17} />
+                <Send size={15} />
               </button>
             </div>
           </div>
