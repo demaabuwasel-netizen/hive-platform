@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  AtSign, BarChart3, Building2, Camera, Check, Edit2, ExternalLink,
-  FileText, Globe, HandHeart, Heart, Layers2, Link2, ShieldCheck, Sparkles, Target,
+  BarChart3, Building2, Calendar, Camera, Check, Code2, DollarSign, Edit2,
+  ExternalLink, FileText, Globe, GraduationCap, Heart, HeartHandshake,
+  Layers, Link2, Megaphone, MessageCircle, PenTool, ShieldCheck, Sparkles,
+  Target, Users2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
@@ -32,20 +34,42 @@ const PROJECT_OPTIONS = [
   'Impact Report', 'Technology Infrastructure', 'Process Improvement'
 ]
 
-function EmptyText({ children = 'Not added yet' }) {
-  return <span className="block text-[0.92rem] italic text-[#9AA0A6]">{children}</span>
+// Keyword → icon so topic chips feel identified, not just labeled
+function topicIcon(name) {
+  const n = name.toLowerCase()
+  if (/programming|web|mobile|app|code|technology|cloud|ai\/machine/.test(n)) return Code2
+  if (/design|graphic|ux|user experience|branding/.test(n)) return PenTool
+  if (/communication|public speaking|social media/.test(n)) return MessageCircle
+  if (/writing|content|copywriting|newsletter|policy brief|report/.test(n)) return FileText
+  if (/marketing|advocacy|pr|public relations/.test(n)) return Megaphone
+  if (/leadership|management|hr|volunteer coordination|mentoring|mentorship/.test(n)) return Users2
+  if (/data|analysis|analytics|dashboard|research/.test(n)) return BarChart3
+  if (/finance|accounting|legal/.test(n)) return DollarSign
+  if (/event|training|workshop/.test(n)) return Calendar
+  if (/education|curriculum|youth development/.test(n)) return GraduationCap
+  if (/fundraising|grant|community/.test(n)) return HeartHandshake
+  return Sparkles
 }
 
-// Section heading — an outline ring badge instead of a filled one, matching
-// the glass boxes below. No border, no boxed container of its own.
-function GroupTitle({ icon: Icon, title, subtitle }) {
+function EmptyText({ children = 'Not added yet' }) {
+  return <p className="text-[0.9rem] text-[#9AA0A6]">{children}</p>
+}
+
+function CardTitle({ icon: Icon, tint = '#F1F3F4', accent = '#5F6368', title, subtitle }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="flex h-7 w-7 items-center justify-center rounded-full ring-1 ring-[#1A73E8]/25 text-[#1A73E8]">
-        <Icon size={13} strokeWidth={2.2} />
-      </span>
-      <h2 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[#202124]">{title}</h2>
-      {subtitle && <span className="hidden text-[0.85rem] text-[#8A93A6] sm:inline">— {subtitle}</span>}
+    <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
+      {Icon && (
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: tint, color: accent }}
+        >
+          <Icon size={16} strokeWidth={2} />
+        </span>
+      )}
+      <div className="min-w-0">
+        <h2 className="text-[0.95rem] font-semibold text-[#202124]">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">{subtitle}</p>}
+      </div>
     </div>
   )
 }
@@ -54,7 +78,7 @@ function EditButton({ onEdit, label }) {
   return (
     <button
       onClick={onEdit}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#8A93A6] opacity-0 transition-all duration-150 hover:bg-[#1A73E8]/10 hover:text-[#1A73E8] group-hover:opacity-100"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1A73E8]"
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -64,147 +88,131 @@ function EditButton({ onEdit, label }) {
 
 function FieldActions({ saving, onSave, onCancel }) {
   return (
-    <div className="mt-3.5 flex justify-end gap-2">
+    <div className="mt-3 flex justify-end gap-2">
       <button
         onClick={onCancel}
-        className="h-9 rounded-full px-4 text-[0.85rem] font-semibold text-[#5F6368] transition-colors hover:bg-black/[0.04]"
+        className="h-9 rounded-full px-4 text-[0.82rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]"
       >
         Cancel
       </button>
       <button
         onClick={onSave}
         disabled={saving}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1A73E8] px-5 text-[0.85rem] font-semibold text-white shadow-[0_6px_16px_-4px_rgba(26,115,232,0.5)] transition-transform hover:scale-[1.03] hover:bg-[#1765CC] active:scale-[0.98] disabled:opacity-50"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1A73E8] px-5 text-[0.82rem] font-medium text-white shadow-[0_4px_12px_rgba(26,115,232,0.25)] transition-all hover:bg-[#1765CC] disabled:opacity-50"
       >
-        <Check size={13} strokeWidth={2.5} />
+        <Check size={13} />
         Save
       </button>
     </div>
   )
 }
 
-// Frosted-glass box — translucent + backdrop-blur so the colorful ambient
-// mesh behind the page bleeds softly through, instead of an opaque card
-// sitting on top of it. A thin ring stands in for a border/shadow edge.
-// Icon is an outline badge (ring only) rather than a filled/gradient one.
-function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit, delay = 0 }) {
+function EditableText({ title, rows = 4, value, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -3 }}
-      className={`group relative overflow-hidden rounded-[26px] border border-white/45 bg-white/35 p-6 shadow-[0_1px_1px_rgba(15,23,42,0.03),0_20px_40px_-24px_rgba(15,23,42,0.25)] backdrop-blur-xl transition-shadow duration-300 ${
-        editing ? 'ring-2 ring-[#1A73E8]/40' : 'hover:shadow-[0_1px_1px_rgba(15,23,42,0.04),0_24px_48px_-20px_rgba(15,23,42,0.3)]'
-      } ${minH}`}
-    >
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3.5">
-          {Icon && (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/70 ring-1 ring-[#1A73E8]/25 text-[#1A73E8]">
-              <Icon size={19} strokeWidth={2} />
-            </span>
-          )}
-          <p className="text-[1rem] font-semibold tracking-[-0.01em] text-[#202124]">{label}</p>
-        </div>
-        {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
+    <section className="border-t border-[#F1F3F4] px-6 py-5 first:border-t-0">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#5F6368]">
+          {title}
+        </h3>
+        {!editing && <EditButton onEdit={onEdit} label={title} />}
       </div>
-      <AnimatePresence initial={false} mode="wait">
-        <motion.div
-          key={editing ? 'editor' : 'view'}
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
-          className="overflow-hidden"
-        >
-          {editing ? (
-            <div className="rounded-2xl bg-[#1A73E8]/[0.06] p-4 ring-1 ring-[#1A73E8]/10">
-              {editor}
-            </div>
-          ) : children}
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
-  )
-}
-
-function TextBox({ icon, label, rows = 4, value, minH, fieldProps, delay }) {
-  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
-  return (
-    <Box
-      icon={icon} label={label} minH={minH} delay={delay}
-      editing={editing} onEdit={onEdit}
-      editor={
+      {editing ? (
         <>
           <textarea
             value={editValue || ''}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full resize-none rounded-xl border border-white/70 bg-white/80 px-3.5 py-2.5 text-[0.92rem] leading-6 text-[#1E2530] outline-none backdrop-blur-sm transition-colors focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
+            className="w-full resize-none rounded-2xl border border-[#DADCE0] bg-white px-4 py-3 text-[0.9rem] leading-7 text-[#3C4043] outline-none transition-colors focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
             rows={rows}
-            autoFocus
           />
           <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} />
         </>
-      }
-    >
-      <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-[#3C4557]">
-        {value || <EmptyText />}
-      </p>
-    </Box>
+      ) : (
+        <p className="max-w-4xl whitespace-pre-wrap text-[0.9rem] leading-7 text-[#3C4043]">
+          {value || <EmptyText />}
+        </p>
+      )}
+    </section>
   )
 }
 
-function ChipsBox({ icon, label, options, items, minH, fieldProps, delay }) {
-  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
+const TOPIC_TINTS = {
+  'Focus areas': {
+    box: 'bg-[#F5F9FF] ring-[#DCE9FE]',
+    label: 'text-[#1A73E8]',
+    chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]',
+  },
+  'Preferred skills': {
+    box: 'bg-[#FAF6FE] ring-[#E9DCFB]',
+    label: 'text-[#8B3DD8]',
+    chip: 'border-[#E5D4FB] bg-white text-[#8B3DD8]',
+  },
+  'Project types': {
+    box: 'bg-[#F3FBF6] ring-[#D3EEDD]',
+    label: 'text-[#188038]',
+    chip: 'border-[#C8E8D0] bg-white text-[#188038]',
+  },
+}
+
+// A standalone selectable box — these are pick-from-a-list fields, not free text,
+// so each one reads as its own card sitting next to its siblings.
+function EditableTopics({ title, options, items, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
+  const tint = TOPIC_TINTS[title] || { box: 'bg-[#FAFBFC] ring-[#E8EAED]', label: 'text-[#5F6368]', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' }
   return (
-    <Box
-      icon={icon} label={label} minH={minH} delay={delay}
-      editing={editing} onEdit={onEdit}
-      editor={
+    <div className={`rounded-[22px] p-4 ring-1 ${tint.box}`}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className={`text-[0.7rem] font-semibold uppercase tracking-[0.08em] ${tint.label}`}>
+          {title}
+        </h3>
+        {!editing && <EditButton onEdit={onEdit} label={title} />}
+      </div>
+      {editing ? (
         <>
           <TopicPicker
             value={editValue || []}
             onChange={onChange}
             options={options}
-            placeholder={`Search or add ${label.toLowerCase()}...`}
+            placeholder={`Search or add ${title.toLowerCase()}...`}
           />
           <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} />
         </>
-      }
-    >
-      {items?.length > 0 ? (
+      ) : items?.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {items.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-white/70 px-3 py-1.5 text-[0.82rem] font-semibold text-[#1A73E8] ring-1 ring-[#1A73E8]/20 backdrop-blur-sm">
-              {item}
-            </span>
-          ))}
+          {items.map((item, index) => {
+            const Icon = topicIcon(item)
+            return (
+              <span
+                key={`${item}-${index}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium shadow-[0_1px_2px_rgba(17,24,39,0.03)] ${tint.chip}`}
+              >
+                <Icon size={12} strokeWidth={2.2} />
+                {item}
+              </span>
+            )
+          })}
         </div>
       ) : (
         <EmptyText />
       )}
-    </Box>
+    </div>
   )
 }
 
-// Radial profile-strength gauge — single flat accent, no gradient
+// Radial profile-strength gauge — same visual language as the match gauges elsewhere in the app
 function StrengthGauge({ percent, size = 88 }) {
-  const r = 33, circ = 2 * Math.PI * r
+  const r = 34, circ = 2 * Math.PI * r
   const color = percent >= 80 ? '#188038' : percent >= 40 ? '#1A73E8' : '#B06000'
-  const track = percent >= 80 ? 'rgba(24,128,56,0.12)' : percent >= 40 ? 'rgba(26,115,232,0.12)' : 'rgba(176,96,0,0.12)'
+  const track = percent >= 80 ? '#E6F4EA' : percent >= 40 ? '#E8F0FE' : '#FEF7E0'
   return (
-    <svg width={size} height={size} viewBox="0 0 84 84" aria-label={`Profile strength ${percent}%`}>
-      <circle cx="42" cy="42" r={r} fill="none" stroke={track} strokeWidth="7" />
+    <svg width={size} height={size} viewBox="0 0 88 88" aria-label={`Profile strength ${percent}%`}>
+      <circle cx="44" cy="44" r={r} fill="none" stroke={track} strokeWidth="8" />
       <motion.circle
-        cx="42" cy="42" r={r} fill="none" stroke={color} strokeWidth="7"
-        strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 42 42)"
+        cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="8"
+        strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 44 44)"
         initial={{ strokeDashoffset: circ }}
         animate={{ strokeDashoffset: circ * (1 - percent / 100) }}
-        transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
+        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
       />
-      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="700" fill="#202124">{percent}%</text>
+      <text x="44" y="49" textAnchor="middle" fontSize="17" fontWeight="700" fill="#202124">{percent}%</text>
     </svg>
   )
 }
@@ -225,6 +233,7 @@ export default function NGOProfile() {
     .slice(0, 2)
     .toUpperCase()
 
+  // Profile completeness — a simple trust/progress signal
   const completenessFields = [
     profile?.description,
     profile?.mission,
@@ -267,6 +276,7 @@ export default function NGOProfile() {
     }
   }
 
+  // Shared wiring for the hoisted editable field components
   const fieldProps = (field) => ({
     editing: editingField === field,
     editValue: editValues[field],
@@ -278,71 +288,67 @@ export default function NGOProfile() {
   })
 
   const links = [
-    profile?.website && { icon: Globe, label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
-    profile?.instagram && { icon: Heart, label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
-    profile?.twitter && { icon: AtSign, label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
-    profile?.registrationNumber && { icon: Building2, label: 'Registration', value: profile.registrationNumber },
+    profile?.website && { icon: Globe, tint: '#E8F0FE', accent: '#1A73E8', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
+    profile?.instagram && { icon: Heart, tint: '#FCE8F3', accent: '#C2185B', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
+    profile?.twitter && { icon: Target, tint: '#F1F3F4', accent: '#3C4043', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
+    profile?.registrationNumber && { icon: Building2, tint: '#F3E8FD', accent: '#A142F4', label: 'Registration', value: profile.registrationNumber },
   ].filter(Boolean)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#EEF2F9]">
-      {/* Ambient color mesh — the thing the glass boxes blur/reveal */}
-      <div aria-hidden className="pointer-events-none absolute -top-32 -left-16 h-[560px] w-[560px] rounded-full bg-[#1A73E8] opacity-40 blur-[90px]" />
-      <div aria-hidden className="pointer-events-none absolute top-[260px] right-[-12%] h-[480px] w-[480px] rounded-full bg-[#0FB89C] opacity-40 blur-[90px]" />
-      <div aria-hidden className="pointer-events-none absolute top-[760px] left-[2%] h-[460px] w-[460px] rounded-full bg-[#F5A623] opacity-[0.32] blur-[90px]" />
-      <div aria-hidden className="pointer-events-none absolute bottom-[-180px] right-[6%] h-[520px] w-[520px] rounded-full bg-[#7C3AED] opacity-[0.32] blur-[90px]" />
+    <main className="relative min-h-screen overflow-hidden bg-[#F6F8FC]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_10%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_90%_5%,rgba(161,66,244,0.05),transparent_42%),radial-gradient(circle_at_50%_15%,rgba(52,168,83,0.04),transparent_38%)]" />
 
       <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-9"
+          transition={{ duration: 0.35 }}
+          className="mb-7"
         >
-          <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
+          <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
             Profile
           </h1>
-          <p className="mt-4 max-w-xl text-[0.96rem] leading-7 text-[#5F6368]">
+          <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
             Keep your organization story, mission, focus areas, and links in one clear view for students and stronger matches.
           </p>
         </motion.header>
 
-        {/* Identity strip */}
+        {/* Identity card */}
         <motion.section
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-10 overflow-hidden rounded-[28px] border border-white/45 bg-white/35 p-6 shadow-[0_1px_1px_rgba(15,23,42,0.03),0_24px_48px_-24px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-7"
+          transition={{ duration: 0.35 }}
+          className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
         >
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:items-center">
-              <div className="relative h-24 w-24 shrink-0 rounded-[24px] bg-white/70 p-[3px] ring-1 ring-[#1A73E8]/25 sm:h-28 sm:w-28">
-                <div className="h-full w-full overflow-hidden rounded-[21px] bg-white/80">
+          <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="relative h-28 w-28 shrink-0">
+                <div className="h-full w-full overflow-hidden rounded-full bg-white shadow-[0_8px_24px_rgba(26,115,232,0.14)] ring-4 ring-white">
                   {profile?.imageUrl ? (
                     <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[1.95rem] font-semibold text-[#1A73E8]">
-                      {initials || <Building2 size={30} />}
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[1.9rem] font-semibold text-[#1A73E8]">
+                      {initials || <Building2 size={34} />}
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#5F6368] shadow-[0_6px_16px_-2px_rgba(16,24,40,0.25)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#1A73E8]"
+                  className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#5F6368] shadow-[0_4px_12px_rgba(17,24,39,0.15)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#1A73E8]"
                   title="Change logo"
                 >
-                  <Camera size={13} />
+                  <Camera size={14} />
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
               </div>
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#202124]">
+                  <h2 className="text-[1.9rem] font-semibold tracking-[-0.015em] text-[#202124]">
                     {displayName}
                   </h2>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[0.72rem] font-semibold text-[#188038] ring-1 ring-[#188038]/20">
-                    <ShieldCheck size={12} strokeWidth={2.4} />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-1 text-[0.7rem] font-medium text-[#188038]">
+                    <ShieldCheck size={12} />
                     Verified organization
                   </span>
                 </div>
@@ -352,90 +358,96 @@ export default function NGOProfile() {
               </div>
             </div>
 
-            <div className="flex w-full shrink-0 items-center gap-4 rounded-[20px] bg-white/60 px-5 py-4 ring-1 ring-white/70 backdrop-blur-sm sm:w-[230px]">
+            {/* Completeness — radial gauge */}
+            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#F7FAFF] to-[#FBFCFE] px-4 py-4 ring-1 ring-[#EEF1F6] sm:w-[230px]">
               <StrengthGauge percent={completeness} />
               <div className="min-w-0">
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#8A93A6]">Profile strength</p>
-                <p className="mt-1 text-[0.8rem] leading-4 text-[#5F6368]">
-                  {completeness >= 80 ? 'Ready for strong matches.' : 'Add more to strengthen it.'}
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
+                <p className="mt-1 text-[0.76rem] leading-4 text-[#5F6368]">
+                  {completeness >= 80
+                    ? 'Looking great — ready for strong matches.'
+                    : 'Complete more sections for stronger matches.'}
                 </p>
               </div>
             </div>
           </div>
         </motion.section>
 
-        <div className="space-y-11">
-          {/* About group */}
-          <div>
-            <GroupTitle icon={FileText} title="About" subtitle="how students get to know you" />
-            <div className="space-y-4">
-              <TextBox icon={Sparkles} label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[150px]" delay={0} />
-              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[130px]" delay={0.05} />
-              <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" delay={0.1} />
-            </div>
-          </div>
+        <div className="mt-6 space-y-6">
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+            className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+          >
+            <CardTitle icon={FileText} tint="#E8F0FE" accent="#1A73E8" title="About" subtitle="How students get to know your organization" />
+            <EditableText title="About the organization" value={profile?.description} {...fieldProps('description')} />
+            <EditableText title="Mission" value={profile?.mission} {...fieldProps('mission')} />
+            <EditableText title="What we need help with" value={profile?.helpNeeded} {...fieldProps('helpNeeded')} />
+          </motion.section>
 
-          {/* Focus group */}
-          <div>
-            <GroupTitle icon={Layers2} title="Focus" subtitle="what you work on and who you're looking for" />
-            <div className="space-y-4">
-              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[110px]" delay={0} />
-              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[110px]" delay={0.05} />
-              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[110px]" delay={0.1} />
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+          >
+            <CardTitle icon={Layers} tint="#F3E8FD" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
+            <div className="grid gap-4 p-6 sm:grid-cols-3">
+              <EditableTopics title="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} {...fieldProps('tags')} />
+              <EditableTopics title="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} {...fieldProps('preferred_skills')} />
+              <EditableTopics title="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} {...fieldProps('project_types')} />
             </div>
-          </div>
+          </motion.section>
 
-          {/* Connect group */}
           {links.length > 0 && (
-            <div>
-              <GroupTitle icon={Link2} title="Connect" subtitle="where students can learn more" />
-              <div className="space-y-3">
-                {links.map(({ icon: Icon, label, value, href }, index) => {
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.15 }}
+              className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+            >
+              <CardTitle icon={Link2} tint="#E6F4EA" accent="#188038" title="Connect" subtitle="Where students can learn more" />
+              <div className="grid gap-3 p-6 sm:grid-cols-2">
+                {links.map(({ icon: Icon, tint, accent, label, value, href }) => {
                   const content = (
                     <>
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/70 ring-1 ring-[#1A73E8]/25 text-[#1A73E8]">
-                        <Icon size={18} strokeWidth={2} />
-                      </span>
+                      <div
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
+                        style={{ background: tint, color: accent }}
+                      >
+                        <Icon size={18} strokeWidth={1.9} />
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-[#8A93A6]">{label}</p>
-                        <p className="truncate text-[0.95rem] font-semibold text-[#202124]">{value}</p>
+                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
+                        <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
                       </div>
                       {href && (
-                        <ExternalLink
-                          size={15}
-                          className="shrink-0 text-[#8A93A6] transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#1A73E8]"
-                        />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors group-hover:bg-white group-hover:text-[#1A73E8]">
+                          <ExternalLink size={13} />
+                        </span>
                       )}
                     </>
                   )
+
                   return href ? (
-                    <motion.a
+                    <a
                       key={label}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                      whileHover={{ y: -3 }}
-                      className="group flex items-center gap-3.5 rounded-[22px] border border-white/45 bg-white/35 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03),0_20px_40px_-24px_rgba(15,23,42,0.25)] backdrop-blur-xl transition-shadow duration-300 hover:shadow-[0_1px_1px_rgba(15,23,42,0.04),0_24px_48px_-20px_rgba(15,23,42,0.3)]"
+                      className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:ring-[#DCE9FE]"
                     >
                       {content}
-                    </motion.a>
+                    </a>
                   ) : (
-                    <motion.div
-                      key={label}
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                      className="group flex items-center gap-3.5 rounded-[22px] border border-white/45 bg-white/35 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.03),0_20px_40px_-24px_rgba(15,23,42,0.25)] backdrop-blur-xl"
-                    >
+                    <div key={label} className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4]">
                       {content}
-                    </motion.div>
+                    </div>
                   )
                 })}
               </div>
-            </div>
+            </motion.section>
           )}
         </div>
       </div>
