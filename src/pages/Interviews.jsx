@@ -90,6 +90,20 @@ function easeInOutQuad(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
 }
 
+// Walks up from a node to find whichever ancestor actually scrolls, rather than
+// assuming a specific element — layout changes shouldn't silently break scrolling.
+function getScrollParent(node, includeSelf = false) {
+  let el = includeSelf ? node : node?.parentElement
+  while (el) {
+    const style = window.getComputedStyle(el)
+    if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) {
+      return el
+    }
+    el = el.parentElement
+  }
+  return document.scrollingElement || document.documentElement
+}
+
 function animateScrollTop(container, targetTop, duration = 900) {
   if (!container) return
   const startTop = container.scrollTop
@@ -108,13 +122,14 @@ function animateScrollTop(container, targetTop, duration = 900) {
 
 function smoothScrollIntoView(el, duration = 900) {
   if (!el) return
-  const container = el.closest('main')
-  if (!container) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    return
-  }
+  const container = getScrollParent(el)
   const targetTop = container.scrollTop + (el.getBoundingClientRect().top - container.getBoundingClientRect().top)
   animateScrollTop(container, targetTop, duration)
+}
+
+function smoothScrollToTop(fromEl, duration = 900) {
+  if (!fromEl) return
+  animateScrollTop(getScrollParent(fromEl, true), 0, duration)
 }
 
 function getSkillNames(skills = []) {
@@ -1791,7 +1806,7 @@ export default function Interviews() {
 
   useEffect(() => {
     if (!practiceInfo.active) {
-      animateScrollTop(mainRef.current, 0)
+      smoothScrollToTop(mainRef.current)
     }
   }, [practiceInfo.active])
 
