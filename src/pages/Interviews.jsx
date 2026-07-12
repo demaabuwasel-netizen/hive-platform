@@ -5,7 +5,7 @@ import {
   Clock, Sparkles, AlertCircle, Lightbulb, Briefcase, ArrowRight,
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, Keyboard, PlayCircle, StopCircle, Heart,
-  FileText, CheckCircle2, Target,
+  FileText, CheckCircle2, Target, MessageCircle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -991,8 +991,8 @@ function NGOView({ onPracticeChange }) {
   const roleSummary = selectedOpp ? makeRoleSummary(selectedOpp, roleSkills) : ''
   const guideSections = selectedOpp ? [
     { id: 'summary', label: 'Summary', icon: Sparkles },
-    { id: 'goals', label: 'What to learn', icon: Target },
-    { id: 'signals', label: 'Signals', icon: CheckCircle2 },
+    { id: 'questions', label: 'Questions to ask', icon: MessageCircle },
+    { id: 'signals', label: 'What to listen for', icon: CheckCircle2 },
   ] : []
   const stageGuidance = selectedOpp && mockStudent ? makeStageGuidance(selectedOpp, mockStudent, activeStage) : ''
   const stageQuestions = selectedOpp && mockStudent ? makeStageQuestions(selectedOpp, mockStudent, activeStage) : []
@@ -1262,10 +1262,16 @@ function NGOView({ onPracticeChange }) {
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                         <Sparkles size={19} />
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Role summary</h3>
-                      <p className="mt-3 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Raw summary</h3>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">The short version — read this if you only have a minute.</p>
+                      <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
                       </p>
+                      {prepSections[2]?.text && (
+                        <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
+                          {prepSections[2].text}
+                        </p>
+                      )}
                       <div className="mt-6 rounded-[26px] bg-[#F8FAFD] p-5">
                         <p className="text-[0.9rem] font-semibold text-[#202124]">Interview direction</p>
                         <p className="mt-2 text-[0.86rem] leading-7 text-[#5F6368]">
@@ -1275,15 +1281,25 @@ function NGOView({ onPracticeChange }) {
                     </section>
                   )}
 
-                  {activeGuideSection === 'goals' && (
+                  {activeGuideSection === 'questions' && (
                     <section className="max-w-3xl">
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                        <Target size={19} />
+                        <MessageCircle size={19} />
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">What you are trying to learn</h3>
-                      <p className="mt-3 border-l-2 border-[#1A73E8] pl-4 text-[0.95rem] leading-8 text-[#5F6368]">
-                        {prepSections[0]?.text}
-                      </p>
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
+                      <div className="mt-5 space-y-6">
+                        {NGO_INTERVIEW_STAGES.map(stage => (
+                          <div key={stage.id}>
+                            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">{stage.label}</p>
+                            <div className="mt-2.5 space-y-2.5">
+                              {makeStageQuestions(selectedOpp, mockStudent, stage.id).map((question, i) => (
+                                <p key={i} className="text-[0.9rem] leading-7 text-[#5F6368]">{question}</p>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </section>
                   )}
 
@@ -1292,10 +1308,8 @@ function NGOView({ onPracticeChange }) {
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E6F4EA] text-[#188038]">
                         <CheckCircle2 size={19} />
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Signals to listen for</h3>
-                      <p className="mt-2 text-[0.86rem] leading-7 text-[#5F6368]">
-                        Use these as quiet anchors during the conversation, not as a checklist you need to force.
-                      </p>
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to listen for</h3>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">Good signs that this candidate is a real fit for the role.</p>
                       <div className="mt-5 divide-y divide-[#E5EEFB]">
                         {(prepSections[1]?.items || []).map(item => (
                           <div key={item} className="flex items-start gap-3 py-4">
