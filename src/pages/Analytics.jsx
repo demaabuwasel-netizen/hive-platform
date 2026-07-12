@@ -140,6 +140,21 @@ function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7'
   )
 }
 
+// Standing column — same scale/gradient language as Bar, but grows upward from a shared baseline
+function VerticalBar({ percent, color = '#4C9AEF', colorDark = '#1A73E8', width = 'w-16', delay = 0, label }) {
+  return (
+    <div className={`relative h-full ${width} overflow-hidden rounded-full bg-[#F1F3F4]`} title={label}>
+      <motion.div
+        initial={{ height: 0 }}
+        animate={{ height: `${percent}%` }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay }}
+        className="absolute bottom-0 left-0 w-full rounded-full"
+        style={{ background: `linear-gradient(180deg, ${color}, ${colorDark})` }}
+      />
+    </div>
+  )
+}
+
 // Radial gauge — a single magnitude (average match score), same visual language as MatchRing elsewhere in the app
 function MatchGauge({ score, size = 148 }) {
   const r = 58, circ = 2 * Math.PI * r
@@ -596,35 +611,42 @@ export default function Analytics() {
                     title="Hiring funnel"
                     subtitle="How applicants move from applying to acceptance"
                   />
-                  <div className="space-y-4 px-6 py-5">
-                    {funnelStages.map((stage, index) => {
-                      const StageIcon = stage.icon
-                      return (
-                        <div key={stage.label}>
-                          <div className="mb-2 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-2.5">
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FE] text-[#1A73E8]">
-                                <StageIcon size={13} />
-                              </span>
-                              <p className="text-[0.85rem] font-medium text-[#202124]">{stage.label}</p>
-                            </div>
-                            <p className="text-[0.85rem] font-medium text-[#202124]">
-                              {stage.count}
-                              <span className="ml-2 text-[0.76rem] font-normal text-[#9AA0A6]">
-                                {index === 0 ? '' : stage.note}
-                              </span>
-                            </p>
+                  <div className="px-6 py-6">
+                    <div className="flex h-[190px] items-end justify-center gap-8 sm:gap-12">
+                      {funnelStages.map((stage, index) => {
+                        return (
+                          <div key={stage.label} className="flex h-full flex-col items-center">
+                            <p className="mb-2 text-[1.3rem] font-semibold leading-none text-[#202124]">{stage.count}</p>
+                            <VerticalBar
+                              percent={Math.max(stage.width, stage.count > 0 ? 4 : 0)}
+                              delay={index * 0.08}
+                              label={`${stage.label}: ${stage.count}`}
+                            />
                           </div>
-                          <Bar
-                            percent={Math.max(stage.width, stage.count > 0 ? 2 : 0)}
-                            delay={index * 0.08}
-                            label={`${stage.label}: ${stage.count}`}
-                          />
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
 
-                    <p className="pt-1 text-[0.78rem] leading-5 text-[#9AA0A6]">
+                    <div className="mt-4 flex justify-center gap-8 sm:gap-12">
+                      {funnelStages.map((stage, index) => {
+                        const StageIcon = stage.icon
+                        return (
+                          <div key={stage.label} className="flex w-16 flex-col items-center text-center">
+                            <div className="flex items-center gap-1.5">
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#E8F0FE] text-[#1A73E8]">
+                                <StageIcon size={11} />
+                              </span>
+                              <p className="text-[0.8rem] font-medium text-[#202124]">{stage.label}</p>
+                            </div>
+                            {index > 0 && (
+                              <p className="mt-1 text-[0.68rem] leading-tight text-[#9AA0A6]">{stage.note}</p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <p className="mt-5 text-center text-[0.78rem] leading-5 text-[#9AA0A6]">
                       Bars share one scale — each stage is shown as a share of all {applied} application{applied !== 1 ? 's' : ''}.
                     </p>
                   </div>
