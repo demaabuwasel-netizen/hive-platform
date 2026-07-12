@@ -1444,6 +1444,11 @@ function NGOView({ onPracticeChange }) {
   const stageHasMessages = askedStages.has(activeStage)
   const featuredQuestion = (activeStage === 'opening' && !stageHasMessages) ? firstQuestion : exampleQuestion
 
+  // Only the current exchange is shown — each new question replaces the last, so it reads like a live interview, not a chat log
+  const lastMessage = transcript[transcript.length - 1]
+  const currentQuestionMsg = lastMessage?.from === 'ngo' ? lastMessage : transcript[transcript.length - 2]
+  const currentAnswerMsg = lastMessage?.from === 'student' ? lastMessage : null
+
   return (
     <motion.div
       key={selectedRole}
@@ -1489,30 +1494,35 @@ function NGOView({ onPracticeChange }) {
                 <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">Type or speak your opening question below.</p>
               </div>
             ) : (
-              <div className="mx-auto max-w-2xl space-y-6">
-                {transcript.map(message => (
-                  message.from === 'ngo' ? (
-                    <div key={message.id}>
-                      <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
-                      <p className="text-[0.92rem] leading-7 text-[#202124]">{message.text}</p>
-                    </div>
-                  ) : (
-                    <div key={message.id} className="rounded-r-xl border-l-2 border-[#1A73E8]/30 bg-[#F8F9FA] px-4 py-3.5">
-                      <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
-                      <p className="text-[0.9rem] leading-7 text-[#3C4043]">{message.text}</p>
-                    </div>
-                  )
-                ))}
-                {isStudentResponding && (
-                  <div className="rounded-r-xl border-l-2 border-[#1A73E8]/30 bg-[#F8F9FA] px-4 py-3.5">
-                    <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
-                    <div className="flex gap-1.5 py-1">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
-                    </div>
-                  </div>
-                )}
+              <div className="mx-auto flex min-h-[300px] max-w-2xl flex-col items-center justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentQuestionMsg?.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.28, ease: 'easeOut' }}
+                    className="w-full text-center">
+                    <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
+                    <p className="mb-6 text-[1.15rem] font-medium leading-8 text-[#202124]">{currentQuestionMsg?.text}</p>
+
+                    {currentAnswerMsg ? (
+                      <div className="mx-auto max-w-xl rounded-[20px] border border-[#E5EEFB] bg-[#F8F9FA] px-5 py-4 text-left">
+                        <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
+                        <p className="text-[0.92rem] leading-7 text-[#3C4043]">{currentAnswerMsg.text}</p>
+                      </div>
+                    ) : (
+                      <div className="mx-auto max-w-xl rounded-[20px] border border-[#E5EEFB] bg-[#F8F9FA] px-5 py-4 text-left">
+                        <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
+                        <div className="flex gap-1.5 py-1">
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             )}
           </div>
