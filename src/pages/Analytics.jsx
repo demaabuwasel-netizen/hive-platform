@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, CheckCircle2,
+  Activity, AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
   Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake,
-  Lightbulb, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Search,
+  Lightbulb, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
   Sparkles, Target, TrendingUp, Users, Video,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -31,17 +31,19 @@ function skillIcon(name) {
   const n = name.toLowerCase()
   if (/python|javascript|java|programming|code|coding|developer|software|c\+\+/.test(n)) return Code2
   if (/sql|database/.test(n)) return Database
-  if (/data analysis|data visualization|analytics|statistics|dashboard/.test(n)) return BarChart3
-  if (/design|graphic|ux|ui/.test(n)) return PenTool
-  if (/communication|public speaking/.test(n)) return MessageCircle
+  if (/excel|spreadsheet|data analysis|data visualization|analytics|statistics|dashboard/.test(n)) return BarChart3
+  if (/design|graphic|ux|ui|illustration/.test(n)) return PenTool
+  if (/communication|public speaking|presentation|negotiation/.test(n)) return MessageCircle
   if (/writing|content|copywriting/.test(n)) return FileText
   if (/marketing|social media|seo/.test(n)) return Megaphone
   if (/leadership|management|project/.test(n)) return Users
   if (/research/.test(n)) return Search
   if (/finance|accounting/.test(n)) return DollarSign
+  if (/photo/.test(n)) return Camera
   if (/video|production/.test(n)) return Video
   if (/web|mobile|app/.test(n)) return Globe
-  if (/fundrais|grant/.test(n)) return HeartHandshake
+  if (/translation|language/.test(n)) return Globe
+  if (/fundrais|grant|customer service|support/.test(n)) return HeartHandshake
   if (/event/.test(n)) return Calendar
   if (/teaching|education|curriculum|mentor/.test(n)) return GraduationCap
   return Sparkles
@@ -138,6 +140,69 @@ function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7'
   )
 }
 
+// Radial gauge — a single magnitude (average match score), same visual language as MatchRing elsewhere in the app
+function MatchGauge({ score, size = 148 }) {
+  const r = 58, circ = 2 * Math.PI * r
+  const color = score >= 80 ? '#188038' : score >= 60 ? '#1A73E8' : '#B06000'
+  const track = score >= 80 ? '#E6F4EA' : score >= 60 ? '#E8F0FE' : '#FEF7E0'
+  return (
+    <svg width={size} height={size} viewBox="0 0 148 148" aria-label={`${score}% average match`}>
+      <circle cx="74" cy="74" r={r} fill="none" stroke={track} strokeWidth="12" />
+      <motion.circle
+        cx="74" cy="74" r={r} fill="none" stroke={color} strokeWidth="12"
+        strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 74 74)"
+        initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: circ * (1 - score / 100) }}
+        transition={{ duration: 1, ease: 'easeOut', delay: 0.15 }}
+      />
+      <text x="74" y="70" textAnchor="middle" fontSize="27" fontWeight="700" fill="#202124">{score}%</text>
+      <text x="74" y="90" textAnchor="middle" fontSize="11" fontWeight="500" fill="#9AA0A6">avg match</text>
+    </svg>
+  )
+}
+
+// Time-series area chart — single hue, gradient fill, animated draw-in. Built in raw SVG (no chart lib dependency).
+function AreaChart({ points, height = 160 }) {
+  const w = 680
+  const max = Math.max(...points.map(p => p.value), 1)
+  const stepX = points.length > 1 ? w / (points.length - 1) : 0
+  const padTop = 16
+  const usableH = height - padTop - 4
+  const coords = points.map((p, i) => ({
+    x: i * stepX,
+    y: height - 4 - (p.value / max) * usableH,
+  }))
+  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ')
+  const areaPath = `${linePath} L${coords[coords.length - 1]?.x.toFixed(1)},${height} L${coords[0]?.x.toFixed(1)},${height} Z`
+
+  return (
+    <svg viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" className="h-full w-full">
+      <defs>
+        <linearGradient id="analyticsAreaFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1A73E8" stopOpacity="0.24" />
+          <stop offset="100%" stopColor="#1A73E8" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map(f => (
+        <line key={f} x1="0" x2={w} y1={height * f} y2={height * f} stroke="#F1F3F4" strokeWidth="1" />
+      ))}
+      <motion.path
+        d={areaPath} fill="url(#analyticsAreaFill)"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.3 }}
+      />
+      <motion.path
+        d={linePath} fill="none" stroke="#1A73E8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: 'easeOut' }}
+      />
+      {coords.map((c, i) => (
+        points[i].value > 0 && (
+          <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="#1A73E8" stroke="white" strokeWidth="1.5" />
+        )
+      ))}
+    </svg>
+  )
+}
+
 export default function Analytics() {
   const { user } = useApp()
   const [roles, setRoles] = useState([])
@@ -145,6 +210,10 @@ export default function Analytics() {
   const [selectedRoleId, setSelectedRoleId] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [todayStart] = useState(() => {
+    const dayMs = 24 * 60 * 60 * 1000
+    return Math.floor(Date.now() / dayMs) * dayMs
+  })
 
   useEffect(() => {
     if (!user?.id) return
@@ -219,20 +288,58 @@ export default function Analytics() {
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
       .slice(0, 8)
 
+    const fields = new Map()
+    scopedApplicants.forEach(applicant => {
+      const name = (applicant.field || '').trim()
+      if (!name) return
+      fields.set(name, (fields.get(name) || 0) + 1)
+    })
+    const fieldPool = [...fields.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, 5)
+
+    const matchScores = scopedApplicants.map(applicant => applicant.match).filter(Number.isFinite)
+    const avgMatchScore = average(matchScores)
+    const matchBands = [
+      { label: 'Strong fit', range: '80–100%', color: '#188038', count: matchScores.filter(m => m >= 80).length },
+      { label: 'Good fit', range: '60–79%', color: '#1A73E8', count: matchScores.filter(m => m >= 60 && m < 80).length },
+      { label: 'Needs review', range: 'Below 60%', color: '#B06000', count: matchScores.filter(m => m < 60).length },
+    ]
+
+    // Applications received per day, last 14 days
+    const dayCount = 14
+    const dayMs = 24 * 60 * 60 * 1000
+    const dailySeries = Array.from({ length: dayCount }, (_, i) => {
+      const dayStart = todayStart - (dayCount - 1 - i) * dayMs
+      const value = scopedApplicants.filter(applicant => {
+        const t = new Date(applicant.submittedAt || 0).getTime()
+        return t >= dayStart && t < dayStart + dayMs
+      }).length
+      return { date: new Date(dayStart), value }
+    })
+
     return {
       roles: scopedRoles,
       applicants: scopedApplicants,
       roleHealth,
       funnel: { applied, interview, accepted },
       skillPool,
+      fieldPool,
+      avgMatchScore,
+      matchBands,
+      dailySeries,
     }
-  }, [applicants, roles, selectedRoleId])
+  }, [applicants, roles, selectedRoleId, todayStart])
 
   const hasActivity = roles.length > 0 || applicants.length > 0
   const { applied, interview, accepted } = data.funnel
   const topSkill = data.skillPool[0]
   const restSkills = data.skillPool.slice(1, 6)
   const maxRestCount = Math.max(...restSkills.map(skill => skill.count), 1)
+  const maxFieldCount = Math.max(...data.fieldPool.map(field => field.count), 1)
+  const totalDailyApplications = data.dailySeries.reduce((sum, day) => sum + day.value, 0)
+  const peakDay = data.dailySeries.reduce((best, day) => (day.value > (best?.value ?? -1) ? day : best), null)
 
   const funnelStages = [
     { label: 'Applied', icon: Users, count: applied, width: applied ? 100 : 0, note: 'All applications received' },
@@ -299,6 +406,11 @@ export default function Analytics() {
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
               <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
               <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+            </div>
+            <div className="h-[260px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+              <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
             </div>
             <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
           </div>
@@ -382,6 +494,85 @@ export default function Analytics() {
                 </div>
               </section>
 
+              {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
+              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" />
+                {data.applicants.length > 0 ? (
+                  <div className="flex flex-col items-center px-6 py-7">
+                    <MatchGauge score={data.avgMatchScore} />
+                    <div className="mt-6 w-full space-y-3">
+                      {data.matchBands.map(band => (
+                        <div key={band.label} className="flex items-center gap-2.5">
+                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: band.color }} />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[0.8rem] text-[#3C4043]">{band.label}</p>
+                          </div>
+                          <span className="shrink-0 text-[0.72rem] text-[#9AA0A6]">{band.range}</span>
+                          <span className="w-5 shrink-0 text-right text-[0.82rem] font-semibold text-[#202124]">{band.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-6 py-12 text-center">
+                    <p className="text-[0.9rem] font-medium text-[#202124]">No match scores yet</p>
+                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Scores appear once students apply.</p>
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* Applications over time — momentum at a glance */}
+            <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F4] text-[#5F6368]">
+                    <Activity size={15} />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-[0.95rem] font-semibold text-[#202124]">Applications over time</h2>
+                    <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">Last 14 days</p>
+                  </div>
+                </div>
+                {totalDailyApplications > 0 && (
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <p className="text-[1.1rem] font-semibold leading-none text-[#202124]">{totalDailyApplications}</p>
+                      <p className="mt-1 text-[0.68rem] text-[#9AA0A6]">received</p>
+                    </div>
+                    {peakDay && peakDay.value > 0 && (
+                      <div>
+                        <p className="text-[1.1rem] font-semibold leading-none text-[#202124]">{peakDay.value}</p>
+                        <p className="mt-1 text-[0.68rem] text-[#9AA0A6]">peak day</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {totalDailyApplications > 0 ? (
+                <div className="px-6 py-6">
+                  <div style={{ height: 160 }}>
+                    <AreaChart points={data.dailySeries} height={160} />
+                  </div>
+                  <div className="mt-2 flex justify-between text-[0.7rem] text-[#9AA0A6]">
+                    {data.dailySeries
+                      .filter((_, i) => i === 0 || i === Math.floor((data.dailySeries.length - 1) / 2) || i === data.dailySeries.length - 1)
+                      .map(day => (
+                        <span key={day.date.toISOString()}>
+                          {day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-[0.9rem] font-medium text-[#202124]">No recent applications</p>
+                  <p className="mt-1 text-[0.8rem] text-[#5F6368]">This chart fills in as applications come in over the next two weeks.</p>
+                </div>
+              )}
+            </section>
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
               {/* Skills — top skill gets a hero treatment, rest as icon rows */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
                 <CardHeader icon={Sparkles} title="Skills in your pool" subtitle="Most common skills across applicants" />
@@ -436,6 +627,40 @@ export default function Analytics() {
                   <div className="px-6 py-12 text-center">
                     <p className="text-[0.9rem] font-medium text-[#202124]">No skill data yet</p>
                     <p className="mt-1 text-[0.8rem] text-[#5F6368]">Applicant skills will appear after students apply.</p>
+                  </div>
+                )}
+              </section>
+
+              {/* Top fields of study — same bar treatment, different lens on the same pool */}
+              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                <CardHeader icon={GraduationCap} title="Top fields of study" subtitle="What applicants are studying" />
+                {data.fieldPool.length > 0 ? (
+                  <div className="space-y-3.5 px-6 py-6">
+                    {data.fieldPool.map((field, index) => (
+                      <div key={field.name} className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F1F3F4] text-[#5F6368]">
+                          <GraduationCap size={13} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex items-center justify-between gap-3">
+                            <p className="truncate text-[0.8rem] text-[#3C4043]">{field.name}</p>
+                            <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{field.count}</span>
+                          </div>
+                          <Bar
+                            percent={Math.max((field.count / maxFieldCount) * 100, 4)}
+                            color="#A142F4" colorDark="#8E24E0"
+                            height="h-2"
+                            delay={index * 0.04}
+                            label={`${field.name}: ${field.count} applicant${field.count !== 1 ? 's' : ''}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-6 py-12 text-center">
+                    <p className="text-[0.9rem] font-medium text-[#202124]">No field data yet</p>
+                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Fields of study will appear after students apply.</p>
                   </div>
                 )}
               </section>
