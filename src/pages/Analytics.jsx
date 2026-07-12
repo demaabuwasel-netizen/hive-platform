@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Activity, AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
+  AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
   Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake, Layers,
   Lightbulb, MapPin, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
   Sparkles, Target, TrendingUp, Users, Video,
@@ -161,45 +161,15 @@ function MatchGauge({ score, size = 148 }) {
   )
 }
 
-// Time-series area chart — single hue, gradient fill, animated draw-in. Built in raw SVG (no chart lib dependency).
-function AreaChart({ points, height = 160 }) {
-  const w = 680
-  const max = Math.max(...points.map(p => p.value), 1)
-  const stepX = points.length > 1 ? w / (points.length - 1) : 0
-  const padTop = 16
-  const usableH = height - padTop - 4
-  const coords = points.map((p, i) => ({
-    x: i * stepX,
-    y: height - 4 - (p.value / max) * usableH,
-  }))
-  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ')
-  const areaPath = `${linePath} L${coords[coords.length - 1]?.x.toFixed(1)},${height} L${coords[0]?.x.toFixed(1)},${height} Z`
-
+function SectionGroup({ label, description, children }) {
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" className="h-full w-full">
-      <defs>
-        <linearGradient id="analyticsAreaFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1A73E8" stopOpacity="0.24" />
-          <stop offset="100%" stopColor="#1A73E8" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map(f => (
-        <line key={f} x1="0" x2={w} y1={height * f} y2={height * f} stroke="#F1F3F4" strokeWidth="1" />
-      ))}
-      <motion.path
-        d={areaPath} fill="url(#analyticsAreaFill)"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.3 }}
-      />
-      <motion.path
-        d={linePath} fill="none" stroke="#1A73E8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: 'easeOut' }}
-      />
-      {coords.map((c, i) => (
-        points[i].value > 0 && (
-          <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="#1A73E8" stroke="white" strokeWidth="1.5" />
-        )
-      ))}
-    </svg>
+    <div className="space-y-6">
+      <div>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">{label}</p>
+        <p className="mt-1 text-[0.88rem] text-[#5F6368]">{description}</p>
+      </div>
+      {children}
+    </div>
   )
 }
 
@@ -211,10 +181,6 @@ export default function Analytics() {
   const [applicantView, setApplicantView] = useState('skills')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [todayStart] = useState(() => {
-    const dayMs = 24 * 60 * 60 * 1000
-    return Math.floor(Date.now() / dayMs) * dayMs
-  })
 
   useEffect(() => {
     if (!user?.id) return
@@ -321,18 +287,6 @@ export default function Analytics() {
       { label: 'Needs review', range: 'Below 60%', color: '#B06000', count: matchScores.filter(m => m < 60).length },
     ]
 
-    // Applications received per day, last 14 days
-    const dayCount = 14
-    const dayMs = 24 * 60 * 60 * 1000
-    const dailySeries = Array.from({ length: dayCount }, (_, i) => {
-      const dayStart = todayStart - (dayCount - 1 - i) * dayMs
-      const value = scopedApplicants.filter(applicant => {
-        const t = new Date(applicant.submittedAt || 0).getTime()
-        return t >= dayStart && t < dayStart + dayMs
-      }).length
-      return { date: new Date(dayStart), value }
-    })
-
     return {
       roles: scopedRoles,
       applicants: scopedApplicants,
@@ -343,9 +297,8 @@ export default function Analytics() {
       languagePool,
       avgMatchScore,
       matchBands,
-      dailySeries,
     }
-  }, [applicants, roles, selectedRoleId, todayStart])
+  }, [applicants, roles, selectedRoleId])
 
   // NGO's own posting patterns — always across all roles, independent of the role filter above
   const orgInsights = useMemo(() => {
@@ -384,8 +337,6 @@ export default function Analytics() {
   const rowIcon = name => (activeView.icon ? activeView.icon : skillIcon(name))
 
   const maxCategoryCount = Math.max(...orgInsights.categoryPool.map(cat => cat.count), 1)
-  const totalDailyApplications = data.dailySeries.reduce((sum, day) => sum + day.value, 0)
-  const peakDay = data.dailySeries.reduce((best, day) => (day.value > (best?.value ?? -1) ? day : best), null)
 
   const funnelStages = [
     { label: 'Applied', icon: Users, count: applied, width: applied ? 100 : 0, note: 'All applications received' },
@@ -443,27 +394,28 @@ export default function Analytics() {
         )}
 
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-10">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[0, 1, 2, 3].map(item => (
                 <div key={item} className="h-[140px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
               ))}
             </section>
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+            <div className="space-y-6">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+                <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+                <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              </div>
+              <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
             </div>
-            <div className="h-[260px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+            <div className="space-y-6">
+              <div className="h-[260px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
               <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
             </div>
-            <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
           </div>
         ) : !hasActivity ? (
           <EmptyState />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-10">
             {/* KPI tiles — icon badge, tinted wash, hover lift */}
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {summaryStats.map((stat, index) => {
@@ -498,6 +450,7 @@ export default function Analytics() {
               })}
             </section>
 
+            <SectionGroup label="Your applicants" description="What you're learning from the students applying to your roles">
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
               {/* Hiring funnel — icon per stage, gradient fill, common scale */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
@@ -568,58 +521,7 @@ export default function Analytics() {
               </section>
             </div>
 
-            {/* Applications over time — momentum at a glance */}
-            <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F4] text-[#5F6368]">
-                    <Activity size={15} />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="text-[0.95rem] font-semibold text-[#202124]">Applications over time</h2>
-                    <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">Last 14 days</p>
-                  </div>
-                </div>
-                {totalDailyApplications > 0 && (
-                  <div className="flex items-center gap-4 text-right">
-                    <div>
-                      <p className="text-[1.1rem] font-semibold leading-none text-[#202124]">{totalDailyApplications}</p>
-                      <p className="mt-1 text-[0.68rem] text-[#9AA0A6]">received</p>
-                    </div>
-                    {peakDay && peakDay.value > 0 && (
-                      <div>
-                        <p className="text-[1.1rem] font-semibold leading-none text-[#202124]">{peakDay.value}</p>
-                        <p className="mt-1 text-[0.68rem] text-[#9AA0A6]">peak day</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              {totalDailyApplications > 0 ? (
-                <div className="px-6 py-6">
-                  <div style={{ height: 160 }}>
-                    <AreaChart points={data.dailySeries} height={160} />
-                  </div>
-                  <div className="mt-2 flex justify-between text-[0.7rem] text-[#9AA0A6]">
-                    {data.dailySeries
-                      .filter((_, i) => i === 0 || i === Math.floor((data.dailySeries.length - 1) / 2) || i === data.dailySeries.length - 1)
-                      .map(day => (
-                        <span key={day.date.toISOString()}>
-                          {day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="px-6 py-12 text-center">
-                  <p className="text-[0.9rem] font-medium text-[#202124]">No recent applications</p>
-                  <p className="mt-1 text-[0.8rem] text-[#5F6368]">This chart fills in as applications come in over the next two weeks.</p>
-                </div>
-              )}
-            </section>
-
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              {/* About your applicants — switch between skills / fields of study / languages */}
+            {/* About your applicants — switch between skills / fields of study / languages */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -696,7 +598,9 @@ export default function Analytics() {
                   </div>
                 )}
               </section>
+            </SectionGroup>
 
+            <SectionGroup label="Your roles" description="How your own postings are shaping the pool">
               {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
                 <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" />
@@ -741,11 +645,10 @@ export default function Analytics() {
                   </div>
                 )}
               </section>
-            </div>
 
-            {/* Role health — icon+label status chips, inline match bar */}
-            <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-              <CardHeader icon={Target} title="Role health" subtitle="Where each role stands, and what to do next" />
+              {/* Role health — icon+label status chips, inline match bar */}
+              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                <CardHeader icon={Target} title="Role health" subtitle="Where each role stands, and what to do next" />
 
               {data.roleHealth.length > 0 ? (
                 <div className="divide-y divide-[#F1F3F4]">
@@ -824,7 +727,8 @@ export default function Analytics() {
                   <p className="text-[0.9rem] font-medium text-[#202124]">No roles match this filter</p>
                 </div>
               )}
-            </section>
+              </section>
+            </SectionGroup>
           </div>
         )}
       </div>
