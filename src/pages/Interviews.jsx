@@ -1573,12 +1573,49 @@ function NGOView({ onPracticeChange }) {
               <p className="truncate text-[0.74rem] text-[#9AA0A6]">Practicing for {selectedOpp.title}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
-            <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
-            <span className="text-[#C7CBD1]">/</span>
-            <span>{NGO_INTERVIEW_STAGES.length}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={() => setAiGuidanceOpen(open => !open)}
+              aria-label={`What to get out of ${activeStageInfo.label}`}
+              title={`What to get out of ${activeStageInfo.label}`}
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                aiGuidanceOpen ? 'bg-[#EAF1FF] text-[#1A73E8]' : 'bg-white text-[#9AA0A6] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6] hover:text-[#1A73E8]'
+              }`}>
+              <Target size={14} />
+            </button>
+            <div className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
+              <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
+              <span className="text-[#C7CBD1]">/</span>
+              <span>{NGO_INTERVIEW_STAGES.length}</span>
+            </div>
           </div>
         </div>
+
+        <AnimatePresence initial={false}>
+          {aiGuidanceOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-b border-[#EEF4FF] bg-[#FAFCFF]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStage}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.15 }}
+                  className="px-6 py-3">
+                  <p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">
+                    What to get out of {activeStageInfo.label.toLowerCase()}
+                  </p>
+                  <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stage stepper — numbered circles on a connecting line, like a wizard progress bar */}
         <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-8">
@@ -1615,58 +1652,6 @@ function NGOView({ onPracticeChange }) {
           })}
         </div>
 
-        {/* Stage guidance — the button's own label swaps with the active stage, so it's obvious the content underneath does too */}
-        <div className="px-5 pt-4">
-          <button
-            onClick={() => setAiGuidanceOpen(open => !open)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium transition-all ${
-              aiGuidanceOpen
-                ? 'bg-[#EAF1FF] text-[#1A73E8] ring-1 ring-[#D7E6FF]'
-                : 'bg-[#F7FAFF] text-[#5F6368] ring-1 ring-transparent hover:bg-[#EEF4FF] hover:text-[#1A73E8]'
-            }`}>
-            <Target size={13} className="shrink-0 text-[#1A73E8]" />
-            <span>What to get out of</span>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={activeStage}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4 }}
-                transition={{ duration: 0.15 }}
-                className="font-semibold text-[#1A73E8]">
-                {activeStageInfo.label}
-              </motion.span>
-            </AnimatePresence>
-            <motion.span
-              animate={{ rotate: aiGuidanceOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="shrink-0 text-[#1A73E8]">
-              <ChevronDown size={13} />
-            </motion.span>
-          </button>
-          <AnimatePresence initial={false}>
-            {aiGuidanceOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={activeStage}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 4 }}
-                    transition={{ duration: 0.15 }}
-                    className="mt-2 rounded-[14px] bg-[#FAFCFF] px-3.5 py-2.5 text-[0.82rem] leading-6 text-[#5F6368] ring-1 ring-[#EEF4FF]">
-                    {stageGuidance}
-                  </motion.p>
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         <div className="flex min-h-[480px] flex-col">
           {/* Transcript — editorial reading style, not chat bubbles */}
