@@ -1196,13 +1196,13 @@ function NGOView({ onPracticeChange }) {
           </div>
         </aside>
 
-        <div>
+        <div className="relative">
           <img
             src={ngoInterviewImg}
             alt=""
-            className="mx-auto h-auto w-full max-w-md"
+            className="pointer-events-none absolute left-1/2 top-0 z-10 w-full max-w-md -translate-x-1/2 -translate-y-1/2"
           />
-          <section className="relative z-10 -mt-16 min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+          <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
           {!selectedOpp ? (
             <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
