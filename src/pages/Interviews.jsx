@@ -1454,12 +1454,6 @@ function NGOView({ onPracticeChange }) {
       </button>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
-        <div className="flex items-center justify-end border-b border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
-          <span className="w-fit rounded-full border border-[#BFD7FF] bg-white px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8]">
-            AI-guided practice
-          </span>
-        </div>
-
         {/* Stage stepper — pills connected by arrows to read as a sequence, centered */}
         <div className="flex items-center justify-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
           {NGO_INTERVIEW_STAGES.map((stage, index) => {
