@@ -1023,19 +1023,6 @@ function NGOView() {
     setTranscript([])
   }
 
-  function startInterview() {
-    const stage = activeStage
-    setTranscript([{ id: 'q1', from: 'ngo', text: firstQuestion, stage }])
-    setIsStudentResponding(true)
-    window.setTimeout(() => {
-      setTranscript(prev => [
-        ...prev,
-        { id: 'a1', from: 'student', text: makeStudentReply(selectedOpp, mockStudent, stage), stage },
-      ])
-      setIsStudentResponding(false)
-    }, 700)
-  }
-
   function sendQuestion() {
     const text = draftQuestion.trim()
     if (!text || isStudentResponding) return
@@ -1445,6 +1432,8 @@ function NGOView() {
   const currentStageIndex = NGO_INTERVIEW_STAGES.findIndex(stage => stage.id === activeStage)
   const isLastStage = currentStageIndex === NGO_INTERVIEW_STAGES.length - 1
   const askedStages = new Set(transcript.map(message => message.stage))
+  const stageHasMessages = askedStages.has(activeStage)
+  const featuredQuestion = (activeStage === 'opening' && !stageHasMessages) ? firstQuestion : exampleQuestion
 
   return (
     <motion.div
@@ -1462,23 +1451,22 @@ function NGOView() {
               <ArrowLeft size={14} />
               Interview guide
             </button>
-            <p className="text-[1rem] font-semibold text-[#202124]">{selectedOpp.title}</p>
-            <p className="mt-1 text-[0.8rem] text-[#5F6368]">Mock interview with {mockStudent.name}</p>
+            <p className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[#202124]">{selectedOpp.title}</p>
           </div>
           <span className="w-fit rounded-full border border-[#BFD7FF] bg-white px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8]">
             AI-guided practice
           </span>
         </div>
 
-        {/* Stage stepper + explicit forward control */}
+        {/* Stage stepper — pills connected by arrows to read as a sequence */}
         <div className="flex items-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
-          <div className="flex flex-1 gap-2">
-            {NGO_INTERVIEW_STAGES.map((stage, index) => {
-              const isActive = activeStage === stage.id
-              const isDone = askedStages.has(stage.id) && !isActive
-              return (
+          {NGO_INTERVIEW_STAGES.map((stage, index) => {
+            const isActive = activeStage === stage.id
+            const isDone = askedStages.has(stage.id) && !isActive
+            return (
+              <div key={stage.id} className="flex shrink-0 items-center gap-2">
+                {index > 0 && <ArrowRight size={13} className="shrink-0 text-[#D7DCE3]" />}
                 <button
-                  key={stage.id}
                   onClick={() => setActiveStage(stage.id)}
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
                     isActive
@@ -1487,44 +1475,29 @@ function NGOView() {
                       ? 'border-[#BFE5CC] bg-[#F1FBF6] text-[#188038]'
                       : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:bg-[#FBFCFE]'
                   }`}>
-                  {isDone ? <CheckCircle2 size={13} /> : <span className={isActive ? 'text-white/80' : 'text-[#9AA0A6]'}>{index + 1}.</span>}
+                  {isDone && <CheckCircle2 size={13} />}
                   {stage.label}
                 </button>
-              )
-            })}
-          </div>
-          <button
-            onClick={goToNextStage}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#202124] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
-            {isLastStage ? 'Finish practice' : 'Next phase'}
-            <ArrowRight size={13} />
-          </button>
+              </div>
+            )
+          })}
         </div>
 
-        {/* What to understand in this phase — always visible, no click needed */}
-        <div className="flex items-start gap-2.5 border-b border-[#E5EEFB] bg-[#F8FBFF] px-5 py-3">
-          <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
-          <p className="text-[0.8rem] leading-5 text-[#3C4043]">
-            <span className="font-semibold text-[#202124]">In this phase, understand: </span>
-            {activeStageInfo.lookFor}
-          </p>
-        </div>
-
-        <div className="flex min-h-[430px] flex-col">
+        <div className="flex min-h-[480px] flex-col">
           {/* Transcript — editorial reading style, not chat bubbles */}
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {transcript.length === 0 ? (
-              <div className="mx-auto flex min-h-[260px] max-w-2xl flex-col items-center justify-center text-center">
-                <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Suggested opening question</p>
-                <div className="mb-5 rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] px-5 py-5 text-left shadow-[0_8px_22px_rgba(17,24,39,0.03)]">
-                  <p className="text-[0.95rem] leading-7 text-[#202124]">{firstQuestion}</p>
+              <div className="mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center text-center">
+                <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+                  </span>
+                  Your turn to talk
                 </div>
-                <button
-                  onClick={startInterview}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-2.5 text-[0.82rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-opacity hover:opacity-95">
-                  <PlayCircle size={16} />
-                  Start with this
-                </button>
+                <p className="text-[0.95rem] leading-7 text-[#5F6368]">
+                  Nothing&apos;s been said yet — go ahead and open the conversation.
+                </p>
               </div>
             ) : (
               <div className="mx-auto max-w-2xl space-y-6">
@@ -1556,15 +1529,23 @@ function NGOView() {
           </div>
 
           <div className="border-t border-[#E5EEFB] bg-white px-5 py-4">
-            {transcript.length > 0 && !isStudentResponding && (
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
-                </span>
-                Your turn to talk
-              </div>
-            )}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              {transcript.length > 0 && !isStudentResponding ? (
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+                  </span>
+                  Your turn to talk
+                </div>
+              ) : <span />}
+              <button
+                onClick={goToNextStage}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#202124] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
+                {isLastStage ? 'Finish practice' : "I'm ready for the next step"}
+                <ArrowRight size={13} />
+              </button>
+            </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setInputMode('type')}
@@ -1600,29 +1581,36 @@ function NGOView() {
                   exit={{ height: 0, opacity: 0, y: 4 }}
                   transition={{ duration: 0.18 }}
                   className="overflow-hidden">
-                  <div className="mb-3 rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-3">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="mb-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
-                          {activeStageInfo.label}
+                  <div className="mb-3 rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-4">
+                    <div className="flex items-start gap-2.5">
+                      <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
+                      <div className="min-w-0">
+                        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
+                          What to get out of {activeStageInfo.label.toLowerCase()}
                         </p>
-                        <p className="text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
+                        <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
                       </div>
-                      <div className="flex shrink-0 flex-wrap gap-2">
+                    </div>
+
+                    <div className="mt-4 border-t border-[#E1ECFF] pt-4">
+                      <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
+                        {stageHasMessages ? 'Need inspiration for your next question?' : 'How you can start'}
+                      </p>
+                      <div className="rounded-[16px] bg-white px-3 py-2.5">
+                        <p className="text-[0.82rem] leading-6 text-[#202124]">{featuredQuestion}</p>
+                      </div>
+                      <div className="mt-2.5 flex flex-wrap gap-2">
                         <button
                           onClick={generateExampleQuestion}
                           className="rounded-full border border-[#D7E6FF] bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]">
-                          Generate question
+                          Shuffle example
                         </button>
                         <button
-                          onClick={() => setDraftQuestion(exampleQuestion)}
+                          onClick={() => setDraftQuestion(featuredQuestion)}
                           className="rounded-full bg-[#1A73E8] px-3 py-1.5 text-[0.74rem] font-semibold text-white transition-opacity hover:opacity-95">
-                          Use question
+                          Use this question
                         </button>
                       </div>
-                    </div>
-                    <div className="mt-3 rounded-[16px] bg-white px-3 py-2">
-                      <p className="text-[0.8rem] leading-5 text-[#202124]">{exampleQuestion}</p>
                     </div>
                   </div>
                 </motion.div>
