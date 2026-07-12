@@ -295,12 +295,9 @@ export default function NGOProfile() {
   ].filter(Boolean)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#EEF2F9]">
-      {/* Ambient color mesh — the boxes below are translucent glass, so this is what shows through them */}
-      <div aria-hidden className="pointer-events-none absolute -top-32 -left-16 h-[560px] w-[560px] rounded-full bg-[#1A73E8] opacity-[0.28] blur-[100px]" />
-      <div aria-hidden className="pointer-events-none absolute top-[300px] right-[-10%] h-[480px] w-[480px] rounded-full bg-[#0FB89C] opacity-[0.24] blur-[100px]" />
-      <div aria-hidden className="pointer-events-none absolute top-[820px] left-[4%] h-[440px] w-[440px] rounded-full bg-[#A142F4] opacity-[0.2] blur-[100px]" />
-      <div aria-hidden className="pointer-events-none absolute bottom-[-160px] right-[8%] h-[480px] w-[480px] rounded-full bg-[#188038] opacity-[0.16] blur-[100px]" />
+    <main className="relative min-h-screen bg-[#F5F7FB]">
+      {/* Soft ambient gradients — same treatment as the NGO dashboard */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
       <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
