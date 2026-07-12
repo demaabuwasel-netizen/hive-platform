@@ -140,16 +140,17 @@ function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7'
   )
 }
 
-// Standing column — same scale/gradient language as Bar, but grows upward from a shared baseline
-function VerticalBar({ percent, color = '#4C9AEF', colorDark = '#1A73E8', width = 'w-16', delay = 0, label }) {
+// Standing column — a real bar anchored to a shared baseline, not a rounded capsule
+function VerticalBar({ percent, color = '#1A73E8', width = 'w-11', delay = 0, label }) {
   return (
-    <div className={`relative h-full ${width} overflow-hidden rounded-full bg-[#F1F3F4]`} title={label}>
+    <div className={`relative flex h-full ${width} items-end justify-center`}>
       <motion.div
         initial={{ height: 0 }}
-        animate={{ height: `${percent}%` }}
+        animate={{ height: `${Math.max(percent, 2)}%` }}
         transition={{ duration: 0.6, ease: 'easeOut', delay }}
-        className="absolute bottom-0 left-0 w-full rounded-full"
-        style={{ background: `linear-gradient(180deg, ${color}, ${colorDark})` }}
+        className="w-full rounded-t-[6px]"
+        style={{ background: color }}
+        title={label}
       />
     </div>
   )
@@ -612,10 +613,19 @@ export default function Analytics() {
                     subtitle="How applicants move from applying to acceptance"
                   />
                   <div className="px-6 py-6">
-                    <div className="flex h-[190px] items-end justify-center gap-8 sm:gap-12">
+                    <div className="relative flex h-[190px] items-end justify-center gap-8 sm:gap-12">
+                      <div className="pointer-events-none absolute inset-x-0 top-0 bottom-0">
+                        {[0, 0.25, 0.5, 0.75].map(f => (
+                          <div
+                            key={f}
+                            className={`absolute inset-x-0 ${f === 0 ? 'border-t border-[#DADCE0]' : 'border-t border-[#F1F3F4]'}`}
+                            style={{ bottom: `${f * 100}%` }}
+                          />
+                        ))}
+                      </div>
                       {funnelStages.map((stage, index) => {
                         return (
-                          <div key={stage.label} className="flex h-full flex-col items-center">
+                          <div key={stage.label} className="relative z-10 flex h-full flex-col items-center justify-end">
                             <p className="mb-2 text-[1.3rem] font-semibold leading-none text-[#202124]">{stage.count}</p>
                             <VerticalBar
                               percent={Math.max(stage.width, stage.count > 0 ? 4 : 0)}
