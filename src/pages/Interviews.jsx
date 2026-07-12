@@ -1262,7 +1262,7 @@ function NGOView({ onPracticeChange }) {
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                         <Sparkles size={19} />
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Raw summary</h3>
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Role summary</h3>
                       <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">The short version — read this if you only have a minute.</p>
                       <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
@@ -1288,11 +1288,14 @@ function NGOView({ onPracticeChange }) {
                       </div>
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
                       <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
-                      <div className="mt-5 space-y-6">
+                      <div className="mt-5 space-y-7">
                         {NGO_INTERVIEW_STAGES.map(stage => (
                           <div key={stage.id}>
                             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">{stage.label}</p>
-                            <div className="mt-2.5 space-y-2.5">
+                            <p className="mt-1.5 text-[0.84rem] leading-6 text-[#5F6368]">
+                              {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
+                            </p>
+                            <div className="mt-3 space-y-2.5">
                               {makeStageQuestions(selectedOpp, mockStudent, stage.id).map((question, i) => (
                                 <p key={i} className="text-[0.9rem] leading-7 text-[#5F6368]">{question}</p>
                               ))}
@@ -1309,12 +1312,15 @@ function NGOView({ onPracticeChange }) {
                         <CheckCircle2 size={19} />
                       </div>
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to listen for</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">Good signs that this candidate is a real fit for the role.</p>
-                      <div className="mt-5 divide-y divide-[#E5EEFB]">
-                        {(prepSections[1]?.items || []).map(item => (
-                          <div key={item} className="flex items-start gap-3 py-4">
-                            <CheckCircle2 size={16} className="mt-1 shrink-0 text-[#188038]" />
-                            <p className="text-[0.9rem] leading-7 text-[#5F6368]">{item}</p>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">The signal that matters most in each part of the conversation.</p>
+                      <div className="mt-5 space-y-5">
+                        {NGO_INTERVIEW_STAGES.map(stage => (
+                          <div key={stage.id} className="flex items-start gap-3 rounded-[20px] bg-[#F6FBF8] p-4">
+                            <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#188038]" />
+                            <div>
+                              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-[#188038]">{stage.label}</p>
+                              <p className="mt-1 text-[0.9rem] leading-7 text-[#5F6368]">{stage.lookFor}</p>
+                            </div>
                           </div>
                         ))}
                       </div>
