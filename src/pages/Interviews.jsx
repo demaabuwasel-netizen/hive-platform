@@ -1544,6 +1544,8 @@ function NGOView({ onPracticeChange }) {
 
   const currentStageIndex = NGO_INTERVIEW_STAGES.findIndex(stage => stage.id === activeStage)
   const isLastStage = currentStageIndex === NGO_INTERVIEW_STAGES.length - 1
+  const nextStage = NGO_INTERVIEW_STAGES[currentStageIndex + 1]
+  const questionsAskedInStage = transcript.filter(message => message.stage === activeStage && message.from === 'ngo').length
   const askedStages = new Set(transcript.map(message => message.stage))
   const stageHasMessages = askedStages.has(activeStage)
   const featuredQuestion = (activeStage === 'opening' && !stageHasMessages) ? firstQuestion : exampleQuestion
@@ -1729,11 +1731,20 @@ function NGOView({ onPracticeChange }) {
                     Your turn to talk
                   </div>
                 )}
+                {questionsAskedInStage > 0 && (
+                  <span className="text-[0.76rem] text-[#9AA0A6]">
+                    {questionsAskedInStage} question{questionsAskedInStage === 1 ? '' : 's'} asked in {activeStageInfo.label.toLowerCase()}
+                  </span>
+                )}
               </div>
               <button
                 onClick={goToNextStage}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#188038] px-4 py-2 text-[0.76rem] font-semibold text-white shadow-[0_6px_16px_rgba(24,128,56,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(24,128,56,0.3)]">
-                {isLastStage ? 'Finish practice' : "I'm ready for the next step"}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[0.76rem] font-semibold text-white shadow-[0_6px_16px_rgba(26,115,232,0.25)] transition-all hover:-translate-y-px ${
+                  isLastStage
+                    ? 'bg-[#188038] shadow-[0_6px_16px_rgba(24,128,56,0.25)] hover:shadow-[0_8px_20px_rgba(24,128,56,0.3)]'
+                    : 'bg-[#1A73E8] hover:shadow-[0_8px_20px_rgba(26,115,232,0.3)]'
+                }`}>
+                {isLastStage ? 'Finish practice' : `Ready for ${nextStage.label}?`}
                 <ArrowRight size={13} />
               </button>
             </div>
