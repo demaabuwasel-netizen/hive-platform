@@ -1597,6 +1597,41 @@ function NGOView({ onPracticeChange }) {
           })}
         </div>
 
+        {/* AI assistant — surfaced up top since it's tied to whichever stage is active */}
+        <div className="px-5 pt-4">
+          <button
+            onClick={() => setAiGuidanceOpen(open => !open)}
+            className={`flex w-full items-center justify-between gap-2 rounded-[18px] px-4 py-3 text-left transition-colors ${
+              aiGuidanceOpen ? 'bg-[#EEF4FF] ring-1 ring-[#D7E6FF]' : 'bg-[#F7FAFF] hover:bg-[#EEF4FF]'
+            }`}>
+            <span className="flex items-center gap-2 text-[0.82rem] font-semibold text-[#1A73E8]">
+              <Sparkles size={14} />
+              AI assistant
+            </span>
+            {aiGuidanceOpen ? <ChevronUp size={14} className="text-[#1A73E8]" /> : <ChevronDown size={14} className="text-[#1A73E8]" />}
+          </button>
+          <AnimatePresence initial={false}>
+            {aiGuidanceOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0, y: -4 }}
+                animate={{ height: 'auto', opacity: 1, y: 0 }}
+                exit={{ height: 0, opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden">
+                <div className="mt-2 flex items-start gap-2.5 rounded-[18px] bg-gradient-to-br from-[#F0F6FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]">
+                  <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
+                  <div className="min-w-0">
+                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
+                      What to get out of {activeStageInfo.label.toLowerCase()}
+                    </p>
+                    <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="flex min-h-[480px] flex-col">
           {/* Transcript — editorial reading style, not chat bubbles */}
           <div className="flex-1 overflow-y-auto px-5 py-5">
@@ -1666,15 +1701,6 @@ function NGOView({ onPracticeChange }) {
                     Your turn to talk
                   </div>
                 )}
-                <button
-                  onClick={() => setAiGuidanceOpen(open => !open)}
-                  className={`inline-flex items-center gap-1.5 text-[0.76rem] font-medium transition-colors ${
-                    aiGuidanceOpen ? 'text-[#1A73E8]' : 'text-[#5F6368] hover:text-[#1A73E8]'
-                  }`}>
-                  <Sparkles size={13} />
-                  AI assistant
-                  {aiGuidanceOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
               </div>
               <button
                 onClick={goToNextStage}
@@ -1683,27 +1709,6 @@ function NGOView({ onPracticeChange }) {
                 <ArrowRight size={13} />
               </button>
             </div>
-
-            <AnimatePresence initial={false}>
-              {aiGuidanceOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0, y: 4 }}
-                  animate={{ height: 'auto', opacity: 1, y: 0 }}
-                  exit={{ height: 0, opacity: 0, y: 4 }}
-                  transition={{ duration: 0.18 }}
-                  className="overflow-hidden">
-                  <div className="mb-3 flex items-start gap-2.5 rounded-[20px] bg-gradient-to-br from-[#F0F6FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]">
-                    <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
-                    <div className="min-w-0">
-                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
-                        What to get out of {activeStageInfo.label.toLowerCase()}
-                      </p>
-                      <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Unified composer — mic and suggest live inside the input, not as separate pills */}
             <div className={`flex items-end gap-1 rounded-[24px] bg-white p-2 pl-2.5 shadow-[0_2px_10px_rgba(17,24,39,0.05)] ring-1 transition-all ${
@@ -1724,8 +1729,9 @@ function NGOView({ onPracticeChange }) {
                 disabled={isStudentResponding}
                 aria-label="Suggest a question"
                 title="Suggest a question"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors hover:bg-[#F1F3F4] hover:text-[#5F6368]">
-                <Lightbulb size={16} />
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#E8F0FE] px-3 text-[0.78rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#D8E7FE] disabled:opacity-50">
+                <Lightbulb size={15} />
+                <span className="hidden sm:inline">Suggest</span>
               </button>
               <textarea
                 value={draftQuestion}
