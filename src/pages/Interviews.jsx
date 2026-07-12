@@ -1456,26 +1456,36 @@ function NGOView({ onPracticeChange }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
-        {/* Stage stepper — pills connected by arrows to read as a sequence, centered */}
-        <div className="flex items-center justify-center gap-2.5 overflow-x-auto bg-[#FBFCFE] px-5 pb-5 pt-7">
+      <section className="min-h-[620px] overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+        {/* Stage stepper — numbered circles on a connecting line, like a wizard progress bar */}
+        <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-9">
           {NGO_INTERVIEW_STAGES.map((stage, index) => {
             const isActive = activeStage === stage.id
             const isDone = askedStages.has(stage.id) && !isActive
             return (
-              <div key={stage.id} className="flex shrink-0 items-center gap-2.5">
-                {index > 0 && <ArrowRight size={13} className="shrink-0 text-[#D2D8E0]" />}
+              <div key={stage.id} className="flex items-start">
+                {index > 0 && (
+                  <div className={`mt-[18px] h-px w-7 shrink-0 transition-colors sm:w-14 ${
+                    isDone ? 'bg-[#188038]/40' : isActive ? 'bg-[#1A73E8]/30' : 'bg-[#E8EAED]'
+                  }`} />
+                )}
                 <button
                   onClick={() => setActiveStage(stage.id)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[0.76rem] font-semibold transition-all ${
+                  className="group flex w-14 shrink-0 flex-col items-center gap-2 sm:w-20">
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-full text-[0.8rem] font-semibold transition-all duration-200 ${
                     isActive
-                      ? 'border-[#1A73E8] bg-[#1A73E8] text-white shadow-[0_10px_22px_rgba(26,115,232,0.22)]'
+                      ? 'scale-110 bg-[#1A73E8] text-white shadow-[0_6px_16px_rgba(26,115,232,0.35)]'
                       : isDone
-                      ? 'border-[#BFE5CC] bg-[#F1FBF6] text-[#188038]'
-                      : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:border-[#D7E6FF] hover:bg-white'
+                      ? 'bg-[#188038] text-white'
+                      : 'bg-[#F1F3F4] text-[#9AA0A6] group-hover:bg-[#E8EAED]'
                   }`}>
-                  {isDone && <CheckCircle2 size={13} />}
-                  {stage.label}
+                    {isDone ? <CheckCircle2 size={16} /> : index + 1}
+                  </span>
+                  <span className={`text-center text-[0.7rem] font-medium leading-tight transition-colors ${
+                    isActive ? 'text-[#1A73E8]' : isDone ? 'text-[#188038]' : 'text-[#9AA0A6]'
+                  }`}>
+                    {stage.label}
+                  </span>
                 </button>
               </div>
             )
@@ -1487,10 +1497,10 @@ function NGOView({ onPracticeChange }) {
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {transcript.length === 0 ? (
               <div className="mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center text-center">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
-                  <Mic size={22} strokeWidth={1.8} />
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)]">
+                  <Mic size={24} strokeWidth={1.8} />
                 </div>
-                <p className="text-[1.05rem] font-semibold text-[#202124]">Start the interview</p>
+                <p className="text-[1.1rem] font-semibold text-[#202124]">Start the interview</p>
                 <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">Type or speak your opening question below.</p>
               </div>
             ) : (
@@ -1498,29 +1508,29 @@ function NGOView({ onPracticeChange }) {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentQuestionMsg?.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.28, ease: 'easeOut' }}
-                    className="w-full text-center">
-                    <div className="mx-auto max-w-lg rounded-[16px] border border-[#E5EEFB] bg-[#F8F9FA] px-4 py-3 text-left">
-                      <p className="mb-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
-                      <p className="text-[0.85rem] leading-6 text-[#5F6368]">{currentQuestionMsg?.text}</p>
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="w-full max-w-xl overflow-hidden rounded-[28px] bg-white shadow-[0_8px_30px_rgba(17,24,39,0.07)] ring-1 ring-black/[0.04]">
+                    <div className="border-b border-[#F1F3F4] bg-[#FAFBFC] px-6 py-4">
+                      <p className="mb-1 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
+                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{currentQuestionMsg?.text}</p>
                     </div>
 
-                    <div className="mx-auto mt-6 max-w-xl">
+                    <div className="px-6 py-8 text-center">
                       {currentAnswerMsg ? (
                         <>
-                          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
-                          <p className="text-[1.1rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
+                          <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
+                          <p className="text-[1.15rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
                         </>
                       ) : (
                         <>
-                          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
+                          <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
                           <div className="flex justify-center gap-1.5 py-1">
-                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
-                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
-                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
+                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.3s' }} />
+                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.15s' }} />
+                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" />
                           </div>
                         </>
                       )}
@@ -1531,11 +1541,11 @@ function NGOView({ onPracticeChange }) {
             )}
           </div>
 
-          <div className="border-t border-[#E5EEFB] bg-white px-5 py-4">
+          <div className="bg-[#FBFCFE] px-5 py-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 {transcript.length > 0 && !isStudentResponding && (
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                  <div className="inline-flex items-center gap-1.5 text-[0.76rem] font-medium text-[#188038]">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
@@ -1545,8 +1555,8 @@ function NGOView({ onPracticeChange }) {
                 )}
                 <button
                   onClick={() => setAiGuidanceOpen(open => !open)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold transition-colors ${
-                    aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
+                  className={`inline-flex items-center gap-1.5 text-[0.76rem] font-medium transition-colors ${
+                    aiGuidanceOpen ? 'text-[#1A73E8]' : 'text-[#5F6368] hover:text-[#1A73E8]'
                   }`}>
                   <Sparkles size={13} />
                   AI assistant
@@ -1555,7 +1565,7 @@ function NGOView({ onPracticeChange }) {
               </div>
               <button
                 onClick={goToNextStage}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#188038] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#188038] px-4 py-2 text-[0.76rem] font-semibold text-white shadow-[0_6px_16px_rgba(24,128,56,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(24,128,56,0.3)]">
                 {isLastStage ? 'Finish practice' : "I'm ready for the next step"}
                 <ArrowRight size={13} />
               </button>
@@ -1569,7 +1579,7 @@ function NGOView({ onPracticeChange }) {
                   exit={{ height: 0, opacity: 0, y: 4 }}
                   transition={{ duration: 0.18 }}
                   className="overflow-hidden">
-                  <div className="mb-3 flex items-start gap-2.5 rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-4">
+                  <div className="mb-3 flex items-start gap-2.5 rounded-[20px] bg-gradient-to-br from-[#F0F6FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]">
                     <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
                     <div className="min-w-0">
                       <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
@@ -1583,8 +1593,8 @@ function NGOView({ onPracticeChange }) {
             </AnimatePresence>
 
             {/* Unified composer — mic and suggest live inside the input, not as separate pills */}
-            <div className={`flex items-end gap-1 rounded-[22px] border bg-[#FBFCFE] p-2 pl-2.5 transition-colors focus-within:border-[#1A73E8] focus-within:bg-white ${
-              isStudentResponding ? 'border-[#E5EEFB] opacity-60' : 'border-[#E5EEFB]'
+            <div className={`flex items-end gap-1 rounded-[24px] bg-white p-2 pl-2.5 shadow-[0_2px_10px_rgba(17,24,39,0.05)] ring-1 transition-all ${
+              isStudentResponding ? 'ring-[#EEF1F6] opacity-60' : 'ring-[#EEF1F6] focus-within:shadow-[0_6px_20px_rgba(26,115,232,0.12)] focus-within:ring-[#1A73E8]/40'
             }`}>
               <button
                 onClick={handleVoiceToggle}
@@ -1592,7 +1602,7 @@ function NGOView({ onPracticeChange }) {
                 aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                 title={isRecording ? 'Stop recording' : 'Start recording'}
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  isRecording ? 'bg-[#E6F4EA] text-[#188038]' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
+                  isRecording ? 'bg-[#E6F4EA] text-[#188038]' : 'text-[#9AA0A6] hover:bg-[#F1F3F4] hover:text-[#5F6368]'
                 }`}>
                 {isRecording ? <StopCircle size={16} /> : <Mic size={16} />}
               </button>
@@ -1601,7 +1611,7 @@ function NGOView({ onPracticeChange }) {
                 disabled={isStudentResponding}
                 aria-label="Suggest a question"
                 title="Suggest a question"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4]">
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors hover:bg-[#F1F3F4] hover:text-[#5F6368]">
                 <Lightbulb size={16} />
               </button>
               <textarea
@@ -1621,7 +1631,7 @@ function NGOView({ onPracticeChange }) {
               <button
                 onClick={sendQuestion}
                 disabled={!draftQuestion.trim() || isStudentResponding}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white transition-opacity hover:opacity-95 disabled:opacity-30"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_4px_12px_rgba(26,115,232,0.3)] transition-all hover:scale-105 hover:bg-[#1765CC] disabled:scale-100 disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                 aria-label="Send question">
                 <Send size={15} />
               </button>
@@ -1630,7 +1640,7 @@ function NGOView({ onPracticeChange }) {
         </div>
       </section>
 
-      <aside className="max-h-[calc(100vh-126px)] overflow-y-auto rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)] xl:sticky xl:top-6">
+      <aside className="max-h-[calc(100vh-126px)] overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
         <div className="border-b border-[#E5EEFB] px-5 py-5">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Context</p>
           <p className="mt-1 text-[0.92rem] font-semibold text-[#202124]">Only open what you need</p>
