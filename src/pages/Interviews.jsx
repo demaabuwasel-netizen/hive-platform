@@ -123,7 +123,7 @@ function makeStageGuidance(role, student, stageId) {
   const field = role?.field || role?.category || 'this impact area'
 
   const guidance = {
-    opening: `Understand why ${student.name.split(' ')[0]} wants ${title}, whether they know what the NGO is trying to do, and if they can connect their interest to ${field}.`,
+    opening: `Understand why the student wants ${title}, whether they know what the NGO is trying to do, and if they can connect their interest to ${field}.`,
     skills: `Check if the student can actually use ${skill} in a practical setting, explain what they personally did, and be honest about where they still need support.`,
     impact: `Listen for whether they understand the community impact behind ${title}, not just the task. You want motivation, respect, and curiosity.`,
     scenario: `See how they think through a real ${title} situation: clarifying the goal, choosing a next step, communicating with the team, and handling uncertainty.`,
@@ -943,6 +943,7 @@ function NGOView({ onPracticeChange }) {
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
+  const [openQuestionStage, setOpenQuestionStage] = useState(null)
   const [activeStage, setActiveStage] = useState('opening')
   const [openPanel, setOpenPanel] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -1262,8 +1263,11 @@ function NGOView({ onPracticeChange }) {
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                         <Sparkles size={19} />
                       </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">Role summary</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">The short version — read this if you only have a minute.</p>
+                      <div className="flex items-center gap-2.5">
+                        <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI summary</h3>
+                        <span className="rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[#1A73E8]">AI-generated</span>
+                      </div>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">What this role is all about — read this if you only have a minute.</p>
                       <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
                       </p>
@@ -1272,12 +1276,6 @@ function NGOView({ onPracticeChange }) {
                           {prepSections[2].text}
                         </p>
                       )}
-                      <div className="mt-6 rounded-[26px] bg-[#F8FAFD] p-5">
-                        <p className="text-[0.9rem] font-semibold text-[#202124]">Interview direction</p>
-                        <p className="mt-2 text-[0.86rem] leading-7 text-[#5F6368]">
-                          Keep the conversation simple: understand the student&apos;s motivation, check one or two relevant skills, then use a real scenario from the role before moving to questions and next steps.
-                        </p>
-                      </div>
                     </section>
                   )}
 
@@ -1288,20 +1286,42 @@ function NGOView({ onPracticeChange }) {
                       </div>
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
                       <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
-                      <div className="mt-5 space-y-7">
-                        {NGO_INTERVIEW_STAGES.map(stage => (
-                          <div key={stage.id}>
-                            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">{stage.label}</p>
-                            <p className="mt-1.5 text-[0.84rem] leading-6 text-[#5F6368]">
-                              {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
-                            </p>
-                            <div className="mt-3 space-y-2.5">
-                              {makeStageQuestions(selectedOpp, mockStudent, stage.id).map((question, i) => (
-                                <p key={i} className="text-[0.9rem] leading-7 text-[#5F6368]">{question}</p>
-                              ))}
+                      <div className="mt-5 space-y-4">
+                        {NGO_INTERVIEW_STAGES.map(stage => {
+                          const isOpen = openQuestionStage === stage.id
+                          return (
+                            <div key={stage.id} className="overflow-hidden rounded-[22px] border border-[#E5EEFB]">
+                              <button
+                                onClick={() => setOpenQuestionStage(isOpen ? null : stage.id)}
+                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8FBFF]">
+                                <div className="min-w-0">
+                                  <p className="text-[1.05rem] font-bold text-[#202124]">{stage.label}</p>
+                                  <p className="mt-1 text-[0.84rem] leading-6 text-[#5F6368]">
+                                    {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
+                                  </p>
+                                </div>
+                                <ChevronDown size={18} className={`shrink-0 text-[#9AA0A6] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence initial={false}>
+                                {isOpen && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden">
+                                    <div className="space-y-2.5 border-t border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
+                                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Example questions</p>
+                                      {makeStageQuestions(selectedOpp, mockStudent, stage.id).map((question, i) => (
+                                        <p key={i} className="text-[0.9rem] leading-7 text-[#5F6368]">{question}</p>
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </section>
                   )}
