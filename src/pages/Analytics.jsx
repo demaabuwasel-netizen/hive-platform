@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Activity, AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
-  Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake,
-  Lightbulb, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
+  Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake, Layers,
+  Lightbulb, MapPin, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
   Sparkles, Target, TrendingUp, Users, Video,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -208,6 +208,7 @@ export default function Analytics() {
   const [roles, setRoles] = useState([])
   const [applicants, setApplicants] = useState([])
   const [selectedRoleId, setSelectedRoleId] = useState('all')
+  const [applicantView, setApplicantView] = useState('skills')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [todayStart] = useState(() => {
@@ -297,7 +298,20 @@ export default function Analytics() {
     const fieldPool = [...fields.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
-      .slice(0, 5)
+      .slice(0, 8)
+
+    const languages = new Map()
+    scopedApplicants.forEach(applicant => {
+      ;(applicant.languages || []).forEach(entry => {
+        const name = String(entry).split('(')[0].trim()
+        if (!name) return
+        languages.set(name, (languages.get(name) || 0) + 1)
+      })
+    })
+    const languagePool = [...languages.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, 8)
 
     const matchScores = scopedApplicants.map(applicant => applicant.match).filter(Number.isFinite)
     const avgMatchScore = average(matchScores)
@@ -326,18 +340,50 @@ export default function Analytics() {
       funnel: { applied, interview, accepted },
       skillPool,
       fieldPool,
+      languagePool,
       avgMatchScore,
       matchBands,
       dailySeries,
     }
   }, [applicants, roles, selectedRoleId, todayStart])
 
+  // NGO's own posting patterns — always across all roles, independent of the role filter above
+  const orgInsights = useMemo(() => {
+    const categories = new Map()
+    roles.forEach(role => {
+      const name = (role.category || role.field || 'General').trim() || 'General'
+      categories.set(name, (categories.get(name) || 0) + 1)
+    })
+    const categoryPool = [...categories.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+    const workModes = { Remote: 0, Hybrid: 0, 'In-person': 0 }
+    roles.forEach(role => {
+      const mode = (role.workMode || '').toLowerCase()
+      if (mode.includes('remote')) workModes.Remote += 1
+      else if (mode.includes('hybrid')) workModes.Hybrid += 1
+      else if (mode) workModes['In-person'] += 1
+    })
+
+    return { categoryPool, workModes }
+  }, [roles])
+
   const hasActivity = roles.length > 0 || applicants.length > 0
   const { applied, interview, accepted } = data.funnel
-  const topSkill = data.skillPool[0]
-  const restSkills = data.skillPool.slice(1, 6)
-  const maxRestCount = Math.max(...restSkills.map(skill => skill.count), 1)
-  const maxFieldCount = Math.max(...data.fieldPool.map(field => field.count), 1)
+
+  const APPLICANT_VIEWS = {
+    skills: { label: 'Skills', heroLabel: 'Most in-demand', unit: 'skill', pool: data.skillPool, icon: null },
+    fields: { label: 'Fields of study', heroLabel: 'Most common field', unit: 'field', pool: data.fieldPool, icon: GraduationCap },
+    languages: { label: 'Languages', heroLabel: 'Most common language', unit: 'language', pool: data.languagePool, icon: Globe },
+  }
+  const activeView = APPLICANT_VIEWS[applicantView]
+  const activeTop = activeView.pool[0]
+  const activeRest = activeView.pool.slice(1, 6)
+  const maxActiveRest = Math.max(...activeRest.map(item => item.count), 1)
+  const rowIcon = name => (activeView.icon ? activeView.icon : skillIcon(name))
+
+  const maxCategoryCount = Math.max(...orgInsights.categoryPool.map(cat => cat.count), 1)
   const totalDailyApplications = data.dailySeries.reduce((sum, day) => sum + day.value, 0)
   const peakDay = data.dailySeries.reduce((best, day) => (day.value > (best?.value ?? -1) ? day : best), null)
 
@@ -573,48 +619,68 @@ export default function Analytics() {
             </section>
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              {/* Skills — top skill gets a hero treatment, rest as icon rows */}
+              {/* About your applicants — switch between skills / fields of study / languages */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader icon={Sparkles} title="Skills in your pool" subtitle="Most common skills across applicants" />
-                {topSkill ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F4] text-[#5F6368]">
+                      <Sparkles size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-[0.95rem] font-semibold text-[#202124]">About your applicants</h2>
+                      <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">What your candidate pool looks like</p>
+                    </div>
+                  </div>
+                  <select
+                    value={applicantView}
+                    onChange={event => setApplicantView(event.target.value)}
+                    className="rounded-full border border-[#DADCE0] bg-white px-3.5 py-1.5 text-[0.78rem] font-medium text-[#202124] outline-none transition-colors hover:border-[#BFD7FF] focus:border-[#1A73E8]"
+                  >
+                    {Object.entries(APPLICANT_VIEWS).map(([key, view]) => (
+                      <option key={key} value={key}>{view.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {activeTop ? (
                   <div className="px-6 py-6">
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      key={applicantView}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
                       className="mb-5 flex items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#EEF4FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]"
                     >
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#1A73E8] shadow-[0_4px_12px_rgba(26,115,232,0.15)]">
-                        {(() => { const TopIcon = skillIcon(topSkill.name); return <TopIcon size={22} strokeWidth={1.9} /> })()}
+                        {(() => { const TopIcon = rowIcon(activeTop.name); return <TopIcon size={22} strokeWidth={1.9} /> })()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">Most in-demand</p>
-                        <p className="truncate text-[1.02rem] font-semibold text-[#202124]">{topSkill.name}</p>
+                        <p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">{activeView.heroLabel}</p>
+                        <p className="truncate text-[1.02rem] font-semibold text-[#202124]">{activeTop.name}</p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-[1.3rem] font-semibold leading-none text-[#202124]">{topSkill.count}</p>
-                        <p className="mt-1 text-[0.66rem] text-[#5F6368]">applicant{topSkill.count !== 1 ? 's' : ''}</p>
+                        <p className="text-[1.3rem] font-semibold leading-none text-[#202124]">{activeTop.count}</p>
+                        <p className="mt-1 text-[0.66rem] text-[#5F6368]">applicant{activeTop.count !== 1 ? 's' : ''}</p>
                       </div>
                     </motion.div>
 
-                    {restSkills.length > 0 && (
+                    {activeRest.length > 0 && (
                       <div className="space-y-3.5">
-                        {restSkills.map((skill, index) => {
-                          const Icon = skillIcon(skill.name)
+                        {activeRest.map((item, index) => {
+                          const Icon = rowIcon(item.name)
                           return (
-                            <div key={skill.name} className="flex items-center gap-3">
+                            <div key={item.name} className="flex items-center gap-3">
                               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F1F3F4] text-[#5F6368]">
                                 <Icon size={13} />
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="mb-1 flex items-center justify-between gap-3">
-                                  <p className="truncate text-[0.8rem] text-[#3C4043]">{skill.name}</p>
-                                  <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{skill.count}</span>
+                                  <p className="truncate text-[0.8rem] text-[#3C4043]">{item.name}</p>
+                                  <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{item.count}</span>
                                 </div>
                                 <Bar
-                                  percent={Math.max((skill.count / maxRestCount) * 100, 4)}
+                                  percent={Math.max((item.count / maxActiveRest) * 100, 4)}
                                   height="h-2"
                                   delay={index * 0.04}
-                                  label={`${skill.name}: ${skill.count} applicant${skill.count !== 1 ? 's' : ''}`}
+                                  label={`${item.name}: ${item.count} applicant${item.count !== 1 ? 's' : ''}`}
                                 />
                               </div>
                             </div>
@@ -625,42 +691,53 @@ export default function Analytics() {
                   </div>
                 ) : (
                   <div className="px-6 py-12 text-center">
-                    <p className="text-[0.9rem] font-medium text-[#202124]">No skill data yet</p>
-                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Applicant skills will appear after students apply.</p>
+                    <p className="text-[0.9rem] font-medium text-[#202124]">No {activeView.unit} data yet</p>
+                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">This fills in once students apply.</p>
                   </div>
                 )}
               </section>
 
-              {/* Top fields of study — same bar treatment, different lens on the same pool */}
+              {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader icon={GraduationCap} title="Top fields of study" subtitle="What applicants are studying" />
-                {data.fieldPool.length > 0 ? (
-                  <div className="space-y-3.5 px-6 py-6">
-                    {data.fieldPool.map((field, index) => (
-                      <div key={field.name} className="flex items-center gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F1F3F4] text-[#5F6368]">
-                          <GraduationCap size={13} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex items-center justify-between gap-3">
-                            <p className="truncate text-[0.8rem] text-[#3C4043]">{field.name}</p>
-                            <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{field.count}</span>
+                <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" />
+                {orgInsights.categoryPool.length > 0 ? (
+                  <div className="px-6 py-6">
+                    <div className="space-y-3.5">
+                      {orgInsights.categoryPool.map((cat, index) => (
+                        <div key={cat.name} className="flex items-center gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
+                            <Briefcase size={13} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex items-center justify-between gap-3">
+                              <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
+                              <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{cat.count}</span>
+                            </div>
+                            <Bar
+                              percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
+                              color="#A142F4" colorDark="#8E24E0"
+                              height="h-2"
+                              delay={index * 0.04}
+                              label={`${cat.name}: ${cat.count} role${cat.count !== 1 ? 's' : ''}`}
+                            />
                           </div>
-                          <Bar
-                            percent={Math.max((field.count / maxFieldCount) * 100, 4)}
-                            color="#A142F4" colorDark="#8E24E0"
-                            height="h-2"
-                            delay={index * 0.04}
-                            label={`${field.name}: ${field.count} applicant${field.count !== 1 ? 's' : ''}`}
-                          />
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-2 border-t border-[#F1F3F4] pt-5">
+                      {Object.entries(orgInsights.workModes).filter(([, count]) => count > 0).map(([mode, count]) => (
+                        <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
+                          <MapPin size={11} />
+                          {mode} · {count}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="px-6 py-12 text-center">
-                    <p className="text-[0.9rem] font-medium text-[#202124]">No field data yet</p>
-                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Fields of study will appear after students apply.</p>
+                    <p className="text-[0.9rem] font-medium text-[#202124]">No roles posted yet</p>
+                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Post a role to see your organization's focus areas.</p>
                   </div>
                 )}
               </section>
