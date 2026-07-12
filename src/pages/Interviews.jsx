@@ -944,7 +944,6 @@ function NGOView() {
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [activeStage, setActiveStage] = useState('opening')
   const [openPanel, setOpenPanel] = useState('')
-  const [inputMode, setInputMode] = useState('type')
   const [isRecording, setIsRecording] = useState(false)
   const [isStudentResponding, setIsStudentResponding] = useState(false)
   const [aiGuidanceOpen, setAiGuidanceOpen] = useState(false)
@@ -1000,7 +999,6 @@ function NGOView() {
     setActiveGuideSection('summary')
     setActiveStage('opening')
     setOpenPanel('')
-    setInputMode('type')
     setIsRecording(false)
     setIsStudentResponding(false)
     setAiGuidanceOpen(false)
@@ -1014,7 +1012,6 @@ function NGOView() {
     setPracticeStarted(true)
     setActiveStage('opening')
     setOpenPanel('')
-    setInputMode('type')
     setIsRecording(false)
     setIsStudentResponding(false)
     setAiGuidanceOpen(false)
@@ -1057,6 +1054,11 @@ function NGOView() {
     setExampleQuestionIndex(prev => prev + 1)
   }
 
+  function suggestQuestion() {
+    setDraftQuestion(featuredQuestion)
+    generateExampleQuestion()
+  }
+
   function handleVoiceToggle() {
     if (isRecording) {
       recognitionRef.current?.stop?.()
@@ -1066,7 +1068,6 @@ function NGOView() {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
-      setInputMode('voice')
       setIsRecording(true)
       setDraftQuestion(prev => prev || 'Voice question recorded for the student.')
       return
@@ -1086,7 +1087,6 @@ function NGOView() {
     recognition.onend = () => setIsRecording(false)
     recognition.onerror = () => setIsRecording(false)
     recognitionRef.current = recognition
-    setInputMode('voice')
     setIsRecording(true)
     recognition.start()
   }
@@ -1440,26 +1440,24 @@ function NGOView() {
       key={selectedRole}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      transition={{ duration: 0.25 }}>
+      <button
+        onClick={() => setPracticeStarted(false)}
+        className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
+        <ArrowLeft size={14} />
+        Interview guide
+      </button>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
         <div className="flex flex-col gap-4 border-b border-[#E5EEFB] bg-[#FBFCFE] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <button
-              onClick={() => setPracticeStarted(false)}
-              className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
-              <ArrowLeft size={14} />
-              Interview guide
-            </button>
-            <p className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[#202124]">{selectedOpp.title}</p>
-          </div>
+          <p className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[#202124]">{selectedOpp.title}</p>
           <span className="w-fit rounded-full border border-[#BFD7FF] bg-white px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8]">
             AI-guided practice
           </span>
         </div>
 
-        {/* Stage stepper — pills connected by arrows to read as a sequence */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
+        {/* Stage stepper — pills connected by arrows to read as a sequence, centered */}
+        <div className="flex items-center justify-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
           {NGO_INTERVIEW_STAGES.map((stage, index) => {
             const isActive = activeStage === stage.id
             const isDone = askedStages.has(stage.id) && !isActive
@@ -1529,48 +1527,46 @@ function NGOView() {
           </div>
 
           <div className="border-t border-[#E5EEFB] bg-white px-5 py-4">
+            {transcript.length > 0 && !isStudentResponding && (
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+                </span>
+                Your turn to talk
+              </div>
+            )}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              {transcript.length > 0 && !isStudentResponding ? (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
-                  </span>
-                  Your turn to talk
-                </div>
-              ) : <span />}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleVoiceToggle}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
+                    isRecording ? 'bg-[#E6F4EA] text-[#188038]' : 'bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED]'
+                  }`}>
+                  {isRecording ? <StopCircle size={13} /> : <Mic size={13} />}
+                  {isRecording ? 'Recording...' : 'Start recording'}
+                </button>
+                <button
+                  onClick={suggestQuestion}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3.5 py-2 text-[0.76rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#E8EAED]">
+                  <Lightbulb size={13} />
+                  Suggest a question
+                </button>
+                <button
+                  onClick={() => setAiGuidanceOpen(open => !open)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
+                    aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368] hover:bg-[#E8EAED]'
+                  }`}>
+                  <Sparkles size={13} />
+                  AI assistant
+                  {aiGuidanceOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+              </div>
               <button
                 onClick={goToNextStage}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#202124] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#188038] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
                 {isLastStage ? 'Finish practice' : "I'm ready for the next step"}
                 <ArrowRight size={13} />
-              </button>
-            </div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setInputMode('type')}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold transition-colors ${
-                  inputMode === 'type' ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368]'
-                }`}>
-                <Keyboard size={13} />
-                Type
-              </button>
-              <button
-                onClick={handleVoiceToggle}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold transition-colors ${
-                  inputMode === 'voice' ? 'bg-[#E6F4EA] text-[#188038]' : 'bg-[#F1F3F4] text-[#5F6368]'
-                }`}>
-                {isRecording ? <StopCircle size={13} /> : <Mic size={13} />}
-                {isRecording ? 'Recording' : 'Speak'}
-              </button>
-              <button
-                onClick={() => setAiGuidanceOpen(open => !open)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold transition-colors ${
-                  aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368]'
-                }`}>
-                <Sparkles size={13} />
-                AI assistant
-                {aiGuidanceOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
             </div>
             <AnimatePresence initial={false}>
@@ -1581,36 +1577,13 @@ function NGOView() {
                   exit={{ height: 0, opacity: 0, y: 4 }}
                   transition={{ duration: 0.18 }}
                   className="overflow-hidden">
-                  <div className="mb-3 rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-4">
-                    <div className="flex items-start gap-2.5">
-                      <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
-                      <div className="min-w-0">
-                        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
-                          What to get out of {activeStageInfo.label.toLowerCase()}
-                        </p>
-                        <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 border-t border-[#E1ECFF] pt-4">
-                      <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
-                        {stageHasMessages ? 'Need inspiration for your next question?' : 'How you can start'}
+                  <div className="mb-3 flex items-start gap-2.5 rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-4">
+                    <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
+                    <div className="min-w-0">
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
+                        What to get out of {activeStageInfo.label.toLowerCase()}
                       </p>
-                      <div className="rounded-[16px] bg-white px-3 py-2.5">
-                        <p className="text-[0.82rem] leading-6 text-[#202124]">{featuredQuestion}</p>
-                      </div>
-                      <div className="mt-2.5 flex flex-wrap gap-2">
-                        <button
-                          onClick={generateExampleQuestion}
-                          className="rounded-full border border-[#D7E6FF] bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]">
-                          Shuffle example
-                        </button>
-                        <button
-                          onClick={() => setDraftQuestion(featuredQuestion)}
-                          className="rounded-full bg-[#1A73E8] px-3 py-1.5 text-[0.74rem] font-semibold text-white transition-opacity hover:opacity-95">
-                          Use this question
-                        </button>
-                      </div>
+                      <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1625,7 +1598,7 @@ function NGOView() {
                 placeholder={
                   isStudentResponding
                     ? `${mockStudent.name} is answering...`
-                    : inputMode === 'voice' && isRecording
+                    : isRecording
                     ? 'Listening...'
                     : 'Ask the next interview question...'
                 }
@@ -1682,6 +1655,7 @@ function NGOView() {
           })}
         </div>
       </aside>
+      </div>
     </motion.div>
   )
 }
