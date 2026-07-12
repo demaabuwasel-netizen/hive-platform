@@ -1503,24 +1503,28 @@ function NGOView({ onPracticeChange }) {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.28, ease: 'easeOut' }}
                     className="w-full text-center">
-                    <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
-                    <p className="mb-6 text-[1.15rem] font-medium leading-8 text-[#202124]">{currentQuestionMsg?.text}</p>
+                    <div className="mx-auto max-w-lg rounded-[16px] border border-[#E5EEFB] bg-[#F8F9FA] px-4 py-3 text-left">
+                      <p className="mb-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
+                      <p className="text-[0.85rem] leading-6 text-[#5F6368]">{currentQuestionMsg?.text}</p>
+                    </div>
 
-                    {currentAnswerMsg ? (
-                      <div className="mx-auto max-w-xl rounded-[20px] border border-[#E5EEFB] bg-[#F8F9FA] px-5 py-4 text-left">
-                        <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
-                        <p className="text-[0.92rem] leading-7 text-[#3C4043]">{currentAnswerMsg.text}</p>
-                      </div>
-                    ) : (
-                      <div className="mx-auto max-w-xl rounded-[20px] border border-[#E5EEFB] bg-[#F8F9FA] px-5 py-4 text-left">
-                        <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
-                        <div className="flex gap-1.5 py-1">
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
-                        </div>
-                      </div>
-                    )}
+                    <div className="mx-auto mt-6 max-w-xl">
+                      {currentAnswerMsg ? (
+                        <>
+                          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
+                          <p className="text-[1.1rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
+                          <div className="flex justify-center gap-1.5 py-1">
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </motion.div>
                 </AnimatePresence>
               </div>
