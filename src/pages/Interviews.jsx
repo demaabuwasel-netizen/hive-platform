@@ -995,7 +995,6 @@ function NGOView({ onPracticeChange }) {
   const [openPanel, setOpenPanel] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [isStudentResponding, setIsStudentResponding] = useState(false)
-  const [aiGuidanceOpen, setAiGuidanceOpen] = useState(false)
   const [exampleQuestionIndex, setExampleQuestionIndex] = useState(0)
   const [draftQuestion, setDraftQuestion] = useState('')
   const [transcript, setTranscript] = useState([])
@@ -1064,7 +1063,6 @@ function NGOView({ onPracticeChange }) {
     setOpenPanel('')
     setIsRecording(false)
     setIsStudentResponding(false)
-    setAiGuidanceOpen(false)
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setTranscript([])
@@ -1077,7 +1075,6 @@ function NGOView({ onPracticeChange }) {
     setOpenPanel('')
     setIsRecording(false)
     setIsStudentResponding(false)
-    setAiGuidanceOpen(false)
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setTranscript([])
@@ -1597,38 +1594,26 @@ function NGOView({ onPracticeChange }) {
           })}
         </div>
 
-        {/* AI assistant — surfaced up top since it's tied to whichever stage is active */}
+        {/* Stage guidance — always visible; its whole job is explaining the active stage, so it shouldn't hide behind a click */}
         <div className="px-5 pt-4">
-          <button
-            onClick={() => setAiGuidanceOpen(open => !open)}
-            className={`flex w-full items-center justify-between gap-2 rounded-[18px] px-4 py-3 text-left transition-colors ${
-              aiGuidanceOpen ? 'bg-[#EEF4FF] ring-1 ring-[#D7E6FF]' : 'bg-[#F7FAFF] hover:bg-[#EEF4FF]'
-            }`}>
-            <span className="flex items-center gap-2 text-[0.82rem] font-semibold text-[#1A73E8]">
-              <Sparkles size={14} />
-              AI assistant
-            </span>
-            {aiGuidanceOpen ? <ChevronUp size={14} className="text-[#1A73E8]" /> : <ChevronDown size={14} className="text-[#1A73E8]" />}
-          </button>
-          <AnimatePresence initial={false}>
-            {aiGuidanceOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0, y: -4 }}
-                animate={{ height: 'auto', opacity: 1, y: 0 }}
-                exit={{ height: 0, opacity: 0, y: -4 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden">
-                <div className="mt-2 flex items-start gap-2.5 rounded-[18px] bg-gradient-to-br from-[#F0F6FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]">
-                  <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
-                  <div className="min-w-0">
-                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">
-                      What to get out of {activeStageInfo.label.toLowerCase()}
-                    </p>
-                    <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeStage}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-start gap-3 rounded-[18px] bg-gradient-to-br from-[#F0F6FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[#1A73E8] shadow-[0_1px_3px_rgba(26,115,232,0.15)]">
+                <Target size={15} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">
+                  What to get out of {activeStageInfo.label.toLowerCase()}
+                </p>
+                <p className="mt-1 text-[0.84rem] leading-6 text-[#5F6368]">{stageGuidance}</p>
+              </div>
+            </motion.div>
           </AnimatePresence>
         </div>
 
