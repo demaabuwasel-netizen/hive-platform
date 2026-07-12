@@ -5,7 +5,7 @@ import {
   Clock, Sparkles, AlertCircle, Lightbulb, Briefcase, ArrowRight,
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, Keyboard, PlayCircle, StopCircle, Heart,
-  FileText, CheckCircle2, Target, MessageCircle,
+  FileText, CheckCircle2, Target, MessageCircle, Info,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -1573,22 +1573,61 @@ function NGOView({ onPracticeChange }) {
               <p className="truncate text-[0.74rem] text-[#9AA0A6]">Practicing for {selectedOpp.title}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={() => setAiGuidanceOpen(open => !open)}
-              aria-label={`What to get out of ${activeStageInfo.label}`}
-              title={`What to get out of ${activeStageInfo.label}`}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                aiGuidanceOpen ? 'bg-[#EAF1FF] text-[#1A73E8]' : 'bg-white text-[#9AA0A6] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6] hover:text-[#1A73E8]'
-              }`}>
-              <Target size={14} />
-            </button>
-            <div className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
-              <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
-              <span className="text-[#C7CBD1]">/</span>
-              <span>{NGO_INTERVIEW_STAGES.length}</span>
-            </div>
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
+            <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
+            <span className="text-[#C7CBD1]">/</span>
+            <span>{NGO_INTERVIEW_STAGES.length}</span>
           </div>
+        </div>
+
+        {/* Stage stepper — numbered circles on a connecting line, like a wizard progress bar. The tips trigger lives right next to the active stage's own label, not off in a header, so it's unmistakably about that category. */}
+        <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-8">
+          {NGO_INTERVIEW_STAGES.map((stage, index) => {
+            const isActive = activeStage === stage.id
+            const isDone = askedStages.has(stage.id) && !isActive
+            return (
+              <div key={stage.id} className="flex items-start">
+                {index > 0 && (
+                  <div className={`mt-[18px] h-[3px] w-7 shrink-0 rounded-full transition-colors sm:w-14 ${
+                    isDone ? 'bg-[#188038]/40' : isActive ? 'bg-[#1A73E8]/30' : 'bg-[#E8EAED]'
+                  }`} />
+                )}
+                <div className="flex w-14 shrink-0 flex-col items-center gap-2 sm:w-20">
+                  <button
+                    onClick={() => setActiveStage(stage.id)}
+                    className="group flex flex-col items-center">
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-full text-[0.8rem] font-semibold transition-all duration-200 ${
+                      isActive
+                        ? 'scale-110 bg-[#1A73E8] text-white shadow-[0_6px_16px_rgba(26,115,232,0.35)]'
+                        : isDone
+                        ? 'bg-[#188038] text-white'
+                        : 'bg-[#F1F3F4] text-[#9AA0A6] group-hover:bg-[#E8EAED]'
+                    }`}>
+                      {isDone ? <CheckCircle2 size={16} /> : index + 1}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveStage(stage.id)}
+                    className={`text-center text-[0.7rem] font-medium leading-tight transition-colors ${
+                      isActive ? 'text-[#1A73E8]' : isDone ? 'text-[#188038]' : 'text-[#9AA0A6]'
+                    }`}>
+                    {stage.label}
+                  </button>
+                  {isActive && (
+                    <button
+                      onClick={() => setAiGuidanceOpen(open => !open)}
+                      aria-label={`Tips for ${stage.label}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.66rem] font-semibold shadow-[0_2px_6px_rgba(26,115,232,0.18)] transition-colors ${
+                        aiGuidanceOpen ? 'bg-[#1A73E8] text-white' : 'bg-[#EAF1FF] text-[#1A73E8] hover:bg-[#D7E6FF]'
+                      }`}>
+                      <Info size={11} />
+                      Tips
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         <AnimatePresence initial={false}>
@@ -1616,41 +1655,6 @@ function NGOView({ onPracticeChange }) {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Stage stepper — numbered circles on a connecting line, like a wizard progress bar */}
-        <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-8">
-          {NGO_INTERVIEW_STAGES.map((stage, index) => {
-            const isActive = activeStage === stage.id
-            const isDone = askedStages.has(stage.id) && !isActive
-            return (
-              <div key={stage.id} className="flex items-start">
-                {index > 0 && (
-                  <div className={`mt-[18px] h-[3px] w-7 shrink-0 rounded-full transition-colors sm:w-14 ${
-                    isDone ? 'bg-[#188038]/40' : isActive ? 'bg-[#1A73E8]/30' : 'bg-[#E8EAED]'
-                  }`} />
-                )}
-                <button
-                  onClick={() => setActiveStage(stage.id)}
-                  className="group flex w-14 shrink-0 flex-col items-center gap-2 sm:w-20">
-                  <span className={`flex h-9 w-9 items-center justify-center rounded-full text-[0.8rem] font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'scale-110 bg-[#1A73E8] text-white shadow-[0_6px_16px_rgba(26,115,232,0.35)]'
-                      : isDone
-                      ? 'bg-[#188038] text-white'
-                      : 'bg-[#F1F3F4] text-[#9AA0A6] group-hover:bg-[#E8EAED]'
-                  }`}>
-                    {isDone ? <CheckCircle2 size={16} /> : index + 1}
-                  </span>
-                  <span className={`text-center text-[0.7rem] font-medium leading-tight transition-colors ${
-                    isActive ? 'text-[#1A73E8]' : isDone ? 'text-[#188038]' : 'text-[#9AA0A6]'
-                  }`}>
-                    {stage.label}
-                  </span>
-                </button>
-              </div>
-            )
-          })}
-        </div>
 
 
         <div className="flex min-h-[480px] flex-col">
