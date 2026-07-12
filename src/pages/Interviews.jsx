@@ -1561,16 +1561,34 @@ function NGOView({ onPracticeChange }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="min-h-[620px] overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+      <section className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
+
+        {/* Context header — grounds the box: who you're talking to, and how far along you are */}
+        <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <GradientAvatar name={mockStudent.name} size={38} radius="0.85rem" className="shrink-0 shadow-sm ring-2 ring-white" />
+            <div className="min-w-0">
+              <p className="truncate text-[0.92rem] font-semibold text-[#202124]">{mockStudent.name}</p>
+              <p className="truncate text-[0.74rem] text-[#9AA0A6]">Practicing for {selectedOpp.title}</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
+            <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
+            <span className="text-[#C7CBD1]">/</span>
+            <span>{NGO_INTERVIEW_STAGES.length}</span>
+          </div>
+        </div>
+
         {/* Stage stepper — numbered circles on a connecting line, like a wizard progress bar */}
-        <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-9">
+        <div className="flex items-start justify-center gap-0 bg-gradient-to-b from-[#F7FAFF] to-white px-6 pb-7 pt-8">
           {NGO_INTERVIEW_STAGES.map((stage, index) => {
             const isActive = activeStage === stage.id
             const isDone = askedStages.has(stage.id) && !isActive
             return (
               <div key={stage.id} className="flex items-start">
                 {index > 0 && (
-                  <div className={`mt-[18px] h-px w-7 shrink-0 transition-colors sm:w-14 ${
+                  <div className={`mt-[18px] h-[3px] w-7 shrink-0 rounded-full transition-colors sm:w-14 ${
                     isDone ? 'bg-[#188038]/40' : isActive ? 'bg-[#1A73E8]/30' : 'bg-[#E8EAED]'
                   }`} />
                 )}
@@ -1687,7 +1705,10 @@ function NGOView({ onPracticeChange }) {
                     <div className="px-6 py-8 text-center">
                       {currentAnswerMsg ? (
                         <>
-                          <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
+                          <p className="mb-3 flex items-center justify-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
+                            {mockStudent.name} answered
+                            <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
+                          </p>
                           <p className="text-[1.15rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
                         </>
                       ) : (
