@@ -1230,7 +1230,7 @@ function NGOView({ onPracticeChange }) {
                 </div>
               </div>
 
-              <div className="mt-6 inline-flex gap-1 overflow-x-auto rounded-full bg-[#F0F2F8] p-1.5">
+              <div className="mt-6 flex flex-wrap gap-2.5">
                 {guideSections.map(section => {
                   const Icon = section.icon
                   const active = activeGuideSection === section.id
@@ -1238,18 +1238,11 @@ function NGOView({ onPracticeChange }) {
                     <button
                       key={section.id}
                       onClick={() => setActiveGuideSection(section.id)}
-                      className={`relative z-10 inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-[0.84rem] font-semibold transition-colors duration-200 ${
+                      className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[0.84rem] font-semibold transition-all duration-200 ${
                         active
-                          ? 'text-[#1A73E8]'
-                          : 'text-[#5F6368] hover:text-[#1A73E8]'
+                          ? 'bg-white text-[#1A73E8] shadow-[0_4px_14px_rgba(26,115,232,0.16)] ring-1 ring-[#E5EEFB]'
+                          : 'bg-[#F0F2F8] text-[#5F6368] hover:bg-[#E8F0FE] hover:text-[#1A73E8]'
                       }`}>
-                      {active && (
-                        <motion.span
-                          layoutId="guideTabPill"
-                          className="absolute inset-0 -z-10 rounded-full bg-white shadow-[0_4px_14px_rgba(26,115,232,0.16)] ring-1 ring-[#E5EEFB]"
-                          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                        />
-                      )}
                       <Icon size={15} />
                       {section.label}
                     </button>
@@ -1270,11 +1263,8 @@ function NGOView({ onPracticeChange }) {
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                         <Sparkles size={19} />
                       </div>
-                      <div className="flex items-center gap-2.5">
-                        <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI summary</h3>
-                        <span className="rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[#1A73E8]">AI-generated</span>
-                      </div>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">An AI-generated summary of the role — read this if you only have a minute.</p>
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI raw summary</h3>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A quick, unfiltered summary of the role — read this if you only have a minute.</p>
                       <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
                       </p>
