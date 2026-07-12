@@ -1260,20 +1260,13 @@ function NGOView({ onPracticeChange }) {
                   className="min-h-[300px] py-7">
                   {activeGuideSection === 'summary' && (
                     <section className="max-w-4xl">
-                      <div className="mb-5 flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                          <Sparkles size={19} />
-                        </div>
-                        <div>
-                          <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI role summary</h3>
-                          <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A quick AI-generated summary of the role — read this if you only have a minute.</p>
-                        </div>
-                      </div>
-                      <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI role summary</h3>
+                      <p className="mt-1.5 text-[0.82rem] text-[#9AA0A6]">A quick AI-generated summary of the role — read this if you only have a minute.</p>
+                      <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         {roleSummary}
                       </p>
                       {prepSections[2]?.text && (
-                        <p className="mt-4 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
+                        <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                           {prepSections[2].text}
                         </p>
                       )}
