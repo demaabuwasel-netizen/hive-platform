@@ -33,7 +33,7 @@ const PROJECT_OPTIONS = [
 ]
 
 function EmptyText({ children = 'Not added yet' }) {
-  return <p className="text-[0.92rem] italic text-[#9AA3B4]">{children}</p>
+  return <p className="text-[0.92rem] italic text-[#9AA0A6]">{children}</p>
 }
 
 // Section heading that groups a cluster of related boxes — a soft accent dot,
@@ -41,11 +41,11 @@ function EmptyText({ children = 'Not added yet' }) {
 function GroupTitle({ icon: Icon, title, subtitle }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB]/12 to-[#7C3AED]/12 text-[#2563EB]">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB]/12 to-[#7C3AED]/12 text-[#1A73E8]">
         <Icon size={14} strokeWidth={2.4} />
       </span>
-      <h2 className="text-[1.2rem] font-bold tracking-[-0.015em] text-[#101827]">{title}</h2>
-      {subtitle && <span className="hidden text-[0.85rem] text-[#98A2B3] sm:inline">— {subtitle}</span>}
+      <h2 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[#202124]">{title}</h2>
+      {subtitle && <span className="hidden text-[0.85rem] text-[#9AA0A6] sm:inline">— {subtitle}</span>}
     </div>
   )
 }
@@ -54,7 +54,7 @@ function EditButton({ onEdit, label }) {
   return (
     <button
       onClick={onEdit}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#98A2B3] opacity-0 transition-all duration-150 hover:bg-[#EEF2FF] hover:text-[#2563EB] group-hover:opacity-100"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] opacity-0 transition-all duration-150 hover:bg-[#EEF2FF] hover:text-[#1A73E8] group-hover:opacity-100"
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -107,7 +107,7 @@ function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit, 
               <Icon size={19} strokeWidth={2.1} />
             </span>
           )}
-          <p className="text-[1rem] font-bold tracking-[-0.01em] text-[#101827]">{label}</p>
+          <p className="text-[1rem] font-semibold tracking-[-0.01em] text-[#202124]">{label}</p>
         </div>
         {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
       </div>
@@ -150,7 +150,7 @@ function TextBox({ icon, label, rows = 4, value, minH, fieldProps, delay }) {
         </>
       }
     >
-      <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-[#3D4759]">
+      <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-[#5F6368]">
         {value || <EmptyText />}
       </p>
     </Box>
@@ -178,7 +178,7 @@ function ChipsBox({ icon, label, options, items, minH, fieldProps, delay }) {
       {items?.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {items.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] px-3 py-1.5 text-[0.82rem] font-semibold text-[#3746C7] ring-1 ring-[#2563EB]/10">
+            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] px-3 py-1.5 text-[0.82rem] font-semibold text-[#1A73E8] ring-1 ring-[#2563EB]/10">
               {item}
             </span>
           ))}
@@ -210,7 +210,7 @@ function StrengthGauge({ percent, size = 88 }) {
         animate={{ strokeDashoffset: circ * (1 - percent / 100) }}
         transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
       />
-      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="800" fill="#101827">{percent}%</text>
+      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="700" fill="#202124">{percent}%</text>
     </svg>
   )
 }
@@ -302,11 +302,10 @@ export default function NGOProfile() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="mb-9"
         >
-          <p className="mb-3 text-[0.76rem] font-bold uppercase tracking-[0.16em] text-[#2563EB]">Organization profile</p>
-          <h1 className="text-[3.6rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-[#0B1220]">
+          <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
             Profile
           </h1>
-          <p className="mt-4 max-w-xl text-[1.05rem] font-medium leading-7 text-[#5B6472]">
+          <p className="mt-4 max-w-xl text-[0.96rem] leading-7 text-[#5F6368]">
             Keep your organization story, mission, focus areas, and links in one clear view for students and stronger matches.
           </p>
         </motion.header>
@@ -326,14 +325,14 @@ export default function NGOProfile() {
                     {profile?.imageUrl ? (
                       <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] text-[1.95rem] font-extrabold text-[#2563EB]">
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] text-[1.95rem] font-semibold text-[#1A73E8]">
                         {initials || <Building2 size={30} />}
                       </div>
                     )}
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#667085] shadow-[0_6px_16px_-2px_rgba(16,24,40,0.25)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#2563EB]"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#5F6368] shadow-[0_6px_16px_-2px_rgba(16,24,40,0.25)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#1A73E8]"
                     title="Change logo"
                   >
                     <Camera size={13} />
@@ -343,15 +342,15 @@ export default function NGOProfile() {
 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <h2 className="text-[2.1rem] font-extrabold tracking-[-0.025em] text-[#0B1220]">
+                    <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#202124]">
                       {displayName}
                     </h2>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[#DCFCE7] to-[#D1FAE5] px-2.5 py-1 text-[0.72rem] font-bold text-[#0F7A45]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-1 text-[0.72rem] font-semibold text-[#188038]">
                       <ShieldCheck size={12} strokeWidth={2.4} />
                       Verified organization
                     </span>
                   </div>
-                  <p className="mt-2 max-w-2xl text-[0.95rem] font-medium leading-7 text-[#5B6472]">
+                  <p className="mt-2 max-w-2xl text-[0.92rem] leading-7 text-[#5F6368]">
                     {profile?.summary || 'Keep your organization profile clear, current, and ready for strong student matches.'}
                   </p>
                 </div>
@@ -360,8 +359,8 @@ export default function NGOProfile() {
               <div className="flex w-full shrink-0 items-center gap-4 rounded-[20px] bg-white/80 px-5 py-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-black/[0.04] sm:w-[230px]">
                 <StrengthGauge percent={completeness} />
                 <div className="min-w-0">
-                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.1em] text-[#98A2B3]">Profile strength</p>
-                  <p className="mt-1 text-[0.8rem] font-medium leading-4 text-[#5B6472]">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
+                  <p className="mt-1 text-[0.8rem] leading-4 text-[#5F6368]">
                     {completeness >= 80 ? 'Ready for strong matches.' : 'Add more to strengthen it.'}
                   </p>
                 </div>
@@ -403,13 +402,13 @@ export default function NGOProfile() {
                         <Icon size={18} strokeWidth={2.1} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#98A2B3]">{label}</p>
-                        <p className="truncate text-[0.95rem] font-bold text-[#101827]">{value}</p>
+                        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
+                        <p className="truncate text-[0.95rem] font-semibold text-[#202124]">{value}</p>
                       </div>
                       {href && (
                         <ExternalLink
                           size={15}
-                          className="shrink-0 text-[#98A2B3] transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#2563EB]"
+                          className="shrink-0 text-[#9AA0A6] transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#1A73E8]"
                         />
                       )}
                     </>
