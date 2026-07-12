@@ -992,8 +992,8 @@ function NGOView({ onPracticeChange }) {
   const roleSummary = selectedOpp ? makeRoleSummary(selectedOpp, roleSkills) : ''
   const guideSections = selectedOpp ? [
     { id: 'summary', label: 'Summary', icon: Sparkles },
+    { id: 'phases', label: 'What to know', icon: Lightbulb },
     { id: 'questions', label: 'Questions to ask', icon: MessageCircle },
-    { id: 'signals', label: 'What to listen for', icon: CheckCircle2 },
   ] : []
   const stageGuidance = selectedOpp && mockStudent ? makeStageGuidance(selectedOpp, mockStudent, activeStage) : ''
   const stageQuestions = selectedOpp && mockStudent ? makeStageQuestions(selectedOpp, mockStudent, activeStage) : []
@@ -1279,6 +1279,31 @@ function NGOView({ onPracticeChange }) {
                     </section>
                   )}
 
+                  {activeGuideSection === 'phases' && (
+                    <section className="max-w-3xl">
+                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3E8FD] text-[#9334E6]">
+                        <Lightbulb size={19} />
+                      </div>
+                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to know</h3>
+                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">What you need to understand from the student in each part of the conversation.</p>
+                      <div className="mt-5 space-y-4">
+                        {NGO_INTERVIEW_STAGES.map((stage, i) => (
+                          <div key={stage.id} className="flex gap-4 rounded-[22px] bg-[#FAF5FE] p-5">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[0.78rem] font-bold text-[#9334E6] shadow-[0_1px_3px_rgba(147,52,230,0.18)]">
+                              {String(i + 1).padStart(2, '0')}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[1.05rem] font-bold text-[#202124]">{stage.label}</p>
+                              <p className="mt-1.5 text-[0.92rem] leading-7 text-[#4B5058]">
+                                {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
                   {activeGuideSection === 'questions' && (
                     <section className="max-w-3xl">
                       <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -1287,20 +1312,24 @@ function NGOView({ onPracticeChange }) {
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">Questions to ask</h3>
                       <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">A ready-made script — pick a few from each part, you don&apos;t need to ask all of them.</p>
                       <div className="mt-5 space-y-4">
-                        {NGO_INTERVIEW_STAGES.map(stage => {
+                        {NGO_INTERVIEW_STAGES.map((stage, i) => {
                           const isOpen = openQuestionStage === stage.id
+                          const questions = makeStageQuestions(selectedOpp, mockStudent, stage.id)
                           return (
                             <div key={stage.id} className="overflow-hidden rounded-[22px] border border-[#E5EEFB]">
                               <button
                                 onClick={() => setOpenQuestionStage(isOpen ? null : stage.id)}
                                 className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8FBFF]">
-                                <div className="min-w-0">
+                                <div className="flex items-center gap-3.5">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
+                                    {i + 1}
+                                  </div>
                                   <p className="text-[1.05rem] font-bold text-[#202124]">{stage.label}</p>
-                                  <p className="mt-1 text-[0.84rem] leading-6 text-[#5F6368]">
-                                    {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
-                                  </p>
                                 </div>
-                                <ChevronDown size={18} className={`shrink-0 text-[#9AA0A6] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[0.76rem] font-medium text-[#9AA0A6]">{questions.length} questions</span>
+                                  <ChevronDown size={18} className={`shrink-0 text-[#9AA0A6] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                </div>
                               </button>
                               <AnimatePresence initial={false}>
                                 {isOpen && (
@@ -1310,10 +1339,12 @@ function NGOView({ onPracticeChange }) {
                                     exit={{ height: 0, opacity: 0 }}
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden">
-                                    <div className="space-y-2.5 border-t border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
-                                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Example questions</p>
-                                      {makeStageQuestions(selectedOpp, mockStudent, stage.id).map((question, i) => (
-                                        <p key={i} className="text-[0.9rem] leading-7 text-[#5F6368]">{question}</p>
+                                    <div className="space-y-3.5 border-t border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
+                                      {questions.map((question, qi) => (
+                                        <div key={qi} className="flex gap-3">
+                                          <span className="mt-0.5 text-[0.84rem] font-bold text-[#1A73E8]">{qi + 1}.</span>
+                                          <p className="text-[0.94rem] leading-7 text-[#3C4043]">{question}</p>
+                                        </div>
                                       ))}
                                     </div>
                                   </motion.div>
@@ -1322,27 +1353,6 @@ function NGOView({ onPracticeChange }) {
                             </div>
                           )
                         })}
-                      </div>
-                    </section>
-                  )}
-
-                  {activeGuideSection === 'signals' && (
-                    <section className="max-w-3xl">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E6F4EA] text-[#188038]">
-                        <CheckCircle2 size={19} />
-                      </div>
-                      <h3 className="text-[1.25rem] font-semibold text-[#202124]">What to listen for</h3>
-                      <p className="mt-1 text-[0.82rem] text-[#9AA0A6]">The signal that matters most in each part of the conversation.</p>
-                      <div className="mt-5 space-y-5">
-                        {NGO_INTERVIEW_STAGES.map(stage => (
-                          <div key={stage.id} className="flex items-start gap-3 rounded-[20px] bg-[#F6FBF8] p-4">
-                            <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#188038]" />
-                            <div>
-                              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-[#188038]">{stage.label}</p>
-                              <p className="mt-1 text-[0.9rem] leading-7 text-[#5F6368]">{stage.lookFor}</p>
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     </section>
                   )}
