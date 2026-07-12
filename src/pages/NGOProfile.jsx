@@ -7,6 +7,8 @@ import {
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
 
+const FONT = "'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+
 const FOCUS_OPTIONS = ['Youth Empowerment', 'Education', 'Healthcare', 'Environment', 'Technology', 'Community Development']
 
 const SKILL_OPTIONS = [
@@ -33,16 +35,19 @@ const PROJECT_OPTIONS = [
 ]
 
 function EmptyText({ children = 'Not added yet' }) {
-  return <p className="text-[0.88rem] italic text-[#9AA0A6]">{children}</p>
+  return <p className="text-[0.92rem] italic text-[#9AA3B4]">{children}</p>
 }
 
-// Small group label sitting above a set of related boxes — this is what groups them, not a bordering container
+// Section heading that groups a cluster of related boxes — a soft accent dot,
+// a real heading weight, and a quiet caption. No borders, no boxed container.
 function GroupTitle({ icon: Icon, title, subtitle }) {
   return (
-    <div className="mb-3 flex items-center gap-2.5">
-      <Icon size={15} className="text-[#5F6368]" />
-      <h2 className="text-[0.85rem] font-semibold text-[#202124]">{title}</h2>
-      {subtitle && <span className="text-[0.8rem] text-[#9AA0A6]">— {subtitle}</span>}
+    <div className="mb-4 flex items-center gap-3">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB]/12 to-[#7C3AED]/12 text-[#2563EB]">
+        <Icon size={14} strokeWidth={2.4} />
+      </span>
+      <h2 className="text-[1.2rem] font-bold tracking-[-0.015em] text-[#101827]">{title}</h2>
+      {subtitle && <span className="hidden text-[0.85rem] text-[#98A2B3] sm:inline">— {subtitle}</span>}
     </div>
   )
 }
@@ -51,7 +56,7 @@ function EditButton({ onEdit, label }) {
   return (
     <button
       onClick={onEdit}
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors hover:bg-black/[0.04] hover:text-[#1A73E8]"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#98A2B3] opacity-0 transition-all duration-150 hover:bg-[#EEF2FF] hover:text-[#2563EB] group-hover:opacity-100"
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -61,47 +66,50 @@ function EditButton({ onEdit, label }) {
 
 function FieldActions({ saving, onSave, onCancel }) {
   return (
-    <div className="relative mt-3 flex justify-end gap-2">
+    <div className="mt-3.5 flex justify-end gap-2">
       <button
         onClick={onCancel}
-        className="h-9 rounded-full px-4 text-[0.82rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]"
+        className="h-9 rounded-full px-4 text-[0.85rem] font-semibold text-[#667085] transition-colors hover:bg-black/[0.04]"
       >
         Cancel
       </button>
       <button
         onClick={onSave}
         disabled={saving}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1A73E8] px-5 text-[0.82rem] font-medium text-white shadow-[0_4px_14px_rgba(26,115,232,0.22)] transition-all hover:bg-[#1765CC] disabled:opacity-50"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#2563EB] to-[#4F46E5] px-5 text-[0.85rem] font-semibold text-white shadow-[0_6px_16px_-4px_rgba(37,99,235,0.5)] transition-transform hover:scale-[1.03] active:scale-[0.98] disabled:opacity-50"
       >
-        <Check size={13} />
+        <Check size={13} strokeWidth={2.5} />
         Save
       </button>
     </div>
   )
 }
 
-// A single box — flat white, blue icon badge for identity, and an accordion-style
-// expand into a blue-tinted panel when editing. No decorative shapes.
-function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit }) {
+// The base box: soft diffused shadow instead of a hairline border, a gradient
+// squircle icon for identity, and an accordion expand into a tinted panel
+// when editing — the "alive" moment lives in the motion, not in ornament.
+function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit, delay = 0 }) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ y: -2 }}
-      className={`relative rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 transition-shadow duration-200 ${
-        editing ? 'ring-2 ring-[#1A73E8]/40 shadow-[0_6px_20px_rgba(26,115,232,0.14)]' : 'ring-black/[0.05] hover:shadow-[0_2px_8px_rgba(60,64,67,0.1)]'
+      transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -3 }}
+      className={`group relative rounded-[26px] bg-white p-6 transition-shadow duration-300 ${
+        editing
+          ? 'shadow-[0_20px_40px_-16px_rgba(37,99,235,0.28)] ring-1 ring-[#2563EB]/25'
+          : 'shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_28px_-14px_rgba(16,24,40,0.14)] ring-1 ring-black/[0.03] hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_18px_36px_-14px_rgba(16,24,40,0.18)]'
       } ${minH}`}
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3.5">
           {Icon && (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
-              <Icon size={16} strokeWidth={2.1} />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#2563EB] to-[#6D28D9] text-white shadow-[0_8px_18px_-4px_rgba(37,99,235,0.42)]">
+              <Icon size={19} strokeWidth={2.1} />
             </span>
           )}
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-[#5F6368]">{label}</p>
+          <p className="text-[1rem] font-bold tracking-[-0.01em] text-[#101827]">{label}</p>
         </div>
         {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
       </div>
@@ -111,11 +119,11 @@ function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit }
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.22, ease: 'easeInOut' }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
           {editing ? (
-            <div className="rounded-xl bg-[#EEF3FC] p-3.5">
+            <div className="rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] p-4">
               {editor}
             </div>
           ) : children}
@@ -125,18 +133,18 @@ function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit }
   )
 }
 
-function TextBox({ icon, label, rows = 4, value, minH, fieldProps }) {
+function TextBox({ icon, label, rows = 4, value, minH, fieldProps, delay }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
   return (
     <Box
-      icon={icon} label={label} minH={minH}
+      icon={icon} label={label} minH={minH} delay={delay}
       editing={editing} onEdit={onEdit}
       editor={
         <>
           <textarea
             value={editValue || ''}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full resize-none rounded-xl border border-[#DADCE0] bg-white px-3.5 py-2.5 text-[0.9rem] leading-6 text-[#3C4043] outline-none transition-colors focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
+            className="w-full resize-none rounded-xl border border-[#DCE2F0] bg-white px-3.5 py-2.5 text-[0.92rem] leading-6 text-[#1E2530] outline-none transition-colors focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15"
             rows={rows}
             autoFocus
           />
@@ -144,18 +152,18 @@ function TextBox({ icon, label, rows = 4, value, minH, fieldProps }) {
         </>
       }
     >
-      <p className="whitespace-pre-wrap text-[0.9rem] leading-7 text-[#3C4043]">
+      <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-[#3D4759]">
         {value || <EmptyText />}
       </p>
     </Box>
   )
 }
 
-function ChipsBox({ icon, label, options, items, minH, fieldProps }) {
+function ChipsBox({ icon, label, options, items, minH, fieldProps, delay }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
   return (
     <Box
-      icon={icon} label={label} minH={minH}
+      icon={icon} label={label} minH={minH} delay={delay}
       editing={editing} onEdit={onEdit}
       editor={
         <>
@@ -170,9 +178,9 @@ function ChipsBox({ icon, label, options, items, minH, fieldProps }) {
       }
     >
       {items?.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {items.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.78rem] font-medium text-[#1A57C4]">
+            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] px-3 py-1.5 text-[0.82rem] font-semibold text-[#3746C7] ring-1 ring-[#2563EB]/10">
               {item}
             </span>
           ))}
@@ -184,22 +192,27 @@ function ChipsBox({ icon, label, options, items, minH, fieldProps }) {
   )
 }
 
-// Radial profile-strength gauge — same technique used for match gauges on Analytics
-function StrengthGauge({ percent, size = 84 }) {
+// Radial profile-strength gauge — gradient stroke instead of a flat tone
+function StrengthGauge({ percent, size = 88 }) {
   const r = 33, circ = 2 * Math.PI * r
-  const color = percent >= 80 ? '#188038' : percent >= 40 ? '#1A73E8' : '#B06000'
-  const track = percent >= 80 ? '#E6F4EA' : percent >= 40 ? '#E8F0FE' : '#FEF7E0'
+  const gradId = 'strengthGaugeGradient'
   return (
     <svg width={size} height={size} viewBox="0 0 84 84" aria-label={`Profile strength ${percent}%`}>
-      <circle cx="42" cy="42" r={r} fill="none" stroke={track} strokeWidth="7" />
+      <defs>
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#7C3AED" />
+        </linearGradient>
+      </defs>
+      <circle cx="42" cy="42" r={r} fill="none" stroke="#EEF2FF" strokeWidth="7" />
       <motion.circle
-        cx="42" cy="42" r={r} fill="none" stroke={color} strokeWidth="7"
+        cx="42" cy="42" r={r} fill="none" stroke={`url(#${gradId})`} strokeWidth="7"
         strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 42 42)"
         initial={{ strokeDashoffset: circ }}
         animate={{ strokeDashoffset: circ * (1 - percent / 100) }}
-        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.25 }}
+        transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
       />
-      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="700" fill="#202124">{percent}%</text>
+      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="800" fill="#101827">{percent}%</text>
     </svg>
   )
 }
@@ -280,87 +293,93 @@ export default function NGOProfile() {
   ].filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-[#F6F8FC]">
-      <div className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
+    <main style={{ fontFamily: FONT }} className="relative min-h-screen overflow-hidden bg-[#F7F9FD]">
+      <div aria-hidden className="pointer-events-none absolute -top-32 right-[-8%] h-[540px] w-[540px] rounded-full bg-gradient-to-br from-[#DCE7FF] to-transparent opacity-70 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute top-[520px] left-[-12%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-[#EDE4FF] to-transparent opacity-50 blur-3xl" />
+
+      <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="mb-7"
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-9"
         >
-          <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
+          <p className="mb-3 text-[0.76rem] font-bold uppercase tracking-[0.16em] text-[#2563EB]">Organization profile</p>
+          <h1 className="text-[3.6rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-[#0B1220]">
             Profile
           </h1>
-          <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
+          <p className="mt-4 max-w-xl text-[1.05rem] font-medium leading-7 text-[#5B6472]">
             Keep your organization story, mission, focus areas, and links in one clear view for students and stronger matches.
           </p>
         </motion.header>
 
         {/* Identity strip */}
         <motion.section
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="relative mb-8 overflow-hidden rounded-[24px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
+          transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mb-10 overflow-hidden rounded-[32px] bg-white p-1 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_24px_48px_-20px_rgba(16,24,40,0.18)] ring-1 ring-black/[0.03]"
         >
-          <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-7">
-            <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <div className="relative h-24 w-24 shrink-0 rounded-[22px] bg-[#F1F3F4] p-1 sm:h-28 sm:w-28">
-                <div className="h-full w-full overflow-hidden rounded-[18px] bg-[#EEF3FC]">
-                  {profile?.imageUrl ? (
-                    <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[1.9rem] font-semibold text-[#1A73E8]">
-                      {initials || <Building2 size={30} />}
-                    </div>
-                  )}
+          <div className="rounded-[28px] bg-gradient-to-br from-[#FBFCFF] to-[#F3F6FF] p-6 sm:p-7">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:items-center">
+                <div className="relative h-24 w-24 shrink-0 rounded-[26px] bg-gradient-to-br from-[#2563EB] to-[#7C3AED] p-[3px] shadow-[0_10px_24px_-8px_rgba(37,99,235,0.45)] sm:h-28 sm:w-28">
+                  <div className="h-full w-full overflow-hidden rounded-[23px] bg-white">
+                    {profile?.imageUrl ? (
+                      <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] text-[1.95rem] font-extrabold text-[#2563EB]">
+                        {initials || <Building2 size={30} />}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#667085] shadow-[0_6px_16px_-2px_rgba(16,24,40,0.25)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#2563EB]"
+                    title="Change logo"
+                  >
+                    <Camera size={13} />
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
                 </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#5F6368] shadow-[0_4px_12px_rgba(17,24,39,0.15)] ring-1 ring-black/[0.04] transition-all hover:-translate-y-0.5 hover:text-[#1A73E8]"
-                  title="Change logo"
-                >
-                  <Camera size={13} />
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h2 className="text-[2.1rem] font-extrabold tracking-[-0.025em] text-[#0B1220]">
+                      {displayName}
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[#DCFCE7] to-[#D1FAE5] px-2.5 py-1 text-[0.72rem] font-bold text-[#0F7A45]">
+                      <ShieldCheck size={12} strokeWidth={2.4} />
+                      Verified organization
+                    </span>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-[0.95rem] font-medium leading-7 text-[#5B6472]">
+                    {profile?.summary || 'Keep your organization profile clear, current, and ready for strong student matches.'}
+                  </p>
+                </div>
               </div>
 
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-[2.05rem] font-semibold tracking-[-0.02em] text-[#202124]">
-                    {displayName}
-                  </h2>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-1 text-[0.7rem] font-medium text-[#188038]">
-                    <ShieldCheck size={12} />
-                    Verified organization
-                  </span>
+              <div className="flex w-full shrink-0 items-center gap-4 rounded-[20px] bg-white/80 px-5 py-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-black/[0.04] sm:w-[230px]">
+                <StrengthGauge percent={completeness} />
+                <div className="min-w-0">
+                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.1em] text-[#98A2B3]">Profile strength</p>
+                  <p className="mt-1 text-[0.8rem] font-medium leading-4 text-[#5B6472]">
+                    {completeness >= 80 ? 'Ready for strong matches.' : 'Add more to strengthen it.'}
+                  </p>
                 </div>
-                <p className="mt-2 max-w-2xl text-[0.92rem] leading-7 text-[#5F6368]">
-                  {profile?.summary || 'Keep your organization profile clear, current, and ready for strong student matches.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex w-full shrink-0 items-center gap-4 rounded-[18px] bg-[#FAFBFC] px-4 py-4 ring-1 ring-black/[0.04] sm:w-[220px]">
-              <StrengthGauge percent={completeness} />
-              <div className="min-w-0">
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
-                <p className="mt-1 text-[0.76rem] leading-4 text-[#5F6368]">
-                  {completeness >= 80 ? 'Ready for strong matches.' : 'Add more to strengthen it.'}
-                </p>
               </div>
             </div>
           </div>
         </motion.section>
 
-        <div className="space-y-9">
+        <div className="space-y-11">
           {/* About group */}
           <div>
             <GroupTitle icon={FileText} title="About" subtitle="how students get to know you" />
             <div className="space-y-4">
-              <TextBox icon={Sparkles} label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[150px]" />
-              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[130px]" />
-              <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" />
+              <TextBox icon={Sparkles} label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[150px]" delay={0} />
+              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[130px]" delay={0.05} />
+              <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" delay={0.1} />
             </div>
           </div>
 
@@ -368,9 +387,9 @@ export default function NGOProfile() {
           <div>
             <GroupTitle icon={Layers2} title="Focus" subtitle="what you work on and who you're looking for" />
             <div className="space-y-4">
-              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[110px]" />
-              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[110px]" />
-              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[110px]" />
+              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[110px]" delay={0} />
+              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[110px]" delay={0.05} />
+              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[110px]" delay={0.1} />
             </div>
           </div>
 
@@ -379,17 +398,22 @@ export default function NGOProfile() {
             <div>
               <GroupTitle icon={Link2} title="Connect" subtitle="where students can learn more" />
               <div className="space-y-3">
-                {links.map(({ icon: Icon, label, value, href }) => {
+                {links.map(({ icon: Icon, label, value, href }, index) => {
                   const content = (
                     <>
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
-                        <Icon size={17} strokeWidth={2} />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#2563EB] to-[#6D28D9] text-white shadow-[0_8px_18px_-4px_rgba(37,99,235,0.42)]">
+                        <Icon size={18} strokeWidth={2.1} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
-                        <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
+                        <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#98A2B3]">{label}</p>
+                        <p className="truncate text-[0.95rem] font-bold text-[#101827]">{value}</p>
                       </div>
-                      {href && <ExternalLink size={13} className="shrink-0 text-[#9AA0A6] opacity-0 transition-opacity group-hover:opacity-100 group-hover:text-[#1A73E8]" />}
+                      {href && (
+                        <ExternalLink
+                          size={15}
+                          className="shrink-0 text-[#98A2B3] transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#2563EB]"
+                        />
+                      )}
                     </>
                   )
                   return href ? (
@@ -398,15 +422,24 @@ export default function NGOProfile() {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      whileHover={{ y: -2 }}
-                      className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] transition-shadow hover:shadow-[0_4px_14px_rgba(26,115,232,0.14)]"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                      whileHover={{ y: -3 }}
+                      className="group flex items-center gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_28px_-14px_rgba(16,24,40,0.14)] ring-1 ring-black/[0.03] transition-shadow duration-300 hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_18px_36px_-14px_rgba(16,24,40,0.18)]"
                     >
                       {content}
                     </motion.a>
                   ) : (
-                    <div key={label} className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05]">
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                      className="group flex items-center gap-3.5 rounded-[22px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_28px_-14px_rgba(16,24,40,0.14)] ring-1 ring-black/[0.03]"
+                    >
                       {content}
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
