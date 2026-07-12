@@ -7,8 +7,6 @@ import {
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
 
-const FONT = "'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
-
 const FOCUS_OPTIONS = ['Youth Empowerment', 'Education', 'Healthcare', 'Environment', 'Technology', 'Community Development']
 
 const SKILL_OPTIONS = [
@@ -293,7 +291,7 @@ export default function NGOProfile() {
   ].filter(Boolean)
 
   return (
-    <main style={{ fontFamily: FONT }} className="relative min-h-screen overflow-hidden bg-[#F7F9FD]">
+    <main className="relative min-h-screen overflow-hidden bg-[#F7F9FD]">
       <div aria-hidden className="pointer-events-none absolute -top-32 right-[-8%] h-[540px] w-[540px] rounded-full bg-gradient-to-br from-[#DCE7FF] to-transparent opacity-70 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute top-[520px] left-[-12%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-[#EDE4FF] to-transparent opacity-50 blur-3xl" />
 
