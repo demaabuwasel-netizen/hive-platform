@@ -55,12 +55,12 @@ function EmptyText({ children = 'Not added yet' }) {
   return <p className="text-[0.9rem] text-[#9AA0A6]">{children}</p>
 }
 
-function CardTitle({ icon: Icon, tint = '#F1F3F4', accent = '#5F6368', title, subtitle }) {
+function CardTitle({ icon: Icon, tint = 'rgba(95,99,104,0.08)', accent = '#5F6368', title, subtitle }) {
   return (
-    <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
+    <div className="flex items-center gap-3 border-b border-white/40 px-6 py-4">
       {Icon && (
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl backdrop-blur-sm ring-1 ring-black/[0.04]"
           style={{ background: tint, color: accent }}
         >
           <Icon size={16} strokeWidth={2} />
@@ -137,26 +137,26 @@ function EditableText({ title, rows = 4, value, editing, editValue, onChange, on
 
 const TOPIC_TINTS = {
   'Focus areas': {
-    box: 'bg-[#F5F9FF] ring-[#DCE9FE]',
+    box: 'bg-[#1A73E8]/[0.07] ring-[#1A73E8]/20 backdrop-blur-md',
     label: 'text-[#1A73E8]',
-    chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]',
+    chip: 'border-white/70 bg-white/70 text-[#1A73E8] backdrop-blur-sm',
   },
   'Preferred skills': {
-    box: 'bg-[#FAF6FE] ring-[#E9DCFB]',
+    box: 'bg-[#8B3DD8]/[0.07] ring-[#8B3DD8]/20 backdrop-blur-md',
     label: 'text-[#8B3DD8]',
-    chip: 'border-[#E5D4FB] bg-white text-[#8B3DD8]',
+    chip: 'border-white/70 bg-white/70 text-[#8B3DD8] backdrop-blur-sm',
   },
   'Project types': {
-    box: 'bg-[#F3FBF6] ring-[#D3EEDD]',
+    box: 'bg-[#188038]/[0.07] ring-[#188038]/20 backdrop-blur-md',
     label: 'text-[#188038]',
-    chip: 'border-[#C8E8D0] bg-white text-[#188038]',
+    chip: 'border-white/70 bg-white/70 text-[#188038] backdrop-blur-sm',
   },
 }
 
 // A standalone selectable box — these are pick-from-a-list fields, not free text,
 // so each one reads as its own card sitting next to its siblings.
 function EditableTopics({ title, options, items, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
-  const tint = TOPIC_TINTS[title] || { box: 'bg-[#FAFBFC] ring-[#E8EAED]', label: 'text-[#5F6368]', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' }
+  const tint = TOPIC_TINTS[title] || { box: 'bg-white/40 ring-white/50 backdrop-blur-md', label: 'text-[#5F6368]', chip: 'border-white/70 bg-white/70 text-[#3C4043] backdrop-blur-sm' }
   return (
     <div className={`rounded-[22px] p-4 ring-1 ${tint.box}`}>
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -288,15 +288,19 @@ export default function NGOProfile() {
   })
 
   const links = [
-    profile?.website && { icon: Globe, tint: '#E8F0FE', accent: '#1A73E8', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
-    profile?.instagram && { icon: Heart, tint: '#FCE8F3', accent: '#C2185B', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
-    profile?.twitter && { icon: Target, tint: '#F1F3F4', accent: '#3C4043', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
-    profile?.registrationNumber && { icon: Building2, tint: '#F3E8FD', accent: '#A142F4', label: 'Registration', value: profile.registrationNumber },
+    profile?.website && { icon: Globe, tint: 'rgba(26,115,232,0.12)', accent: '#1A73E8', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
+    profile?.instagram && { icon: Heart, tint: 'rgba(194,24,91,0.12)', accent: '#C2185B', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
+    profile?.twitter && { icon: Target, tint: 'rgba(60,64,67,0.1)', accent: '#3C4043', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
+    profile?.registrationNumber && { icon: Building2, tint: 'rgba(161,66,244,0.12)', accent: '#A142F4', label: 'Registration', value: profile.registrationNumber },
   ].filter(Boolean)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#F6F8FC]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_10%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_90%_5%,rgba(161,66,244,0.05),transparent_42%),radial-gradient(circle_at_50%_15%,rgba(52,168,83,0.04),transparent_38%)]" />
+    <main className="relative min-h-screen overflow-hidden bg-[#EEF2F9]">
+      {/* Ambient color mesh — the boxes below are translucent glass, so this is what shows through them */}
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-16 h-[560px] w-[560px] rounded-full bg-[#1A73E8] opacity-[0.28] blur-[100px]" />
+      <div aria-hidden className="pointer-events-none absolute top-[300px] right-[-10%] h-[480px] w-[480px] rounded-full bg-[#0FB89C] opacity-[0.24] blur-[100px]" />
+      <div aria-hidden className="pointer-events-none absolute top-[820px] left-[4%] h-[440px] w-[440px] rounded-full bg-[#A142F4] opacity-[0.2] blur-[100px]" />
+      <div aria-hidden className="pointer-events-none absolute bottom-[-160px] right-[8%] h-[480px] w-[480px] rounded-full bg-[#188038] opacity-[0.16] blur-[100px]" />
 
       <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
@@ -318,7 +322,7 @@ export default function NGOProfile() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+          className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
         >
           <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
@@ -359,7 +363,7 @@ export default function NGOProfile() {
             </div>
 
             {/* Completeness — radial gauge */}
-            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#F7FAFF] to-[#FBFCFE] px-4 py-4 ring-1 ring-[#EEF1F6] sm:w-[230px]">
+            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-white/40 px-4 py-4 ring-1 ring-white/50 backdrop-blur-md sm:w-[230px]">
               <StrengthGauge percent={completeness} />
               <div className="min-w-0">
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
@@ -378,9 +382,9 @@ export default function NGOProfile() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.05 }}
-            className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+            className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
           >
-            <CardTitle icon={FileText} tint="#E8F0FE" accent="#1A73E8" title="About" subtitle="How students get to know your organization" />
+            <CardTitle icon={FileText} tint="rgba(26,115,232,0.12)" accent="#1A73E8" title="About" subtitle="How students get to know your organization" />
             <EditableText title="About the organization" value={profile?.description} {...fieldProps('description')} />
             <EditableText title="Mission" value={profile?.mission} {...fieldProps('mission')} />
             <EditableText title="What we need help with" value={profile?.helpNeeded} {...fieldProps('helpNeeded')} />
@@ -390,9 +394,9 @@ export default function NGOProfile() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
-            className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+            className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
           >
-            <CardTitle icon={Layers} tint="#F3E8FD" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
+            <CardTitle icon={Layers} tint="rgba(161,66,244,0.12)" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
             <div className="grid gap-4 p-6 sm:grid-cols-3">
               <EditableTopics title="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} {...fieldProps('tags')} />
               <EditableTopics title="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} {...fieldProps('preferred_skills')} />
@@ -405,15 +409,15 @@ export default function NGOProfile() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: 0.15 }}
-              className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
+              className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
             >
-              <CardTitle icon={Link2} tint="#E6F4EA" accent="#188038" title="Connect" subtitle="Where students can learn more" />
+              <CardTitle icon={Link2} tint="rgba(24,128,56,0.12)" accent="#188038" title="Connect" subtitle="Where students can learn more" />
               <div className="grid gap-3 p-6 sm:grid-cols-2">
                 {links.map(({ icon: Icon, tint, accent, label, value, href }) => {
                   const content = (
                     <>
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl backdrop-blur-sm ring-1 ring-black/[0.04] transition-transform duration-200 group-hover:scale-110"
                         style={{ background: tint, color: accent }}
                       >
                         <Icon size={18} strokeWidth={1.9} />
@@ -436,12 +440,12 @@ export default function NGOProfile() {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:ring-[#DCE9FE]"
+                      className="group flex items-center gap-3 rounded-[20px] bg-white/40 p-4 ring-1 ring-white/50 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-[0_10px_24px_rgba(17,24,39,0.08)]"
                     >
                       {content}
                     </a>
                   ) : (
-                    <div key={label} className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4]">
+                    <div key={label} className="group flex items-center gap-3 rounded-[20px] bg-white/40 p-4 ring-1 ring-white/50 backdrop-blur-md">
                       {content}
                     </div>
                   )
