@@ -1680,7 +1680,7 @@ export default function Interviews() {
             </button>
           )}
           <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-            {inPractice ? `Practice ${practiceInfo.title}` : 'Interviews'}
+            {inPractice ? `Interview practice: ${practiceInfo.title}` : 'Interviews'}
           </h1>
           <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
             {inPractice
