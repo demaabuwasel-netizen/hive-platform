@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  AtSign, BarChart3, Building2, Calendar, Camera, Check, Code2, DollarSign, Edit2,
-  ExternalLink, FileText, Globe, GraduationCap, Heart, HeartHandshake,
-  Layers, Link2, Megaphone, MessageCircle, PenTool, ShieldCheck, Sparkles,
-  Users2,
+  AtSign, BarChart3, Building2, Camera, Check, Code2, DollarSign, Edit2,
+  ExternalLink, Globe, GraduationCap, Heart, HeartHandshake, HelpingHand,
+  Megaphone, MessageCircle, PenTool, Quote, ShieldCheck, Sparkles, Target, Users2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
@@ -34,51 +33,46 @@ const PROJECT_OPTIONS = [
   'Impact Report', 'Technology Infrastructure', 'Process Improvement'
 ]
 
-// Keyword → icon so topic chips feel identified, not just labeled
+// Keyword → icon so chips feel identified, not just labeled
 function topicIcon(name) {
   const n = name.toLowerCase()
   if (/programming|web|mobile|app|code|technology|cloud|ai\/machine/.test(n)) return Code2
   if (/design|graphic|ux|user experience|branding/.test(n)) return PenTool
   if (/communication|public speaking|social media/.test(n)) return MessageCircle
-  if (/writing|content|copywriting|newsletter|policy brief|report/.test(n)) return FileText
   if (/marketing|advocacy|pr|public relations/.test(n)) return Megaphone
   if (/leadership|management|hr|volunteer coordination|mentoring|mentorship/.test(n)) return Users2
   if (/data|analysis|analytics|dashboard|research/.test(n)) return BarChart3
   if (/finance|accounting|legal/.test(n)) return DollarSign
-  if (/event|training|workshop/.test(n)) return Calendar
   if (/education|curriculum|youth development/.test(n)) return GraduationCap
   if (/fundraising|grant|community/.test(n)) return HeartHandshake
   return Sparkles
 }
 
 function EmptyText({ children = 'Not added yet' }) {
-  return <p className="text-[0.9rem] text-[#9AA0A6]">{children}</p>
+  return <p className="text-[0.88rem] italic text-[#9AA0A6]">{children}</p>
 }
 
-function CardTitle({ icon: Icon, tint = '#E8F0FE', accent = '#1A73E8', title, subtitle }) {
+// Big, bold icon badge — the visual anchor of every tile
+function TileIcon({ icon: Icon, tint, accent, size = 46 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
-      {Icon && (
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: tint, color: accent }}
-        >
-          <Icon size={16} strokeWidth={2} />
-        </span>
-      )}
-      <div className="min-w-0">
-        <h2 className="text-[1.02rem] font-semibold text-[#202124]">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">{subtitle}</p>}
-      </div>
-    </div>
+    <span
+      className="flex shrink-0 items-center justify-center rounded-2xl"
+      style={{ width: size, height: size, background: tint, color: accent }}
+    >
+      <Icon size={size * 0.46} strokeWidth={2} />
+    </span>
   )
 }
 
-function EditButton({ onEdit, label }) {
+function EditButton({ onEdit, label, light = false }) {
   return (
     <button
       onClick={onEdit}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1A73E8]"
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+        light
+          ? 'text-white/70 hover:bg-white/15 hover:text-white'
+          : 'text-[#9AA0A6] hover:bg-black/[0.04] hover:text-[#1A73E8]'
+      }`}
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -86,19 +80,23 @@ function EditButton({ onEdit, label }) {
   )
 }
 
-function FieldActions({ saving, onSave, onCancel }) {
+function FieldActions({ saving, onSave, onCancel, light = false }) {
   return (
     <div className="mt-3 flex justify-end gap-2">
       <button
         onClick={onCancel}
-        className="h-9 rounded-full px-4 text-[0.82rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]"
+        className={`h-9 rounded-full px-4 text-[0.82rem] font-medium transition-colors ${
+          light ? 'text-white/80 hover:bg-white/10' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
+        }`}
       >
         Cancel
       </button>
       <button
         onClick={onSave}
         disabled={saving}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1A73E8] px-5 text-[0.82rem] font-medium text-white shadow-[0_4px_14px_rgba(26,115,232,0.25)] transition-all hover:bg-[#1765CC] disabled:opacity-50"
+        className={`inline-flex h-9 items-center gap-1.5 rounded-full px-5 text-[0.82rem] font-medium shadow-[0_4px_14px_rgba(0,0,0,0.15)] transition-all disabled:opacity-50 ${
+          light ? 'bg-white text-[#1A73E8] hover:bg-white/90' : 'bg-[#1A73E8] text-white hover:bg-[#1765CC]'
+        }`}
       >
         <Check size={13} />
         Save
@@ -107,85 +105,87 @@ function FieldActions({ saving, onSave, onCancel }) {
   )
 }
 
-function EditableText({ title, rows = 4, value, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
+const TONES = {
+  blue:   { tint: '#E8F0FE', accent: '#1A73E8', chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]' },
+  purple: { tint: '#F3E8FD', accent: '#A142F4', chip: 'border-[#E9DCFB] bg-white text-[#8B3DD8]' },
+  green:  { tint: '#E6F4EA', accent: '#188038', chip: 'border-[#CDEBD8] bg-white text-[#188038]' },
+  amber:  { tint: '#FEF3DC', accent: '#B36B00', chip: 'border-[#F6DFAF] bg-white text-[#B36B00]' },
+  pink:   { tint: '#FCE8F3', accent: '#C2185B', chip: 'border-[#F6D2E5] bg-white text-[#C2185B]' },
+  gray:   { tint: '#F1F3F4', accent: '#3C4043', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' },
+}
+
+// A bento tile — white surface, big icon, editable body. The unit every box on this page is built from.
+function Tile({ icon, tone = 'blue', label, span = '', minH = '', children, editing, editor, onEdit }) {
+  const t = TONES[tone]
   return (
-    <section className="border-t border-[#F1F3F4] px-6 py-5 first:border-t-0">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#5F6368]">
-          {title}
-        </h3>
-        {!editing && <EditButton onEdit={onEdit} label={title} />}
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={`group relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03] ${span} ${minH}`}
+    >
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <TileIcon icon={icon} tint={t.tint} accent={t.accent} />
+        {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
       </div>
-      {editing ? (
+      <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.09em]" style={{ color: t.accent }}>{label}</p>
+      {editing ? editor : children}
+    </motion.div>
+  )
+}
+
+function TextTile({ icon, tone, label, rows = 4, value, span, minH, fieldProps }) {
+  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
+  return (
+    <Tile
+      icon={icon} tone={tone} label={label} span={span} minH={minH}
+      editing={editing} onEdit={onEdit}
+      editor={
         <>
           <textarea
             value={editValue || ''}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full resize-none rounded-2xl border border-[#DADCE0] bg-white px-4 py-3 text-[0.9rem] leading-7 text-[#3C4043] outline-none transition-colors focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
+            className="w-full resize-none rounded-xl border border-[#DADCE0] bg-white px-3.5 py-2.5 text-[0.9rem] leading-6 text-[#3C4043] outline-none transition-colors focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
             rows={rows}
+            autoFocus
           />
           <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} />
         </>
-      ) : (
-        <p className="max-w-4xl whitespace-pre-wrap text-[0.9rem] leading-7 text-[#3C4043]">
-          {value || <EmptyText />}
-        </p>
-      )}
-    </section>
+      }
+    >
+      <p className="whitespace-pre-wrap text-[0.9rem] leading-7 text-[#3C4043]">
+        {value || <EmptyText />}
+      </p>
+    </Tile>
   )
 }
 
-// Same three-tone treatment as the KPI tiles on the dashboard/analytics pages — blue, purple, green
-const TOPIC_TINTS = {
-  'Focus areas': {
-    box: 'bg-[#F5F9FF] ring-[#DCE9FE]',
-    label: 'text-[#1A73E8]',
-    chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]',
-  },
-  'Preferred skills': {
-    box: 'bg-[#FAF6FE] ring-[#E9DCFB]',
-    label: 'text-[#8B3DD8]',
-    chip: 'border-[#E5D4FB] bg-white text-[#8B3DD8]',
-  },
-  'Project types': {
-    box: 'bg-[#F3FBF6] ring-[#D3EEDD]',
-    label: 'text-[#188038]',
-    chip: 'border-[#C8E8D0] bg-white text-[#188038]',
-  },
-}
-
-// A standalone selectable box — these are pick-from-a-list fields, not free text,
-// so each one reads as its own card sitting next to its siblings.
-function EditableTopics({ title, options, items, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
-  const tint = TOPIC_TINTS[title] || { box: 'bg-[#FAFBFC] ring-[#E8EAED]', label: 'text-[#5F6368]', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' }
+function ChipsTile({ icon, tone, label, options, items, span, minH, fieldProps }) {
+  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
+  const t = TONES[tone]
   return (
-    <div className={`rounded-[22px] p-4 ring-1 ${tint.box}`}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className={`text-[0.7rem] font-semibold uppercase tracking-[0.1em] ${tint.label}`}>
-          {title}
-        </h3>
-        {!editing && <EditButton onEdit={onEdit} label={title} />}
-      </div>
-      {editing ? (
+    <Tile
+      icon={icon} tone={tone} label={label} span={span} minH={minH}
+      editing={editing} onEdit={onEdit}
+      editor={
         <>
           <TopicPicker
             value={editValue || []}
             onChange={onChange}
             options={options}
-            placeholder={`Search or add ${title.toLowerCase()}...`}
+            placeholder={`Search or add ${label.toLowerCase()}...`}
           />
           <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} />
         </>
-      ) : items?.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
+      }
+    >
+      {items?.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
           {items.map((item, index) => {
             const Icon = topicIcon(item)
             return (
-              <span
-                key={`${item}-${index}`}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium shadow-[0_1px_2px_rgba(17,24,39,0.03)] ${tint.chip}`}
-              >
-                <Icon size={12} strokeWidth={2.2} />
+              <span key={`${item}-${index}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.78rem] font-medium ${t.chip}`}>
+                <Icon size={11} strokeWidth={2.2} />
                 {item}
               </span>
             )
@@ -194,26 +194,62 @@ function EditableTopics({ title, options, items, editing, editValue, onChange, o
       ) : (
         <EmptyText />
       )}
-    </div>
+    </Tile>
+  )
+}
+
+// Mission — the one deep-color hero tile in the grid; everything else is white
+function MissionTile({ value, fieldProps }) {
+  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.05 }}
+      className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#1A73E8] to-[#1554B0] p-5 text-white shadow-[0_8px_24px_rgba(26,115,232,0.28)] md:row-span-2"
+    >
+      <Quote className="pointer-events-none absolute -right-2 -top-2 h-24 w-24 text-white/10" strokeWidth={1} />
+      <div className="relative mb-4 flex items-start justify-between gap-2">
+        <TileIcon icon={Target} tint="rgba(255,255,255,0.16)" accent="#FFFFFF" />
+        {!editing && <EditButton onEdit={onEdit} label="Mission" light />}
+      </div>
+      <p className="relative mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-white/70">Mission</p>
+      {editing ? (
+        <div className="relative">
+          <textarea
+            value={editValue || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full resize-none rounded-xl border border-white/25 bg-white/10 px-3.5 py-2.5 text-[0.92rem] leading-6 text-white outline-none transition-colors placeholder:text-white/50 focus:border-white/60"
+            rows={5}
+            autoFocus
+          />
+          <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} light />
+        </div>
+      ) : (
+        <p className="relative text-[1.05rem] font-medium leading-8">
+          {value || <span className="text-white/60">No mission statement yet</span>}
+        </p>
+      )}
+    </motion.div>
   )
 }
 
 // Radial profile-strength gauge — same technique used for match gauges on Analytics
-function StrengthGauge({ percent, size = 92 }) {
-  const r = 36, circ = 2 * Math.PI * r
+function StrengthGauge({ percent, size = 84 }) {
+  const r = 33, circ = 2 * Math.PI * r
   const color = percent >= 80 ? '#188038' : percent >= 40 ? '#1A73E8' : '#B06000'
   const track = percent >= 80 ? '#E6F4EA' : percent >= 40 ? '#E8F0FE' : '#FEF7E0'
   return (
-    <svg width={size} height={size} viewBox="0 0 92 92" aria-label={`Profile strength ${percent}%`}>
-      <circle cx="46" cy="46" r={r} fill="none" stroke={track} strokeWidth="7" />
+    <svg width={size} height={size} viewBox="0 0 84 84" aria-label={`Profile strength ${percent}%`}>
+      <circle cx="42" cy="42" r={r} fill="none" stroke={track} strokeWidth="7" />
       <motion.circle
-        cx="46" cy="46" r={r} fill="none" stroke={color} strokeWidth="7"
-        strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 46 46)"
+        cx="42" cy="42" r={r} fill="none" stroke={color} strokeWidth="7"
+        strokeDasharray={circ} strokeLinecap="round" transform="rotate(-90 42 42)"
         initial={{ strokeDashoffset: circ }}
         animate={{ strokeDashoffset: circ * (1 - percent / 100) }}
         transition={{ duration: 0.9, ease: 'easeOut', delay: 0.25 }}
       />
-      <text x="46" y="51" textAnchor="middle" fontSize="18" fontWeight="700" fill="#202124">{percent}%</text>
+      <text x="42" y="47" textAnchor="middle" fontSize="16" fontWeight="700" fill="#202124">{percent}%</text>
     </svg>
   )
 }
@@ -234,7 +270,6 @@ export default function NGOProfile() {
     .slice(0, 2)
     .toUpperCase()
 
-  // Profile completeness — a simple trust/progress signal
   const completenessFields = [
     profile?.description,
     profile?.mission,
@@ -277,7 +312,6 @@ export default function NGOProfile() {
     }
   }
 
-  // Shared wiring for the hoisted editable field components
   const fieldProps = (field) => ({
     editing: editingField === field,
     editValue: editValues[field],
@@ -289,10 +323,10 @@ export default function NGOProfile() {
   })
 
   const links = [
-    profile?.website && { icon: Globe, tint: 'bg-[#E8F0FE]', accent: '#1A73E8', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
-    profile?.instagram && { icon: Heart, tint: 'bg-[#FCE8F3]', accent: '#C2185B', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
-    profile?.twitter && { icon: AtSign, tint: 'bg-[#F1F3F4]', accent: '#3C4043', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
-    profile?.registrationNumber && { icon: Building2, tint: 'bg-[#F3E8FD]', accent: '#A142F4', label: 'Registration', value: profile.registrationNumber },
+    profile?.website && { icon: Globe, tone: 'blue', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
+    profile?.instagram && { icon: Heart, tone: 'pink', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
+    profile?.twitter && { icon: AtSign, tone: 'gray', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
+    profile?.registrationNumber && { icon: Building2, tone: 'purple', label: 'Registration', value: profile.registrationNumber },
   ].filter(Boolean)
 
   return (
@@ -314,12 +348,12 @@ export default function NGOProfile() {
           </p>
         </motion.header>
 
-        {/* Identity card */}
+        {/* Identity strip */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
+          className="relative mb-6 overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[150px] bg-[radial-gradient(circle_at_15%_0%,rgba(26,115,232,0.10),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(161,66,244,0.08),transparent_45%)]" />
 
@@ -361,97 +395,68 @@ export default function NGOProfile() {
               </div>
             </div>
 
-            {/* Completeness gauge */}
-            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#F7FAFF] to-[#FBFCFE] px-4 py-4 ring-1 ring-[#EEF1F6] sm:w-[230px]">
+            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#F7FAFF] to-[#FBFCFE] px-4 py-4 ring-1 ring-[#EEF1F6] sm:w-[220px]">
               <StrengthGauge percent={completeness} />
               <div className="min-w-0">
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
                 <p className="mt-1 text-[0.76rem] leading-4 text-[#5F6368]">
-                  {completeness >= 80
-                    ? 'Looking great — ready for strong matches.'
-                    : 'Complete more sections for stronger matches.'}
+                  {completeness >= 80 ? 'Ready for strong matches.' : 'Add more to strengthen it.'}
                 </p>
               </div>
             </div>
           </div>
         </motion.section>
 
-        <div className="mt-6 space-y-6">
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.05 }}
-            className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
-          >
-            <CardTitle icon={FileText} tint="#E8F0FE" accent="#1A73E8" title="About" subtitle="How students get to know your organization" />
-            <EditableText title="About the organization" value={profile?.description} {...fieldProps('description')} />
-            <EditableText title="Mission" value={profile?.mission} {...fieldProps('mission')} />
-            <EditableText title="What we need help with" value={profile?.helpNeeded} {...fieldProps('helpNeeded')} />
-          </motion.section>
+        {/* Bento grid — varied tile sizes, big icons, one deep-color hero tile */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <TextTile icon={Sparkles} tone="blue" label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[176px]" />
+          </div>
+          <MissionTile value={profile?.mission} fieldProps={fieldProps('mission')} />
 
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
-          >
-            <CardTitle icon={Layers} tint="#F3E8FD" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
-            <div className="grid gap-4 p-6 sm:grid-cols-3">
-              <EditableTopics title="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} {...fieldProps('tags')} />
-              <EditableTopics title="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} {...fieldProps('preferred_skills')} />
-              <EditableTopics title="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} {...fieldProps('project_types')} />
-            </div>
-          </motion.section>
+          <div className="md:col-span-2">
+            <TextTile icon={HelpingHand} tone="amber" label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[150px]" />
+          </div>
 
-          {links.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.15 }}
-              className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
-            >
-              <CardTitle icon={Link2} tint="#E6F4EA" accent="#188038" title="Connect" subtitle="Where students can learn more" />
-              <div className="grid gap-3 p-6 sm:grid-cols-2">
-                {links.map(({ icon: Icon, tint, accent, label, value, href }) => {
-                  const content = (
-                    <>
-                      <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110 ${tint}`}
-                        style={{ color: accent }}
-                      >
-                        <Icon size={18} strokeWidth={1.9} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
-                        <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
-                      </div>
-                      {href && (
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors group-hover:bg-white group-hover:text-[#1A73E8]">
-                          <ExternalLink size={13} />
-                        </span>
-                      )}
-                    </>
-                  )
+          <ChipsTile icon={Target} tone="blue" label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[170px]" />
+          <ChipsTile icon={Sparkles} tone="purple" label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[170px]" />
+          <ChipsTile icon={BarChart3} tone="green" label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[170px]" />
 
-                  return href ? (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:ring-[#DCE9FE]"
-                    >
-                      {content}
-                    </a>
-                  ) : (
-                    <div key={label} className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4]">
-                      {content}
-                    </div>
-                  )
-                })}
-              </div>
-            </motion.section>
-          )}
+          {links.map((link) => {
+            const t = TONES[link.tone]
+            const content = (
+              <>
+                <div className="mb-4">
+                  <TileIcon icon={link.icon} tint={t.tint} accent={t.accent} size={40} />
+                </div>
+                <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-[0.09em]" style={{ color: t.accent }}>{link.label}</p>
+                <p className="truncate text-[0.92rem] font-medium text-[#202124]">{link.value}</p>
+              </>
+            )
+            return link.href ? (
+              <motion.a
+                key={link.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03] transition-all hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(17,24,39,0.1)]"
+              >
+                {content}
+                <ExternalLink size={13} className="absolute right-5 top-5 text-[#C4C7CC] opacity-0 transition-opacity group-hover:opacity-100" />
+              </motion.a>
+            ) : (
+              <motion.div
+                key={link.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
+              >
+                {content}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </main>
