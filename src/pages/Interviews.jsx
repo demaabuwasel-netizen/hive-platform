@@ -1200,7 +1200,7 @@ function NGOView({ onPracticeChange }) {
           <img
             src={ngoInterviewImg}
             alt=""
-            className="pointer-events-none absolute -top-10 right-12 z-10 w-full max-w-md -translate-y-1/2"
+            className="pointer-events-none absolute -top-16 right-8 z-10 w-full max-w-xl -translate-y-1/2"
           />
           <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
           {!selectedOpp ? (
@@ -1699,8 +1699,10 @@ export default function Interviews() {
   const inPractice = isNGO && practiceInfo.active
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
-      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+    <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
+      {/* Soft ambient gradients — same treatment as the dashboard */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
