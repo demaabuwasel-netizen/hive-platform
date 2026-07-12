@@ -1616,12 +1616,12 @@ function NGOView({ onPracticeChange }) {
                   {isActive && (
                     <button
                       onClick={() => setAiGuidanceOpen(open => !open)}
-                      aria-label={`Tips for ${stage.label}`}
+                      aria-label={`What to get out of ${stage.label}`}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.66rem] font-semibold shadow-[0_2px_6px_rgba(26,115,232,0.18)] transition-colors ${
                         aiGuidanceOpen ? 'bg-[#1A73E8] text-white' : 'bg-[#EAF1FF] text-[#1A73E8] hover:bg-[#D7E6FF]'
                       }`}>
                       <Info size={11} />
-                      Tips
+                      Goal
                     </button>
                   )}
                 </div>
