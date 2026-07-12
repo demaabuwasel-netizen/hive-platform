@@ -1162,7 +1162,6 @@ function NGOView({ onPracticeChange }) {
           <div className="space-y-3">
             {ngoOpportunities.map(opp => {
               const active = String(opp.id) === String(selectedRole)
-              const skills = getSkillNames(opp.skills).slice(0, 2)
               return (
                 <button
                   key={opp.id}
@@ -1178,17 +1177,10 @@ function NGOView({ onPracticeChange }) {
                         {opp.title}
                       </p>
                       <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
-                        {[opp.workMode, opp.location].filter(Boolean).join(' · ') || opp.category || 'Flexible role'}
+                        {opp.category || 'Flexible role'}
                       </p>
                     </div>
                     <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {(skills.length ? skills : ['Interview']).map(skill => (
-                      <span key={skill} className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${active ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368]'}`}>
-                        {skill}
-                      </span>
-                    ))}
                   </div>
                 </button>
               )
@@ -1200,7 +1192,7 @@ function NGOView({ onPracticeChange }) {
           <img
             src={ngoInterviewImg}
             alt=""
-            className="pointer-events-none absolute -top-20 right-8 z-10 w-full max-w-lg -translate-y-1/2"
+            className="pointer-events-none absolute top-0 right-8 z-10 w-full max-w-lg -translate-y-1/2"
           />
           <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
           {!selectedOpp ? (
