@@ -939,6 +939,7 @@ function NGOView({ onPracticeChange }) {
   const navigate = useNavigate()
   const recognitionRef = useRef(null)
   const messageIdRef = useRef(0)
+  const practiceBoxRef = useRef(null)
   const [ngoOpportunities, setNgoOpportunities] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
@@ -983,6 +984,11 @@ function NGOView({ onPracticeChange }) {
       onBack: () => setPracticeStarted(false),
     })
   }, [practiceStarted, selectedOpp?.title, onPracticeChange])
+
+  useEffect(() => {
+    if (!practiceStarted) return
+    practiceBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [practiceStarted])
 
   const mockStudent = selectedOpp ? makeMockStudent(selectedOpp) : null
   const firstQuestion = selectedOpp && mockStudent ? makeFirstQuestion(selectedOpp, mockStudent) : ''
@@ -1503,6 +1509,7 @@ function NGOView({ onPracticeChange }) {
 
   return (
     <motion.div
+      ref={practiceBoxRef}
       key={selectedRole}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1752,7 +1759,9 @@ export default function Interviews() {
   const mainRef = useRef(null)
 
   useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    if (!practiceInfo.active) {
+      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }, [practiceInfo.active])
 
   return (
