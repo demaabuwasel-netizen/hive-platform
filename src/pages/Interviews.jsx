@@ -86,6 +86,37 @@ const NGO_INTERVIEW_STAGES = [
   },
 ]
 
+function easeInOutQuad(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+}
+
+function animateScrollTop(container, targetTop, duration = 900) {
+  if (!container) return
+  const startTop = container.scrollTop
+  const distance = targetTop - startTop
+  if (Math.abs(distance) < 1) return
+  const startTime = performance.now()
+
+  function step(now) {
+    const elapsed = now - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    container.scrollTop = startTop + distance * easeInOutQuad(progress)
+    if (progress < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+function smoothScrollIntoView(el, duration = 900) {
+  if (!el) return
+  const container = el.closest('main')
+  if (!container) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  const targetTop = container.scrollTop + (el.getBoundingClientRect().top - container.getBoundingClientRect().top)
+  animateScrollTop(container, targetTop, duration)
+}
+
 function getSkillNames(skills = []) {
   return skills
     .map(skill => typeof skill === 'string' ? skill : skill?.name)
@@ -987,7 +1018,7 @@ function NGOView({ onPracticeChange }) {
 
   useEffect(() => {
     if (!practiceStarted) return
-    practiceBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    smoothScrollIntoView(practiceBoxRef.current)
   }, [practiceStarted])
 
   const mockStudent = selectedOpp ? makeMockStudent(selectedOpp) : null
@@ -1760,7 +1791,7 @@ export default function Interviews() {
 
   useEffect(() => {
     if (!practiceInfo.active) {
-      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+      animateScrollTop(mainRef.current, 0)
     }
   }, [practiceInfo.active])
 
