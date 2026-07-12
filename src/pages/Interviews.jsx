@@ -943,9 +943,10 @@ function NGOView() {
   const [practiceStarted, setPracticeStarted] = useState(false)
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [activeStage, setActiveStage] = useState('opening')
-  const [openPanel, setOpenPanel] = useState('profile')
+  const [openPanel, setOpenPanel] = useState('')
   const [inputMode, setInputMode] = useState('type')
   const [isRecording, setIsRecording] = useState(false)
+  const [isStudentResponding, setIsStudentResponding] = useState(false)
   const [aiGuidanceOpen, setAiGuidanceOpen] = useState(false)
   const [exampleQuestionIndex, setExampleQuestionIndex] = useState(0)
   const [draftQuestion, setDraftQuestion] = useState('')
@@ -976,7 +977,6 @@ function NGOView() {
   const mockStudent = selectedOpp ? makeMockStudent(selectedOpp) : null
   const firstQuestion = selectedOpp && mockStudent ? makeFirstQuestion(selectedOpp, mockStudent) : ''
   const activeStageInfo = NGO_INTERVIEW_STAGES.find(stage => stage.id === activeStage) || NGO_INTERVIEW_STAGES[0]
-  const currentQuestion = draftQuestion.trim() || firstQuestion
   const roleSkills = getSkillNames(selectedOpp?.skills)
   const prepSections = selectedOpp ? makeRolePrepSections(selectedOpp, roleSkills) : []
   const roleSummary = selectedOpp ? makeRoleSummary(selectedOpp, roleSkills) : ''
@@ -999,9 +999,10 @@ function NGOView() {
     setPracticeStarted(false)
     setActiveGuideSection('summary')
     setActiveStage('opening')
-    setOpenPanel('profile')
+    setOpenPanel('')
     setInputMode('type')
     setIsRecording(false)
+    setIsStudentResponding(false)
     setAiGuidanceOpen(false)
     setExampleQuestionIndex(0)
     setDraftQuestion('')
@@ -1012,9 +1013,10 @@ function NGOView() {
     if (!selectedOpp) return
     setPracticeStarted(true)
     setActiveStage('opening')
-    setOpenPanel('profile')
+    setOpenPanel('')
     setInputMode('type')
     setIsRecording(false)
+    setIsStudentResponding(false)
     setAiGuidanceOpen(false)
     setExampleQuestionIndex(0)
     setDraftQuestion('')
@@ -1022,25 +1024,46 @@ function NGOView() {
   }
 
   function startInterview() {
-    setTranscript([
-      { id: 'q1', from: 'ngo', text: firstQuestion },
-      { id: 'a1', from: 'student', text: makeStudentReply(selectedOpp, mockStudent, activeStage) },
-    ])
+    const stage = activeStage
+    setTranscript([{ id: 'q1', from: 'ngo', text: firstQuestion, stage }])
+    setIsStudentResponding(true)
+    window.setTimeout(() => {
+      setTranscript(prev => [
+        ...prev,
+        { id: 'a1', from: 'student', text: makeStudentReply(selectedOpp, mockStudent, stage), stage },
+      ])
+      setIsStudentResponding(false)
+    }, 700)
   }
 
   function sendQuestion() {
-    const text = currentQuestion.trim()
-    if (!text) return
-    const nextStage = activeStage === 'opening' ? 'skills' : activeStage
-    setTranscript(prev => [
-      ...prev,
-      { id: nextMessageId('q'), from: 'ngo', text },
-      { id: nextMessageId('a'), from: 'student', text: makeStudentReply(selectedOpp, mockStudent, nextStage) },
-    ])
-    setActiveStage(nextStage)
+    const text = draftQuestion.trim()
+    if (!text || isStudentResponding) return
+    const stage = activeStage
+    setTranscript(prev => [...prev, { id: nextMessageId('q'), from: 'ngo', text, stage }])
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setIsRecording(false)
+    setIsStudentResponding(true)
+    window.setTimeout(() => {
+      setTranscript(prev => [
+        ...prev,
+        { id: nextMessageId('a'), from: 'student', text: makeStudentReply(selectedOpp, mockStudent, stage), stage },
+      ])
+      setIsStudentResponding(false)
+    }, 700)
+  }
+
+  function goToNextStage() {
+    const idx = NGO_INTERVIEW_STAGES.findIndex(stage => stage.id === activeStage)
+    const next = NGO_INTERVIEW_STAGES[idx + 1]
+    if (next) {
+      setActiveStage(next.id)
+      setExampleQuestionIndex(0)
+      setDraftQuestion('')
+    } else {
+      setPracticeStarted(false)
+    }
   }
 
   function generateExampleQuestion() {
@@ -1419,6 +1442,10 @@ function NGOView() {
     },
   ]
 
+  const currentStageIndex = NGO_INTERVIEW_STAGES.findIndex(stage => stage.id === activeStage)
+  const isLastStage = currentStageIndex === NGO_INTERVIEW_STAGES.length - 1
+  const askedStages = new Set(transcript.map(message => message.stage))
+
   return (
     <motion.div
       key={selectedRole}
@@ -1442,26 +1469,53 @@ function NGOView() {
             AI-guided practice
           </span>
         </div>
-        <div className="flex gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
-          {NGO_INTERVIEW_STAGES.map((stage, index) => (
-            <button
-              key={stage.id}
-              onClick={() => setActiveStage(stage.id)}
-              className={`shrink-0 rounded-full border px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
-                activeStage === stage.id
-                  ? 'border-[#1A73E8] bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.16)]'
-                  : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:bg-[#FBFCFE]'
-              }`}>
-              {index + 1}. {stage.label}
-            </button>
-          ))}
+
+        {/* Stage stepper + explicit forward control */}
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-[#E5EEFB] bg-white px-5 py-3">
+          <div className="flex flex-1 gap-2">
+            {NGO_INTERVIEW_STAGES.map((stage, index) => {
+              const isActive = activeStage === stage.id
+              const isDone = askedStages.has(stage.id) && !isActive
+              return (
+                <button
+                  key={stage.id}
+                  onClick={() => setActiveStage(stage.id)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[0.76rem] font-semibold transition-colors ${
+                    isActive
+                      ? 'border-[#1A73E8] bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.16)]'
+                      : isDone
+                      ? 'border-[#BFE5CC] bg-[#F1FBF6] text-[#188038]'
+                      : 'border-[#E5EEFB] bg-white text-[#5F6368] hover:bg-[#FBFCFE]'
+                  }`}>
+                  {isDone ? <CheckCircle2 size={13} /> : <span className={isActive ? 'text-white/80' : 'text-[#9AA0A6]'}>{index + 1}.</span>}
+                  {stage.label}
+                </button>
+              )
+            })}
+          </div>
+          <button
+            onClick={goToNextStage}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#202124] px-3.5 py-2 text-[0.76rem] font-semibold text-white transition-opacity hover:opacity-90">
+            {isLastStage ? 'Finish practice' : 'Next phase'}
+            <ArrowRight size={13} />
+          </button>
         </div>
 
-        <div className="flex min-h-[510px] flex-col">
+        {/* What to understand in this phase — always visible, no click needed */}
+        <div className="flex items-start gap-2.5 border-b border-[#E5EEFB] bg-[#F8FBFF] px-5 py-3">
+          <Target size={14} className="mt-0.5 shrink-0 text-[#1A73E8]" />
+          <p className="text-[0.8rem] leading-5 text-[#3C4043]">
+            <span className="font-semibold text-[#202124]">In this phase, understand: </span>
+            {activeStageInfo.lookFor}
+          </p>
+        </div>
+
+        <div className="flex min-h-[430px] flex-col">
+          {/* Transcript — editorial reading style, not chat bubbles */}
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {transcript.length === 0 ? (
-              <div className="mx-auto flex min-h-[330px] max-w-2xl flex-col items-center justify-center text-center">
-                <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Opening question</p>
+              <div className="mx-auto flex min-h-[260px] max-w-2xl flex-col items-center justify-center text-center">
+                <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Suggested opening question</p>
                 <div className="mb-5 rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] px-5 py-5 text-left shadow-[0_8px_22px_rgba(17,24,39,0.03)]">
                   <p className="text-[0.95rem] leading-7 text-[#202124]">{firstQuestion}</p>
                 </div>
@@ -1473,25 +1527,44 @@ function NGOView() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="mx-auto max-w-2xl space-y-6">
                 {transcript.map(message => (
-                  <div key={message.id} className={`flex items-start gap-3 ${message.from === 'ngo' ? '' : 'justify-end'}`}>
-                    {message.from === 'ngo' && <GradientAvatar name="NGO interviewer" size={36} radius="0.75rem" />}
-                    <div className={`max-w-[78%] rounded-[22px] px-4 py-3 text-[0.84rem] leading-6 ${
-                      message.from === 'ngo'
-                        ? 'rounded-tl-md bg-[#E8F0FE] text-[#202124]'
-                        : 'rounded-tr-md bg-[#F1F3F4] text-[#202124]'
-                    }`}>
-                      {message.text}
+                  message.from === 'ngo' ? (
+                    <div key={message.id}>
+                      <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
+                      <p className="text-[0.92rem] leading-7 text-[#202124]">{message.text}</p>
                     </div>
-                    {message.from === 'student' && <GradientAvatar name={mockStudent.name} size={36} radius="0.75rem" />}
-                  </div>
+                  ) : (
+                    <div key={message.id} className="rounded-r-xl border-l-2 border-[#1A73E8]/30 bg-[#F8F9FA] px-4 py-3.5">
+                      <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} answered</p>
+                      <p className="text-[0.9rem] leading-7 text-[#3C4043]">{message.text}</p>
+                    </div>
+                  )
                 ))}
+                {isStudentResponding && (
+                  <div className="rounded-r-xl border-l-2 border-[#1A73E8]/30 bg-[#F8F9FA] px-4 py-3.5">
+                    <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
+                    <div className="flex gap-1.5 py-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.3s' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" style={{ animationDelay: '-0.15s' }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#9AA0A6]" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           <div className="border-t border-[#E5EEFB] bg-white px-5 py-4">
+            {transcript.length > 0 && !isStudentResponding && (
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1FBF6] px-3 py-1 text-[0.72rem] font-semibold text-[#188038]">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34A853] opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34A853]" />
+                </span>
+                Your turn to talk
+              </div>
+            )}
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setInputMode('type')}
@@ -1515,7 +1588,7 @@ function NGOView() {
                   aiGuidanceOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-[#F1F3F4] text-[#5F6368]'
                 }`}>
                 <Sparkles size={13} />
-                AI guidance
+                AI assistant
                 {aiGuidanceOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
             </div>
@@ -1560,12 +1633,20 @@ function NGOView() {
                 value={draftQuestion}
                 onChange={e => setDraftQuestion(e.target.value)}
                 rows={2}
-                placeholder={inputMode === 'voice' && isRecording ? 'Listening...' : 'Ask the next interview question...'}
-                className="min-h-[48px] flex-1 resize-none rounded-[18px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3 text-[0.84rem] leading-5 text-[#202124] outline-none transition-colors placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:bg-white"
+                disabled={isStudentResponding}
+                placeholder={
+                  isStudentResponding
+                    ? `${mockStudent.name} is answering...`
+                    : inputMode === 'voice' && isRecording
+                    ? 'Listening...'
+                    : 'Ask the next interview question...'
+                }
+                className="min-h-[48px] flex-1 resize-none rounded-[18px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3 text-[0.84rem] leading-5 text-[#202124] outline-none transition-colors placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:bg-white disabled:opacity-60"
               />
               <button
                 onClick={sendQuestion}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-opacity hover:opacity-95"
+                disabled={!draftQuestion.trim() || isStudentResponding}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-opacity hover:opacity-95 disabled:opacity-40"
                 aria-label="Send question">
                 <Send size={17} />
               </button>
