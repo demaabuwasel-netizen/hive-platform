@@ -975,7 +975,11 @@ function NGOView({ onPracticeChange }) {
   const selectedOpp = ngoOpportunities.find(o => String(o.id) === String(selectedRole))
 
   useEffect(() => {
-    onPracticeChange?.({ active: practiceStarted, title: selectedOpp?.title || '' })
+    onPracticeChange?.({
+      active: practiceStarted,
+      title: selectedOpp?.title || '',
+      onBack: () => setPracticeStarted(false),
+    })
   }, [practiceStarted, selectedOpp?.title, onPracticeChange])
 
   const mockStudent = selectedOpp ? makeMockStudent(selectedOpp) : null
@@ -1446,12 +1450,6 @@ function NGOView({ onPracticeChange }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}>
-      <button
-        onClick={() => setPracticeStarted(false)}
-        className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
-        <ArrowLeft size={14} />
-        Interview guide
-      </button>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
         {/* Stage stepper — pills connected by arrows to read as a sequence, centered */}
@@ -1673,6 +1671,14 @@ export default function Interviews() {
           transition={{ duration: 0.4 }}
           className="mb-8"
         >
+          {inPractice && (
+            <button
+              onClick={() => practiceInfo.onBack?.()}
+              className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
+              <ArrowLeft size={14} />
+              Interview guide
+            </button>
+          )}
           <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
             {inPractice ? `Practice ${practiceInfo.title}` : 'Interviews'}
           </h1>
