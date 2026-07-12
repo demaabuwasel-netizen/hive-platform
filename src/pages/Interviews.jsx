@@ -1192,7 +1192,7 @@ function NGOView({ onPracticeChange }) {
           <img
             src={ngoInterviewImg}
             alt=""
-            className="pointer-events-none absolute -top-[200px] right-8 z-10 w-full max-w-md"
+            className="pointer-events-none absolute -top-[183px] right-8 z-10 w-full max-w-md"
           />
           <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
           {!selectedOpp ? (
