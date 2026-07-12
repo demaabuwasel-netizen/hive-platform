@@ -1678,7 +1678,7 @@ export default function Interviews() {
           </h1>
           <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
             {inPractice
-              ? 'A mock interview with a generated student profile — ask questions, get guidance, and move through each phase.'
+              ? 'A mock interview with a generated student profile.'
               : isNGO
               ? 'Pick a posted role and practice with a generated student profile'
               : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
