@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  AtSign, BarChart3, Building2, Camera, Check, Code2, DollarSign, Edit2,
-  ExternalLink, Globe, GraduationCap, Heart, HeartHandshake, HelpingHand,
-  Megaphone, MessageCircle, PenTool, Quote, ShieldCheck, Sparkles, Target, Users2,
+  AtSign, BarChart3, Building2, Camera, Check, Edit2, ExternalLink,
+  FileText, Globe, HandHeart, Heart, Layers2, Link2, ShieldCheck, Sparkles, Target,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import TopicPicker from '../components/TopicPicker'
@@ -33,46 +32,26 @@ const PROJECT_OPTIONS = [
   'Impact Report', 'Technology Infrastructure', 'Process Improvement'
 ]
 
-// Keyword → icon so chips feel identified, not just labeled
-function topicIcon(name) {
-  const n = name.toLowerCase()
-  if (/programming|web|mobile|app|code|technology|cloud|ai\/machine/.test(n)) return Code2
-  if (/design|graphic|ux|user experience|branding/.test(n)) return PenTool
-  if (/communication|public speaking|social media/.test(n)) return MessageCircle
-  if (/marketing|advocacy|pr|public relations/.test(n)) return Megaphone
-  if (/leadership|management|hr|volunteer coordination|mentoring|mentorship/.test(n)) return Users2
-  if (/data|analysis|analytics|dashboard|research/.test(n)) return BarChart3
-  if (/finance|accounting|legal/.test(n)) return DollarSign
-  if (/education|curriculum|youth development/.test(n)) return GraduationCap
-  if (/fundraising|grant|community/.test(n)) return HeartHandshake
-  return Sparkles
-}
-
 function EmptyText({ children = 'Not added yet' }) {
   return <p className="text-[0.88rem] italic text-[#9AA0A6]">{children}</p>
 }
 
-// Big, bold icon badge — the visual anchor of every tile
-function TileIcon({ icon: Icon, tint, accent, size = 46 }) {
+// Small group label sitting above a set of related boxes — this is what groups them, not a bordering container
+function GroupTitle({ icon: Icon, title, subtitle }) {
   return (
-    <span
-      className="flex shrink-0 items-center justify-center rounded-2xl"
-      style={{ width: size, height: size, background: tint, color: accent }}
-    >
-      <Icon size={size * 0.46} strokeWidth={2} />
-    </span>
+    <div className="mb-3 flex items-center gap-2.5">
+      <Icon size={15} className="text-[#5F6368]" />
+      <h2 className="text-[0.85rem] font-semibold text-[#202124]">{title}</h2>
+      {subtitle && <span className="text-[0.8rem] text-[#9AA0A6]">— {subtitle}</span>}
+    </div>
   )
 }
 
-function EditButton({ onEdit, label, light = false }) {
+function EditButton({ onEdit, label }) {
   return (
     <button
       onClick={onEdit}
-      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-        light
-          ? 'text-white/70 hover:bg-white/15 hover:text-white'
-          : 'text-[#9AA0A6] hover:bg-black/[0.04] hover:text-[#1A73E8]'
-      }`}
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors hover:bg-black/[0.04] hover:text-[#1A73E8]"
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -80,23 +59,19 @@ function EditButton({ onEdit, label, light = false }) {
   )
 }
 
-function FieldActions({ saving, onSave, onCancel, light = false }) {
+function FieldActions({ saving, onSave, onCancel }) {
   return (
-    <div className="mt-3 flex justify-end gap-2">
+    <div className="relative mt-3 flex justify-end gap-2">
       <button
         onClick={onCancel}
-        className={`h-9 rounded-full px-4 text-[0.82rem] font-medium transition-colors ${
-          light ? 'text-white/80 hover:bg-white/10' : 'text-[#5F6368] hover:bg-[#F1F3F4]'
-        }`}
+        className="h-9 rounded-full px-4 text-[0.82rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]"
       >
         Cancel
       </button>
       <button
         onClick={onSave}
         disabled={saving}
-        className={`inline-flex h-9 items-center gap-1.5 rounded-full px-5 text-[0.82rem] font-medium shadow-[0_4px_14px_rgba(0,0,0,0.15)] transition-all disabled:opacity-50 ${
-          light ? 'bg-white text-[#1A73E8] hover:bg-white/90' : 'bg-[#1A73E8] text-white hover:bg-[#1765CC]'
-        }`}
+        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1A73E8] px-5 text-[0.82rem] font-medium text-white shadow-[0_4px_14px_rgba(26,115,232,0.22)] transition-all hover:bg-[#1765CC] disabled:opacity-50"
       >
         <Check size={13} />
         Save
@@ -105,40 +80,38 @@ function FieldActions({ saving, onSave, onCancel, light = false }) {
   )
 }
 
-const TONES = {
-  blue:   { tint: '#E8F0FE', accent: '#1A73E8', chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]' },
-  purple: { tint: '#F3E8FD', accent: '#A142F4', chip: 'border-[#E9DCFB] bg-white text-[#8B3DD8]' },
-  green:  { tint: '#E6F4EA', accent: '#188038', chip: 'border-[#CDEBD8] bg-white text-[#188038]' },
-  amber:  { tint: '#FEF3DC', accent: '#B36B00', chip: 'border-[#F6DFAF] bg-white text-[#B36B00]' },
-  pink:   { tint: '#FCE8F3', accent: '#C2185B', chip: 'border-[#F6D2E5] bg-white text-[#C2185B]' },
-  gray:   { tint: '#F1F3F4', accent: '#3C4043', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' },
-}
-
-// A bento tile — white surface, big icon, editable body. The unit every box on this page is built from.
-function Tile({ icon, tone = 'blue', label, span = '', minH = '', children, editing, editor, onEdit }) {
-  const t = TONES[tone]
+// A single box — flat white, hairline ring, one huge low-opacity watermark icon for character
+// instead of color. Every box on the page (text, chips, links) is built from this.
+function Box({ icon, label, span = '', minH = '', children, editing, editor, onEdit }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`group relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03] ${span} ${minH}`}
+      className={`group relative overflow-hidden rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] ${span} ${minH}`}
     >
-      <div className="mb-4 flex items-start justify-between gap-2">
-        <TileIcon icon={icon} tint={t.tint} accent={t.accent} />
+      {icon && (
+        (() => {
+          const Icon = icon
+          return <Icon className="pointer-events-none absolute -right-3 -top-3 text-[#F1F3F4]" size={80} strokeWidth={1} />
+        })()
+      )}
+      <div className="relative mb-2.5 flex items-start justify-between gap-2">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-[#5F6368]">{label}</p>
         {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
       </div>
-      <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.09em]" style={{ color: t.accent }}>{label}</p>
-      {editing ? editor : children}
+      <div className="relative">
+        {editing ? editor : children}
+      </div>
     </motion.div>
   )
 }
 
-function TextTile({ icon, tone, label, rows = 4, value, span, minH, fieldProps }) {
+function TextBox({ icon, label, rows = 4, value, span, minH, fieldProps }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
   return (
-    <Tile
-      icon={icon} tone={tone} label={label} span={span} minH={minH}
+    <Box
+      icon={icon} label={label} span={span} minH={minH}
       editing={editing} onEdit={onEdit}
       editor={
         <>
@@ -156,16 +129,15 @@ function TextTile({ icon, tone, label, rows = 4, value, span, minH, fieldProps }
       <p className="whitespace-pre-wrap text-[0.9rem] leading-7 text-[#3C4043]">
         {value || <EmptyText />}
       </p>
-    </Tile>
+    </Box>
   )
 }
 
-function ChipsTile({ icon, tone, label, options, items, span, minH, fieldProps }) {
+function ChipsBox({ icon, label, options, items, span, minH, fieldProps }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
-  const t = TONES[tone]
   return (
-    <Tile
-      icon={icon} tone={tone} label={label} span={span} minH={minH}
+    <Box
+      icon={icon} label={label} span={span} minH={minH}
       editing={editing} onEdit={onEdit}
       editor={
         <>
@@ -181,56 +153,16 @@ function ChipsTile({ icon, tone, label, options, items, span, minH, fieldProps }
     >
       {items?.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
-          {items.map((item, index) => {
-            const Icon = topicIcon(item)
-            return (
-              <span key={`${item}-${index}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.78rem] font-medium ${t.chip}`}>
-                <Icon size={11} strokeWidth={2.2} />
-                {item}
-              </span>
-            )
-          })}
+          {items.map((item, index) => (
+            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full border border-[#DADCE0] bg-white px-2.5 py-1 text-[0.78rem] font-medium text-[#3C4043]">
+              {item}
+            </span>
+          ))}
         </div>
       ) : (
         <EmptyText />
       )}
-    </Tile>
-  )
-}
-
-// Mission — the one deep-color hero tile in the grid; everything else is white
-function MissionTile({ value, fieldProps }) {
-  const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.05 }}
-      className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-[#1A73E8] to-[#1554B0] p-5 text-white shadow-[0_8px_24px_rgba(26,115,232,0.28)] md:row-span-2"
-    >
-      <Quote className="pointer-events-none absolute -right-2 -top-2 h-24 w-24 text-white/10" strokeWidth={1} />
-      <div className="relative mb-4 flex items-start justify-between gap-2">
-        <TileIcon icon={Target} tint="rgba(255,255,255,0.16)" accent="#FFFFFF" />
-        {!editing && <EditButton onEdit={onEdit} label="Mission" light />}
-      </div>
-      <p className="relative mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-white/70">Mission</p>
-      {editing ? (
-        <div className="relative">
-          <textarea
-            value={editValue || ''}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full resize-none rounded-xl border border-white/25 bg-white/10 px-3.5 py-2.5 text-[0.92rem] leading-6 text-white outline-none transition-colors placeholder:text-white/50 focus:border-white/60"
-            rows={5}
-            autoFocus
-          />
-          <FieldActions saving={saving} onSave={onSave} onCancel={onCancel} light />
-        </div>
-      ) : (
-        <p className="relative text-[1.05rem] font-medium leading-8">
-          {value || <span className="text-white/60">No mission statement yet</span>}
-        </p>
-      )}
-    </motion.div>
+    </Box>
   )
 }
 
@@ -323,17 +255,15 @@ export default function NGOProfile() {
   })
 
   const links = [
-    profile?.website && { icon: Globe, tone: 'blue', label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
-    profile?.instagram && { icon: Heart, tone: 'pink', label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
-    profile?.twitter && { icon: AtSign, tone: 'gray', label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
-    profile?.registrationNumber && { icon: Building2, tone: 'purple', label: 'Registration', value: profile.registrationNumber },
+    profile?.website && { icon: Globe, label: 'Website', value: profile.website.replace(/^https?:\/\/(www\.)?/, ''), href: profile.website },
+    profile?.instagram && { icon: Heart, label: 'Instagram', value: profile.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: profile.instagram },
+    profile?.twitter && { icon: AtSign, label: 'Twitter / X', value: profile.twitter.replace(/^https?:\/\/(www\.)?/, ''), href: profile.twitter },
+    profile?.registrationNumber && { icon: Building2, label: 'Registration', value: profile.registrationNumber },
   ].filter(Boolean)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#F6F8FC]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_10%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_90%_5%,rgba(161,66,244,0.05),transparent_42%),radial-gradient(circle_at_50%_15%,rgba(52,168,83,0.04),transparent_38%)]" />
-
-      <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
+    <main className="min-h-screen bg-[#F6F8FC]">
+      <div className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -353,14 +283,12 @@ export default function NGOProfile() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative mb-6 overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
+          className="relative mb-8 overflow-hidden rounded-[24px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[150px] bg-[radial-gradient(circle_at_15%_0%,rgba(26,115,232,0.10),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(161,66,244,0.08),transparent_45%)]" />
-
-          <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-7">
+          <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-7">
             <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <div className="relative h-24 w-24 shrink-0 rounded-[24px] bg-white p-1 shadow-[0_10px_28px_rgba(26,115,232,0.16)] sm:h-28 sm:w-28">
-                <div className="h-full w-full overflow-hidden rounded-[20px] bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE]">
+              <div className="relative h-24 w-24 shrink-0 rounded-[22px] bg-[#F1F3F4] p-1 sm:h-28 sm:w-28">
+                <div className="h-full w-full overflow-hidden rounded-[18px] bg-[#EEF3FC]">
                   {profile?.imageUrl ? (
                     <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
                   ) : (
@@ -395,7 +323,7 @@ export default function NGOProfile() {
               </div>
             </div>
 
-            <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#F7FAFF] to-[#FBFCFE] px-4 py-4 ring-1 ring-[#EEF1F6] sm:w-[220px]">
+            <div className="flex w-full shrink-0 items-center gap-4 rounded-[18px] bg-[#FAFBFC] px-4 py-4 ring-1 ring-black/[0.04] sm:w-[220px]">
               <StrengthGauge percent={completeness} />
               <div className="min-w-0">
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#9AA0A6]">Profile strength</p>
@@ -407,56 +335,66 @@ export default function NGOProfile() {
           </div>
         </motion.section>
 
-        {/* Bento grid — varied tile sizes, big icons, one deep-color hero tile */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <TextTile icon={Sparkles} tone="blue" label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[176px]" />
+        <div className="space-y-9">
+          {/* About group */}
+          <div>
+            <GroupTitle icon={FileText} title="About" subtitle="how students get to know you" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <TextBox icon={Sparkles} label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[150px]" />
+              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[150px]" />
+              <div className="md:col-span-2">
+                <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" />
+              </div>
+            </div>
           </div>
-          <MissionTile value={profile?.mission} fieldProps={fieldProps('mission')} />
 
-          <div className="md:col-span-2">
-            <TextTile icon={HelpingHand} tone="amber" label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[150px]" />
+          {/* Focus group */}
+          <div>
+            <GroupTitle icon={Layers2} title="Focus" subtitle="what you work on and who you're looking for" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[160px]" />
+              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[160px]" />
+              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[160px]" />
+            </div>
           </div>
 
-          <ChipsTile icon={Target} tone="blue" label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[170px]" />
-          <ChipsTile icon={Sparkles} tone="purple" label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[170px]" />
-          <ChipsTile icon={BarChart3} tone="green" label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[170px]" />
-
-          {links.map((link) => {
-            const t = TONES[link.tone]
-            const content = (
-              <>
-                <div className="mb-4">
-                  <TileIcon icon={link.icon} tint={t.tint} accent={t.accent} size={40} />
-                </div>
-                <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-[0.09em]" style={{ color: t.accent }}>{link.label}</p>
-                <p className="truncate text-[0.92rem] font-medium text-[#202124]">{link.value}</p>
-              </>
-            )
-            return link.href ? (
-              <motion.a
-                key={link.label}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03] transition-all hover:-translate-y-1 hover:shadow-[0_10px_24px_rgba(17,24,39,0.1)]"
-              >
-                {content}
-                <ExternalLink size={13} className="absolute right-5 top-5 text-[#C4C7CC] opacity-0 transition-opacity group-hover:opacity-100" />
-              </motion.a>
-            ) : (
-              <motion.div
-                key={link.label}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
-              >
-                {content}
-              </motion.div>
-            )
-          })}
+          {/* Connect group */}
+          {links.length > 0 && (
+            <div>
+              <GroupTitle icon={Link2} title="Connect" subtitle="where students can learn more" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {links.map(({ icon: Icon, label, value, href }) => {
+                  const content = (
+                    <>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F1F3F4] text-[#5F6368] transition-colors group-hover:bg-[#E8F0FE] group-hover:text-[#1A73E8]">
+                        <Icon size={17} strokeWidth={1.9} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
+                        <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
+                      </div>
+                      {href && <ExternalLink size={13} className="shrink-0 text-[#C4C7CC] opacity-0 transition-opacity group-hover:opacity-100" />}
+                    </>
+                  )
+                  return href ? (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] transition-colors hover:bg-[#FAFBFF]"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div key={label} className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05]">
+                      {content}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
