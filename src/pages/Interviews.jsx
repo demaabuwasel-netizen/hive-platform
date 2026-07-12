@@ -933,7 +933,7 @@ function StudentView() {
   )
 }
 
-function NGOView() {
+function NGOView({ onPracticeChange }) {
   const { user } = useApp()
   const navigate = useNavigate()
   const recognitionRef = useRef(null)
@@ -973,6 +973,11 @@ function NGOView() {
   }, [])
 
   const selectedOpp = ngoOpportunities.find(o => String(o.id) === String(selectedRole))
+
+  useEffect(() => {
+    onPracticeChange?.({ active: practiceStarted, title: selectedOpp?.title || '' })
+  }, [practiceStarted, selectedOpp?.title, onPracticeChange])
+
   const mockStudent = selectedOpp ? makeMockStudent(selectedOpp) : null
   const firstQuestion = selectedOpp && mockStudent ? makeFirstQuestion(selectedOpp, mockStudent) : ''
   const activeStageInfo = NGO_INTERVIEW_STAGES.find(stage => stage.id === activeStage) || NGO_INTERVIEW_STAGES[0]
@@ -1449,8 +1454,7 @@ function NGOView() {
       </button>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-h-[620px] overflow-hidden rounded-[28px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
-        <div className="flex flex-col gap-4 border-b border-[#E5EEFB] bg-[#FBFCFE] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[#202124]">{selectedOpp.title}</p>
+        <div className="flex items-center justify-end border-b border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
           <span className="w-fit rounded-full border border-[#BFD7FF] bg-white px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8]">
             AI-guided practice
           </span>
@@ -1663,6 +1667,8 @@ function NGOView() {
 export default function Interviews() {
   const { user } = useApp()
   const isNGO = user?.role === 'ngo'
+  const [practiceInfo, setPracticeInfo] = useState({ active: false, title: '' })
+  const inPractice = isNGO && practiceInfo.active
 
   return (
     <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
@@ -1674,15 +1680,17 @@ export default function Interviews() {
           className="mb-8"
         >
           <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-            Interviews
+            {inPractice ? `Practice ${practiceInfo.title}` : 'Interviews'}
           </h1>
-          <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
-            {isNGO
-              ? 'Pick a posted role and practice with a generated student profile'
-              : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
-          </p>
+          {!inPractice && (
+            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+              {isNGO
+                ? 'Pick a posted role and practice with a generated student profile'
+                : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
+            </p>
+          )}
         </motion.header>
-        {isNGO ? <NGOView /> : <StudentView />}
+        {isNGO ? <NGOView onPracticeChange={setPracticeInfo} /> : <StudentView />}
       </div>
     </main>
   )
