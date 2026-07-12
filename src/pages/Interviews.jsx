@@ -1676,13 +1676,13 @@ export default function Interviews() {
           <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
             {inPractice ? `Practice ${practiceInfo.title}` : 'Interviews'}
           </h1>
-          {!inPractice && (
-            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
-              {isNGO
-                ? 'Pick a posted role and practice with a generated student profile'
-                : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
-            </p>
-          )}
+          <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+            {inPractice
+              ? 'A mock interview with a generated student profile — ask questions, get guidance, and move through each phase.'
+              : isNGO
+              ? 'Pick a posted role and practice with a generated student profile'
+              : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
+          </p>
         </motion.header>
         {isNGO ? <NGOView onPracticeChange={setPracticeInfo} /> : <StudentView />}
       </div>
