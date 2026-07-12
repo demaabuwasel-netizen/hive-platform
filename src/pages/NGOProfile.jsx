@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   AtSign, BarChart3, Building2, Camera, Check, Edit2, ExternalLink,
   FileText, Globe, HandHeart, Heart, Layers2, Link2, ShieldCheck, Sparkles, Target,
@@ -80,38 +80,56 @@ function FieldActions({ saving, onSave, onCancel }) {
   )
 }
 
-// A single box — flat white, hairline ring, one huge low-opacity watermark icon for character
-// instead of color. Every box on the page (text, chips, links) is built from this.
-function Box({ icon, label, span = '', minH = '', children, editing, editor, onEdit }) {
+// A single box — flat white, blue icon badge for identity, and an accordion-style
+// expand into a blue-tinted panel when editing. No decorative shapes.
+function Box({ icon: Icon, label, minH = '', children, editing, editor, onEdit }) {
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`group relative overflow-hidden rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] ${span} ${minH}`}
+      whileHover={{ y: -2 }}
+      className={`relative rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 transition-shadow duration-200 ${
+        editing ? 'ring-2 ring-[#1A73E8]/40 shadow-[0_6px_20px_rgba(26,115,232,0.14)]' : 'ring-black/[0.05] hover:shadow-[0_2px_8px_rgba(60,64,67,0.1)]'
+      } ${minH}`}
     >
-      {icon && (
-        (() => {
-          const Icon = icon
-          return <Icon className="pointer-events-none absolute -right-3 -top-3 text-[#F1F3F4]" size={80} strokeWidth={1} />
-        })()
-      )}
-      <div className="relative mb-2.5 flex items-start justify-between gap-2">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-[#5F6368]">{label}</p>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          {Icon && (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+              <Icon size={16} strokeWidth={2.1} />
+            </span>
+          )}
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.09em] text-[#5F6368]">{label}</p>
+        </div>
         {!editing && onEdit && <EditButton onEdit={onEdit} label={label} />}
       </div>
-      <div className="relative">
-        {editing ? editor : children}
-      </div>
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div
+          key={editing ? 'editor' : 'view'}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.22, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
+          {editing ? (
+            <div className="rounded-xl bg-[#EEF3FC] p-3.5">
+              {editor}
+            </div>
+          ) : children}
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   )
 }
 
-function TextBox({ icon, label, rows = 4, value, span, minH, fieldProps }) {
+function TextBox({ icon, label, rows = 4, value, minH, fieldProps }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
   return (
     <Box
-      icon={icon} label={label} span={span} minH={minH}
+      icon={icon} label={label} minH={minH}
       editing={editing} onEdit={onEdit}
       editor={
         <>
@@ -133,11 +151,11 @@ function TextBox({ icon, label, rows = 4, value, span, minH, fieldProps }) {
   )
 }
 
-function ChipsBox({ icon, label, options, items, span, minH, fieldProps }) {
+function ChipsBox({ icon, label, options, items, minH, fieldProps }) {
   const { editing, editValue, onChange, onEdit, onSave, onCancel, saving } = fieldProps
   return (
     <Box
-      icon={icon} label={label} span={span} minH={minH}
+      icon={icon} label={label} minH={minH}
       editing={editing} onEdit={onEdit}
       editor={
         <>
@@ -154,7 +172,7 @@ function ChipsBox({ icon, label, options, items, span, minH, fieldProps }) {
       {items?.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {items.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full border border-[#DADCE0] bg-white px-2.5 py-1 text-[0.78rem] font-medium text-[#3C4043]">
+            <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.78rem] font-medium text-[#1A57C4]">
               {item}
             </span>
           ))}
@@ -339,22 +357,20 @@ export default function NGOProfile() {
           {/* About group */}
           <div>
             <GroupTitle icon={FileText} title="About" subtitle="how students get to know you" />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-4">
               <TextBox icon={Sparkles} label="About the organization" value={profile?.description} fieldProps={fieldProps('description')} minH="min-h-[150px]" />
-              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[150px]" />
-              <div className="md:col-span-2">
-                <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" />
-              </div>
+              <TextBox icon={Target} label="Mission" rows={3} value={profile?.mission} fieldProps={fieldProps('mission')} minH="min-h-[130px]" />
+              <TextBox icon={HandHeart} label="What we need help with" rows={3} value={profile?.helpNeeded} fieldProps={fieldProps('helpNeeded')} minH="min-h-[130px]" />
             </div>
           </div>
 
           {/* Focus group */}
           <div>
             <GroupTitle icon={Layers2} title="Focus" subtitle="what you work on and who you're looking for" />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[160px]" />
-              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[160px]" />
-              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[160px]" />
+            <div className="space-y-4">
+              <ChipsBox icon={Target} label="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} fieldProps={fieldProps('tags')} minH="min-h-[110px]" />
+              <ChipsBox icon={Sparkles} label="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} fieldProps={fieldProps('preferred_skills')} minH="min-h-[110px]" />
+              <ChipsBox icon={BarChart3} label="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} fieldProps={fieldProps('project_types')} minH="min-h-[110px]" />
             </div>
           </div>
 
@@ -362,30 +378,31 @@ export default function NGOProfile() {
           {links.length > 0 && (
             <div>
               <GroupTitle icon={Link2} title="Connect" subtitle="where students can learn more" />
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
                 {links.map(({ icon: Icon, label, value, href }) => {
                   const content = (
                     <>
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F1F3F4] text-[#5F6368] transition-colors group-hover:bg-[#E8F0FE] group-hover:text-[#1A73E8]">
-                        <Icon size={17} strokeWidth={1.9} />
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                        <Icon size={17} strokeWidth={2} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
                         <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
                       </div>
-                      {href && <ExternalLink size={13} className="shrink-0 text-[#C4C7CC] opacity-0 transition-opacity group-hover:opacity-100" />}
+                      {href && <ExternalLink size={13} className="shrink-0 text-[#9AA0A6] opacity-0 transition-opacity group-hover:opacity-100 group-hover:text-[#1A73E8]" />}
                     </>
                   )
                   return href ? (
-                    <a
+                    <motion.a
                       key={label}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] transition-colors hover:bg-[#FAFBFF]"
+                      whileHover={{ y: -2 }}
+                      className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05] transition-shadow hover:shadow-[0_4px_14px_rgba(26,115,232,0.14)]"
                     >
                       {content}
-                    </a>
+                    </motion.a>
                   ) : (
                     <div key={label} className="group flex items-center gap-3 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(60,64,67,0.08),0_1px_3px_rgba(60,64,67,0.06)] ring-1 ring-black/[0.05]">
                       {content}
