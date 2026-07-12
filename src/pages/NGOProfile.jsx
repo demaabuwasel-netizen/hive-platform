@@ -67,7 +67,7 @@ function CardTitle({ icon: Icon, tint = '#E8F0FE', accent = '#1A73E8', title, su
         </span>
       )}
       <div className="min-w-0">
-        <h2 className="text-[0.95rem] font-semibold text-[#202124]">{title}</h2>
+        <h2 className="text-[1.02rem] font-semibold text-[#202124]">{title}</h2>
         {subtitle && <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">{subtitle}</p>}
       </div>
     </div>
@@ -319,7 +319,7 @@ export default function NGOProfile() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-[28px] bg-white shadow-[0_2px_12px_rgba(17,24,39,0.05),0_20px_48px_rgba(17,24,39,0.07)] ring-1 ring-black/[0.03]"
+          className="relative overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[150px] bg-[radial-gradient(circle_at_15%_0%,rgba(26,115,232,0.10),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(161,66,244,0.08),transparent_45%)]" />
 
@@ -347,7 +347,7 @@ export default function NGOProfile() {
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-[1.85rem] font-semibold tracking-[-0.015em] text-[#202124]">
+                  <h2 className="text-[2.05rem] font-semibold tracking-[-0.02em] text-[#202124]">
                     {displayName}
                   </h2>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-1 text-[0.7rem] font-medium text-[#188038]">
@@ -381,7 +381,7 @@ export default function NGOProfile() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.05 }}
-            className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)] ring-1 ring-black/[0.03]"
+            className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
           >
             <CardTitle icon={FileText} tint="#E8F0FE" accent="#1A73E8" title="About" subtitle="How students get to know your organization" />
             <EditableText title="About the organization" value={profile?.description} {...fieldProps('description')} />
@@ -393,7 +393,7 @@ export default function NGOProfile() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
-            className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)] ring-1 ring-black/[0.03]"
+            className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
           >
             <CardTitle icon={Layers} tint="#F3E8FD" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
             <div className="grid gap-4 p-6 sm:grid-cols-3">
@@ -408,7 +408,7 @@ export default function NGOProfile() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: 0.15 }}
-              className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)] ring-1 ring-black/[0.03]"
+              className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.10),0_2px_6px_2px_rgba(60,64,67,0.05)] ring-1 ring-black/[0.03]"
             >
               <CardTitle icon={Link2} tint="#E6F4EA" accent="#188038" title="Connect" subtitle="Where students can learn more" />
               <div className="grid gap-3 p-6 sm:grid-cols-2">
