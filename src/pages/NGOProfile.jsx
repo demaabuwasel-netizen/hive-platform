@@ -136,17 +136,31 @@ function EditableText({ title, rows = 4, value, editing, editValue, onChange, on
 }
 
 const TOPIC_TINTS = {
-  'Focus areas': { chip: 'border-[#D7E6FF] bg-[#F0F6FF] text-[#1A73E8]', icon: '#1A73E8' },
-  'Preferred skills': { chip: 'border-[#E5D4FB] bg-[#F7F1FE] text-[#8B3DD8]', icon: '#8B3DD8' },
-  'Project types': { chip: 'border-[#C8E8D0] bg-[#F1FBF6] text-[#188038]', icon: '#188038' },
+  'Focus areas': {
+    box: 'bg-[#F5F9FF] ring-[#DCE9FE]',
+    label: 'text-[#1A73E8]',
+    chip: 'border-[#D7E6FF] bg-white text-[#1A73E8]',
+  },
+  'Preferred skills': {
+    box: 'bg-[#FAF6FE] ring-[#E9DCFB]',
+    label: 'text-[#8B3DD8]',
+    chip: 'border-[#E5D4FB] bg-white text-[#8B3DD8]',
+  },
+  'Project types': {
+    box: 'bg-[#F3FBF6] ring-[#D3EEDD]',
+    label: 'text-[#188038]',
+    chip: 'border-[#C8E8D0] bg-white text-[#188038]',
+  },
 }
 
+// A standalone selectable box — these are pick-from-a-list fields, not free text,
+// so each one reads as its own card sitting next to its siblings.
 function EditableTopics({ title, options, items, editing, editValue, onChange, onEdit, onSave, onCancel, saving }) {
-  const tint = TOPIC_TINTS[title] || { chip: 'border-[#DADCE0] bg-white text-[#3C4043]', icon: '#5F6368' }
+  const tint = TOPIC_TINTS[title] || { box: 'bg-[#FAFBFC] ring-[#E8EAED]', label: 'text-[#5F6368]', chip: 'border-[#DADCE0] bg-white text-[#3C4043]' }
   return (
-    <section className="border-t border-[#F1F3F4] px-6 py-5 first:border-t-0">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#5F6368]">
+    <div className={`rounded-[22px] p-4 ring-1 ${tint.box}`}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className={`text-[0.7rem] font-semibold uppercase tracking-[0.08em] ${tint.label}`}>
           {title}
         </h3>
         {!editing && <EditButton onEdit={onEdit} label={title} />}
@@ -168,7 +182,7 @@ function EditableTopics({ title, options, items, editing, editValue, onChange, o
             return (
               <span
                 key={`${item}-${index}`}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium ${tint.chip}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium shadow-[0_1px_2px_rgba(17,24,39,0.03)] ${tint.chip}`}
               >
                 <Icon size={12} strokeWidth={2.2} />
                 {item}
@@ -179,7 +193,7 @@ function EditableTopics({ title, options, items, editing, editValue, onChange, o
       ) : (
         <EmptyText />
       )}
-    </section>
+    </div>
   )
 }
 
@@ -379,9 +393,11 @@ export default function NGOProfile() {
             className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
           >
             <CardTitle icon={Layers} tint="#F3E8FD" accent="#A142F4" title="Focus" subtitle="What you work on and the skills you look for" />
-            <EditableTopics title="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} {...fieldProps('tags')} />
-            <EditableTopics title="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} {...fieldProps('preferred_skills')} />
-            <EditableTopics title="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} {...fieldProps('project_types')} />
+            <div className="grid gap-4 p-6 sm:grid-cols-3">
+              <EditableTopics title="Focus areas" options={FOCUS_OPTIONS} items={profile?.tags} {...fieldProps('tags')} />
+              <EditableTopics title="Preferred skills" options={SKILL_OPTIONS} items={profile?.preferred_skills} {...fieldProps('preferred_skills')} />
+              <EditableTopics title="Project types" options={PROJECT_OPTIONS} items={profile?.project_types} {...fieldProps('project_types')} />
+            </div>
           </motion.section>
 
           {links.length > 0 && (
@@ -392,21 +408,25 @@ export default function NGOProfile() {
               className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]"
             >
               <CardTitle icon={Link2} tint="#E6F4EA" accent="#188038" title="Connect" subtitle="Where students can learn more" />
-              <div className="divide-y divide-[#F1F3F4]">
+              <div className="grid gap-3 p-6 sm:grid-cols-2">
                 {links.map(({ icon: Icon, tint, accent, label, value, href }) => {
                   const content = (
                     <>
                       <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform group-hover:scale-110"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
                         style={{ background: tint, color: accent }}
                       >
-                        <Icon size={17} strokeWidth={1.9} />
+                        <Icon size={18} strokeWidth={1.9} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
-                        <p className="truncate text-[0.88rem] font-medium text-[#202124]">{value}</p>
+                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">{label}</p>
+                        <p className="truncate text-[0.9rem] font-medium text-[#202124]">{value}</p>
                       </div>
-                      {href && <ExternalLink size={14} className="text-[#9AA0A6]" />}
+                      {href && (
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#9AA0A6] transition-colors group-hover:bg-white group-hover:text-[#1A73E8]">
+                          <ExternalLink size={13} />
+                        </span>
+                      )}
                     </>
                   )
 
@@ -416,12 +436,12 @@ export default function NGOProfile() {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center gap-3 px-6 py-4 transition-colors hover:bg-[#FAFBFF]"
+                      className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:ring-[#DCE9FE]"
                     >
                       {content}
                     </a>
                   ) : (
-                    <div key={label} className="group flex items-center gap-3 px-6 py-4">
+                    <div key={label} className="group flex items-center gap-3 rounded-[20px] bg-[#FAFBFC] p-4 ring-1 ring-[#F1F3F4]">
                       {content}
                     </div>
                   )
