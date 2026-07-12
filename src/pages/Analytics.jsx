@@ -161,12 +161,17 @@ function MatchGauge({ score, size = 148 }) {
   )
 }
 
-function SectionGroup({ label, description, children }) {
+function SectionGroup({ icon: Icon, title, description, children }) {
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">{label}</p>
-        <p className="mt-1 text-[0.88rem] text-[#5F6368]">{description}</p>
+    <div className="space-y-5">
+      <div className="flex items-center gap-3.5">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+          <Icon size={19} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-[1.35rem] font-semibold leading-tight text-[#202124]">{title}</h2>
+          <p className="mt-0.5 text-[0.85rem] text-[#5F6368]">{description}</p>
+        </div>
       </div>
       {children}
     </div>
@@ -332,7 +337,7 @@ export default function Analytics() {
   }
   const activeView = APPLICANT_VIEWS[applicantView]
   const activeTop = activeView.pool[0]
-  const activeRest = activeView.pool.slice(1, 6)
+  const activeRest = activeView.pool.slice(1, 5)
   const maxActiveRest = Math.max(...activeRest.map(item => item.count), 1)
   const rowIcon = name => (activeView.icon ? activeView.icon : skillIcon(name))
 
@@ -400,16 +405,16 @@ export default function Analytics() {
                 <div key={item} className="h-[140px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
               ))}
             </section>
-            <div className="space-y-6">
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-                <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-                <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-              </div>
-              <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
             </div>
             <div className="space-y-6">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+                <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+                <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              </div>
               <div className="h-[260px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-              <div className="h-[320px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
             </div>
           </div>
         ) : !hasActivity ? (
@@ -450,78 +455,210 @@ export default function Analytics() {
               })}
             </section>
 
-            <SectionGroup label="Your applicants" description="What you're learning from the students applying to your roles">
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              {/* Hiring funnel — icon per stage, gradient fill, common scale */}
-              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader
-                  icon={BarChart3}
-                  title="Hiring funnel"
-                  subtitle="How applicants move from applying to acceptance"
-                />
-                <div className="space-y-5 px-6 py-6">
-                  {funnelStages.map((stage, index) => {
-                    const StageIcon = stage.icon
-                    return (
-                      <div key={stage.label}>
-                        <div className="mb-2 flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FE] text-[#1A73E8]">
-                              <StageIcon size={13} />
-                            </span>
-                            <p className="text-[0.85rem] font-medium text-[#202124]">{stage.label}</p>
-                          </div>
-                          <p className="text-[0.85rem] font-medium text-[#202124]">
-                            {stage.count}
-                            <span className="ml-2 text-[0.76rem] font-normal text-[#9AA0A6]">
-                              {index === 0 ? '' : stage.note}
-                            </span>
+            <SectionGroup icon={Layers} title="Your roles" description="How your own postings are performing">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+                {/* Role health — icon+label status chips, inline match bar */}
+                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                  <CardHeader icon={Target} title="Role health" subtitle="Where each role stands, and what to do next" />
+
+                  {data.roleHealth.length > 0 ? (
+                    <div className="divide-y divide-[#F1F3F4]">
+                      <div className="hidden grid-cols-[minmax(0,1.4fr)_repeat(3,56px)_minmax(120px,0.8fr)_150px] items-center gap-3 px-6 py-2.5 lg:grid">
+                        {['Role', 'Applied', 'Interview', 'Accepted', 'Avg match', 'Status'].map(col => (
+                          <p key={col} className={`text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6] ${col !== 'Role' && col !== 'Avg match' && col !== 'Status' ? 'text-center' : ''}`}>
+                            {col}
                           </p>
-                        </div>
-                        <Bar
-                          percent={Math.max(stage.width, stage.count > 0 ? 2 : 0)}
-                          delay={index * 0.08}
-                          label={`${stage.label}: ${stage.count}`}
-                        />
+                        ))}
                       </div>
-                    )
-                  })}
 
-                  <p className="pt-1 text-[0.78rem] leading-5 text-[#9AA0A6]">
-                    Bars share one scale — each stage is shown as a share of all {applied} application{applied !== 1 ? 's' : ''}.
-                  </p>
-                </div>
-              </section>
+                      {data.roleHealth.map((role, index) => {
+                        const suggestion = getRoleSuggestion(role)
+                        const healthCfg = HEALTH_CONFIG[role.health]
+                        const HealthIcon = healthCfg.icon
 
-              {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
-              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" />
-                {data.applicants.length > 0 ? (
-                  <div className="flex flex-col items-center px-6 py-7">
-                    <MatchGauge score={data.avgMatchScore} />
-                    <div className="mt-6 w-full space-y-3">
-                      {data.matchBands.map(band => (
-                        <div key={band.label} className="flex items-center gap-2.5">
-                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: band.color }} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[0.8rem] text-[#3C4043]">{band.label}</p>
-                          </div>
-                          <span className="shrink-0 text-[0.72rem] text-[#9AA0A6]">{band.range}</span>
-                          <span className="w-5 shrink-0 text-right text-[0.82rem] font-semibold text-[#202124]">{band.count}</span>
-                        </div>
-                      ))}
+                        return (
+                          <motion.div
+                            key={role.id}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.035 }}
+                            className="px-6 py-3.5 transition-colors hover:bg-[#FAFBFF]"
+                          >
+                            <div className="grid grid-cols-1 items-center gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,56px)_minmax(120px,0.8fr)_150px] lg:gap-3">
+                              <p className="truncate text-[0.9rem] font-medium text-[#202124]">{role.title}</p>
+
+                              <div className="flex gap-5 lg:contents">
+                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
+                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Applied</span>
+                                  {role.applicantCount}
+                                </p>
+                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
+                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Interview</span>
+                                  {role.interviews}
+                                </p>
+                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
+                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Accepted</span>
+                                  {role.accepted}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2.5" title={`Average match: ${role.avgMatch}%`}>
+                                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#F1F3F4]">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.max(role.avgMatch, role.applicantCount > 0 ? 3 : 0)}%` }}
+                                    transition={{ duration: 0.5, delay: index * 0.04 }}
+                                    className="h-full rounded-full"
+                                    style={{ background: 'linear-gradient(90deg, #34A853, #188038)' }}
+                                  />
+                                </div>
+                                <span className="w-9 shrink-0 text-right text-[0.8rem] font-medium text-[#202124]">
+                                  {role.applicantCount > 0 ? `${role.avgMatch}%` : '—'}
+                                </span>
+                              </div>
+
+                              <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-medium ${healthCfg.className}`}>
+                                <HealthIcon size={12} />
+                                {role.health}
+                              </span>
+                            </div>
+
+                            {suggestion && (
+                              <div className="mt-2.5 flex items-start gap-2 text-[0.78rem] leading-5 text-[#5F6368]">
+                                <Lightbulb size={13} className="mt-0.5 shrink-0 text-[#B06000]" />
+                                {suggestion}
+                              </div>
+                            )}
+                          </motion.div>
+                        )
+                      })}
                     </div>
-                  </div>
-                ) : (
-                  <div className="px-6 py-12 text-center">
-                    <p className="text-[0.9rem] font-medium text-[#202124]">No match scores yet</p>
-                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Scores appear once students apply.</p>
-                  </div>
-                )}
-              </section>
-            </div>
+                  ) : (
+                    <div className="px-6 py-12 text-center">
+                      <p className="text-[0.9rem] font-medium text-[#202124]">No roles match this filter</p>
+                    </div>
+                  )}
+                </section>
 
-            {/* About your applicants — switch between skills / fields of study / languages */}
+                {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
+                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                  <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" />
+                  {orgInsights.categoryPool.length > 0 ? (
+                    <div className="px-6 py-5">
+                      <div className="space-y-3">
+                        {orgInsights.categoryPool.map((cat, index) => (
+                          <div key={cat.name} className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
+                              <Briefcase size={13} />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1 flex items-center justify-between gap-3">
+                                <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
+                                <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{cat.count}</span>
+                              </div>
+                              <Bar
+                                percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
+                                color="#A142F4" colorDark="#8E24E0"
+                                height="h-2"
+                                delay={index * 0.04}
+                                label={`${cat.name}: ${cat.count} role${cat.count !== 1 ? 's' : ''}`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2 border-t border-[#F1F3F4] pt-4">
+                        {Object.entries(orgInsights.workModes).filter(([, count]) => count > 0).map(([mode, count]) => (
+                          <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
+                            <MapPin size={11} />
+                            {mode} · {count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-6 py-12 text-center">
+                      <p className="text-[0.9rem] font-medium text-[#202124]">No roles posted yet</p>
+                      <p className="mt-1 text-[0.8rem] text-[#5F6368]">Post a role to see your organization's focus areas.</p>
+                    </div>
+                  )}
+                </section>
+              </div>
+            </SectionGroup>
+
+            <SectionGroup icon={Users} title="Your applicants" description="What you're learning from the students applying">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+                {/* Hiring funnel — icon per stage, gradient fill, common scale */}
+                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                  <CardHeader
+                    icon={BarChart3}
+                    title="Hiring funnel"
+                    subtitle="How applicants move from applying to acceptance"
+                  />
+                  <div className="space-y-4 px-6 py-5">
+                    {funnelStages.map((stage, index) => {
+                      const StageIcon = stage.icon
+                      return (
+                        <div key={stage.label}>
+                          <div className="mb-2 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2.5">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FE] text-[#1A73E8]">
+                                <StageIcon size={13} />
+                              </span>
+                              <p className="text-[0.85rem] font-medium text-[#202124]">{stage.label}</p>
+                            </div>
+                            <p className="text-[0.85rem] font-medium text-[#202124]">
+                              {stage.count}
+                              <span className="ml-2 text-[0.76rem] font-normal text-[#9AA0A6]">
+                                {index === 0 ? '' : stage.note}
+                              </span>
+                            </p>
+                          </div>
+                          <Bar
+                            percent={Math.max(stage.width, stage.count > 0 ? 2 : 0)}
+                            delay={index * 0.08}
+                            label={`${stage.label}: ${stage.count}`}
+                          />
+                        </div>
+                      )
+                    })}
+
+                    <p className="pt-1 text-[0.78rem] leading-5 text-[#9AA0A6]">
+                      Bars share one scale — each stage is shown as a share of all {applied} application{applied !== 1 ? 's' : ''}.
+                    </p>
+                  </div>
+                </section>
+
+                {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
+                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                  <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" />
+                  {data.applicants.length > 0 ? (
+                    <div className="flex flex-col items-center px-6 py-6">
+                      <MatchGauge score={data.avgMatchScore} />
+                      <div className="mt-5 w-full space-y-3">
+                        {data.matchBands.map(band => (
+                          <div key={band.label} className="flex items-center gap-2.5">
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: band.color }} />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[0.8rem] text-[#3C4043]">{band.label}</p>
+                            </div>
+                            <span className="shrink-0 text-[0.72rem] text-[#9AA0A6]">{band.range}</span>
+                            <span className="w-5 shrink-0 text-right text-[0.82rem] font-semibold text-[#202124]">{band.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-6 py-12 text-center">
+                      <p className="text-[0.9rem] font-medium text-[#202124]">No match scores yet</p>
+                      <p className="mt-1 text-[0.8rem] text-[#5F6368]">Scores appear once students apply.</p>
+                    </div>
+                  )}
+                </section>
+              </div>
+
+              {/* About your applicants — switch between skills / fields of study / languages */}
               <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -544,12 +681,12 @@ export default function Analytics() {
                   </select>
                 </div>
                 {activeTop ? (
-                  <div className="px-6 py-6">
+                  <div className="px-6 py-5">
                     <motion.div
                       key={applicantView}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-5 flex items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#EEF4FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]"
+                      className="mb-4 flex items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#EEF4FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]"
                     >
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#1A73E8] shadow-[0_4px_12px_rgba(26,115,232,0.15)]">
                         {(() => { const TopIcon = rowIcon(activeTop.name); return <TopIcon size={22} strokeWidth={1.9} /> })()}
@@ -565,7 +702,7 @@ export default function Analytics() {
                     </motion.div>
 
                     {activeRest.length > 0 && (
-                      <div className="space-y-3.5">
+                      <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                         {activeRest.map((item, index) => {
                           const Icon = rowIcon(item.name)
                           return (
@@ -597,136 +734,6 @@ export default function Analytics() {
                     <p className="mt-1 text-[0.8rem] text-[#5F6368]">This fills in once students apply.</p>
                   </div>
                 )}
-              </section>
-            </SectionGroup>
-
-            <SectionGroup label="Your roles" description="How your own postings are shaping the pool">
-              {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
-              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" />
-                {orgInsights.categoryPool.length > 0 ? (
-                  <div className="px-6 py-6">
-                    <div className="space-y-3.5">
-                      {orgInsights.categoryPool.map((cat, index) => (
-                        <div key={cat.name} className="flex items-center gap-3">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
-                            <Briefcase size={13} />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-1 flex items-center justify-between gap-3">
-                              <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
-                              <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{cat.count}</span>
-                            </div>
-                            <Bar
-                              percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
-                              color="#A142F4" colorDark="#8E24E0"
-                              height="h-2"
-                              delay={index * 0.04}
-                              label={`${cat.name}: ${cat.count} role${cat.count !== 1 ? 's' : ''}`}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-2 border-t border-[#F1F3F4] pt-5">
-                      {Object.entries(orgInsights.workModes).filter(([, count]) => count > 0).map(([mode, count]) => (
-                        <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
-                          <MapPin size={11} />
-                          {mode} · {count}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="px-6 py-12 text-center">
-                    <p className="text-[0.9rem] font-medium text-[#202124]">No roles posted yet</p>
-                    <p className="mt-1 text-[0.8rem] text-[#5F6368]">Post a role to see your organization's focus areas.</p>
-                  </div>
-                )}
-              </section>
-
-              {/* Role health — icon+label status chips, inline match bar */}
-              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                <CardHeader icon={Target} title="Role health" subtitle="Where each role stands, and what to do next" />
-
-              {data.roleHealth.length > 0 ? (
-                <div className="divide-y divide-[#F1F3F4]">
-                  <div className="hidden grid-cols-[minmax(0,1.4fr)_repeat(3,72px)_minmax(140px,0.8fr)_170px] items-center gap-4 px-6 py-2.5 lg:grid">
-                    {['Role', 'Applied', 'Interview', 'Accepted', 'Avg match', 'Status'].map(col => (
-                      <p key={col} className={`text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6] ${col !== 'Role' && col !== 'Avg match' && col !== 'Status' ? 'text-center' : ''}`}>
-                        {col}
-                      </p>
-                    ))}
-                  </div>
-
-                  {data.roleHealth.map((role, index) => {
-                    const suggestion = getRoleSuggestion(role)
-                    const healthCfg = HEALTH_CONFIG[role.health]
-                    const HealthIcon = healthCfg.icon
-
-                    return (
-                      <motion.div
-                        key={role.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.035 }}
-                        className="px-6 py-4 transition-colors hover:bg-[#FAFBFF]"
-                      >
-                        <div className="grid grid-cols-1 items-center gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,72px)_minmax(140px,0.8fr)_170px] lg:gap-4">
-                          <p className="truncate text-[0.9rem] font-medium text-[#202124]">{role.title}</p>
-
-                          <div className="flex gap-5 lg:contents">
-                            <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                              <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Applied</span>
-                              {role.applicantCount}
-                            </p>
-                            <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                              <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Interview</span>
-                              {role.interviews}
-                            </p>
-                            <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                              <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Accepted</span>
-                              {role.accepted}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2.5" title={`Average match: ${role.avgMatch}%`}>
-                            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#F1F3F4]">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.max(role.avgMatch, role.applicantCount > 0 ? 3 : 0)}%` }}
-                                transition={{ duration: 0.5, delay: index * 0.04 }}
-                                className="h-full rounded-full"
-                                style={{ background: 'linear-gradient(90deg, #34A853, #188038)' }}
-                              />
-                            </div>
-                            <span className="w-9 shrink-0 text-right text-[0.8rem] font-medium text-[#202124]">
-                              {role.applicantCount > 0 ? `${role.avgMatch}%` : '—'}
-                            </span>
-                          </div>
-
-                          <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-medium ${healthCfg.className}`}>
-                            <HealthIcon size={12} />
-                            {role.health}
-                          </span>
-                        </div>
-
-                        {suggestion && (
-                          <div className="mt-2.5 flex items-start gap-2 text-[0.78rem] leading-5 text-[#5F6368]">
-                            <Lightbulb size={13} className="mt-0.5 shrink-0 text-[#B06000]" />
-                            {suggestion}
-                          </div>
-                        )}
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="px-6 py-12 text-center">
-                  <p className="text-[0.9rem] font-medium text-[#202124]">No roles match this filter</p>
-                </div>
-              )}
               </section>
             </SectionGroup>
           </div>
