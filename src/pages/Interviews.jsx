@@ -1601,35 +1601,29 @@ function NGOView({ onPracticeChange }) {
         <div className="px-5 pt-4">
           <button
             onClick={() => setAiGuidanceOpen(open => !open)}
-            className={`flex w-full items-center justify-between gap-3 rounded-[18px] px-3.5 py-2.5 text-left transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.76rem] font-medium transition-all ${
               aiGuidanceOpen
-                ? 'bg-gradient-to-r from-[#EAF1FF] to-[#F5F9FF] ring-1 ring-[#D7E6FF] shadow-[0_4px_14px_rgba(26,115,232,0.08)]'
-                : 'bg-[#F7FAFF] ring-1 ring-transparent hover:bg-[#EEF4FF] hover:ring-[#D7E6FF]'
+                ? 'bg-[#EAF1FF] text-[#1A73E8] ring-1 ring-[#D7E6FF]'
+                : 'bg-[#F7FAFF] text-[#5F6368] ring-1 ring-transparent hover:bg-[#EEF4FF] hover:text-[#1A73E8]'
             }`}>
-            <span className="flex min-w-0 items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#1A73E8] shadow-[0_1px_3px_rgba(26,115,232,0.15)]">
-                <Target size={15} />
-              </span>
-              <span className="min-w-0 text-left">
-                <span className="block text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">What to get out of</span>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={activeStage}
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.16 }}
-                    className="block truncate text-[0.9rem] font-semibold text-[#1A73E8]">
-                    {activeStageInfo.label}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-            </span>
+            <Target size={13} className="shrink-0 text-[#1A73E8]" />
+            <span>What to get out of</span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={activeStage}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.15 }}
+                className="font-semibold text-[#1A73E8]">
+                {activeStageInfo.label}
+              </motion.span>
+            </AnimatePresence>
             <motion.span
               animate={{ rotate: aiGuidanceOpen ? 180 : 0 }}
               transition={{ duration: 0.2 }}
               className="shrink-0 text-[#1A73E8]">
-              <ChevronDown size={16} />
+              <ChevronDown size={13} />
             </motion.span>
           </button>
           <AnimatePresence initial={false}>
@@ -1647,7 +1641,7 @@ function NGOView({ onPracticeChange }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="mt-2 rounded-[16px] bg-[#FAFCFF] px-4 py-3 text-[0.84rem] leading-6 text-[#5F6368] ring-1 ring-[#EEF4FF]">
+                    className="mt-2 rounded-[14px] bg-[#FAFCFF] px-3.5 py-2.5 text-[0.82rem] leading-6 text-[#5F6368] ring-1 ring-[#EEF4FF]">
                     {stageGuidance}
                   </motion.p>
                 </AnimatePresence>
