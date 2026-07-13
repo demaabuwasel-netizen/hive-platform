@@ -1568,13 +1568,17 @@ function NGOView({ onPracticeChange }) {
 
         {/* Context header — grounds the box: who you're talking to, and how far along you are */}
         <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-4">
-          <div className="flex min-w-0 items-center gap-3">
+          <button
+            onClick={() => setOpenPanel('profile')}
+            aria-label={`View ${mockStudent.name}'s profile`}
+            title={`View ${mockStudent.name}'s profile`}
+            className="flex min-w-0 items-center gap-3 rounded-2xl py-1 pr-3 text-left transition-colors hover:bg-black/[0.03]">
             <GradientAvatar name={mockStudent.name} size={38} radius="0.85rem" className="shrink-0 shadow-sm ring-2 ring-white" />
             <div className="min-w-0">
               <p className="truncate text-[0.92rem] font-semibold text-[#202124]">{mockStudent.name}</p>
               <p className="truncate text-[0.74rem] text-[#9AA0A6]">Practicing for {selectedOpp.title}</p>
             </div>
-          </div>
+          </button>
           <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] shadow-[0_1px_3px_rgba(17,24,39,0.06)] ring-1 ring-[#EEF1F6]">
             <span className="text-[#1A73E8]">{currentStageIndex + 1}</span>
             <span className="text-[#C7CBD1]">/</span>
