@@ -422,11 +422,6 @@ export default function Analytics() {
 
   const maxCategoryCount = Math.max(...orgInsights.categoryPool.map(cat => cat.count), 1)
 
-  const healthCounts = data.roleHealth.reduce((acc, role) => {
-    acc[role.health] = (acc[role.health] || 0) + 1
-    return acc
-  }, {})
-
   const roleHealthTotals = data.roleHealth.reduce((acc, role) => {
     acc.reviewing += role.reviewing
     acc.interviews += role.interviews
@@ -435,7 +430,15 @@ export default function Analytics() {
   }, { reviewing: 0, interviews: 0, accepted: 0 })
   const totalActiveApplicants = roleHealthTotals.reviewing + roleHealthTotals.interviews + roleHealthTotals.accepted
   const singleRole = selectedRoleId !== 'all' && data.roleHealth.length === 1 ? data.roleHealth[0] : null
-  const singleRoleSuggestion = singleRole ? getRoleSuggestion(singleRole) : ''
+  const overallHealth = singleRole
+    ? singleRole.health
+    : getRoleHealth({
+        applicantCount: totalActiveApplicants,
+        avgMatch: data.avgMatchScore,
+        interviews: roleHealthTotals.interviews,
+        accepted: roleHealthTotals.accepted,
+      })
+  const overallSuggestion = getRoleSuggestion({ health: overallHealth })
 
   const funnelStages = [
     { label: 'Applied', icon: Users, count: applied, width: applied ? 100 : 0, note: 'All applications received' },
@@ -571,7 +574,7 @@ export default function Analytics() {
 
                   {data.roleHealth.length > 0 ? (
                     <div className="px-6 py-6">
-                      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+                      <div className="flex flex-wrap items-center gap-7">
                         <div className="flex items-center gap-5">
                           <MiniDonut
                             segments={[
@@ -579,8 +582,8 @@ export default function Analytics() {
                               { label: 'Interview', value: roleHealthTotals.interviews, color: '#F9D3A8', colorDark: '#F0AE68' },
                               { label: 'Accepted', value: roleHealthTotals.accepted, color: '#B4E3C9', colorDark: '#7BC29A' },
                             ]}
-                            size={122}
-                            strokeWidth={15}
+                            size={172}
+                            strokeWidth={20}
                           />
                           <div className="space-y-3">
                             <p className="flex items-center gap-2.5 text-[0.86rem] text-[#3C4043]">
@@ -598,76 +601,56 @@ export default function Analytics() {
                           </div>
                         </div>
 
-                        <div className="flex flex-1 flex-col justify-between gap-5 sm:border-l sm:border-[#F1F3F4] sm:pl-8">
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3EFFC] text-[#7C6BC4]">
-                              <Users size={17} />
+                        <div className="flex flex-col justify-center gap-3 border-l border-[#F1F3F4] pl-6">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3EFFC] text-[#7C6BC4]">
+                              <Users size={14} />
                             </span>
                             <div>
-                              <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
-                              <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
+                              <p className="text-[1.15rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
+                              <p className="mt-1 text-[0.7rem] text-[#9AA0A6]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF8F1] text-[#3C9C6C]">
-                              <Percent size={17} />
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EBF8F1] text-[#3C9C6C]">
+                              <Percent size={14} />
                             </span>
                             <div>
-                              <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
-                              <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">Average match</p>
+                              <p className="text-[1.15rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
+                              <p className="mt-1 text-[0.7rem] text-[#9AA0A6]">Average match</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {singleRole ? (
-                        (() => {
-                          const cfg = HEALTH_CONFIG[singleRole.health]
-                          const Icon = cfg.icon
-                          return (
-                            <div className="mt-5 overflow-hidden rounded-[20px]" style={{ background: cfg.tint }}>
-                              <div className="flex items-center gap-2.5 px-4 py-3.5">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70" style={{ color: cfg.accent }}>
-                                  <Icon size={16} />
-                                </span>
-                                <div className="min-w-0">
-                                  <p className="text-[0.88rem] font-semibold" style={{ color: cfg.accent }}>{singleRole.health}</p>
-                                  <p className="mt-0.5 text-[0.76rem] leading-snug" style={{ color: cfg.accent, opacity: 0.85 }}>{cfg.description}</p>
-                                </div>
+                      {(() => {
+                        const cfg = HEALTH_CONFIG[overallHealth]
+                        const Icon = cfg.icon
+                        return (
+                          <div className="mt-6 overflow-hidden rounded-[20px]" style={{ background: cfg.tint }}>
+                            {selectedRoleId === 'all' && (
+                              <p className="px-4 pt-3 text-[0.68rem] font-medium uppercase tracking-[0.08em]" style={{ color: cfg.accent, opacity: 0.75 }}>
+                                Average status across all your roles
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2.5 px-4 py-3.5">
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70" style={{ color: cfg.accent }}>
+                                <Icon size={16} />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-[0.88rem] font-semibold" style={{ color: cfg.accent }}>{overallHealth}</p>
+                                <p className="mt-0.5 text-[0.76rem] leading-snug" style={{ color: cfg.accent, opacity: 0.85 }}>{cfg.description}</p>
                               </div>
-                              {singleRoleSuggestion && (
-                                <div className="flex items-start gap-2 border-t border-white/60 px-4 py-3 text-[0.8rem] leading-5" style={{ color: cfg.accent }}>
-                                  <Lightbulb size={14} className="mt-0.5 shrink-0" />
-                                  {singleRoleSuggestion}
-                                </div>
-                              )}
                             </div>
-                          )
-                        })()
-                      ) : (
-                        <div className="mt-6">
-                          <p className="mb-3 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Average status across all your roles</p>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            {Object.entries(HEALTH_CONFIG).map(([status, cfg]) => {
-                              const Icon = cfg.icon
-                              return (
-                                <div key={status} className="rounded-[18px] p-3.5" style={{ background: cfg.tint }}>
-                                  <div className="flex items-center gap-2.5">
-                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70" style={{ color: cfg.accent }}>
-                                      <Icon size={14} />
-                                    </span>
-                                    <div>
-                                      <p className="text-[1.15rem] font-semibold leading-none text-[#202124]">{healthCounts[status] || 0}</p>
-                                      <p className="mt-0.5 text-[0.7rem] font-medium leading-tight" style={{ color: cfg.accent }}>{status}</p>
-                                    </div>
-                                  </div>
-                                  <p className="mt-2.5 text-[0.72rem] leading-snug" style={{ color: cfg.accent, opacity: 0.85 }}>{cfg.description}</p>
-                                </div>
-                              )
-                            })}
+                            {overallSuggestion && (
+                              <div className="flex items-start gap-2 border-t border-white/60 px-4 py-3 text-[0.8rem] leading-5" style={{ color: cfg.accent }}>
+                                <Lightbulb size={14} className="mt-0.5 shrink-0" />
+                                {overallSuggestion}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
+                        )
+                      })()}
                     </div>
                   ) : (
                     <div className="px-6 py-12 text-center">
