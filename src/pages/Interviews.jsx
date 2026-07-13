@@ -5,7 +5,7 @@ import {
   Clock, Sparkles, AlertCircle, Lightbulb, Briefcase, ArrowRight,
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, Keyboard, PlayCircle, StopCircle, Heart,
-  FileText, CheckCircle2, Target, MessageCircle, Info,
+  FileText, CheckCircle2, Target, MessageCircle, Info, Layers,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -1829,13 +1829,10 @@ function NGOView({ onPracticeChange }) {
       <aside className="max-h-[calc(100vh-126px)] overflow-hidden overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
         <div className="flex items-center gap-3 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-5 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8]">
-            <Info size={16} />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_2px_6px_rgba(26,115,232,0.15)]">
+            <Layers size={16} />
           </span>
-          <div className="min-w-0">
-            <p className="text-[0.92rem] font-semibold text-[#202124]">Context</p>
-            <p className="truncate text-[0.74rem] text-[#9AA0A6]">Only open what you need</p>
-          </div>
+          <p className="text-[0.98rem] font-semibold text-[#202124]">Context</p>
         </div>
         <div className="space-y-2.5 p-3">
           {panels.map(panel => {
@@ -1852,7 +1849,7 @@ function NGOView({ onPracticeChange }) {
                   className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[#FBFCFE]">
                   <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                      isOpen ? 'bg-[#1A73E8] text-white' : 'bg-[#E8F0FE] text-[#1A73E8]'
+                      isOpen ? 'bg-gradient-to-br from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_2px_6px_rgba(26,115,232,0.3)]' : 'bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8]'
                     }`}>
                       <Icon size={14} />
                     </span>
