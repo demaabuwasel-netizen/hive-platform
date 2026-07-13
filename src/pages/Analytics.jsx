@@ -177,6 +177,55 @@ function MatchGauge({ score, size = 148 }) {
   )
 }
 
+// Small-multiple donut — an applicant pipeline mix (disjoint status buckets, so shares are honest).
+// Rejected applicants are excluded from the ring, matching how "total" is treated elsewhere in the app.
+function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
+  const r = (size - strokeWidth) / 2
+  const circ = 2 * Math.PI * r
+  const center = size / 2
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0)
+  const gap = total > 1 ? 2.5 : 0
+  let cumulative = 0
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 drop-shadow-[0_2px_5px_rgba(17,24,39,0.08)]">
+      <circle cx={center} cy={center} r={r} fill="none" stroke="#F1F3F4" strokeWidth={strokeWidth} />
+      {total > 0 && segments.filter(seg => seg.value > 0).map((seg, i) => {
+        const rawLen = (seg.value / total) * circ
+        const segLen = Math.max(rawLen - gap, 1)
+        const dashoffset = -cumulative
+        cumulative += rawLen
+        return (
+          <motion.circle
+            key={seg.label}
+            cx={center} cy={center} r={r} fill="none"
+            stroke={seg.color} strokeWidth={strokeWidth} strokeLinecap="round"
+            strokeDasharray={`${segLen} ${circ - segLen}`}
+            transform={`rotate(-90 ${center} ${center})`}
+            initial={{ strokeDashoffset: 0, opacity: 0 }}
+            animate={{ strokeDashoffset: dashoffset, opacity: 1 }}
+            transition={{ duration: 0.55, delay: i * 0.08, ease: 'easeOut' }}
+          />
+        )
+      })}
+      {total > 0 && (
+        <circle
+          cx={center} cy={center} r={r} fill="none"
+          stroke="white" strokeOpacity="0.5" strokeWidth={strokeWidth * 0.4} strokeLinecap="round"
+          strokeDasharray={`${circ * 0.14} ${circ - circ * 0.14}`}
+          transform={`rotate(-135 ${center} ${center})`}
+        />
+      )}
+      <circle cx={center} cy={center} r={r - strokeWidth / 2 - 1.5} fill="url(#donutSheen)" />
+      {total > 0 ? (
+        <text x={center} y={center + 4} textAnchor="middle" fontSize={size * 0.3} fontWeight="700" fill="#202124">{total}</text>
+      ) : (
+        <text x={center} y={center + 4} textAnchor="middle" fontSize={size * 0.24} fontWeight="600" fill="#C4C9D0">—</text>
+      )}
+    </svg>
+  )
+}
+
 function SectionGroup({ icon: Icon, title, description, children }) {
   return (
     <div className="space-y-5">
@@ -243,6 +292,10 @@ export default function Analytics() {
       const roleApplicants = applicants.filter(applicant => sameId(applicant.opportunityId, role.id))
       const interviews = roleApplicants.filter(applicant => toUiStatus(applicant.status) === 'interview').length
       const accepted = roleApplicants.filter(applicant => toUiStatus(applicant.status) === 'accepted').length
+      const reviewing = roleApplicants.filter(applicant => {
+        const status = toUiStatus(applicant.status)
+        return status === 'new' || status === 'shortlisted'
+      }).length
       const avgMatch = average(roleApplicants.map(applicant => applicant.match))
       const applicantCount = roleApplicants.length
 
@@ -253,6 +306,7 @@ export default function Analytics() {
         avgMatch,
         interviews,
         accepted,
+        reviewing,
         health: getRoleHealth({ applicantCount, avgMatch, interviews, accepted }),
       }
     })
@@ -358,6 +412,21 @@ export default function Analytics() {
   const rowIcon = name => (activeView.icon ? activeView.icon : skillIcon(name))
 
   const maxCategoryCount = Math.max(...orgInsights.categoryPool.map(cat => cat.count), 1)
+
+  const healthCounts = data.roleHealth.reduce((acc, role) => {
+    acc[role.health] = (acc[role.health] || 0) + 1
+    return acc
+  }, {})
+
+  const roleHealthTotals = data.roleHealth.reduce((acc, role) => {
+    acc.reviewing += role.reviewing
+    acc.interviews += role.interviews
+    acc.accepted += role.accepted
+    return acc
+  }, { reviewing: 0, interviews: 0, accepted: 0 })
+  const totalActiveApplicants = roleHealthTotals.reviewing + roleHealthTotals.interviews + roleHealthTotals.accepted
+  const singleRole = selectedRoleId !== 'all' && data.roleHealth.length === 1 ? data.roleHealth[0] : null
+  const singleRoleSuggestion = singleRole ? getRoleSuggestion(singleRole) : ''
 
   const funnelStages = [
     { label: 'Applied', icon: Users, count: applied, width: applied ? 100 : 0, note: 'All applications received' },
@@ -473,81 +542,89 @@ export default function Analytics() {
 
             <SectionGroup icon={Layers} title="Your roles" description="How your own postings are performing">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-                {/* Role health — icon+label status chips, inline match bar */}
+                {/* Role health — glassy applicant-mix donut, inline match bar, status chips */}
                 <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                  <CardHeader icon={Target} title="Role health" subtitle="Where each role stands, and what to do next" />
+                  <svg width="0" height="0" className="absolute" aria-hidden="true">
+                    <defs>
+                      <radialGradient id="donutSheen" cx="35%" cy="30%" r="65%">
+                        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
+                        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+                      </radialGradient>
+                    </defs>
+                  </svg>
+
+                  <CardHeader icon={Target} title="Role health" subtitle="Pick a role up top to focus the numbers below" />
 
                   {data.roleHealth.length > 0 ? (
-                    <div className="divide-y divide-[#F1F3F4]">
-                      <div className="hidden grid-cols-[minmax(0,1.4fr)_repeat(3,56px)_minmax(120px,0.8fr)_150px] items-center gap-3 px-6 py-2.5 lg:grid">
-                        {['Role', 'Applied', 'Interview', 'Accepted', 'Avg match', 'Status'].map(col => (
-                          <p key={col} className={`text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6] ${col !== 'Role' && col !== 'Avg match' && col !== 'Status' ? 'text-center' : ''}`}>
-                            {col}
-                          </p>
-                        ))}
-                      </div>
+                    <div className="relative overflow-hidden px-6 py-9">
+                      <div
+                        className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/3 rounded-full opacity-50 blur-3xl"
+                        style={{ background: 'radial-gradient(circle, #A142F4, transparent 70%)' }}
+                      />
 
-                      {data.roleHealth.map((role, index) => {
-                        const suggestion = getRoleSuggestion(role)
-                        const healthCfg = HEALTH_CONFIG[role.health]
-                        const HealthIcon = healthCfg.icon
+                      <div className="relative flex flex-col items-center">
+                        <MiniDonut
+                          segments={[
+                            { label: 'Applied', value: roleHealthTotals.reviewing, color: '#A142F4' },
+                            { label: 'Interview', value: roleHealthTotals.interviews, color: '#F29900' },
+                            { label: 'Accepted', value: roleHealthTotals.accepted, color: '#188038' },
+                          ]}
+                          size={148}
+                          strokeWidth={16}
+                        />
 
-                        return (
-                          <motion.div
-                            key={role.id}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.035 }}
-                            className="px-6 py-3.5 transition-colors hover:bg-[#FAFBFF]"
-                          >
-                            <div className="grid grid-cols-1 items-center gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,56px)_minmax(120px,0.8fr)_150px] lg:gap-3">
-                              <p className="truncate text-[0.9rem] font-medium text-[#202124]">{role.title}</p>
+                        <div className="mt-6 flex items-center gap-4 divide-x divide-[#F1F3F4]">
+                          <div className="pr-4 text-center">
+                            <p className="text-[1.6rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
+                            <p className="mt-1.5 text-[0.74rem] text-[#9AA0A6]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
+                          </div>
+                          <div className="pl-4 text-center">
+                            <p className="text-[1.6rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
+                            <p className="mt-1.5 text-[0.74rem] text-[#9AA0A6]">Average match</p>
+                          </div>
+                        </div>
 
-                              <div className="flex gap-5 lg:contents">
-                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Applied</span>
-                                  {role.applicantCount}
-                                </p>
-                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Interview</span>
-                                  {role.interviews}
-                                </p>
-                                <p className="text-[0.85rem] text-[#3C4043] lg:text-center">
-                                  <span className="mr-1 text-[0.72rem] text-[#9AA0A6] lg:hidden">Accepted</span>
-                                  {role.accepted}
-                                </p>
-                              </div>
+                        <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-[0.76rem] text-[#5F6368]">
+                          <span className="flex items-center gap-1.5"><span className="h-2 w-2 shrink-0 rounded-full bg-[#A142F4]" />Applied {roleHealthTotals.reviewing}</span>
+                          <span className="flex items-center gap-1.5"><span className="h-2 w-2 shrink-0 rounded-full bg-[#F29900]" />Interview {roleHealthTotals.interviews}</span>
+                          <span className="flex items-center gap-1.5"><span className="h-2 w-2 shrink-0 rounded-full bg-[#188038]" />Accepted {roleHealthTotals.accepted}</span>
+                        </div>
 
-                              <div className="flex items-center gap-2.5" title={`Average match: ${role.avgMatch}%`}>
-                                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#F1F3F4]">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${Math.max(role.avgMatch, role.applicantCount > 0 ? 3 : 0)}%` }}
-                                    transition={{ duration: 0.5, delay: index * 0.04 }}
-                                    className="h-full rounded-full"
-                                    style={{ background: 'linear-gradient(90deg, #34A853, #188038)' }}
-                                  />
-                                </div>
-                                <span className="w-9 shrink-0 text-right text-[0.8rem] font-medium text-[#202124]">
-                                  {role.applicantCount > 0 ? `${role.avgMatch}%` : '—'}
-                                </span>
-                              </div>
-
-                              <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[0.72rem] font-medium ${healthCfg.className}`}>
-                                <HealthIcon size={12} />
-                                {role.health}
-                              </span>
+                        {singleRole ? (
+                          <div className="mt-6 w-full max-w-sm space-y-3 border-t border-[#F1F3F4] pt-5">
+                            <div className="flex items-center justify-center">
+                              {(() => {
+                                const cfg = HEALTH_CONFIG[singleRole.health]
+                                const Icon = cfg.icon
+                                return (
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.76rem] font-medium ${cfg.className}`}>
+                                    <Icon size={12} />
+                                    {singleRole.health}
+                                  </span>
+                                )
+                              })()}
                             </div>
-
-                            {suggestion && (
-                              <div className="mt-2.5 flex items-start gap-2 text-[0.78rem] leading-5 text-[#5F6368]">
-                                <Lightbulb size={13} className="mt-0.5 shrink-0 text-[#B06000]" />
-                                {suggestion}
+                            {singleRoleSuggestion && (
+                              <div className="flex items-start gap-2 rounded-[16px] bg-[#FFFBF2] px-3.5 py-3 text-[0.8rem] leading-5 text-[#5F6368]">
+                                <Lightbulb size={14} className="mt-0.5 shrink-0 text-[#B06000]" />
+                                {singleRoleSuggestion}
                               </div>
                             )}
-                          </motion.div>
-                        )
-                      })}
+                          </div>
+                        ) : (
+                          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-[#F1F3F4] pt-5">
+                            {Object.entries(HEALTH_CONFIG).filter(([status]) => healthCounts[status]).map(([status, cfg]) => {
+                              const Icon = cfg.icon
+                              return (
+                                <span key={status} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-medium ${cfg.className}`}>
+                                  <Icon size={11} />
+                                  {healthCounts[status]} {status}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="px-6 py-12 text-center">
