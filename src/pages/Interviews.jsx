@@ -1443,8 +1443,8 @@ function NGOView({ onPracticeChange }) {
       icon: UserRound,
       content: (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-[22px] bg-[#F8FAFD] p-3">
-            <GradientAvatar name={mockStudent.name} size={48} radius="0.85rem" className="ring-[3px] ring-white shadow shrink-0" />
+          <div className="flex items-start gap-3 rounded-[22px] bg-gradient-to-br from-[#F6F9FF] to-[#EEF4FF] p-3 ring-1 ring-[#E1ECFF]">
+            <GradientAvatar name={mockStudent.name} size={48} radius="0.85rem" className="shrink-0 shadow-sm ring-2 ring-white" />
             <div className="min-w-0">
               <p className="text-[0.95rem] font-semibold text-[#202124]">{mockStudent.name}</p>
               <p className="mt-1 text-[0.8rem] leading-5 text-[#5F6368]">{mockStudent.headline}</p>
@@ -1489,7 +1489,7 @@ function NGOView({ onPracticeChange }) {
       icon: Briefcase,
       content: (
         <div className="space-y-4">
-          <div>
+          <div className="rounded-[22px] bg-gradient-to-br from-[#F6F9FF] to-[#EEF4FF] p-3 ring-1 ring-[#E1ECFF]">
             <p className="text-[0.94rem] font-semibold text-[#202124]">{selectedOpp.title}</p>
             <p className="mt-1 text-[0.78rem] leading-5 text-[#5F6368]">
               {[selectedOpp.category, selectedOpp.field].filter(Boolean).join(' · ') || 'Posted role'}
@@ -1826,22 +1826,36 @@ function NGOView({ onPracticeChange }) {
         </div>
       </section>
 
-      <aside className="max-h-[calc(100vh-126px)] overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
-        <div className="border-b border-[#E5EEFB] px-5 py-5">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Context</p>
-          <p className="mt-1 text-[0.92rem] font-semibold text-[#202124]">Only open what you need</p>
+      <aside className="max-h-[calc(100vh-126px)] overflow-hidden overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
+        <div className="flex items-center gap-3 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-5 py-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8]">
+            <Info size={16} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[0.92rem] font-semibold text-[#202124]">Context</p>
+            <p className="truncate text-[0.74rem] text-[#9AA0A6]">Only open what you need</p>
+          </div>
         </div>
         <div className="space-y-2.5 p-3">
           {panels.map(panel => {
             const Icon = panel.icon
             const isOpen = openPanel === panel.id
             return (
-              <div key={panel.id} className="overflow-hidden rounded-[20px] border border-[#E5EEFB] bg-white">
+              <div
+                key={panel.id}
+                className={`overflow-hidden rounded-[20px] border transition-colors ${
+                  isOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'
+                }`}>
                 <button
                   onClick={() => setOpenPanel(isOpen ? '' : panel.id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#FBFCFE]">
+                  className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[#FBFCFE]">
                   <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
-                    <Icon size={15} className="text-[#1A73E8]" />
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                      isOpen ? 'bg-[#1A73E8] text-white' : 'bg-[#E8F0FE] text-[#1A73E8]'
+                    }`}>
+                      <Icon size={14} />
+                    </span>
                     {panel.title}
                   </span>
                   {isOpen ? <ChevronUp size={15} className="text-[#5F6368]" /> : <ChevronDown size={15} className="text-[#5F6368]" />}
