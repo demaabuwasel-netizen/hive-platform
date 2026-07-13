@@ -1563,7 +1563,7 @@ function NGOView({ onPracticeChange }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="flex max-h-[calc(100vh-126px)] flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+      <section className="flex h-[calc(100vh-100px)] flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
 
         {/* Context header — grounds the box: who you're talking to, and how far along you are */}
@@ -1826,7 +1826,7 @@ function NGOView({ onPracticeChange }) {
         </div>
       </section>
 
-      <aside className="max-h-[calc(100vh-126px)] overflow-hidden overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
+      <aside className="h-[calc(100vh-100px)] overflow-hidden overflow-y-auto rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03] xl:sticky xl:top-6">
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
         <div className="flex items-center gap-3 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-5 py-4">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_2px_6px_rgba(26,115,232,0.15)]">
