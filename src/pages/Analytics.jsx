@@ -5,7 +5,7 @@ import {
   AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
   Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake, Layers,
   Lightbulb, MapPin, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
-  Sparkles, Target, TrendingUp, Users, Video,
+  Sparkles, Target, Users, Video,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
@@ -13,10 +13,18 @@ import { fetchNgoOpportunities, parseSkillString } from '../services/opportuniti
 import { withTimeout } from '../utils/withTimeout'
 
 const HEALTH_CONFIG = {
-  'Strong candidate pool': { icon: TrendingUp, className: 'bg-[#E6F4EA] text-[#188038]', tint: '#E6F4EA', accent: '#188038' },
-  Healthy: { icon: CheckCircle2, className: 'bg-[#E8F0FE] text-[#1A73E8]', tint: '#E8F0FE', accent: '#1A73E8' },
-  'Needs attention': { icon: AlertTriangle, className: 'bg-[#FEF7E0] text-[#B06000]', tint: '#FEF7E0', accent: '#B06000' },
-  'Low activity': { icon: Moon, className: 'bg-[#F1F3F4] text-[#5F6368]', tint: '#F1F3F4', accent: '#5F6368' },
+  Healthy: {
+    icon: CheckCircle2, className: 'bg-[#E6F4EA] text-[#188038]', tint: '#E6F4EA', accent: '#188038',
+    description: 'Applicants are moving — interviews or offers are happening.',
+  },
+  'Needs attention': {
+    icon: AlertTriangle, className: 'bg-[#FEF7E0] text-[#B06000]', tint: '#FEF7E0', accent: '#B06000',
+    description: "Applicants aren't advancing yet, or match quality is low.",
+  },
+  'Low activity': {
+    icon: Moon, className: 'bg-[#F1F3F4] text-[#5F6368]', tint: '#F1F3F4', accent: '#5F6368',
+    description: 'Too few applicants so far to tell much.',
+  },
 }
 
 const KPI_STYLES = [
@@ -74,10 +82,8 @@ function sameId(a, b) {
 }
 
 function getRoleHealth({ applicantCount, avgMatch, interviews, accepted }) {
-  if (applicantCount > 0 && avgMatch >= 80) return 'Strong candidate pool'
-  if (applicantCount === 0) return 'Low activity'
-  if (applicantCount > 0 && interviews === 0 && accepted === 0) return 'Needs attention'
   if (applicantCount <= 1) return 'Low activity'
+  if ((interviews === 0 && accepted === 0) || avgMatch < 50) return 'Needs attention'
   return 'Healthy'
 }
 
@@ -190,13 +196,18 @@ function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
   let cumulative = 0
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 overflow-visible">
       <defs>
         {segments.map((seg, i) => (
           <linearGradient key={seg.label} id={`${gradientId}-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={seg.color} />
             <stop offset="100%" stopColor={seg.colorDark || seg.color} />
           </linearGradient>
+        ))}
+        {segments.map((seg, i) => (
+          <filter key={seg.label} id={`${gradientId}-glow-${i}`} x="-60%" y="-60%" width="220%" height="220%">
+            <feDropShadow dx="0" dy="0" stdDeviation={strokeWidth * 0.35} floodColor={seg.colorDark || seg.color} floodOpacity="0.55" />
+          </filter>
         ))}
       </defs>
       <circle cx={center} cy={center} r={r} fill="none" stroke="#F1F3F4" strokeWidth={strokeWidth} />
@@ -213,6 +224,7 @@ function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
             stroke={`url(#${gradientId}-${i})`} strokeWidth={strokeWidth} strokeLinecap="round"
             strokeDasharray={`${segLen} ${circ - segLen}`}
             transform={`rotate(-90 ${center} ${center})`}
+            style={{ filter: `url(#${gradientId}-glow-${i})` }}
             initial={{ strokeDashoffset: 0, opacity: 0 }}
             animate={{ strokeDashoffset: dashoffset, opacity: 1 }}
             transition={{ duration: 0.55, delay: i * 0.08, ease: 'easeOut' }}
@@ -559,8 +571,7 @@ export default function Analytics() {
 
                   {data.roleHealth.length > 0 ? (
                     <div className="px-6 py-6">
-                      {/* Soft tri-tone pastel canvas — donut + breakdown on the left, headline numbers on the right */}
-                      <div className="flex flex-col gap-6 rounded-[22px] bg-gradient-to-br from-[#F3EFFC] via-[#FDF3E8] to-[#EBF8F1] p-5 sm:flex-row sm:items-center sm:gap-7">
+                      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
                         <div className="flex items-center gap-5">
                           <MiniDonut
                             segments={[
@@ -571,39 +582,39 @@ export default function Analytics() {
                             size={122}
                             strokeWidth={15}
                           />
-                          <div className="space-y-2.5">
-                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #CBBFEF, #9B87D6)' }} />
+                          <div className="space-y-3">
+                            <p className="flex items-center gap-2.5 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #CBBFEF, #9B87D6)', boxShadow: '0 0 8px 2px rgba(155,135,214,0.5)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.reviewing}</span> Applied
                             </p>
-                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #F9D3A8, #F0AE68)' }} />
+                            <p className="flex items-center gap-2.5 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #F9D3A8, #F0AE68)', boxShadow: '0 0 8px 2px rgba(240,174,104,0.5)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.interviews}</span> Interview
                             </p>
-                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #B4E3C9, #7BC29A)' }} />
+                            <p className="flex items-center gap-2.5 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #B4E3C9, #7BC29A)', boxShadow: '0 0 8px 2px rgba(123,194,154,0.5)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.accepted}</span> Accepted
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-1 flex-col justify-between gap-5 sm:border-l sm:border-white/70 sm:pl-7">
+                        <div className="flex flex-1 flex-col justify-between gap-5 sm:border-l sm:border-[#F1F3F4] sm:pl-8">
                           <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[#7C6BC4]">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3EFFC] text-[#7C6BC4]">
                               <Users size={17} />
                             </span>
                             <div>
                               <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
-                              <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
+                              <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[#3C9C6C]">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF8F1] text-[#3C9C6C]">
                               <Percent size={17} />
                             </span>
                             <div>
                               <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
-                              <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">Average match</p>
+                              <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">Average match</p>
                             </div>
                           </div>
                         </div>
@@ -619,7 +630,10 @@ export default function Analytics() {
                                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70" style={{ color: cfg.accent }}>
                                   <Icon size={16} />
                                 </span>
-                                <span className="text-[0.88rem] font-semibold" style={{ color: cfg.accent }}>{singleRole.health}</span>
+                                <div className="min-w-0">
+                                  <p className="text-[0.88rem] font-semibold" style={{ color: cfg.accent }}>{singleRole.health}</p>
+                                  <p className="mt-0.5 text-[0.76rem] leading-snug" style={{ color: cfg.accent, opacity: 0.85 }}>{cfg.description}</p>
+                                </div>
                               </div>
                               {singleRoleSuggestion && (
                                 <div className="flex items-start gap-2 border-t border-white/60 px-4 py-3 text-[0.8rem] leading-5" style={{ color: cfg.accent }}>
@@ -631,19 +645,27 @@ export default function Analytics() {
                           )
                         })()
                       ) : (
-                        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                          {Object.entries(HEALTH_CONFIG).map(([status, cfg]) => {
-                            const Icon = cfg.icon
-                            return (
-                              <div key={status} className="rounded-[18px] p-3.5" style={{ background: cfg.tint }}>
-                                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/70" style={{ color: cfg.accent }}>
-                                  <Icon size={14} />
-                                </span>
-                                <p className="mt-2.5 text-[1.35rem] font-semibold leading-none text-[#202124]">{healthCounts[status] || 0}</p>
-                                <p className="mt-1 text-[0.68rem] leading-tight" style={{ color: cfg.accent }}>{status}</p>
-                              </div>
-                            )
-                          })}
+                        <div className="mt-6">
+                          <p className="mb-3 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Average status across all your roles</p>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            {Object.entries(HEALTH_CONFIG).map(([status, cfg]) => {
+                              const Icon = cfg.icon
+                              return (
+                                <div key={status} className="rounded-[18px] p-3.5" style={{ background: cfg.tint }}>
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70" style={{ color: cfg.accent }}>
+                                      <Icon size={14} />
+                                    </span>
+                                    <div>
+                                      <p className="text-[1.15rem] font-semibold leading-none text-[#202124]">{healthCounts[status] || 0}</p>
+                                      <p className="mt-0.5 text-[0.7rem] font-medium leading-tight" style={{ color: cfg.accent }}>{status}</p>
+                                    </div>
+                                  </div>
+                                  <p className="mt-2.5 text-[0.72rem] leading-snug" style={{ color: cfg.accent, opacity: 0.85 }}>{cfg.description}</p>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
