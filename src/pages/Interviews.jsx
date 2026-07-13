@@ -1841,12 +1841,14 @@ function NGOView({ onPracticeChange }) {
             return (
               <div
                 key={panel.id}
-                className={`overflow-hidden rounded-[20px] border transition-colors ${
+                className={`rounded-[20px] border transition-colors ${
                   isOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'
                 }`}>
                 <button
                   onClick={() => setOpenPanel(isOpen ? '' : panel.id)}
-                  className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[#FBFCFE]">
+                  className={`sticky top-0 z-10 flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[#FBFCFE] ${
+                    isOpen ? 'rounded-t-[20px] bg-[#FBFCFE]' : 'rounded-[20px] bg-white'
+                  }`}>
                   <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
                       isOpen ? 'bg-gradient-to-br from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_2px_6px_rgba(26,115,232,0.3)]' : 'bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8]'
@@ -1864,7 +1866,7 @@ function NGOView({ onPracticeChange }) {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.18 }}
-                      className="border-t border-[#E5EEFB]">
+                      className="overflow-hidden rounded-b-[20px] border-t border-[#E5EEFB]">
                       <div className="px-4 py-4">
                         {panel.content}
                       </div>
