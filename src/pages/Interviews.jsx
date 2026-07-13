@@ -1569,7 +1569,7 @@ function NGOView({ onPracticeChange }) {
         {/* Context header — grounds the box: who you're talking to, and how far along you are */}
         <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-4">
           <button
-            onClick={() => setOpenPanel('profile')}
+            onClick={() => setOpenPanel(openPanel === 'profile' ? '' : 'profile')}
             aria-label={`View ${mockStudent.name}'s profile`}
             title={`View ${mockStudent.name}'s profile`}
             className="flex min-w-0 items-center gap-3 rounded-2xl py-1 pr-3 text-left transition-colors hover:bg-black/[0.03]">
