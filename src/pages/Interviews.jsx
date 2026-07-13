@@ -989,6 +989,8 @@ function NGOView({ onPracticeChange }) {
   const [ngoOpportunities, setNgoOpportunities] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
+  const [openSummaryStage, setOpenSummaryStage] = useState(null)
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [openQuestionStage, setOpenQuestionStage] = useState(null)
   const [activeStage, setActiveStage] = useState('opening')
@@ -1027,7 +1029,10 @@ function NGOView({ onPracticeChange }) {
     onPracticeChange?.({
       active: practiceStarted,
       title: selectedOpp?.title || '',
-      onBack: () => setPracticeStarted(false),
+      onBack: () => {
+        setPracticeStarted(false)
+        setShowSummary(false)
+      },
     })
   }, [practiceStarted, selectedOpp?.title, onPracticeChange])
 
@@ -1059,6 +1064,7 @@ function NGOView({ onPracticeChange }) {
   function openRole(roleId) {
     setSelectedRole(roleId)
     setPracticeStarted(false)
+    setShowSummary(false)
     setActiveGuideSection('summary')
     setActiveStage('opening')
     setOpenPanel('')
@@ -1073,6 +1079,8 @@ function NGOView({ onPracticeChange }) {
   function openPracticeRoom() {
     if (!selectedOpp) return
     setPracticeStarted(true)
+    setShowSummary(false)
+    setOpenSummaryStage(null)
     setActiveStage('opening')
     setOpenPanel('')
     setAiGuidanceOpen(false)
@@ -1109,7 +1117,7 @@ function NGOView({ onPracticeChange }) {
       setExampleQuestionIndex(0)
       setDraftQuestion('')
     } else {
-      setPracticeStarted(false)
+      setShowSummary(true)
     }
   }
 
@@ -1431,6 +1439,201 @@ function NGOView({ onPracticeChange }) {
             </div>
           )}
         </section>
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (showSummary) {
+    const stagesRecap = NGO_INTERVIEW_STAGES.map(stage => {
+      const questions = transcript.filter(message => message.stage === stage.id && message.from === 'ngo')
+      const answers = transcript.filter(message => message.stage === stage.id && message.from === 'student')
+      const qaPairs = questions.map((question, index) => ({
+        id: question.id,
+        question: question.text,
+        answer: answers[index]?.text || null,
+      }))
+      return { ...stage, qaPairs, covered: qaPairs.length > 0 }
+    })
+    const coveredStages = stagesRecap.filter(stage => stage.covered)
+    const skippedStages = stagesRecap.filter(stage => !stage.covered)
+    const questionsAsked = transcript.filter(message => message.from === 'ngo').length
+    const answersGiven = transcript.filter(message => message.from === 'student').length
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mx-auto max-w-3xl space-y-6">
+        {/* Overview — who this was, and the headline numbers */}
+        <section className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+          <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-5">
+            <div className="flex items-center gap-3">
+              <GradientAvatar name={mockStudent.name} size={44} radius="0.9rem" className="shrink-0 shadow-sm ring-2 ring-white" />
+              <div className="min-w-0">
+                <p className="text-[1.05rem] font-semibold text-[#202124]">Interview summary</p>
+                <p className="truncate text-[0.82rem] text-[#9AA0A6]">{mockStudent.name} · {selectedOpp.title}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setPracticeStarted(false); setShowSummary(false) }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#D7E6FF] bg-white px-4 py-2 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+              <ArrowLeft size={14} />
+              Back to guide
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-4 p-6">
+            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
+              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{questionsAsked}</p>
+              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Questions asked</p>
+            </div>
+            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
+              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{answersGiven}</p>
+              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Answers given</p>
+            </div>
+            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
+              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{coveredStages.length}/{NGO_INTERVIEW_STAGES.length}</p>
+              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Stages covered</p>
+            </div>
+          </div>
+        </section>
+
+        {/* What you learned / what could improve — derived from which stages actually got asked about */}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <section className="rounded-[28px] bg-white p-5 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F4EA] text-[#188038]">
+                <CheckCircle2 size={15} />
+              </span>
+              <p className="text-[0.9rem] font-semibold text-[#202124]">What you learned</p>
+            </div>
+            {coveredStages.length > 0 ? (
+              <div className="space-y-3">
+                {coveredStages.map(stage => (
+                  <div key={stage.id} className="rounded-[16px] bg-[#F6FBF8] p-3">
+                    <p className="text-[0.82rem] font-semibold text-[#202124]">{stage.label}</p>
+                    <p className="mt-1 text-[0.8rem] leading-6 text-[#5F6368]">{stage.lookFor}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[0.82rem] leading-6 text-[#5F6368]">No questions were asked, so there's nothing to reflect on yet.</p>
+            )}
+          </section>
+
+          <section className="rounded-[28px] bg-white p-5 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FEF7E0] text-[#B06000]">
+                <AlertCircle size={15} />
+              </span>
+              <p className="text-[0.9rem] font-semibold text-[#202124]">What could improve</p>
+            </div>
+            {skippedStages.length > 0 ? (
+              <div className="space-y-3">
+                {skippedStages.map(stage => (
+                  <div key={stage.id} className="rounded-[16px] bg-[#FFFBF2] p-3">
+                    <p className="text-[0.82rem] font-semibold text-[#202124]">{stage.label} wasn&apos;t covered</p>
+                    <p className="mt-1 text-[0.8rem] leading-6 text-[#5F6368]">{stage.prompt}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[0.82rem] leading-6 text-[#5F6368]">Nice — every stage got at least one question.</p>
+            )}
+          </section>
+        </div>
+
+        {/* What happened — full transcript, one collapsible section per stage */}
+        <section className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+          <div className="flex items-center gap-3 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_2px_6px_rgba(26,115,232,0.15)]">
+              <MessageCircle size={16} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[0.95rem] font-semibold text-[#202124]">What happened during the interview</p>
+              <p className="text-[0.78rem] text-[#9AA0A6]">Questions asked and how {mockStudent.name.split(' ')[0]} answered, by stage</p>
+            </div>
+          </div>
+          <div className="space-y-2.5 p-3">
+            {stagesRecap.map(stage => {
+              const isOpen = openSummaryStage === stage.id
+              return (
+                <div
+                  key={stage.id}
+                  className={`overflow-hidden rounded-[20px] border transition-colors ${
+                    isOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'
+                  }`}>
+                  <button
+                    onClick={() => stage.covered && setOpenSummaryStage(isOpen ? null : stage.id)}
+                    disabled={!stage.covered}
+                    className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors ${
+                      stage.covered ? 'hover:bg-[#FBFCFE]' : 'cursor-default opacity-50'
+                    }`}>
+                    <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                        isOpen ? 'bg-gradient-to-br from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_2px_6px_rgba(26,115,232,0.3)]' : 'bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8]'
+                      }`}>
+                        {stage.covered ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                      </span>
+                      {stage.label}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-[0.74rem] font-medium text-[#9AA0A6]">
+                        {stage.covered ? `${stage.qaPairs.length} question${stage.qaPairs.length !== 1 ? 's' : ''}` : 'Not covered'}
+                      </span>
+                      {stage.covered && (isOpen ? <ChevronUp size={15} className="text-[#5F6368]" /> : <ChevronDown size={15} className="text-[#5F6368]" />)}
+                    </span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="overflow-hidden border-t border-[#E5EEFB]">
+                        <div className="space-y-4 px-4 py-4">
+                          {stage.qaPairs.map((pair, index) => (
+                            <div key={pair.id} className="space-y-2">
+                              {index > 0 && <div className="border-t border-[#F1F3F4] pt-3" />}
+                              <div className="flex items-start gap-2.5">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF4FF] text-[#1A73E8]">
+                                  <MessageCircle size={12} />
+                                </span>
+                                <p className="text-[0.84rem] leading-6 text-[#3C4043]">{pair.question}</p>
+                              </div>
+                              <div className="flex items-start gap-2.5 pl-1">
+                                <GradientAvatar name={mockStudent.name} size={24} radius="0.5rem" className="mt-0.5 shrink-0" />
+                                <p className="text-[0.84rem] leading-6 text-[#5F6368]">
+                                  {pair.answer || <span className="italic text-[#9AA0A6]">No answer recorded</span>}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        <div className="flex flex-wrap justify-center gap-3 pb-2">
+          <button
+            onClick={openPracticeRoom}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-6 py-3 text-[0.88rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+            <PlayCircle size={17} />
+            Practice again
+          </button>
+          <button
+            onClick={() => { setPracticeStarted(false); setShowSummary(false) }}
+            className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+            Back to guide
+          </button>
         </div>
       </motion.div>
     )
