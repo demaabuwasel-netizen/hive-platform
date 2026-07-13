@@ -574,7 +574,7 @@ export default function Analytics() {
 
                   {data.roleHealth.length > 0 ? (
                     <div className="px-6 py-6">
-                      <div className="flex flex-wrap items-center justify-between gap-7">
+                      <div className="flex flex-wrap items-center justify-center gap-14">
                         <div className="flex items-center gap-9">
                           <MiniDonut
                             segments={[
@@ -627,22 +627,24 @@ export default function Analytics() {
                         const cfg = HEALTH_CONFIG[overallHealth]
                         const Icon = cfg.icon
                         return (
-                          <div className="mt-7 flex items-start gap-3 border-t border-[#F1F3F4] pt-6">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: cfg.tint, color: cfg.accent }}>
-                              <Icon size={16} />
-                            </span>
-                            <div className="min-w-0">
-                              {selectedRoleId === 'all' && (
-                                <p className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Average status across all your roles</p>
-                              )}
-                              <p className="mt-0.5 text-[0.9rem] font-semibold" style={{ color: cfg.accent }}>{overallHealth}</p>
-                              <p className="mt-0.5 text-[0.82rem] leading-snug text-[#5F6368]">{cfg.description}</p>
-                              {overallSuggestion && (
-                                <p className="mt-2.5 flex items-start gap-1.5 text-[0.82rem] leading-5 text-[#5F6368]">
-                                  <Lightbulb size={14} className="mt-0.5 shrink-0 text-[#B06000]" />
-                                  {overallSuggestion}
-                                </p>
-                              )}
+                          <div className="mt-7 border-t border-[#F1F3F4] pt-6">
+                            {selectedRoleId === 'all' && (
+                              <p className="mb-2 text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Average status across all your roles</p>
+                            )}
+                            <div className="flex items-start gap-3">
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: cfg.tint, color: cfg.accent }}>
+                                <Icon size={16} />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-[0.9rem] font-semibold" style={{ color: cfg.accent }}>{overallHealth}</p>
+                                <p className="mt-0.5 text-[0.82rem] leading-snug text-[#5F6368]">{cfg.description}</p>
+                                {overallSuggestion && (
+                                  <p className="mt-2.5 flex items-start gap-1.5 text-[0.82rem] leading-5 text-[#5F6368]">
+                                    <Lightbulb size={14} className="mt-0.5 shrink-0 text-[#B06000]" />
+                                    {overallSuggestion}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )
