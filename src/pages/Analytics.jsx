@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -13,10 +13,10 @@ import { fetchNgoOpportunities, parseSkillString } from '../services/opportuniti
 import { withTimeout } from '../utils/withTimeout'
 
 const HEALTH_CONFIG = {
-  'Strong candidate pool': { icon: TrendingUp, className: 'bg-[#E6F4EA] text-[#188038]' },
-  Healthy: { icon: CheckCircle2, className: 'bg-[#E8F0FE] text-[#1A73E8]' },
-  'Needs attention': { icon: AlertTriangle, className: 'bg-[#FEF7E0] text-[#B06000]' },
-  'Low activity': { icon: Moon, className: 'bg-[#F1F3F4] text-[#5F6368]' },
+  'Strong candidate pool': { icon: TrendingUp, className: 'bg-[#E6F4EA] text-[#188038]', tint: '#E6F4EA', accent: '#188038' },
+  Healthy: { icon: CheckCircle2, className: 'bg-[#E8F0FE] text-[#1A73E8]', tint: '#E8F0FE', accent: '#1A73E8' },
+  'Needs attention': { icon: AlertTriangle, className: 'bg-[#FEF7E0] text-[#B06000]', tint: '#FEF7E0', accent: '#B06000' },
+  'Low activity': { icon: Moon, className: 'bg-[#F1F3F4] text-[#5F6368]', tint: '#F1F3F4', accent: '#5F6368' },
 }
 
 const KPI_STYLES = [
@@ -179,7 +179,9 @@ function MatchGauge({ score, size = 148 }) {
 
 // Small-multiple donut — an applicant pipeline mix (disjoint status buckets, so shares are honest).
 // Rejected applicants are excluded from the ring, matching how "total" is treated elsewhere in the app.
+// Each segment is a soft light→deeper pastel gradient (same technique as <Bar>), not a flat fill.
 function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
+  const gradientId = useId()
   const r = (size - strokeWidth) / 2
   const circ = 2 * Math.PI * r
   const center = size / 2
@@ -189,8 +191,17 @@ function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+      <defs>
+        {segments.map((seg, i) => (
+          <linearGradient key={seg.label} id={`${gradientId}-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={seg.color} />
+            <stop offset="100%" stopColor={seg.colorDark || seg.color} />
+          </linearGradient>
+        ))}
+      </defs>
       <circle cx={center} cy={center} r={r} fill="none" stroke="#F1F3F4" strokeWidth={strokeWidth} />
-      {total > 0 && segments.filter(seg => seg.value > 0).map((seg, i) => {
+      {total > 0 && segments.map((seg, i) => {
+        if (seg.value <= 0) return null
         const rawLen = (seg.value / total) * circ
         const segLen = Math.max(rawLen - gap, 1)
         const dashoffset = -cumulative
@@ -199,7 +210,7 @@ function MiniDonut({ segments, size = 52, strokeWidth = 7 }) {
           <motion.circle
             key={seg.label}
             cx={center} cy={center} r={r} fill="none"
-            stroke={seg.color} strokeWidth={strokeWidth} strokeLinecap="round"
+            stroke={`url(#${gradientId}-${i})`} strokeWidth={strokeWidth} strokeLinecap="round"
             strokeDasharray={`${segLen} ${circ - segLen}`}
             transform={`rotate(-90 ${center} ${center})`}
             initial={{ strokeDashoffset: 0, opacity: 0 }}
@@ -547,79 +558,90 @@ export default function Analytics() {
                   </div>
 
                   {data.roleHealth.length > 0 ? (
-                    <div className="px-6 py-7">
-                      <div className="flex flex-col gap-6 sm:flex-row sm:items-stretch sm:gap-8">
-                        {/* Left — the cake, with its own breakdown stacked right beside it */}
+                    <div className="px-6 py-6">
+                      {/* Soft tri-tone pastel canvas — donut + breakdown on the left, headline numbers on the right */}
+                      <div className="flex flex-col gap-6 rounded-[22px] bg-gradient-to-br from-[#F3EFFC] via-[#FDF3E8] to-[#EBF8F1] p-5 sm:flex-row sm:items-center sm:gap-7">
                         <div className="flex items-center gap-5">
                           <MiniDonut
                             segments={[
-                              { label: 'Applied', value: roleHealthTotals.reviewing, color: '#9B87D6' },
-                              { label: 'Interview', value: roleHealthTotals.interviews, color: '#F0AE68' },
-                              { label: 'Accepted', value: roleHealthTotals.accepted, color: '#7BC29A' },
+                              { label: 'Applied', value: roleHealthTotals.reviewing, color: '#CBBFEF', colorDark: '#9B87D6' },
+                              { label: 'Interview', value: roleHealthTotals.interviews, color: '#F9D3A8', colorDark: '#F0AE68' },
+                              { label: 'Accepted', value: roleHealthTotals.accepted, color: '#B4E3C9', colorDark: '#7BC29A' },
                             ]}
-                            size={120}
-                            strokeWidth={14}
+                            size={122}
+                            strokeWidth={15}
                           />
                           <div className="space-y-2.5">
-                            <p className="flex items-center gap-2 text-[0.84rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#9B87D6]" />
+                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #CBBFEF, #9B87D6)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.reviewing}</span> Applied
                             </p>
-                            <p className="flex items-center gap-2 text-[0.84rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#F0AE68]" />
+                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #F9D3A8, #F0AE68)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.interviews}</span> Interview
                             </p>
-                            <p className="flex items-center gap-2 text-[0.84rem] text-[#3C4043]">
-                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#7BC29A]" />
+                            <p className="flex items-center gap-2 text-[0.86rem] text-[#3C4043]">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg, #B4E3C9, #7BC29A)' }} />
                               <span className="font-semibold text-[#202124]">{roleHealthTotals.accepted}</span> Accepted
                             </p>
                           </div>
                         </div>
 
-                        {/* Right — total up top, average match down at the bottom */}
-                        <div className="flex flex-1 flex-col justify-between gap-4 sm:items-end sm:border-l sm:border-[#F1F3F4] sm:pl-8 sm:text-right">
-                          <div>
-                            <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
-                            <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
+                        <div className="flex flex-1 flex-col justify-between gap-5 sm:border-l sm:border-white/70 sm:pl-7">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[#7C6BC4]">
+                              <Users size={17} />
+                            </span>
+                            <div>
+                              <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{totalActiveApplicants}</p>
+                              <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">{selectedRoleId === 'all' ? 'Applicants across roles' : 'Applicants'}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
-                            <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">Average match</p>
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[#3C9C6C]">
+                              <Percent size={17} />
+                            </span>
+                            <div>
+                              <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{data.avgMatchScore}%</p>
+                              <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">Average match</p>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       {singleRole ? (
-                        <div className="mt-6 space-y-3 border-t border-[#F1F3F4] pt-5">
-                          <div className="flex items-center">
-                            {(() => {
-                              const cfg = HEALTH_CONFIG[singleRole.health]
-                              const Icon = cfg.icon
-                              return (
-                                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.76rem] font-medium ${cfg.className}`}>
-                                  <Icon size={12} />
-                                  {singleRole.health}
+                        (() => {
+                          const cfg = HEALTH_CONFIG[singleRole.health]
+                          const Icon = cfg.icon
+                          return (
+                            <div className="mt-5 overflow-hidden rounded-[20px]" style={{ background: cfg.tint }}>
+                              <div className="flex items-center gap-2.5 px-4 py-3.5">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70" style={{ color: cfg.accent }}>
+                                  <Icon size={16} />
                                 </span>
-                              )
-                            })()}
-                          </div>
-                          {singleRoleSuggestion && (
-                            <div className="flex items-start gap-2 rounded-[16px] bg-[#FFFBF2] px-3.5 py-3 text-[0.8rem] leading-5 text-[#5F6368]">
-                              <Lightbulb size={14} className="mt-0.5 shrink-0 text-[#B06000]" />
-                              {singleRoleSuggestion}
+                                <span className="text-[0.88rem] font-semibold" style={{ color: cfg.accent }}>{singleRole.health}</span>
+                              </div>
+                              {singleRoleSuggestion && (
+                                <div className="flex items-start gap-2 border-t border-white/60 px-4 py-3 text-[0.8rem] leading-5" style={{ color: cfg.accent }}>
+                                  <Lightbulb size={14} className="mt-0.5 shrink-0" />
+                                  {singleRoleSuggestion}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
+                          )
+                        })()
                       ) : (
-                        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[#F1F3F4] pt-5">
-                          <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Overall status</span>
-                          {Object.entries(HEALTH_CONFIG).filter(([status]) => healthCounts[status]).map(([status, cfg]) => {
+                        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          {Object.entries(HEALTH_CONFIG).map(([status, cfg]) => {
                             const Icon = cfg.icon
                             return (
-                              <span key={status} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-medium ${cfg.className}`}>
-                                <Icon size={11} />
-                                {healthCounts[status]} {status}
-                              </span>
+                              <div key={status} className="rounded-[18px] p-3.5" style={{ background: cfg.tint }}>
+                                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/70" style={{ color: cfg.accent }}>
+                                  <Icon size={14} />
+                                </span>
+                                <p className="mt-2.5 text-[1.35rem] font-semibold leading-none text-[#202124]">{healthCounts[status] || 0}</p>
+                                <p className="mt-1 text-[0.68rem] leading-tight" style={{ color: cfg.accent }}>{status}</p>
+                              </div>
                             )
                           })}
                         </div>
