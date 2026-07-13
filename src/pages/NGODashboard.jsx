@@ -16,7 +16,7 @@ import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities } from '../services/opportunities'
 import { supabase } from '../services/supabase'
 import { computeMatch } from '../services/matching'
-import dashboardIllustration from '../assets/download.png'
+import dashboardIllustration from '../assets/ngo dashboard.PNG'
 
 const QUICK_ACTIONS = [
   {
@@ -323,30 +323,34 @@ export default function NGODashboard() {
       {/* Soft ambient gradients */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
-      <div className="relative mx-auto max-w-[1440px] px-6 pb-10 pt-3 lg:px-10 lg:pt-4">
+      <div className="relative mx-auto max-w-[1440px] px-6 pb-10 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="relative z-0 mb-8 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-start lg:justify-between"
+          className="relative z-0 mb-2 flex flex-col gap-4 lg:mb-0 lg:flex-row lg:items-start lg:justify-between"
         >
-          <div className="max-w-3xl lg:pt-10">
+          <div className="max-w-3xl lg:mt-0 lg:translate-x-2 lg:translate-y-16">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
               {orgName}
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
-              Manage connections, roles, and hiring momentum from one clean workspace.
+              Manage connections, roles, and hiring momentum
+              <br />
+              from one clean workspace.
             </p>
           </div>
 
-          <motion.img
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            src={dashboardIllustration}
-            alt=""
-            className="w-[380px] max-w-full self-start lg:mt-4 lg:mb-[-70px] lg:mr-8"
-          />
+          <div className="self-start lg:mt-0 lg:translate-y-6">
+            <motion.img
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.1 }}
+              src={dashboardIllustration}
+              alt=""
+              className="w-[600px] max-w-full lg:mb-[-54px] lg:mr-8"
+            />
+          </div>
         </motion.header>
 
         <section className="relative z-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
