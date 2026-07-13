@@ -990,7 +990,7 @@ function NGOView({ onPracticeChange }) {
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
-  const [closedInsightKeys, setClosedInsightKeys] = useState(() => new Set())
+  const [openInsightKeys, setOpenInsightKeys] = useState(() => new Set())
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [openQuestionStage, setOpenQuestionStage] = useState(null)
   const [activeStage, setActiveStage] = useState('opening')
@@ -1080,7 +1080,7 @@ function NGOView({ onPracticeChange }) {
     if (!selectedOpp) return
     setPracticeStarted(true)
     setShowSummary(false)
-    setClosedInsightKeys(new Set())
+    setOpenInsightKeys(new Set())
     setActiveStage('opening')
     setOpenPanel('')
     setAiGuidanceOpen(false)
@@ -1122,7 +1122,7 @@ function NGOView({ onPracticeChange }) {
   }
 
   function toggleInsight(key) {
-    setClosedInsightKeys(prev => {
+    setOpenInsightKeys(prev => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -1478,145 +1478,149 @@ function NGOView({ onPracticeChange }) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mx-auto max-w-4xl">
-        <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.04]">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 px-8 py-7">
-            <div className="flex items-center gap-3.5">
-              <GradientAvatar name={mockStudent.name} size={44} radius="0.9rem" className="shrink-0" />
+        className="mx-auto max-w-4xl space-y-6">
+        {/* Overview — who this was, and the headline numbers */}
+        <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <GradientAvatar name={mockStudent.name} size={40} radius="0.85rem" className="shrink-0" />
               <div className="min-w-0">
-                <p className="text-[1.15rem] font-semibold tracking-[-0.01em] text-[#202124]">Interview summary</p>
-                <p className="truncate text-[0.83rem] text-[#9AA0A6]">{mockStudent.name} · {selectedOpp.title}</p>
+                <h2 className="text-[0.98rem] font-semibold text-[#202124]">Interview summary</h2>
+                <p className="truncate text-[0.8rem] text-[#5F6368]">{mockStudent.name} · {selectedOpp.title}</p>
               </div>
             </div>
             <button
               onClick={() => { setPracticeStarted(false); setShowSummary(false) }}
-              className="inline-flex shrink-0 items-center gap-1.5 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:text-[#174EA6]">
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-white px-4 py-2 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
               <ArrowLeft size={14} />
               Back to guide
             </button>
           </div>
-
-          {/* Headline numbers */}
-          <div className="grid grid-cols-3 divide-x divide-[#EEF1F6] border-y border-[#EEF1F6]">
+          <div className="grid grid-cols-3 divide-x divide-[#F1F3F4] border-t border-[#F1F3F4]">
             {[
               { label: 'Questions asked', value: questionsAsked },
               { label: 'Answers given', value: answersGiven },
               { label: 'Stages covered', value: `${coveredStages.length}/${NGO_INTERVIEW_STAGES.length}` },
             ].map(stat => (
-              <div key={stat.label} className="px-6 py-6 text-center sm:text-left">
-                <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{stat.value}</p>
-                <p className="mt-2 text-[0.78rem] text-[#9AA0A6]">{stat.label}</p>
+              <div key={stat.label} className="px-6 py-5 text-center sm:text-left">
+                <p className="text-[1.7rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{stat.value}</p>
+                <p className="mt-1.5 text-[0.76rem] text-[#9AA0A6]">{stat.label}</p>
               </div>
             ))}
           </div>
-
-          {/* One section per interview stage, always open */}
-          <div className="divide-y divide-[#EEF1F6]">
-            {stagesRecap.map((stage, index) => {
-              const learnedKey = `${stage.id}-learned`
-              const improveKey = `${stage.id}-improve`
-              const learnedOpen = !closedInsightKeys.has(learnedKey)
-              const improveOpen = !closedInsightKeys.has(improveKey)
-              return (
-                <div key={stage.id} className="px-8 py-8">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-[0.8rem] font-semibold tabular-nums text-[#C4C9D0]">0{index + 1}</span>
-                    <div className="min-w-0">
-                      <p className="text-[1.02rem] font-semibold text-[#202124]">{stage.label}</p>
-                      <p className="text-[0.78rem] text-[#9AA0A6]">
-                        {stage.covered ? `${stage.qaPairs.length} question${stage.qaPairs.length !== 1 ? 's' : ''} asked` : 'Not covered in this practice'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* What happened — always visible */}
-                  <div className="mt-5">
-                    {stage.covered ? (
-                      <div className="space-y-4">
-                        {stage.qaPairs.map((pair, pairIndex) => (
-                          <div key={pair.id} className="space-y-2">
-                            {pairIndex > 0 && <div className="border-t border-[#F1F3F4] pt-3" />}
-                            <p className="text-[0.88rem] font-medium leading-6 text-[#3C4043]">{pair.question}</p>
-                            <div className="flex items-start gap-2.5">
-                              <GradientAvatar name={mockStudent.name} size={22} radius="0.5rem" className="mt-0.5 shrink-0" />
-                              <p className="text-[0.86rem] leading-6 text-[#5F6368]">
-                                {pair.answer || <span className="italic text-[#9AA0A6]">No answer recorded</span>}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[0.86rem] leading-6 text-[#9AA0A6]">This stage wasn&apos;t covered in the conversation.</p>
-                    )}
-                  </div>
-
-                  {/* What you learned / what could improve — side by side, quietly collapsible */}
-                  <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                    <div>
-                      <button
-                        onClick={() => toggleInsight(learnedKey)}
-                        className="flex w-full items-center justify-between gap-2 text-left">
-                        <span className="flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#188038]">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#188038]" />
-                          What you learned
-                        </span>
-                        {learnedOpen ? <ChevronUp size={14} className="shrink-0 text-[#9AA0A6]" /> : <ChevronDown size={14} className="shrink-0 text-[#9AA0A6]" />}
-                      </button>
-                      <AnimatePresence initial={false}>
-                        {learnedOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.18 }}
-                            className="overflow-hidden">
-                            <p className="mt-2.5 border-l-2 border-[#DCEEE2] pl-3 text-[0.85rem] leading-6 text-[#5F6368]">
-                              {stage.covered ? stage.lookFor : `Once you ask about this, listen for: ${stage.lookFor}`}
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    <div>
-                      <button
-                        onClick={() => toggleInsight(improveKey)}
-                        className="flex w-full items-center justify-between gap-2 text-left">
-                        <span className="flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-[#B06000]">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#B06000]" />
-                          What could improve
-                        </span>
-                        {improveOpen ? <ChevronUp size={14} className="shrink-0 text-[#9AA0A6]" /> : <ChevronDown size={14} className="shrink-0 text-[#9AA0A6]" />}
-                      </button>
-                      <AnimatePresence initial={false}>
-                        {improveOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.18 }}
-                            className="overflow-hidden">
-                            <p className="mt-2.5 border-l-2 border-[#F7E3B5] pl-3 text-[0.85rem] leading-6 text-[#5F6368]">
-                              {stage.covered
-                                ? (stage.suggestedFollowUp
-                                  ? `Consider also asking: "${stage.suggestedFollowUp}"`
-                                  : 'You asked a full round of questions here — nice and thorough.')
-                                : stage.prompt}
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         </section>
 
-        <div className="mt-7 flex flex-wrap justify-center gap-3 pb-2">
+        {/* One card per interview stage, with generous space between */}
+        {stagesRecap.map((stage, index) => {
+          const learnedKey = `${stage.id}-learned`
+          const improveKey = `${stage.id}-improve`
+          const learnedOpen = openInsightKeys.has(learnedKey)
+          const improveOpen = openInsightKeys.has(improveKey)
+          return (
+            <section
+              key={stage.id}
+              className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+              <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[0.85rem] font-bold text-[#1A73E8]">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-[0.95rem] font-semibold text-[#202124]">{stage.label}</h2>
+                  <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">
+                    {stage.covered ? `${stage.qaPairs.length} question${stage.qaPairs.length !== 1 ? 's' : ''} asked` : 'Not covered in this practice'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-5">
+                {/* What happened */}
+                {stage.covered ? (
+                  <div className="space-y-4">
+                    {stage.qaPairs.map((pair, pairIndex) => (
+                      <div key={pair.id} className="space-y-2">
+                        {pairIndex > 0 && <div className="border-t border-[#F1F3F4] pt-3" />}
+                        <p className="text-[0.88rem] font-medium leading-6 text-[#3C4043]">{pair.question}</p>
+                        <div className="flex items-start gap-2.5">
+                          <GradientAvatar name={mockStudent.name} size={22} radius="0.5rem" className="mt-0.5 shrink-0" />
+                          <p className="text-[0.86rem] leading-6 text-[#5F6368]">
+                            {pair.answer || <span className="italic text-[#9AA0A6]">No answer recorded</span>}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[0.86rem] leading-6 text-[#9AA0A6]">This stage wasn&apos;t covered in the conversation.</p>
+                )}
+
+                {/* What you learned / what could improve — side by side, closed until opened */}
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className={`overflow-hidden rounded-[18px] border transition-colors ${learnedOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'}`}>
+                    <button
+                      onClick={() => toggleInsight(learnedKey)}
+                      className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
+                      <span className="flex items-center gap-2 text-[0.8rem] font-semibold text-[#202124]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#E6F4EA] text-[#188038]">
+                          <CheckCircle2 size={12} />
+                        </span>
+                        What you learned
+                      </span>
+                      {learnedOpen ? <ChevronUp size={14} className="shrink-0 text-[#5F6368]" /> : <ChevronDown size={14} className="shrink-0 text-[#5F6368]" />}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {learnedOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden border-t border-[#E5EEFB]">
+                          <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
+                            {stage.covered ? stage.lookFor : `Once you ask about this, listen for: ${stage.lookFor}`}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <div className={`overflow-hidden rounded-[18px] border transition-colors ${improveOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'}`}>
+                    <button
+                      onClick={() => toggleInsight(improveKey)}
+                      className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
+                      <span className="flex items-center gap-2 text-[0.8rem] font-semibold text-[#202124]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#FEF7E0] text-[#B06000]">
+                          <AlertCircle size={12} />
+                        </span>
+                        What could improve
+                      </span>
+                      {improveOpen ? <ChevronUp size={14} className="shrink-0 text-[#5F6368]" /> : <ChevronDown size={14} className="shrink-0 text-[#5F6368]" />}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {improveOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden border-t border-[#E5EEFB]">
+                          <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
+                            {stage.covered
+                              ? (stage.suggestedFollowUp
+                                ? `Consider also asking: "${stage.suggestedFollowUp}"`
+                                : 'You asked a full round of questions here — nice and thorough.')
+                              : stage.prompt}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
+        })}
+
+        <div className="flex flex-wrap justify-center gap-3 pb-2 pt-1">
           <button
             onClick={openPracticeRoom}
             className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-6 py-3 text-[0.88rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
