@@ -1660,58 +1660,82 @@ function NGOView({ onPracticeChange }) {
 
 
         <div className="flex min-h-[480px] flex-col">
-          {/* Transcript — editorial reading style, not chat bubbles */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          {/* Transcript — dialogue stage: avatar-led speech blocks instead of a single centered card */}
+          <div className="flex-1 overflow-y-auto px-6 py-6">
             {transcript.length === 0 ? (
-              <div className="mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center text-center">
-                <button
-                  onClick={handleVoiceToggle}
-                  aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-                  title={isRecording ? 'Stop recording' : 'Start recording'}
-                  className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)] transition-transform hover:scale-105 ${
-                    isRecording ? 'animate-pulse ring-4 ring-[#1A73E8]/20' : ''
-                  }`}>
-                  {isRecording ? <StopCircle size={24} strokeWidth={1.8} /> : <Mic size={24} strokeWidth={1.8} />}
-                </button>
-                <p className="text-[1.1rem] font-semibold text-[#202124]">Start the interview</p>
-                <p className="mt-1.5 text-[0.85rem] text-[#5F6368]">
+              <div className="relative mx-auto flex min-h-[300px] max-w-md flex-col items-center justify-center overflow-hidden text-center">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(26,115,232,0.08),transparent_62%)]" />
+                <div className="relative flex h-[92px] w-[92px] items-center justify-center">
+                  <motion.span
+                    className="absolute inset-0 rounded-full bg-[#1A73E8]/10"
+                    animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  <motion.span
+                    className="absolute inset-0 rounded-full bg-[#1A73E8]/10"
+                    animate={{ scale: [1, 1.65, 1], opacity: [0.4, 0, 0.4] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+                  />
+                  <button
+                    onClick={handleVoiceToggle}
+                    aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                    title={isRecording ? 'Stop recording' : 'Start recording'}
+                    className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#4C9AEF] to-[#1A5FC4] text-white shadow-[0_12px_32px_rgba(26,115,232,0.35)] transition-transform hover:scale-105 ${
+                      isRecording ? 'animate-pulse ring-4 ring-[#1A73E8]/25' : ''
+                    }`}>
+                    {isRecording ? <StopCircle size={24} strokeWidth={1.8} /> : <Mic size={24} strokeWidth={1.8} />}
+                  </button>
+                </div>
+                <p className="relative mt-6 text-[1.2rem] font-semibold tracking-tight text-[#202124]">Start the interview</p>
+                <p className="relative mt-2 max-w-xs text-[0.88rem] leading-6 text-[#5F6368]">
                   {isRecording ? 'Listening — tap again to stop.' : 'Type or tap the mic to speak your opening question.'}
                 </p>
               </div>
             ) : (
-              <div className="mx-auto flex min-h-[300px] max-w-2xl flex-col items-center justify-center">
+              <div className="mx-auto flex min-h-[300px] max-w-2xl flex-col justify-center">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentQuestionMsg?.id}
-                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="w-full max-w-xl overflow-hidden rounded-[28px] bg-white shadow-[0_8px_30px_rgba(17,24,39,0.07)] ring-1 ring-black/[0.04]">
-                    <div className="border-b border-[#F1F3F4] bg-[#FAFBFC] px-6 py-4">
-                      <p className="mb-1 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">You asked</p>
-                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{currentQuestionMsg?.text}</p>
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className="space-y-4">
+
+                    {/* Question — compact, interviewer voice */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF4FF] text-[#1A73E8] ring-1 ring-[#D7E6FF]">
+                        <MessageCircle size={15} />
+                      </div>
+                      <div className="min-w-0 flex-1 rounded-[20px] rounded-tl-md bg-[#F6F9FF] px-5 py-3.5">
+                        <p className="mb-0.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#6B93D6]">You asked</p>
+                        <p className="text-[0.9rem] leading-6 text-[#3C4043]">{currentQuestionMsg?.text}</p>
+                      </div>
                     </div>
 
-                    <div className="px-6 py-8 text-center">
-                      {currentAnswerMsg ? (
-                        <>
-                          <p className="mb-3 flex items-center justify-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
-                            {mockStudent.name} answered
-                            <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
-                          </p>
-                          <p className="text-[1.15rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
-                          <div className="flex justify-center gap-1.5 py-1">
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.3s' }} />
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.15s' }} />
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" />
-                          </div>
-                        </>
-                      )}
+                    {/* Answer — the main event, avatar-led and elevated */}
+                    <div className="flex items-start gap-3">
+                      <GradientAvatar name={mockStudent.name} size={36} radius="0.7rem" className="mt-1 shrink-0 shadow-sm" />
+                      <div className="min-w-0 flex-1 overflow-hidden rounded-[20px] rounded-tl-md bg-white px-5 pb-5 pt-4 shadow-[0_10px_36px_rgba(17,24,39,0.09)] ring-1 ring-black/[0.04]">
+                        {currentAnswerMsg ? (
+                          <>
+                            <p className="mb-2 flex items-center gap-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
+                              {mockStudent.name}
+                              <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
+                            </p>
+                            <p className="text-[1.05rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">{mockStudent.name} is answering</p>
+                            <div className="flex gap-1.5 py-1">
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.3s' }} />
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" style={{ animationDelay: '-0.15s' }} />
+                              <span className="h-2 w-2 animate-bounce rounded-full bg-[#1A73E8]/40" />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 </AnimatePresence>
