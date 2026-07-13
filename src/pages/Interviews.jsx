@@ -990,7 +990,7 @@ function NGOView({ onPracticeChange }) {
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
-  const [openSummaryStage, setOpenSummaryStage] = useState(null)
+  const [closedInsightKeys, setClosedInsightKeys] = useState(() => new Set())
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [openQuestionStage, setOpenQuestionStage] = useState(null)
   const [activeStage, setActiveStage] = useState('opening')
@@ -1080,7 +1080,7 @@ function NGOView({ onPracticeChange }) {
     if (!selectedOpp) return
     setPracticeStarted(true)
     setShowSummary(false)
-    setOpenSummaryStage(null)
+    setClosedInsightKeys(new Set())
     setActiveStage('opening')
     setOpenPanel('')
     setAiGuidanceOpen(false)
@@ -1119,6 +1119,15 @@ function NGOView({ onPracticeChange }) {
     } else {
       setShowSummary(true)
     }
+  }
+
+  function toggleInsight(key) {
+    setClosedInsightKeys(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   function generateExampleQuestion() {
@@ -1453,28 +1462,39 @@ function NGOView({ onPracticeChange }) {
         question: question.text,
         answer: answers[index]?.text || null,
       }))
-      return { ...stage, qaPairs, covered: qaPairs.length > 0 }
+      const covered = qaPairs.length > 0
+      const askedTexts = new Set(questions.map(question => question.text))
+      const suggestedFollowUp = covered
+        ? makeStageQuestions(selectedOpp, mockStudent, stage.id).find(question => !askedTexts.has(question))
+        : null
+      return { ...stage, qaPairs, covered, suggestedFollowUp }
     })
     const coveredStages = stagesRecap.filter(stage => stage.covered)
-    const skippedStages = stagesRecap.filter(stage => !stage.covered)
     const questionsAsked = transcript.filter(message => message.from === 'ngo').length
     const answersGiven = transcript.filter(message => message.from === 'student').length
+
+    const overviewStats = [
+      { label: 'Questions asked', value: questionsAsked, hint: `Across ${NGO_INTERVIEW_STAGES.length} stages`, icon: MessageCircle, tint: '#E8F0FE', accent: '#1A73E8' },
+      { label: 'Answers given', value: answersGiven, hint: `By ${mockStudent.name.split(' ')[0]}`, icon: UserRound, tint: '#F3E8FD', accent: '#A142F4' },
+      { label: 'Stages covered', value: `${coveredStages.length}/${NGO_INTERVIEW_STAGES.length}`, hint: coveredStages.length === NGO_INTERVIEW_STAGES.length ? 'Full coverage' : 'See what to revisit', icon: CheckCircle2, tint: '#E6F4EA', accent: '#188038' },
+    ]
 
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mx-auto max-w-3xl space-y-6">
+        className="mx-auto max-w-5xl space-y-7">
         {/* Overview — who this was, and the headline numbers */}
-        <section className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+        <section className="relative overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_20px_48px_rgba(17,24,39,0.07)] ring-1 ring-black/[0.03]">
           <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-5">
-            <div className="flex items-center gap-3">
-              <GradientAvatar name={mockStudent.name} size={44} radius="0.9rem" className="shrink-0 shadow-sm ring-2 ring-white" />
+          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#EAF1FE] opacity-70 blur-3xl" />
+          <div className="relative flex flex-wrap items-center justify-between gap-4 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-7 py-6">
+            <div className="flex items-center gap-3.5">
+              <GradientAvatar name={mockStudent.name} size={48} radius="1rem" className="shrink-0 shadow-sm ring-2 ring-white" />
               <div className="min-w-0">
-                <p className="text-[1.05rem] font-semibold text-[#202124]">Interview summary</p>
-                <p className="truncate text-[0.82rem] text-[#9AA0A6]">{mockStudent.name} · {selectedOpp.title}</p>
+                <p className="text-[1.15rem] font-semibold tracking-[-0.01em] text-[#202124]">Interview summary</p>
+                <p className="truncate text-[0.84rem] text-[#9AA0A6]">{mockStudent.name} · {selectedOpp.title}</p>
               </div>
             </div>
             <button
@@ -1484,143 +1504,160 @@ function NGOView({ onPracticeChange }) {
               Back to guide
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-4 p-6">
-            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
-              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{questionsAsked}</p>
-              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Questions asked</p>
-            </div>
-            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
-              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{answersGiven}</p>
-              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Answers given</p>
-            </div>
-            <div className="rounded-[20px] bg-[#F8FAFD] p-4 text-center">
-              <p className="text-[1.6rem] font-semibold leading-none text-[#202124]">{coveredStages.length}/{NGO_INTERVIEW_STAGES.length}</p>
-              <p className="mt-1.5 text-[0.74rem] text-[#5F6368]">Stages covered</p>
-            </div>
-          </div>
-        </section>
-
-        {/* What you learned / what could improve — derived from which stages actually got asked about */}
-        <div className="grid gap-5 sm:grid-cols-2">
-          <section className="rounded-[28px] bg-white p-5 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
-            <div className="mb-4 flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F4EA] text-[#188038]">
-                <CheckCircle2 size={15} />
-              </span>
-              <p className="text-[0.9rem] font-semibold text-[#202124]">What you learned</p>
-            </div>
-            {coveredStages.length > 0 ? (
-              <div className="space-y-3">
-                {coveredStages.map(stage => (
-                  <div key={stage.id} className="rounded-[16px] bg-[#F6FBF8] p-3">
-                    <p className="text-[0.82rem] font-semibold text-[#202124]">{stage.label}</p>
-                    <p className="mt-1 text-[0.8rem] leading-6 text-[#5F6368]">{stage.lookFor}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[0.82rem] leading-6 text-[#5F6368]">No questions were asked, so there's nothing to reflect on yet.</p>
-            )}
-          </section>
-
-          <section className="rounded-[28px] bg-white p-5 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
-            <div className="mb-4 flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FEF7E0] text-[#B06000]">
-                <AlertCircle size={15} />
-              </span>
-              <p className="text-[0.9rem] font-semibold text-[#202124]">What could improve</p>
-            </div>
-            {skippedStages.length > 0 ? (
-              <div className="space-y-3">
-                {skippedStages.map(stage => (
-                  <div key={stage.id} className="rounded-[16px] bg-[#FFFBF2] p-3">
-                    <p className="text-[0.82rem] font-semibold text-[#202124]">{stage.label} wasn&apos;t covered</p>
-                    <p className="mt-1 text-[0.8rem] leading-6 text-[#5F6368]">{stage.prompt}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[0.82rem] leading-6 text-[#5F6368]">Nice — every stage got at least one question.</p>
-            )}
-          </section>
-        </div>
-
-        {/* What happened — full transcript, one collapsible section per stage */}
-        <section className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
-          <div className="flex items-center gap-3 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-6 py-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_2px_6px_rgba(26,115,232,0.15)]">
-              <MessageCircle size={16} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[0.95rem] font-semibold text-[#202124]">What happened during the interview</p>
-              <p className="text-[0.78rem] text-[#9AA0A6]">Questions asked and how {mockStudent.name.split(' ')[0]} answered, by stage</p>
-            </div>
-          </div>
-          <div className="space-y-2.5 p-3">
-            {stagesRecap.map(stage => {
-              const isOpen = openSummaryStage === stage.id
+          <div className="relative grid grid-cols-1 gap-4 p-7 sm:grid-cols-3">
+            {overviewStats.map(stat => {
+              const Icon = stat.icon
               return (
-                <div
-                  key={stage.id}
-                  className={`overflow-hidden rounded-[20px] border transition-colors ${
-                    isOpen ? 'border-[#D7E6FF] bg-[#FBFCFE]' : 'border-[#E5EEFB] bg-white'
-                  }`}>
-                  <button
-                    onClick={() => stage.covered && setOpenSummaryStage(isOpen ? null : stage.id)}
-                    disabled={!stage.covered}
-                    className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors ${
-                      stage.covered ? 'hover:bg-[#FBFCFE]' : 'cursor-default opacity-50'
-                    }`}>
-                    <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                        isOpen ? 'bg-gradient-to-br from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_2px_6px_rgba(26,115,232,0.3)]' : 'bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8]'
-                      }`}>
-                        {stage.covered ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                      </span>
-                      {stage.label}
+                <div key={stat.label} className="group relative overflow-hidden rounded-[22px] bg-[#FBFCFE] p-5 ring-1 ring-[#EEF3FC] transition-shadow hover:shadow-[0_6px_18px_rgba(17,24,39,0.06)]">
+                  <div
+                    className="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-60 blur-2xl transition-opacity group-hover:opacity-90"
+                    style={{ background: stat.tint }}
+                  />
+                  <div className="relative flex items-center justify-between">
+                    <p className="text-[0.78rem] font-medium text-[#5F6368]">{stat.label}</p>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110" style={{ background: stat.tint, color: stat.accent }}>
+                      <Icon size={15} strokeWidth={2.1} />
                     </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-[0.74rem] font-medium text-[#9AA0A6]">
-                        {stage.covered ? `${stage.qaPairs.length} question${stage.qaPairs.length !== 1 ? 's' : ''}` : 'Not covered'}
-                      </span>
-                      {stage.covered && (isOpen ? <ChevronUp size={15} className="text-[#5F6368]" /> : <ChevronDown size={15} className="text-[#5F6368]" />)}
-                    </span>
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.18 }}
-                        className="overflow-hidden border-t border-[#E5EEFB]">
-                        <div className="space-y-4 px-4 py-4">
-                          {stage.qaPairs.map((pair, index) => (
-                            <div key={pair.id} className="space-y-2">
-                              {index > 0 && <div className="border-t border-[#F1F3F4] pt-3" />}
-                              <div className="flex items-start gap-2.5">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF4FF] text-[#1A73E8]">
-                                  <MessageCircle size={12} />
-                                </span>
-                                <p className="text-[0.84rem] leading-6 text-[#3C4043]">{pair.question}</p>
-                              </div>
-                              <div className="flex items-start gap-2.5 pl-1">
-                                <GradientAvatar name={mockStudent.name} size={24} radius="0.5rem" className="mt-0.5 shrink-0" />
-                                <p className="text-[0.84rem] leading-6 text-[#5F6368]">
-                                  {pair.answer || <span className="italic text-[#9AA0A6]">No answer recorded</span>}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  </div>
+                  <p className="relative mt-3 text-[2rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{stat.value}</p>
+                  <p className="relative mt-2 text-[0.76rem] text-[#9AA0A6]">{stat.hint}</p>
                 </div>
               )
             })}
           </div>
         </section>
+
+        {/* One box per interview stage, always open — what happened, what you learned, what could improve */}
+        <div className="space-y-5">
+          {stagesRecap.map((stage, index) => {
+            const learnedKey = `${stage.id}-learned`
+            const improveKey = `${stage.id}-improve`
+            const learnedOpen = !closedInsightKeys.has(learnedKey)
+            const improveOpen = !closedInsightKeys.has(improveKey)
+            return (
+              <motion.section
+                key={stage.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.25 }}
+                className="overflow-hidden rounded-[32px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_20px_48px_rgba(17,24,39,0.07)] ring-1 ring-black/[0.03]">
+                <div className="h-[3px] w-full bg-gradient-to-r from-[#1A73E8] to-[#8AB4F8]" />
+                <div className="flex items-center gap-3.5 border-b border-[#EEF1F6] bg-gradient-to-b from-[#FAFBFF] to-white px-7 py-5">
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[0.95rem] font-bold transition-colors ${
+                    stage.covered ? 'bg-gradient-to-br from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_4px_10px_rgba(26,115,232,0.3)]' : 'bg-[#F1F3F4] text-[#9AA0A6]'
+                  }`}>
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[1rem] font-semibold text-[#202124]">{stage.label}</p>
+                    <p className="text-[0.78rem] text-[#9AA0A6]">
+                      {stage.covered ? `${stage.qaPairs.length} question${stage.qaPairs.length !== 1 ? 's' : ''} asked` : 'Not covered in this practice'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-5 px-7 py-6">
+                  {/* What happened — always visible */}
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#EEF4FF] text-[#1A73E8]">
+                        <MessageCircle size={12} />
+                      </span>
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">What happened</p>
+                    </div>
+                    {stage.covered ? (
+                      <div className="space-y-4 rounded-[20px] bg-[#FBFCFE] p-4 ring-1 ring-[#EEF3FC]">
+                        {stage.qaPairs.map((pair, pairIndex) => (
+                          <div key={pair.id} className="space-y-2">
+                            {pairIndex > 0 && <div className="border-t border-[#EEF1F6] pt-3" />}
+                            <div className="flex items-start gap-2.5">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF4FF] text-[#1A73E8]">
+                                <MessageCircle size={12} />
+                              </span>
+                              <p className="text-[0.86rem] leading-6 text-[#3C4043]">{pair.question}</p>
+                            </div>
+                            <div className="flex items-start gap-2.5 pl-1">
+                              <GradientAvatar name={mockStudent.name} size={26} radius="0.55rem" className="mt-0.5 shrink-0" />
+                              <p className="text-[0.86rem] leading-6 text-[#5F6368]">
+                                {pair.answer || <span className="italic text-[#9AA0A6]">No answer recorded</span>}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-[20px] bg-[#FBFCFE] p-4 text-[0.86rem] leading-6 text-[#5F6368] ring-1 ring-[#EEF3FC]">
+                        This stage wasn&apos;t covered in the conversation.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* What you learned — collapsible */}
+                  <div className="overflow-hidden rounded-[20px] bg-[#F6FBF8] ring-1 ring-[#E1F2E7]">
+                    <button
+                      onClick={() => toggleInsight(learnedKey)}
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#F0F9F3]">
+                      <span className="flex items-center gap-2.5">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F4EA] text-[#188038]">
+                          <CheckCircle2 size={13} />
+                        </span>
+                        <span className="text-[0.74rem] font-semibold uppercase tracking-[0.12em] text-[#188038]">What you learned</span>
+                      </span>
+                      {learnedOpen ? <ChevronUp size={15} className="shrink-0 text-[#188038]" /> : <ChevronDown size={15} className="shrink-0 text-[#188038]" />}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {learnedOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden">
+                          <p className="px-4 pb-4 text-[0.86rem] leading-6 text-[#3C4043]">
+                            {stage.covered ? stage.lookFor : `Once you ask about this, listen for: ${stage.lookFor}`}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* What could improve — collapsible */}
+                  <div className="overflow-hidden rounded-[20px] bg-[#FFFBF2] ring-1 ring-[#F7E8C4]">
+                    <button
+                      onClick={() => toggleInsight(improveKey)}
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#FEF6E9]">
+                      <span className="flex items-center gap-2.5">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FEF7E0] text-[#B06000]">
+                          <AlertCircle size={13} />
+                        </span>
+                        <span className="text-[0.74rem] font-semibold uppercase tracking-[0.12em] text-[#B06000]">What could improve</span>
+                      </span>
+                      {improveOpen ? <ChevronUp size={15} className="shrink-0 text-[#B06000]" /> : <ChevronDown size={15} className="shrink-0 text-[#B06000]" />}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {improveOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden">
+                          <p className="px-4 pb-4 text-[0.86rem] leading-6 text-[#3C4043]">
+                            {stage.covered
+                              ? (stage.suggestedFollowUp
+                                ? `Consider also asking: "${stage.suggestedFollowUp}"`
+                                : 'You asked a full round of questions here — nice and thorough.')
+                              : stage.prompt}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </motion.section>
+            )
+          })}
+        </div>
 
         <div className="flex flex-wrap justify-center gap-3 pb-2">
           <button
