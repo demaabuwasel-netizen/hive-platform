@@ -245,7 +245,6 @@ export default function StudentOnboarding() {
           field: data.field?.trim() || null,
           university: data.university?.trim() || null,
           country: data.country?.trim() || null,
-          city: data.city?.trim() || null,
           graduation_year: data.graduationYear || null,
           bio: data.bio?.trim() || null,
           skills: skillNames,
@@ -382,26 +381,17 @@ export default function StudentOnboarding() {
                   error={errors.name}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <SearchableSelect
-                    label="Country"
-                    placeholder="Select your country"
-                    value={data.country || ''}
-                    onChange={(val) => update('country', val)}
-                    required
-                    error={errors.country}
-                    options={COUNTRIES.map(c => ({ ...c, value: c.name }))}
-                    formatOption={(opt) => opt.name}
-                    searchFields={['name']}
-                  />
-
-                  <TextInput
-                    label="City (optional)"
-                    placeholder="Your city"
-                    value={data.city || ''}
-                    onChange={(val) => update('city', val)}
-                  />
-                </div>
+                <SearchableSelect
+                  label="Country"
+                  placeholder="Select your country"
+                  value={data.country || ''}
+                  onChange={(val) => update('country', val)}
+                  required
+                  error={errors.country}
+                  options={COUNTRIES.map(c => ({ ...c, value: c.name }))}
+                  formatOption={(opt) => opt.name}
+                  searchFields={['name']}
+                />
 
                 <TextInput
                   label="University or school"

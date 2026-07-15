@@ -13,6 +13,7 @@ import {
 } from '../services/applications'
 import { fetchNgoOpportunities, setOpportunityStatus } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
+import ngoApplicantsImg from '../assets/ngo applicants.PNG'
 
 function toUiStatus(dbStatus) {
   if (dbStatus === 'submitted' || dbStatus === 'under_review') return 'new'
@@ -267,17 +268,26 @@ export default function Applicants() {
     <div className="mx-auto max-w-[1520px] overflow-x-hidden px-6 py-10 lg:px-10">
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
-          Applicants
-        </h1>
-        <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
-          {rolesLoading
-            ? 'Loading your applicant queue...'
-            : selectedRole
-              ? `Review ${totalApplicants} applicant${totalApplicants !== 1 ? 's' : ''} for ${selectedRole.title}.`
-              : 'Choose a posted role to review its applicants.'}
-        </p>
+      <div className="relative mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
+              Applicants
+            </h1>
+            <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
+              {rolesLoading
+                ? 'Loading your applicant queue...'
+                : selectedRole
+                  ? `Review ${totalApplicants} applicant${totalApplicants !== 1 ? 's' : ''} for ${selectedRole.title}.`
+                  : 'Choose a posted role to review its applicants.'}
+            </p>
+          </div>
+          <img
+            src={ngoApplicantsImg}
+            alt=""
+            className="pointer-events-none relative z-0 w-full max-w-sm select-none lg:max-w-md"
+          />
+        </div>
       </div>
 
       {/* Error */}
@@ -290,12 +300,14 @@ export default function Applicants() {
         </div>
       )}
 
+      <div className="relative z-10 -mt-8">
       <RolesList
         roles={roles}
         selectedRoleId={selectedRoleId}
         onSelectRole={handleSelectRole}
         loading={rolesLoading}
       />
+      </div>
 
       {/* Main layout */}
       <div className="mx-auto grid w-full max-w-[1760px] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_780px]">

@@ -9,6 +9,7 @@ export function runMigrations() {
       console.warn('[migrations] Go to: Supabase SQL Editor → paste supabase/add_ngo_fields.sql → Run')
       console.warn('[migrations] ⚠️  Reminder: if student profile is incomplete, run the migration SQL in Supabase')
       console.warn('[migrations] Go to: Supabase SQL Editor → paste supabase/add_student_fields.sql → Run')
+      console.warn('[migrations] ⚠️  Reminder: for the Analytics applicant map, run supabase/add_student_location.sql')
     } catch (err) {
       // Silent fail
     }

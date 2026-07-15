@@ -13,6 +13,7 @@ import { fetchActiveOpportunities, fetchNgoOpportunities, parseSkillString } fro
 import { computeMatch } from '../services/matching'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
+import ngoMatchesImg from '../assets/ngo matches.png'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
 
@@ -813,15 +814,22 @@ export default function MatchResults() {
 
     return (
       <div className="mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
-        <div className="mb-8">
-          <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
-            Matches
-          </h1>
-          <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
-            {ngoLoading
-              ? 'Finding compatible students for your posted roles...'
-              : `Review ${totalRanked} ranked student recommendation${totalRanked !== 1 ? 's' : ''} across your opportunities.`}
-          </p>
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
+              Matches
+            </h1>
+            <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
+              {ngoLoading
+                ? 'Finding compatible students for your posted roles...'
+                : `Review ${totalRanked} ranked student recommendation${totalRanked !== 1 ? 's' : ''} across your opportunities.`}
+            </p>
+          </div>
+          <img
+            src={ngoMatchesImg}
+            alt=""
+            className="w-full max-w-xs shrink-0 select-none lg:max-w-sm"
+          />
         </div>
 
         <NgoMatchesView

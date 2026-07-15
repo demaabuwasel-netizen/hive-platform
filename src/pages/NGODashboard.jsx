@@ -70,9 +70,28 @@ function QuickActionCard({ action, delay = 0, count = null }) {
         style={{ background: `linear-gradient(90deg, ${action.accent}, ${action.tint})` }}
       />
 
+      {/* Faded pastel waves in the card's own tint */}
+      <svg
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+        viewBox="0 0 300 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z"
+          fill={action.tint}
+          opacity="0.55"
+        />
+        <path
+          d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z"
+          fill={action.tint}
+          opacity="0.85"
+        />
+      </svg>
+
       <Link to={action.to} className="absolute inset-0" aria-label={action.title} />
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="relative z-10 flex items-start justify-between gap-4">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
           style={{ background: action.tint, color: action.accent }}
@@ -88,7 +107,7 @@ function QuickActionCard({ action, delay = 0, count = null }) {
         </div>
       </div>
 
-      <div className="mt-10">
+      <div className="relative z-10 mt-10">
         <div className="flex items-center gap-2">
           <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.title}</h3>
           {typeof count === 'number' && count > 0 && (

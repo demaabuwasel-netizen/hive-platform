@@ -135,6 +135,21 @@ function toSkillObjects(raw) {
 }
 
 // NGO: rich applicant list — joins applications, users, student_profiles, opportunities
+// Loads student profiles for a set of ids. Tries to include country/city (used by the
+// Analytics map); if the add_student_location.sql migration hasn't run yet, those columns
+// don't exist and Supabase rejects the whole select — so retry with the base columns.
+async function fetchStudentProfilesFor(studentIds) {
+  const baseColumns = 'user_id, field, university, skills, languages, bio, interests, links, experience, goals'
+  let { data, error } = await supabase
+    .from('student_profiles')
+    .select(`${baseColumns}, country, city`)
+    .in('user_id', studentIds)
+  if (error) {
+    ;({ data } = await supabase.from('student_profiles').select(baseColumns).in('user_id', studentIds))
+  }
+  return data
+}
+
 export async function fetchNgoApplicants(ngoId) {
   const { data: apps, error } = await supabase
     .from('applications')
@@ -146,11 +161,9 @@ export async function fetchNgoApplicants(ngoId) {
 
   const studentIds = [...new Set(apps.map(a => a.student_id))]
 
-  const [{ data: userData }, { data: profileData }] = await Promise.all([
+  const [{ data: userData }, profileData] = await Promise.all([
     supabase.from('users').select('id, name, email').in('id', studentIds),
-    supabase.from('student_profiles')
-      .select('user_id, field, university, skills, languages, bio, interests, links, experience, goals')
-      .in('user_id', studentIds),
+    fetchStudentProfilesFor(studentIds),
   ])
 
   const userMap    = Object.fromEntries((userData    ?? []).map(u => [u.id,      u]))
@@ -201,6 +214,7 @@ export async function fetchNgoApplicants(ngoId) {
       matchReasons:     matchResult.strengths.slice(0, 3),
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
+      studentLocation:  [prof.city, prof.country].filter(Boolean).join(', '),
       year:             '',
       projects:         [],
     }
@@ -293,11 +307,9 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
 
   const studentIds = [...new Set(apps.map(a => a.student_id))]
 
-  const [{ data: userData }, { data: profileData }] = await Promise.all([
+  const [{ data: userData }, profileData] = await Promise.all([
     supabase.from('users').select('id, name, email').in('id', studentIds),
-    supabase.from('student_profiles')
-      .select('user_id, field, university, skills, languages, bio, interests, links, experience, goals')
-      .in('user_id', studentIds),
+    fetchStudentProfilesFor(studentIds),
   ])
 
   const userMap    = Object.fromEntries((userData    ?? []).map(u => [u.id,      u]))

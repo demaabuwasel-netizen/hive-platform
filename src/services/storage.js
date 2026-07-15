@@ -59,6 +59,8 @@ function dbToStudent(row) {
     links:             row.links               ?? {},
     bio:               row.bio,
     phone:             row.phone,
+    country:           row.country             ?? null,
+    city:              row.city                ?? null,
   }
 }
 
@@ -100,6 +102,8 @@ function studentToDb(userId, profile) {
     links:             profile.links            ?? {},
     bio:               profile.bio?.trim()              || null,
     phone:             profile.phone?.trim()           || null,
+    country:           profile.country?.trim()          || null,
+    city:              profile.city?.trim()             || null,
     updated_at:        new Date().toISOString(),
   }
 }
@@ -116,10 +120,22 @@ export async function saveStudentProfile(userId, profile) {
   const abortTimer = setTimeout(() => controller.abort(), 12000)
 
   try {
-    const { error } = await supabase
+    let { error } = await supabase
       .from('student_profiles')
       .upsert(payload, { onConflict: 'user_id' })
       .abortSignal(controller.signal)
+
+    // country/city need the add_student_location.sql migration — if it hasn't run
+    // yet, retry without them so onboarding never breaks on the missing columns.
+    if (error && /country|city/.test(error.message) && /column/i.test(error.message)) {
+      const { country, city, ...fallbackPayload } = payload
+      void country
+      void city
+      ;({ error } = await supabase
+        .from('student_profiles')
+        .upsert(fallbackPayload, { onConflict: 'user_id' })
+        .abortSignal(controller.signal))
+    }
 
     clearTimeout(abortTimer)
     console.log(`[storage] saveStudentProfile done in ${Date.now() - t}ms`, error ?? 'ok')

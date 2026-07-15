@@ -11,6 +11,7 @@ import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities, parseSkillString } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
+import { WORLD_DOTS, COUNTRY_POINTS } from '../data/worldMap'
 
 const HEALTH_CONFIG = {
   Healthy: {
@@ -99,7 +100,7 @@ function getRoleSuggestion(role) {
 
 function EmptyState() {
   return (
-    <div className="relative overflow-hidden rounded-[32px] bg-white px-8 py-16 text-center shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/[0.03]">
+    <div className="relative overflow-hidden rounded-[32px] border border-[rgba(26,115,232,0.10)] bg-white px-8 py-16 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(26,115,232,0.06),transparent_55%)]" />
       <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)]">
         <BarChart3 size={26} strokeWidth={1.8} />
@@ -115,17 +116,179 @@ function EmptyState() {
   )
 }
 
-function CardHeader({ icon: Icon, title, subtitle }) {
+function CardHeader({ icon: Icon, title, subtitle, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
     <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
       {Icon && (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F4] text-[#5F6368]">
-          <Icon size={15} />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl" style={{ background: tint, color: accent }}>
+          <Icon size={16} strokeWidth={2.15} />
         </span>
       )}
       <div className="min-w-0">
         <h2 className="text-[0.95rem] font-semibold text-[#202124]">{title}</h2>
         {subtitle && <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">{subtitle}</p>}
+      </div>
+    </div>
+  )
+}
+
+// World bubble map — a dotted land grid with one bubble per country, sized by applicant count
+const COUNTRY_ALIASES = {
+  'united states': 'United States', 'usa': 'United States', 'us': 'United States', 'america': 'United States',
+  'united kingdom': 'United Kingdom', 'uk': 'United Kingdom', 'england': 'United Kingdom', 'britain': 'United Kingdom',
+  'uae': 'United Arab Emirates', 'south korea': 'South Korea', 'korea': 'South Korea',
+  'palestine': 'Palestine', 'palestinian territories': 'Palestine',
+}
+
+// Longest names first so "United Arab Emirates" wins over partial matches
+const COUNTRY_MATCHERS = Object.keys(COUNTRY_POINTS)
+  .map(name => ({ name, needle: name.toLowerCase() }))
+  .sort((a, b) => b.needle.length - a.needle.length)
+
+function matchCountry(raw) {
+  const key = String(raw || '').trim().toLowerCase()
+  if (!key) return null
+  for (const [alias, name] of Object.entries(COUNTRY_ALIASES)) {
+    if (key === alias || key.endsWith(`, ${alias}`) || key.includes(alias)) return name
+  }
+  const exact = COUNTRY_MATCHERS.find(entry => entry.needle === key)
+  if (exact) return exact.name
+  const partial = COUNTRY_MATCHERS.find(entry => key.includes(entry.needle))
+  return partial ? partial.name : null
+}
+
+// Groups applicant location strings into country bubbles + an "elsewhere" list
+function groupLocations(locations) {
+  const bubbles = new Map()
+  const other = new Map()
+
+  locations.forEach(raw => {
+    const loc = String(raw || '').trim()
+    if (!loc) return
+    const country = matchCountry(loc)
+    if (country) {
+      const [x, y] = COUNTRY_POINTS[country]
+      const entry = bubbles.get(country) || { label: country, x, y, count: 0 }
+      entry.count += 1
+      bubbles.set(country, entry)
+    } else {
+      const label = loc.split(',')[0].trim()
+      other.set(label, (other.get(label) || 0) + 1)
+    }
+  })
+
+  return {
+    bubbles: [...bubbles.values()].sort((a, b) => b.count - a.count),
+    other: [...other.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count),
+  }
+}
+
+export function ApplicantMap({ locations }) {
+  const { bubbles, other } = groupLocations(locations)
+  const totalMapped = bubbles.reduce((sum, b) => sum + b.count, 0)
+  const listTop = bubbles.slice(0, 6)
+  const maxCount = Math.max(...bubbles.map(b => b.count), 1)
+
+  // Neighbouring countries (e.g. Israel/Jordan/Egypt) can land almost on top of each
+  // other — relax overlapping bubbles apart a little so every count stays readable.
+  const placed = bubbles.map(bubble => ({
+    ...bubble,
+    r: Math.min(6 + Math.sqrt(bubble.count / maxCount) * 6, 12),
+  }))
+  for (let pass = 0; pass < 24; pass += 1) {
+    for (let i = 0; i < placed.length; i += 1) {
+      for (let j = i + 1; j < placed.length; j += 1) {
+        const a = placed[i], b = placed[j]
+        const dx = b.x - a.x, dy = b.y - a.y
+        const dist = Math.max(Math.hypot(dx, dy), 0.01)
+        const minDist = a.r + b.r + 1.5
+        if (dist < minDist) {
+          const push = (minDist - dist) / 2
+          const ux = dx / dist, uy = dy / dist
+          a.x -= ux * push; a.y -= uy * push
+          b.x += ux * push; b.y += uy * push
+        }
+      }
+    }
+  }
+
+  return (
+    <div className="px-6 py-6">
+      <svg viewBox="0 4 360 146" className="w-full overflow-visible" aria-label="World map of applicant locations">
+        <defs>
+          <linearGradient id="mapBubble" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4C9AEF" />
+            <stop offset="100%" stopColor="#1A5FC4" />
+          </linearGradient>
+        </defs>
+        {WORLD_DOTS.map(([x, y]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="0.95" fill="#C9DBF8" />
+        ))}
+        {placed.map((bubble, index) => {
+          const r = bubble.r
+          return (
+            <motion.g
+              key={bubble.label}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, delay: 0.15 + index * 0.06, ease: 'easeOut' }}
+              style={{ transformOrigin: `${bubble.x}px ${bubble.y}px` }}
+            >
+              <circle cx={bubble.x} cy={bubble.y} r={r + 3.5} fill="#1A73E8" opacity="0.15" />
+              <circle cx={bubble.x} cy={bubble.y} r={r} fill="url(#mapBubble)" stroke="#FFFFFF" strokeWidth="1.5" />
+              <text x={bubble.x} y={bubble.y + 0.5} textAnchor="middle" dominantBaseline="central" fontSize={r > 9 ? 9 : 7.5} fontWeight="700" fill="#FFFFFF">
+                {bubble.count}
+              </text>
+            </motion.g>
+          )
+        })}
+      </svg>
+
+      <div className="mt-6 border-t border-[#F1F3F4] pt-5">
+        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Top countries</p>
+        {listTop.length > 0 ? (
+          <div className="mt-3 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+            {listTop.map((bubble, index) => (
+              <div key={bubble.label} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FE] text-[#1A73E8]">
+                  <MapPin size={13} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <p className="truncate text-[0.8rem] text-[#3C4043]">{bubble.label}</p>
+                    <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{bubble.count}</span>
+                  </div>
+                  <Bar
+                    percent={Math.max((bubble.count / maxCount) * 100, 6)}
+                    height="h-2"
+                    delay={index * 0.04}
+                    label={`${bubble.label}: ${bubble.count} applicant${bubble.count !== 1 ? 's' : ''}`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">
+            Countries light up on the map once students with a saved country apply.
+          </p>
+        )}
+
+        {other.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {other.slice(0, 6).map(item => (
+              <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
+                {item.label} · {item.count}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {totalMapped > 0 && (
+          <p className="mt-4 text-[0.78rem] leading-5 text-[#9AA0A6]">
+            Bubble size follows applicant count — {totalMapped} applicant{totalMapped !== 1 ? 's' : ''} placed on the map.
+          </p>
+        )}
       </div>
     </div>
   )
@@ -146,16 +309,16 @@ function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7'
   )
 }
 
-// Standing column — a real bar anchored to a shared baseline, not a rounded capsule
-function VerticalBar({ percent, color = '#1A73E8', width = 'w-11', delay = 0, label }) {
+// Standing column — a real bar anchored to a shared baseline, on a soft full-height track
+function VerticalBar({ percent, color = '#8AB4F8', colorDark = '#1A73E8', width = 'w-14', delay = 0, label }) {
   return (
-    <div className={`relative flex h-full ${width} items-end justify-center`}>
+    <div className={`relative flex h-full ${width} items-end justify-center overflow-hidden rounded-t-[10px] bg-[#F4F7FC]`}>
       <motion.div
         initial={{ height: 0 }}
         animate={{ height: `${Math.max(percent, 2)}%` }}
         transition={{ duration: 0.6, ease: 'easeOut', delay }}
-        className="w-full rounded-t-[6px]"
-        style={{ background: color }}
+        className="w-full rounded-t-[10px]"
+        style={{ background: `linear-gradient(180deg, ${color}, ${colorDark})` }}
         title={label}
       />
     </div>
@@ -469,7 +632,7 @@ export default function Analytics() {
           </div>
 
           {(loading || roles.length > 0) && (
-            <label className="w-full max-w-xs rounded-2xl bg-white px-4 py-3 shadow-[0_2px_8px_rgba(17,24,39,0.04)] ring-1 ring-black/[0.04]">
+            <label className="w-full max-w-xs rounded-2xl border border-[rgba(26,115,232,0.10)] bg-white px-4 py-3 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
               <span className="mb-1 block text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#5F6368]">Role</span>
               {loading ? (
                 <div className="mt-2 h-5 w-32 animate-pulse rounded-full bg-[#F1F3F4]" />
@@ -499,26 +662,26 @@ export default function Analytics() {
           <div className="space-y-10">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[0, 1, 2, 3].map(item => (
-                <div key={item} className="h-[140px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+                <div key={item} className="h-[140px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
               ))}
             </section>
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-              <div className="h-[360px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              <div className="h-[360px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+              <div className="h-[360px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
             </div>
             <div className="space-y-6">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-                <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
-                <div className="h-[300px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+                <div className="h-[300px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+                <div className="h-[300px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
               </div>
-              <div className="h-[260px] animate-pulse rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04)]" />
+              <div className="h-[260px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
             </div>
           </div>
         ) : !hasActivity ? (
           <EmptyState />
         ) : (
           <div className="space-y-10">
-            {/* KPI tiles — icon badge, tinted wash, hover lift */}
+            {/* KPI tiles — dashboard language: tinted icon badge, pastel waves, hover lift */}
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {summaryStats.map((stat, index) => {
                 const style = KPI_STYLES[index]
@@ -526,27 +689,35 @@ export default function Analytics() {
                 return (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ y: -3 }}
-                    className="group relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03] transition-shadow hover:shadow-[0_4px_14px_rgba(17,24,39,0.06),0_20px_44px_rgba(17,24,39,0.09)]"
+                    transition={{ duration: 0.28, delay: index * 0.05 }}
+                    className="group relative overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white p-5 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
                   >
-                    <div
-                      className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-60 blur-2xl transition-opacity group-hover:opacity-90"
-                      style={{ background: style.tint }}
+                    <span
+                      className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                      style={{ background: `linear-gradient(90deg, ${style.accent}, ${style.tint})` }}
                     />
-                    <div className="relative flex items-start justify-between">
-                      <p className="text-[0.78rem] font-medium text-[#5F6368]">{stat.label}</p>
+                    <svg
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+                      viewBox="0 0 300 100"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z" fill={style.tint} opacity="0.55" />
+                      <path d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z" fill={style.tint} opacity="0.85" />
+                    </svg>
+                    <div className="relative z-10 flex items-start justify-between">
                       <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
                         style={{ background: style.tint, color: style.accent }}
                       >
-                        <Icon size={16} strokeWidth={2.1} />
+                        <Icon size={18} strokeWidth={2.15} />
                       </span>
+                      <p className="text-[0.78rem] font-medium text-[#5F6368]">{stat.label}</p>
                     </div>
-                    <p className="relative mt-4 text-[2.15rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{stat.value}</p>
-                    <p className="relative mt-2 text-[0.78rem] text-[#9AA0A6]">{stat.hint}</p>
+                    <p className="relative z-10 mt-5 text-[2.15rem] font-semibold leading-none tracking-[-0.02em] text-[#202124]">{stat.value}</p>
+                    <p className="relative z-10 mt-2 text-[0.78rem] text-[#5F6368]">{stat.hint}</p>
                   </motion.div>
                 )
               })}
@@ -555,8 +726,8 @@ export default function Analytics() {
             <SectionGroup icon={Layers} title="Your roles" description="How your own postings are performing">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
                 {/* Role health — glassy applicant-mix donut, inline match bar, status chips */}
-                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                  <CardHeader icon={Target} title="Role health" subtitle="See how each role is doing" />
+                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                  <CardHeader icon={Target} title="Role health" subtitle="See how each role is doing" tint="#E8F0FE" accent="#1A73E8" />
 
                   <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-3">
                     <span className="shrink-0 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Role</span>
@@ -658,36 +829,39 @@ export default function Analytics() {
                 </section>
 
                 {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
-                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                  <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" />
+                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                  <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" tint="#F3E8FD" accent="#A142F4" />
                   {orgInsights.categoryPool.length > 0 ? (
                     <div className="px-6 py-5">
-                      <div className="space-y-3">
-                        {orgInsights.categoryPool.map((cat, index) => (
-                          <div key={cat.name} className="flex items-center gap-3">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
-                              <Briefcase size={13} />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-1 flex items-center justify-between gap-3">
-                                <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
-                                <span className="shrink-0 text-[0.78rem] font-medium text-[#202124]">{cat.count}</span>
+                      <div className="space-y-3.5">
+                        {orgInsights.categoryPool.map((cat, index) => {
+                          const CatIcon = skillIcon(cat.name)
+                          return (
+                            <div key={cat.name} className="flex items-center gap-3">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
+                                <CatIcon size={14} />
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="mb-1 flex items-center justify-between gap-3">
+                                  <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
+                                  <span className="shrink-0 rounded-full bg-[#F3E8FD] px-2 py-0.5 text-[0.72rem] font-bold text-[#A142F4]">{cat.count}</span>
+                                </div>
+                                <Bar
+                                  percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
+                                  color="#C58AF9" colorDark="#A142F4"
+                                  height="h-2"
+                                  delay={index * 0.04}
+                                  label={`${cat.name}: ${cat.count} role${cat.count !== 1 ? 's' : ''}`}
+                                />
                               </div>
-                              <Bar
-                                percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
-                                color="#A142F4" colorDark="#8E24E0"
-                                height="h-2"
-                                delay={index * 0.04}
-                                label={`${cat.name}: ${cat.count} role${cat.count !== 1 ? 's' : ''}`}
-                              />
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2 border-t border-[#F1F3F4] pt-4">
                         {Object.entries(orgInsights.workModes).filter(([, count]) => count > 0).map(([mode, count]) => (
-                          <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
+                          <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F3E8FD] px-3 py-1.5 text-[0.72rem] font-medium text-[#A142F4]">
                             <MapPin size={11} />
                             {mode} · {count}
                           </span>
@@ -706,12 +880,62 @@ export default function Analytics() {
 
             <SectionGroup icon={Users} title="Your applicants" description="What you're learning from the students applying">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+              {/* Where applicants live — bubble map, size follows count */}
+              <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                <CardHeader icon={MapPin} title="Where applicants live" subtitle="Locations across your candidate pool" tint="#FEF7E0" accent="#F29900" />
+                <ApplicantMap locations={data.applicants.map(applicant => applicant.studentLocation)} />
+              </section>
+
+                {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
+                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                  <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" tint="#E6F4EA" accent="#188038" />
+                  {data.applicants.length > 0 ? (
+                    <div className="flex flex-col items-center px-6 py-6">
+                      <MatchGauge score={data.avgMatchScore} />
+                      <div className="mt-6 w-full space-y-3.5">
+                        {(() => {
+                          const maxBand = Math.max(...data.matchBands.map(b => b.count), 1)
+                          return data.matchBands.map((band, index) => (
+                            <div key={band.label} className="flex items-center gap-3">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: band.color, boxShadow: `0 0 6px 1.5px ${band.color}55` }} />
+                              <div className="min-w-0 flex-1">
+                                <div className="mb-1 flex items-center justify-between gap-3">
+                                  <p className="truncate text-[0.8rem] text-[#3C4043]">
+                                    {band.label}
+                                    <span className="ml-1.5 text-[0.7rem] text-[#9AA0A6]">{band.range}</span>
+                                  </p>
+                                  <span className="shrink-0 text-[0.82rem] font-semibold text-[#202124]">{band.count}</span>
+                                </div>
+                                <Bar
+                                  percent={Math.max((band.count / maxBand) * 100, band.count > 0 ? 6 : 0)}
+                                  color={band.color} colorDark={band.color}
+                                  height="h-2"
+                                  delay={index * 0.06}
+                                  label={`${band.label}: ${band.count} applicant${band.count !== 1 ? 's' : ''}`}
+                                />
+                              </div>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-6 py-12 text-center">
+                      <p className="text-[0.9rem] font-medium text-[#202124]">No match scores yet</p>
+                      <p className="mt-1 text-[0.8rem] text-[#5F6368]">Scores appear once students apply.</p>
+                    </div>
+                  )}
+                </section>
+              </div>
+
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(340px,1.1fr)]">
                 {/* Hiring funnel — icon per stage, gradient fill, common scale */}
-                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
                   <CardHeader
                     icon={BarChart3}
                     title="Hiring funnel"
                     subtitle="How applicants move from applying to acceptance"
+                    tint="#E8F0FE" accent="#1A73E8"
                   />
                   <div className="px-6 py-6">
                     <div className="relative flex h-[190px] items-end justify-center gap-8 sm:gap-12">
@@ -763,40 +987,12 @@ export default function Analytics() {
                   </div>
                 </section>
 
-                {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
-                <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
-                  <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" />
-                  {data.applicants.length > 0 ? (
-                    <div className="flex flex-col items-center px-6 py-6">
-                      <MatchGauge score={data.avgMatchScore} />
-                      <div className="mt-5 w-full space-y-3">
-                        {data.matchBands.map(band => (
-                          <div key={band.label} className="flex items-center gap-2.5">
-                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: band.color }} />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[0.8rem] text-[#3C4043]">{band.label}</p>
-                            </div>
-                            <span className="shrink-0 text-[0.72rem] text-[#9AA0A6]">{band.range}</span>
-                            <span className="w-5 shrink-0 text-right text-[0.82rem] font-semibold text-[#202124]">{band.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-[0.9rem] font-medium text-[#202124]">No match scores yet</p>
-                      <p className="mt-1 text-[0.8rem] text-[#5F6368]">Scores appear once students apply.</p>
-                    </div>
-                  )}
-                </section>
-              </div>
-
               {/* About your applicants — switch between skills / fields of study / languages */}
-              <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.05)] ring-1 ring-black/[0.03]">
+              <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F4] text-[#5F6368]">
-                      <Sparkles size={15} />
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#F3E8FD] text-[#A142F4]">
+                      <Sparkles size={16} strokeWidth={2.15} />
                     </span>
                     <div className="min-w-0">
                       <h2 className="text-[0.95rem] font-semibold text-[#202124]">About your applicants</h2>
@@ -868,6 +1064,7 @@ export default function Analytics() {
                   </div>
                 )}
               </section>
+              </div>
             </SectionGroup>
           </div>
         )}

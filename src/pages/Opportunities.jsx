@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Briefcase, Users, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight, Globe, Trash2, PencilLine,
+  X, CheckCircle2, Clock, ChevronRight, ArrowRight, Globe, Trash2, PencilLine,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -13,6 +13,7 @@ import { fetchActiveOpportunities, fetchNgoOpportunities, deleteOpportunity } fr
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
+import ngoOpportunityImg from '../assets/ngo opportunities2.PNG'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
@@ -438,7 +439,7 @@ function normalizeNgoOpportunity(opp = {}) {
 function statusMeta(status) {
   switch ((status || '').toLowerCase()) {
     case 'active':
-      return { label: 'Open', bg: 'rgba(26,115,232,0.10)', text: '#1A73E8' }
+      return { label: 'Open', bg: 'rgba(52,168,83,0.12)', text: '#1E8E3E' }
     case 'paused':
       return { label: 'Filled', bg: 'rgba(24,128,56,0.10)', text: '#188038' }
     case 'draft':
@@ -681,13 +682,15 @@ export default function Opportunities() {
 
   return (
     <>
-      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+      <div className="relative min-h-screen bg-[#F5F7FB]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
 
         {isNGO ? (
           <div className="space-y-6">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-              <div className="max-w-3xl">
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
+              <div className="max-w-3xl translate-x-2 translate-y-3">
+                <h1 className="text-4xl font-bold tracking-[-0.04em] text-[#202124] sm:text-5xl">
                   Opportunities
                 </h1>
                 <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
@@ -696,7 +699,7 @@ export default function Opportunities() {
               </div>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <div className="grid translate-x-2 translate-y-8 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
               <motion.aside
                 initial={false}
                 animate={{ opacity: 1 }}
@@ -723,7 +726,7 @@ export default function Opportunities() {
                     [1, 2, 3].map(i => (
                       <div
                         key={i}
-                        className="h-[112px] animate-pulse rounded-[22px] border bg-[#FBFCFE]"
+                        className="h-24 animate-pulse rounded-[24px] border bg-[#FBFCFE]"
                         style={{ borderColor: 'rgba(26,115,232,0.08)' }}
                       />
                     ))
@@ -740,64 +743,47 @@ export default function Opportunities() {
                       const active = String(selectedOppId) === String(opp.id)
                       const status = statusMeta(normalized.status)
                       const filled = (normalized.status || '').toLowerCase() === 'paused'
+                      const isDraft = (normalized.status || '').toLowerCase() === 'draft'
                       return (
-                        <motion.button
+                        <button
                           key={opp.id}
                           onClick={() => setSelectedOppId(opp.id)}
-                          initial={false}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.12 }}
-                          className={`min-h-[112px] w-full rounded-[22px] border px-4 py-4 text-left transition-all ${
+                          className={`group w-full rounded-[24px] border p-4 text-left transition-all ${
                             filled
-                              ? 'bg-[#F2FBF6] shadow-[0_8px_22px_rgba(24,128,56,0.07)]'
+                              ? 'border-[rgba(24,128,56,0.20)] bg-[#F2FBF6] hover:bg-[#EDFAF2]'
                               : active
-                              ? 'bg-[#E8F0FE] shadow-[0_8px_20px_rgba(26,115,232,0.10)]'
-                              : 'bg-white hover:bg-[#FBFCFE]'
+                              ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
+                              : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
                           }`}
-                          style={{
-                            borderColor: filled
-                              ? 'rgba(24,128,56,0.20)'
-                              : active
-                                ? 'rgba(26,115,232,0.22)'
-                                : 'rgba(26,115,232,0.10)',
-                          }}
-                          >
+                        >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              {filled && (
-                                <span className="mb-2 inline-flex h-2 w-8 rounded-full bg-[#34A853]" aria-hidden="true" />
-                              )}
-                              <p className="truncate text-[0.92rem] font-semibold text-[#202124]">
+                            <div className="min-w-0">
+                              <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${
+                                filled ? 'text-[#188038]' : 'text-[#202124]'
+                              }`}>
                                 {normalized.title}
                               </p>
-	                              <p className={`mt-1 truncate text-[0.78rem] ${
-	                                filled ? 'text-[#188038]' : 'text-[#5F6368]'
-	                              }`}>
-	                                {normalized.category || normalized.location || (filled ? 'Filled role' : 'Open role')}
-	                              </p>
+                              <p className={`mt-1.5 flex items-center gap-2 text-[0.76rem] ${filled ? 'text-[#188038]' : 'text-[#5F6368]'}`}>
+                                {filled ? 'Someone works there' : (normalized.category || normalized.location || 'Open role')}
+                                {isDraft && (
+                                  <span
+                                    className="rounded-full px-2 py-0.5 text-[0.66rem] font-semibold"
+                                    style={{ background: status.bg, color: status.text }}
+                                  >
+                                    {status.label}
+                                  </span>
+                                )}
+                              </p>
                             </div>
-                            {!filled && (
-                              <span
-                                className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold"
-                                style={{ background: status.bg, color: status.text }}
-                              >
-                                {status.label}
-                              </span>
-                            )}
+                            <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${
+                              filled
+                                ? 'text-[#188038]'
+                                : active
+                                ? 'text-[#1A73E8]'
+                                : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'
+                            }`} />
                           </div>
-
-                          <div className="mt-3 flex items-center justify-between gap-3 text-[0.78rem] text-[#5F6368]">
-                            <span className={filled ? 'text-[#188038]' : ''}>
-                              {filled ? 'Someone works there' : `${normalized.applicantCount} applicant${normalized.applicantCount === 1 ? '' : 's'}`}
-                            </span>
-                            <span className={`inline-flex items-center gap-1 ${
-                              filled ? 'text-[#188038]' : 'text-[#1A73E8]'
-                            }`}>
-                              {filled ? 'View placement' : 'View'}
-                              <ChevronRight size={13} />
-                            </span>
-                          </div>
-                        </motion.button>
+                        </button>
                       )
                     })
                   )}
@@ -889,12 +875,18 @@ export default function Opportunities() {
                     </button>
                   </div>
                 ) : (
-                  <motion.div
+                  <div className="relative">
+                    <img
+                      src={ngoOpportunityImg}
+                      alt=""
+                      className="pointer-events-none absolute -top-[9.5rem] left-[65%] z-0 w-full max-w-sm -translate-x-1/2 select-none"
+                    />
+                    <motion.div
                     key={selectedOpp.id}
                     initial={false}
 	                    animate={{ opacity: 1 }}
 	                    transition={{ duration: 0.12 }}
-	                    className="rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+	                    className="relative z-10 rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
 	                    style={{
                         background: selectedOppFilled ? 'linear-gradient(180deg, #F4FBF7 0%, #FFFFFF 38%)' : '#FFFFFF',
                         borderColor: selectedOppFilled ? 'rgba(24,128,56,0.18)' : 'rgba(26,115,232,0.10)',
@@ -966,20 +958,46 @@ export default function Opportunities() {
                           </p>
                           <div className="mt-3 grid gap-3 xl:grid-cols-4">
                             {[
-                              { label: 'Location', value: selectedOpp.location || 'Not set' },
-                              { label: 'Category', value: selectedOpp.category || 'Not set' },
-                              { label: 'Work mode', value: selectedOpp.workMode || 'Not set' },
-                              { label: 'Hours/week', value: selectedOpp.weeklyHours ? `${selectedOpp.weeklyHours}` : 'Not set' },
+                              { label: 'Location', value: selectedOpp.location || 'Not set', icon: MapPin, tint: '#E8F0FE', accent: '#1A73E8' },
+                              { label: 'Category', value: selectedOpp.category || 'Not set', icon: Briefcase, tint: '#F3E8FD', accent: '#A142F4' },
+                              { label: 'Work mode', value: selectedOpp.workMode || 'Not set', icon: Globe, tint: '#FEF7E0', accent: '#F29900' },
+                              { label: 'Hours/week', value: selectedOpp.weeklyHours ? `${selectedOpp.weeklyHours}` : 'Not set', icon: Clock, tint: '#E6F4EA', accent: '#188038' },
                             ].map(item => (
                               <div
                                 key={item.label}
-                                className="rounded-[20px] border bg-[#FBFCFE] px-4 py-4 shadow-[0_1px_0_rgba(17,24,39,0.02)]"
+                                className="relative overflow-hidden rounded-[20px] border bg-[#FBFCFE] px-4 py-4 shadow-[0_1px_0_rgba(17,24,39,0.02)]"
                                 style={{ borderColor: 'rgba(26,115,232,0.08)' }}
                               >
-                                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
-                                  {item.label}
-                                </p>
-                                <p className="mt-2 text-[0.92rem] font-semibold text-[#202124]">
+                                <svg
+                                  className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
+                                  viewBox="0 0 300 100"
+                                  preserveAspectRatio="none"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z"
+                                    fill={item.tint}
+                                    opacity="0.55"
+                                  />
+                                  <path
+                                    d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z"
+                                    fill={item.tint}
+                                    opacity="0.85"
+                                  />
+                                </svg>
+
+                                <div className="relative z-10 flex items-center gap-2">
+                                  <span
+                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                                    style={{ background: item.tint, color: item.accent }}
+                                  >
+                                    <item.icon size={13} />
+                                  </span>
+                                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+                                    {item.label}
+                                  </p>
+                                </div>
+                                <p className="relative z-10 mt-2 text-[0.92rem] font-semibold text-[#202124]">
                                   {item.value}
                                 </p>
                               </div>
@@ -1044,6 +1062,7 @@ export default function Opportunities() {
                       </button>
                       </div>
                   </motion.div>
+                  </div>
                 )}
               </section>
             </div>
@@ -1237,6 +1256,7 @@ export default function Opportunities() {
             )}
           </div>
         )}
+      </div>
       </div>
 
       {/* Detail modal */}
