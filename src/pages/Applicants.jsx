@@ -77,6 +77,9 @@ export default function Applicants() {
   // Applicants list
   const [applicants, setApplicants]     = useState([])
   const [applicantsLoading, setApplicantsLoading] = useState(false)
+  // Stays false until the FIRST applicants fetch settles, so the page shows one
+  // continuous skeleton phase (no flash of empty/unselected states in between).
+  const [initialLoadDone, setInitialLoadDone] = useState(false)
   const [statuses, setStatuses]         = useState({})
   const [applicantSearch] = useState('')
 
@@ -96,6 +99,7 @@ export default function Applicants() {
 	    setRolesLoading(true)
 	    setError(null)
       setSelectedRoleId(null)
+      setInitialLoadDone(false)
     Promise.all([
       withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunities'),
       withTimeout(fetchNgoApplicants(user.id), 10000, 'fetchNgoApplicantsForRoleCounts').catch(() => []),
@@ -106,11 +110,15 @@ export default function Applicants() {
           stats: buildRoleStats(allApplicants.filter(app => app.opportunityId === opp.id)),
         }))
         setRoles(mapped)
-        if (mapped.length === 0) setSelectedRoleId(null)
+        if (mapped.length === 0) {
+          setSelectedRoleId(null)
+          setInitialLoadDone(true)
+        }
       })
       .catch(err => {
         console.error('Error loading opportunities:', err.message)
         setError('Could not load opportunities. Please try again.')
+        setInitialLoadDone(true)
       })
       .finally(() => setRolesLoading(false))
   }, [user?.id])
@@ -153,7 +161,10 @@ export default function Applicants() {
         setSelectedStatus(first ? toUiStatus(first.status) : null)
       })
       .catch(err => setError('Could not load applicants for this role. ' + err.message))
-      .finally(() => setApplicantsLoading(false))
+      .finally(() => {
+        setApplicantsLoading(false)
+        setInitialLoadDone(true)
+      })
   }, [rolesLoading, selectedRoleId, user?.id])
 
   // ── Status change (persisted) ─────────────────────────────────────────────
@@ -264,18 +275,21 @@ export default function Applicants() {
 
   const selectedRole = roles.find(r => String(r.id) === String(selectedRoleId))
   const totalApplicants = applicants.filter(a => (statuses[a.id] ?? toUiStatus(a.status)) !== 'rejected').length
+  // One loading flag for the whole page: skeletons everywhere until the first
+  // full roles+applicants load settles, then everything appears in one paint.
+  const pageLoading = rolesLoading || applicantsLoading || !initialLoadDone
   return (
     <div className="mx-auto max-w-[1520px] overflow-x-hidden px-6 py-10 lg:px-10">
 
-      {/* Header */}
+      {/* Header — locked to the same lg height as the Matches page header */}
       <div className="relative mb-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 lg:min-h-[182px] lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
               Applicants
             </h1>
             <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
-              {rolesLoading
+              {pageLoading
                 ? 'Loading your applicant queue...'
                 : selectedRole
                   ? `Review ${totalApplicants} applicant${totalApplicants !== 1 ? 's' : ''} for ${selectedRole.title}.`
@@ -305,7 +319,7 @@ export default function Applicants() {
         roles={roles}
         selectedRoleId={selectedRoleId}
         onSelectRole={handleSelectRole}
-        loading={rolesLoading}
+        loading={rolesLoading || !initialLoadDone}
       />
       </div>
 
@@ -316,7 +330,7 @@ export default function Applicants() {
           selectedId={selected?.id}
           onSelectApplicant={handleSelectApplicant}
           statuses={statuses}
-          loading={rolesLoading || applicantsLoading}
+          loading={pageLoading}
           searchQuery={applicantSearch}
           selectedRoleTitle={selectedRole?.title ?? null}
         />
@@ -324,6 +338,7 @@ export default function Applicants() {
         <div className="min-w-0">
           <ApplicantDetail
             applicant={selected}
+            loading={pageLoading}
             status={selectedStatus}
             onStatusChange={handleStatusChange}
             opportunityId={selectedRoleId}

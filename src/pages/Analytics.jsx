@@ -11,7 +11,7 @@ import { useApp } from '../context/AppContext'
 import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities, parseSkillString } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
-import { WORLD_DOTS, COUNTRY_POINTS } from '../data/worldMap'
+import { WORLD_LAND, COUNTRY_POINTS } from '../data/worldMap'
 
 const HEALTH_CONFIG = {
   Healthy: {
@@ -220,10 +220,13 @@ export function ApplicantMap({ locations }) {
             <stop offset="0%" stopColor="#4C9AEF" />
             <stop offset="100%" stopColor="#1A5FC4" />
           </linearGradient>
+          <linearGradient id="mapLand" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#DCE8FA" />
+            <stop offset="100%" stopColor="#CFDFF7" />
+          </linearGradient>
         </defs>
-        {WORLD_DOTS.map(([x, y]) => (
-          <circle key={`${x}-${y}`} cx={x} cy={y} r="0.95" fill="#C9DBF8" />
-        ))}
+        <path d={WORLD_LAND} fill="url(#mapLand)" stroke="#B9D2F3" strokeWidth="0.35" strokeLinejoin="round" />
+
         {placed.map((bubble, index) => {
           const r = bubble.r
           return (
@@ -620,7 +623,7 @@ export default function Analytics() {
     <main className="relative min-h-screen overflow-hidden bg-[#F5F7FB]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_10%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_90%_5%,rgba(161,66,244,0.05),transparent_42%),radial-gradient(circle_at_50%_15%,rgba(52,168,83,0.04),transparent_38%)]" />
 
-      <div className="relative mx-auto max-w-[1480px] px-6 py-10 lg:px-10">
+      <div className="relative mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-[clamp(2.35rem,5vw,4.1rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">

@@ -190,8 +190,27 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
   )
 }
 
-export default function ApplicantDetail({ applicant, status, onStatusChange }) {
+export default function ApplicantDetail({ applicant, loading, status, onStatusChange }) {
   const [inviteOpen, setInviteOpen] = useState(false)
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-[620px] rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+        style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+        <div className="flex items-start gap-4">
+          <div className="h-16 w-16 shrink-0 animate-pulse rounded-[1.35rem] bg-[#F1F3F4]" />
+          <div className="min-w-0 flex-1">
+            <div className="h-[30px] w-36 animate-pulse rounded-full bg-[#E8F0FE]" />
+            <div className="mt-4 h-[58px] w-80 max-w-full animate-pulse rounded-2xl bg-[#F1F3F4]" />
+            <div className="mt-3 h-5 w-56 animate-pulse rounded-full bg-[#F1F4F9]" />
+            <div className="mt-2 h-4 w-44 animate-pulse rounded-full bg-[#F8FAFC]" />
+          </div>
+        </div>
+        <div className="mt-7 min-h-[380px] animate-pulse rounded-[28px] border border-[#E5EEFB] bg-[#FBFCFE]" />
+      </div>
+    )
+  }
 
   if (!applicant) {
     return (

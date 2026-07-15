@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, CheckCircle2, Sparkles, MessageCircle, Send, Search, Target, Brain,
-  Briefcase, Users, ChevronRight, ChevronDown, ChevronUp, Mail, GraduationCap, MapPin, Layers,
+  Briefcase, Users, ChevronRight, ChevronDown, ChevronLeft, Mail, GraduationCap, MapPin, Layers,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
@@ -327,10 +327,9 @@ function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loadi
         {loading ? (
           <div className="space-y-2.5 px-3 py-3">
             {[0, 1, 2, 3].map(i => (
-              <div key={i} className="h-[112px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-4">
+              <div key={i} className="h-[72px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-4">
                 <div className="h-4 w-2/3 rounded-full bg-[#EEF4FF]" />
                 <div className="mt-3 h-3 w-1/2 rounded-full bg-[#F1F4F9]" />
-                <div className="mt-4 h-6 w-28 rounded-full bg-[#EEF4FF]" />
               </div>
             ))}
           </div>
@@ -354,7 +353,7 @@ function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loadi
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.12 }}
                   onClick={() => onSelectRole(role.id)}
-                  className={`min-h-[112px] w-full rounded-[22px] border px-4 py-4 text-left transition-all ${
+                  className={`w-full rounded-[22px] border px-4 py-3.5 text-left transition-all ${
                     isActive
                       ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_10px_24px_rgba(26,115,232,0.12)]'
                       : 'border-[#E5EEFB] bg-white hover:border-[#D7E6FF] hover:bg-[#FBFCFE]'
@@ -365,23 +364,14 @@ function NgoRoleRail({ roles, selectedRoleId, onSelectRole, roleSummaries, loadi
                       <p className={`truncate text-[0.92rem] font-semibold ${isActive ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
                         {role.title || 'Untitled role'}
                       </p>
-                      <p className="mt-1 truncate text-[0.76rem] text-[#5F6368]">
-                        {role.category || role.field || role.workMode || 'General opportunity'}
+                      <p className="mt-1 flex items-center gap-2 truncate text-[0.76rem] text-[#5F6368]">
+                        <span className="truncate">{role.category || role.field || role.workMode || 'General opportunity'}</span>
+                        {summary.topScore > 0 && (
+                          <span className="shrink-0 font-semibold text-[#188038]">Best {summary.topScore}%</span>
+                        )}
                       </p>
                     </div>
-                    <ChevronRight size={16} className={isActive ? 'text-[#1A73E8]' : 'text-[#9AA0A6]'} />
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${
-                      isActive ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F4F9] text-[#5F6368]'
-                    }`}>
-                      {summary.count} match{summary.count !== 1 ? 'es' : ''}
-                    </span>
-                    {summary.topScore > 0 && (
-                      <span className="text-[0.72rem] font-semibold text-[#188038]">
-                        Best {summary.topScore}%
-                      </span>
-                    )}
+                    <ChevronRight size={16} className={`mt-1 shrink-0 ${isActive ? 'text-[#1A73E8]' : 'text-[#9AA0A6]'}`} />
                   </div>
                 </motion.button>
               )
@@ -501,7 +491,7 @@ function NgoStudentMatchCard({ match, onViewProfile, onReachOut }) {
   )
 }
 
-const TOP_MATCHES_SHOWN = 6
+const MATCHES_PER_PAGE = 5
 
 function NgoMatchesView({
   roles,
@@ -515,21 +505,22 @@ function NgoMatchesView({
   onViewProfile,
   onReachOut,
 }) {
-  const [showAll, setShowAll] = useState(false)
+  const [page, setPage] = useState(0)
   const [lastRoleId, setLastRoleId] = useState(selectedRoleId)
   const listTopRef = useRef(null)
 
-  // Collapse back to the top 6 whenever a different role is selected
+  // Jump back to the first page whenever a different role is selected
   if (lastRoleId !== selectedRoleId) {
     setLastRoleId(selectedRoleId)
-    setShowAll(false)
+    setPage(0)
   }
 
-  const visibleMatches = showAll ? selectedMatches : selectedMatches.slice(0, TOP_MATCHES_SHOWN)
-  const hiddenCount = selectedMatches.length - TOP_MATCHES_SHOWN
+  const pageCount = Math.ceil(selectedMatches.length / MATCHES_PER_PAGE)
+  const currentPage = Math.min(page, Math.max(pageCount - 1, 0))
+  const visibleMatches = selectedMatches.slice(currentPage * MATCHES_PER_PAGE, (currentPage + 1) * MATCHES_PER_PAGE)
 
-  function collapseToTop() {
-    setShowAll(false)
+  function goToPage(nextPage) {
+    setPage(nextPage)
     setTimeout(() => {
       listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
@@ -611,14 +602,10 @@ function NgoMatchesView({
                     {selectedRole.title || 'Selected role'}
                   </h2>
                   <p className="mt-3 max-w-2xl text-[0.92rem] leading-6 text-[#5F6368]">
-                    Top students are sorted by compatibility, so you can quickly find people worth inviting into a conversation.
+                    Top students sorted by how closely their skills and languages match this role.
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:flex">
-                  <div className="rounded-2xl bg-[#F8FAFF] px-4 py-3 text-center">
-                    <p className="text-[1.25rem] font-semibold text-[#202124]">{selectedMatches.length}</p>
-                    <p className="text-[0.72rem] font-semibold text-[#5F6368]">Total matches</p>
-                  </div>
+                <div className="flex gap-3">
                   <div className="rounded-2xl bg-[#F0FBF4] px-4 py-3 text-center">
                     <p className="text-[1.25rem] font-semibold text-[#188038]">
                       {selectedMatches[0]?.result.score ?? 0}%
@@ -651,26 +638,40 @@ function NgoMatchesView({
                   ))}
                 </div>
 
-                {hiddenCount > 0 && (
-                  <div className="flex justify-center pt-1">
-                    {showAll ? (
+                {pageCount > 1 && (
+                  <nav className="flex items-center justify-center gap-2 pt-1" aria-label="Match pages">
+                    <button
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      aria-label="Previous page"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D7E6FF] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FBFF] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft size={15} />
+                    </button>
+                    {Array.from({ length: pageCount }, (_, pageIndex) => (
                       <button
-                        onClick={collapseToTop}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-2.5 text-[0.85rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+                        key={pageIndex}
+                        onClick={() => goToPage(pageIndex)}
+                        aria-label={`Page ${pageIndex + 1}`}
+                        aria-current={pageIndex === currentPage ? 'page' : undefined}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-[0.85rem] font-semibold transition-all ${
+                          pageIndex === currentPage
+                            ? 'bg-[#1A73E8] text-white shadow-[0_6px_16px_rgba(26,115,232,0.25)]'
+                            : 'border border-[#D7E6FF] bg-white text-[#5F6368] hover:bg-[#F8FBFF] hover:text-[#1A73E8]'
+                        }`}
                       >
-                        <ChevronUp size={15} />
-                        Back to top {TOP_MATCHES_SHOWN}
+                        {pageIndex + 1}
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowAll(true)}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-2.5 text-[0.85rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
-                      >
-                        <ChevronDown size={15} />
-                        View more ({hiddenCount})
-                      </button>
-                    )}
-                  </div>
+                    ))}
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage >= pageCount - 1}
+                      aria-label="Next page"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D7E6FF] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FBFF] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronRight size={15} />
+                    </button>
+                  </nav>
                 )}
               </>
             )}
@@ -810,40 +811,44 @@ export default function MatchResults() {
   }
 
   if (isNgo) {
-    const totalRanked = Object.values(roleSummaries).reduce((sum, item) => sum + item.count, 0)
-
     return (
-      <div className="mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
-              Matches
-            </h1>
-            <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
-              {ngoLoading
-                ? 'Finding compatible students for your posted roles...'
-                : `Review ${totalRanked} ranked student recommendation${totalRanked !== 1 ? 's' : ''} across your opportunities.`}
-            </p>
+      <div className="max-w-[1520px] overflow-x-hidden px-6 py-10 lg:px-10">
+        {/* Header — same structure, rhythm, and height as the Applicants page, so
+            everything below starts at the exact same position on both pages */}
+        <div className="relative mb-8">
+          <div className="flex flex-col gap-4 lg:min-h-[182px] lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
+                Matches
+              </h1>
+              <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
+                {ngoLoading
+                  ? 'Finding compatible students for your posted roles...'
+                  : 'Top students for each role, ranked by matching skills and languages.'}
+              </p>
+            </div>
+            <img
+              src={ngoMatchesImg}
+              alt=""
+              className="pointer-events-none relative z-0 w-full max-w-sm select-none lg:max-w-md"
+            />
           </div>
-          <img
-            src={ngoMatchesImg}
-            alt=""
-            className="w-full max-w-xs shrink-0 select-none lg:max-w-sm"
-          />
         </div>
 
-        <NgoMatchesView
-          roles={ngoRoles}
-          loading={ngoLoading}
-          error={ngoError}
-          selectedRoleId={selectedNgoRoleId}
-          onSelectRole={setSelectedNgoRoleId}
-          selectedRole={selectedNgoRole}
-          selectedMatches={selectedNgoMatches}
-          roleSummaries={roleSummaries}
-          onViewProfile={handleViewStudentProfile}
-          onReachOut={handleReachOut}
-        />
+        <div className="relative z-10 -mt-8">
+          <NgoMatchesView
+            roles={ngoRoles}
+            loading={ngoLoading}
+            error={ngoError}
+            selectedRoleId={selectedNgoRoleId}
+            onSelectRole={setSelectedNgoRoleId}
+            selectedRole={selectedNgoRole}
+            selectedMatches={selectedNgoMatches}
+            roleSummaries={roleSummaries}
+            onViewProfile={handleViewStudentProfile}
+            onReachOut={handleReachOut}
+          />
+        </div>
       </div>
     )
   }

@@ -40,13 +40,18 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
   }
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-[28px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-[28px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)] xl:max-h-[calc(100vh-120px)] xl:min-h-[600px]">
       <div className="min-w-0 border-b border-[rgba(26,115,232,0.10)] bg-[#FBFCFE] p-5">
         <div className="mb-4 min-w-0">
           {loading ? (
             <>
-              <div className="h-8 w-56 animate-pulse rounded-2xl bg-[#EEF4FF]" />
-              <div className="mt-2 h-4 w-36 animate-pulse rounded-full bg-[#F1F4F9]" />
+              {/* Same h2/p elements as the loaded state so line-height matches exactly */}
+              <h2 className="truncate text-[1.35rem] font-semibold tracking-[-0.04em]">
+                <span className="inline-block h-[0.72em] w-56 animate-pulse rounded-full bg-[#EEF4FF] align-middle" />
+              </h2>
+              <p className="mt-1 text-[0.84rem]">
+                <span className="inline-block h-[0.72em] w-36 animate-pulse rounded-full bg-[#F1F4F9] align-middle" />
+              </p>
             </>
           ) : (
             <>
@@ -87,7 +92,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         </div>
       </div>
 
-      <div className="min-w-0 space-y-3 overflow-y-auto p-5 xl:h-[560px]">
+      <div className="min-w-0 flex-1 space-y-3 overflow-y-auto p-5">
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-3">
@@ -149,7 +154,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                   currentStatus === 'accepted'
                     ? 'border-[#D9F0E4] bg-[#F1FBF6] shadow-[0_10px_24px_rgba(24,128,56,0.06)] hover:bg-[#ECF9F0]'
                     : isActive
-                    ? 'border-[#BFD7FF] bg-[#F8FAFF] shadow-[0_14px_30px_rgba(26,115,232,0.10)]'
+                    ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.12)]'
                     : 'border-[#E5EEFB] bg-white/80 shadow-[0_8px_20px_rgba(60,64,67,0.03)] hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:bg-white hover:shadow-[0_14px_28px_rgba(60,64,67,0.055)]'
                 }`}>
                 <GradientAvatar name={a.name} size={44} radius="0.9rem" className="shadow-none"/>
@@ -167,10 +172,11 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className="inline-flex h-8 items-center justify-center rounded-full bg-[#E8F0FE] px-3 text-[0.72rem] font-semibold text-[#1A73E8]">
+                  <span className={`inline-flex h-8 items-center justify-center rounded-full px-3 text-[0.72rem] font-semibold text-[#1A73E8] ${
+                    isActive ? 'bg-white' : 'bg-[#E8F0FE]'
+                  }`}>
                     {a.match}% match
                   </span>
-                  <p className="mt-2 text-[0.68rem] font-semibold text-[#9AA0A6]">Open profile</p>
                 </div>
               </motion.div>
             )
