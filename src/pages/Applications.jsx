@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import applicationIllustration from '../assets/application.png'
+import applicationEmptyIllustration from '../assets/img1.jpg'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -134,14 +136,19 @@ export default function Applications() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="mb-8"
+          className={`mb-8 ${!loading && apps.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
         >
-          <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-            Applications
-          </h1>
-          <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
-            Manage the roles you have applied to and review the full opportunity on the right.
-          </p>
+          <div>
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              Applications
+            </h1>
+            <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
+              Manage the roles you have applied to and review the full opportunity on the right.
+            </p>
+          </div>
+          {!loading && apps.length > 0 && (
+            <img src={applicationIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
+          )}
         </motion.header>
 
         <section className="grid items-start gap-6 md:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -179,14 +186,15 @@ export default function Applications() {
                   ))}
                 </div>
               ) : apps.length === 0 ? (
-                <div className="rounded-[24px] border border-[#E5EEFB] bg-white px-4 py-6 text-center">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                    <Briefcase size={18} />
-                  </div>
-                  <h3 className="text-sm font-semibold text-[#202124]">No applications</h3>
+                <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-4 py-10 text-center">
+                  <img src={applicationEmptyIllustration} alt="" className="mx-auto w-44 mb-4 select-none" />
+                  <h3 className="text-sm font-semibold text-[#202124]">No applications yet</h3>
                   <p className="mx-auto mt-1.5 max-w-xs text-[0.75rem] leading-5 text-[#5F6368]">
-                    Apply to opportunities to see them here.
+                    Start applying to opportunities to track them here.
                   </p>
+                  <Link to="/opportunities" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#1A73E8] px-4 py-2 text-[0.75rem] font-semibold text-white hover:bg-[#1558C0] transition-colors">
+                    Browse opportunities <ArrowRight size={12} />
+                  </Link>
                 </div>
               ) : (
                 apps.map((app, index) => {
@@ -247,14 +255,9 @@ export default function Applications() {
             {!selectedApp ? (
               <div className="flex min-h-[360px] items-center justify-center px-8 py-16">
                 <div className="max-w-lg text-center">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
-                    <Briefcase size={28} />
-                  </div>
-                  <h2 className="text-2xl font-semibold text-[#202124]">
-                    Select an application
-                  </h2>
+                  <h2 className="text-xl font-semibold text-[#202124]">Select an application</h2>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#5F6368]">
-                    Choose a role from the list on the left to open the full opportunity details here.
+                    Choose a role from the list to review its full details here.
                   </p>
                 </div>
               </div>

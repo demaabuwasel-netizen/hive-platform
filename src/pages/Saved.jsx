@@ -10,6 +10,7 @@ import {
   MapPin,
   Trash2,
 } from 'lucide-react'
+import savedIllustration from '../assets/saved.png'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchSavedOpportunities, unsaveOpportunity } from '../services/saved'
@@ -81,26 +82,26 @@ export default function Saved() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8"
+          className={`mb-8 ${!loading && !error && items.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
         >
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-                Saved
-              </h1>
-              <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
-                Keep your favorite roles in one clean workspace and come back when you are ready to apply.
-              </p>
-            </div>
-
+          <div>
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              Saved
+            </h1>
+            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+              Keep your favorite roles in one clean workspace and come back when you are ready to apply.
+            </p>
             <Link
               to="/opportunities"
-              className="inline-flex w-fit items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.88rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558C0]"
+              className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.88rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558C0]"
             >
               Browse more
               <ArrowRight size={16} />
             </Link>
           </div>
+          {!loading && !error && items.length > 0 && (
+            <img src={savedIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
+          )}
         </motion.header>
 
         <section className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
@@ -148,15 +149,13 @@ export default function Saved() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex min-h-[320px] items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-6 text-center"
+              className="flex min-h-[380px] items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-6 text-center"
             >
               <div>
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
-                  <Bookmark size={30} />
-                </div>
-                <h2 className="text-xl font-semibold text-[#202124]">No saved opportunities yet</h2>
-                <p className="mx-auto mt-2 max-w-xl text-[0.9rem] leading-7 text-[#5F6368]">
-                  Browse opportunities and save the roles you want to revisit later.
+                <img src={savedIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
+                <h2 className="text-xl font-semibold text-[#202124]">Nothing saved yet</h2>
+                <p className="mx-auto mt-2 max-w-sm text-[0.9rem] leading-7 text-[#5F6368]">
+                  Bookmark roles you love and come back when you're ready to apply.
                 </p>
                 <Link
                   to="/opportunities"
