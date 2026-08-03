@@ -61,6 +61,7 @@ export default function DashboardLayout() {
     ? {
         activeBg: '#E8F0FE',
         activeText: '#1A73E8',
+        activeShadow: '0 10px 22px rgba(26,115,232,0.12)',
         hoverBg: 'rgba(26,115,232,0.08)',
         border: 'rgba(26,115,232,0.10)',
         text: '#5F6368',
@@ -69,6 +70,7 @@ export default function DashboardLayout() {
     : {
         activeBg: '#E8F0FE',
         activeText: '#1A73E8',
+        activeShadow: '0 10px 22px rgba(26,115,232,0.12)',
         hoverBg: 'rgba(26,115,232,0.08)',
         border: 'rgba(26,115,232,0.10)',
         text: '#5F6368',
@@ -135,7 +137,7 @@ export default function DashboardLayout() {
                 to={item.to}
                 className="flex items-center gap-2.5 px-3.5 py-[10px] rounded-full text-[13px] font-medium transition-colors duration-100"
                 style={active
-                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: '0 10px 22px rgba(26,115,232,0.12)' }
+                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: sidebarTheme.activeShadow }
                   : { color: sidebarTheme.text }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarTheme.hoverBg }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
@@ -162,7 +164,7 @@ export default function DashboardLayout() {
                 to={item.to}
                 className="flex items-center gap-2.5 px-3.5 py-[10px] rounded-full text-[13px] font-medium transition-colors duration-100"
                 style={active
-                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: '0 10px 22px rgba(26,115,232,0.12)' }
+                  ? { background: sidebarTheme.activeBg, color: sidebarTheme.activeText, boxShadow: sidebarTheme.activeShadow }
                   : { color: sidebarTheme.text }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarTheme.hoverBg }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>

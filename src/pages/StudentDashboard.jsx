@@ -265,7 +265,7 @@ export default function StudentDashboard() {
 
   return (
     <main className="relative min-h-screen bg-[#F5F7FB]">
-      {/* Soft ambient gradients — same treatment as the NGO dashboard */}
+      {/* Soft ambient gradients */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
       <div className="relative mx-auto max-w-[1520px] px-6 pb-10 lg:px-10">

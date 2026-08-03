@@ -14,6 +14,7 @@ import { computeMatch } from '../services/matching'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 import ngoMatchesImg from '../assets/ngo matches.png'
+import matchesIllustration from '../assets/matches.png'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
 
@@ -856,10 +857,14 @@ export default function MatchResults() {
   if (user && !user.onboardingComplete) {
     return (
       <div className="w-full px-8 py-7 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <EmptyState icon={Search} title="No matches yet"
-            description="Complete your profile so our AI can find NGOs that match your skills and values."
-            actionLabel="Complete my profile" actionHref="/" card={false} />
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center py-16 text-center">
+          <h2 className="text-xl font-semibold text-[#202124]">Complete your profile to see matches</h2>
+          <p className="mx-auto mt-2 max-w-sm text-[0.9rem] leading-7 text-[#5F6368]">
+            Our AI needs your skills and interests to find NGOs that are a strong fit.
+          </p>
+          <a href="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.86rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558C0]">
+            Complete my profile
+          </a>
         </div>
       </div>
     )
@@ -875,16 +880,21 @@ export default function MatchResults() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mb-8"
+            className={`mb-8 ${!loading && matchesToShow.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
           >
-            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-              Matches
-            </h1>
-            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
-              {loading
-                ? 'Finding compatible roles for your profile.'
-                : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} ranked by skills, experience, language, and mission alignment.`}
-            </p>
+            <div>
+              <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+                Matches
+              </h1>
+              <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+                {loading
+                  ? 'Finding compatible roles for your profile.'
+                  : `${matchesToShow.length} match${matchesToShow.length !== 1 ? 'es' : ''} ranked by skills, experience, language, and mission alignment.`}
+              </p>
+            </div>
+            {!loading && matchesToShow.length > 0 && (
+              <img src={matchesIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
+            )}
           </motion.header>
 
         {/* Personalisation notice */}
@@ -947,9 +957,16 @@ export default function MatchResults() {
             ))}
           </div>
         ) : matchesToShow.length === 0 ? (
-          <EmptyState compact icon={Search} title="No matches yet"
-            description="Add more skills, interests, and experience to your profile for stronger matches."
-            actionLabel="Update profile" actionHref="/settings" card={false} />
+          <div className="flex min-h-[340px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-6 py-16 text-center">
+            <img src={matchesIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
+            <h2 className="text-xl font-semibold text-[#202124]">No matches yet</h2>
+            <p className="mx-auto mt-2 max-w-sm text-[0.9rem] leading-7 text-[#5F6368]">
+              Add more skills, interests, and experience to your profile for stronger matches.
+            </p>
+            <a href="/settings" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.86rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558C0]">
+              Update profile
+            </a>
+          </div>
         ) : (
           <div className="flex flex-col gap-5" role="list" aria-label="Match results">
             {matchesToShow.map((match, i) => (

@@ -12,6 +12,7 @@ import { fetchNgoApplicants } from '../services/applications'
 import { fetchNgoOpportunities, parseSkillString } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
 import { WORLD_LAND, COUNTRY_POINTS } from '../data/worldMap'
+import analyticsIllustration from '../assets/img2.jpg'
 
 const HEALTH_CONFIG = {
   Healthy: {
@@ -102,9 +103,7 @@ function EmptyState() {
   return (
     <div className="relative overflow-hidden rounded-[32px] border border-[rgba(26,115,232,0.10)] bg-white px-8 py-16 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(26,115,232,0.06),transparent_55%)]" />
-      <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8F0FE] to-[#DCE9FE] text-[#1A73E8] shadow-[0_8px_20px_rgba(26,115,232,0.15)]">
-        <BarChart3 size={26} strokeWidth={1.8} />
-      </div>
+      <img src={analyticsIllustration} alt="" className="relative mx-auto w-52 mb-5 select-none" />
       <p className="relative text-[1.1rem] font-semibold text-[#202124]">Analytics will appear once roles get activity</p>
       <p className="relative mx-auto mt-2 max-w-md text-[0.88rem] leading-6 text-[#5F6368]">
         Post roles and review applicants to see movement, match quality, and skill trends.

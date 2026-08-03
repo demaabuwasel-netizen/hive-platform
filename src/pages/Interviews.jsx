@@ -13,6 +13,7 @@ import { fetchStudentApplications } from '../services/applications'
 import { fetchNgoOpportunities, fetchOpportunity } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
 import ngoInterviewImg from '../assets/ngo interview.PNG'
+import interviewIllustration from '../assets/interview.png'
 
 const STUDENT_INTERVIEW_CATEGORIES = [
   {
@@ -490,6 +491,7 @@ function StudentView() {
       .then(async loadedApps => {
         const nextApps = Array.isArray(loadedApps) ? loadedApps : []
         setApps(nextApps)
+        onHasContent?.(nextApps.length > 0)
 
         const detailEntries = await Promise.all(
           nextApps.map(async app => {
@@ -503,6 +505,7 @@ function StudentView() {
       .catch(err => {
         console.error('Failed to load applications:', err.message)
         setApps([])
+        onHasContent?.(false)
       })
       .finally(() => setLoading(false))
   }, [user?.id])
@@ -693,9 +696,7 @@ function StudentView() {
       <section
         className="rounded-[32px] border bg-white px-6 py-16 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
-          <Briefcase size={28} />
-        </div>
+        <img src={interviewIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
         <h2 className="text-[1.35rem] font-semibold text-[#202124]">No applications yet</h2>
         <p className="mx-auto mt-3 max-w-md text-[0.92rem] leading-7 text-[#5F6368]">
           Apply to a role first, then Hive will turn that role into a practice interview room.
@@ -1504,7 +1505,7 @@ function StudentView() {
   )
 }
 
-function NGOView({ onPracticeChange }) {
+function NGOView({ onPracticeChange, onHasContent }) {
   const { user } = useApp()
   const navigate = useNavigate()
   const recognitionRef = useRef(null)
@@ -1530,10 +1531,14 @@ function NGOView({ onPracticeChange }) {
   useEffect(() => {
     if (!user?.id) return
     withTimeout(fetchNgoOpportunities(user.id), 10000, 'fetchNgoOpportunities')
-      .then(opps => setNgoOpportunities(opps || []))
+      .then(opps => {
+        setNgoOpportunities(opps || [])
+        onHasContent?.((opps || []).length > 0)
+      })
       .catch(err => {
         console.error('Failed to load NGO opportunities:', err.message)
         setNgoOpportunities([])
+        onHasContent?.(false)
       })
       .finally(() => setLoading(false))
   }, [user?.id])
@@ -1726,9 +1731,7 @@ function NGOView({ onPracticeChange }) {
   if (ngoOpportunities.length === 0) {
     return (
       <div className="rounded-[28px] border border-[#E5EEFB] bg-white px-6 py-16 text-center shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-          <Briefcase size={22}/>
-        </div>
+        <img src={interviewIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
         <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No roles posted yet</p>
         <p className="text-[0.82rem] leading-6 text-[#5F6368]">Create opportunities to practice interviews for each role.</p>
       </div>
@@ -2718,6 +2721,7 @@ export default function Interviews() {
   const { user } = useApp()
   const isNGO = user?.role === 'ngo'
   const [practiceInfo, setPracticeInfo] = useState({ active: false, title: '' })
+  const [hasContent, setHasContent] = useState(false)
   const inPractice = isNGO && practiceInfo.active
   const mainRef = useRef(null)
 
@@ -2726,6 +2730,8 @@ export default function Interviews() {
       smoothScrollToTop(mainRef.current)
     }
   }, [practiceInfo.active])
+
+  const showHeroIllustration = hasContent && !inPractice
 
   return (
     <main ref={mainRef} className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
@@ -2736,13 +2742,28 @@ export default function Interviews() {
           transition={{ duration: 0.4 }}
           className={inPractice ? 'mb-4' : 'mb-8'}
         >
-          {inPractice && (
-            <button
-              onClick={() => practiceInfo.onBack?.()}
-              className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
-              <ArrowLeft size={14} />
-              Interview guide
-            </button>
+          <div>
+            {inPractice && (
+              <button
+                onClick={() => practiceInfo.onBack?.()}
+                className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
+                <ArrowLeft size={14} />
+                Interview guide
+              </button>
+            )}
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              {inPractice ? `Interview practice: ${practiceInfo.title}` : 'Interviews'}
+            </h1>
+            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+              {inPractice
+                ? 'A mock interview with a generated student profile.'
+                : isNGO
+                ? 'Pick a posted role and practice with a generated student profile'
+                : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
+            </p>
+          </div>
+          {showHeroIllustration && (
+            <img src={interviewIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
           )}
           <h1 className={inPractice ? 'text-[1.35rem] font-semibold leading-tight text-[#202124]' : 'text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]'}>
             {inPractice ? `Interview practice: ${practiceInfo.title}` : 'Interviews'}
@@ -2755,7 +2776,10 @@ export default function Interviews() {
             </p>
           )}
         </motion.header>
-        {isNGO ? <NGOView onPracticeChange={setPracticeInfo} /> : <StudentView />}
+        {isNGO
+          ? <NGOView onPracticeChange={setPracticeInfo} onHasContent={setHasContent} />
+          : <StudentView onHasContent={setHasContent} />
+        }
       </div>
     </main>
   )

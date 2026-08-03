@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Loader, MessageCircle, Search, Send } from 'lucide-react'
+import messagesIllustration from '../assets/messages.png'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { getMessages, sendInterviewMessage } from '../services/messages'
@@ -172,14 +173,19 @@ export default function Messages() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8"
+          className={`mb-8 ${!loading && conversationList.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
         >
-          <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
-            Your Messages
-          </h1>
-          <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
-            Keep interview conversations and NGO updates organized in one clean workspace.
-          </p>
+          <div>
+            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+              Your Messages
+            </h1>
+            <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
+              Keep interview conversations and NGO updates organized in one clean workspace.
+            </p>
+          </div>
+          {!loading && conversationList.length > 0 && (
+            <img src={messagesIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
+          )}
         </motion.header>
 
         <section className="grid gap-6 md:grid-cols-[340px_minmax(0,1fr)]">
@@ -200,7 +206,7 @@ export default function Messages() {
               </div>
 
               <div className="flex items-center gap-2 rounded-2xl border border-[#E5EEFB] bg-[#F8FBFF] px-3 py-2.5">
-                <Search size={15} className="shrink-0 text-[#1A73E8]" />
+                <Search size={15} className="shrink-0 text-[#9AA0A6]" />
                 <input
                   value={searchQ}
                   onChange={event => setSearchQ(event.target.value)}
@@ -223,9 +229,6 @@ export default function Messages() {
               ) : filtered.length === 0 ? (
                 <div className="flex h-full items-center justify-center rounded-[26px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-5 text-center">
                   <div>
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                      <MessageCircle size={24} />
-                    </div>
                     <p className="text-[0.95rem] font-semibold text-[#202124]">No conversations yet</p>
                     <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">
                       Interview invitations and replies will appear here.
@@ -287,12 +290,16 @@ export default function Messages() {
             {!selectedConvId ? (
               <div className="flex flex-1 items-center justify-center px-8 py-16 text-center">
                 <div>
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
-                    <MessageCircle size={30} />
-                  </div>
-                  <h2 className="text-2xl font-semibold text-[#202124]">Select a conversation</h2>
+                  {conversationList.length === 0 && (
+                    <img src={messagesIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
+                  )}
+                  <h2 className="text-xl font-semibold text-[#202124]">
+                    {conversationList.length === 0 ? 'No messages yet' : 'Select a conversation'}
+                  </h2>
                   <p className="mx-auto mt-3 max-w-md text-[0.9rem] leading-7 text-[#5F6368]">
-                    Choose a conversation from the left to read messages and reply.
+                    {conversationList.length === 0
+                      ? 'Interview invitations and replies from NGOs will appear here.'
+                      : 'Choose a conversation from the left to read messages and reply.'}
                   </p>
                 </div>
               </div>
