@@ -30,9 +30,9 @@ const SKILLS_LIST = {
 const LANGUAGES = ['English', 'Arabic', 'Hebrew', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian', 'Chinese (Mandarin)', 'Japanese', 'Korean', 'Hindi', 'Turkish']
 const INTERESTS = ['Education', 'Youth Empowerment', 'Women Empowerment', 'Environment', 'Mental Health', 'Digital Inclusion', 'Animal Welfare', 'Community Development']
 
-const inputClass = 'w-full rounded-2xl border border-[#E5EEFB] bg-white px-3.5 py-3 text-[0.88rem] text-[#202124] outline-none transition placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-4 focus:ring-[#1A73E8]/10'
-const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-45'
-const softButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-[#1A73E8] transition hover:-translate-y-0.5 hover:border-[#C8DCF8] hover:bg-[#F8FBFF]'
+const inputClass = 'w-full rounded-2xl border border-[#DADCE0] bg-white px-3.5 py-3 text-[0.88rem] text-[#202124] outline-none transition placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15'
+const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.82rem] font-medium text-white shadow-[0_4px_12px_rgba(26,115,232,0.25)] transition hover:bg-[#1765CC] disabled:cursor-not-allowed disabled:opacity-45'
+const softButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2.5 text-[0.82rem] font-medium text-[#1A73E8] backdrop-blur-sm transition hover:bg-white hover:shadow-[0_6px_16px_rgba(17,24,39,0.06)]'
 
 function getSkillCategory(name) {
   const match = Object.entries(SKILLS_LIST).find(([, categorySkills]) =>
@@ -63,7 +63,7 @@ function normalizeSkills(profile) {
 function Card({ children, className = '' }) {
   return (
     <section
-      className={`rounded-[32px] bg-white border border-[#E5EEFB] shadow-[0_10px_30px_rgba(17,24,39,0.03)] ${className}`}
+      className={`overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl ${className}`}
     >
       {children}
     </section>
@@ -72,13 +72,17 @@ function Card({ children, className = '' }) {
 
 function SectionHeader({ icon: Icon, title, description, action }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 border-b border-[#E5EEFB] pb-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <p className="inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase text-[#9AA0A6]">
-          {Icon && <Icon size={14} className="text-[#1A73E8]" />}
-          {title}
-        </p>
-        {description && <p className="mt-2 max-w-3xl text-[0.92rem] leading-7 text-[#5F6368]">{description}</p>}
+    <div className="mb-5 flex flex-col gap-3 border-b border-white/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        {Icon && (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8] ring-1 ring-black/[0.04]">
+            <Icon size={16} strokeWidth={2} />
+          </span>
+        )}
+        <div className="min-w-0">
+          <h2 className="text-[0.95rem] font-semibold text-[#202124]">{title}</h2>
+          {description && <p className="mt-0.5 max-w-3xl text-[0.82rem] leading-6 text-[#5F6368]">{description}</p>}
+        </div>
       </div>
       {action}
     </div>
@@ -91,7 +95,7 @@ function FieldLabel({ children }) {
 
 function EmptyState({ title, description }) {
   return (
-    <div className="rounded-[22px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-4 py-4 text-center">
+    <div className="rounded-[22px] border border-dashed border-white/70 bg-white/45 px-4 py-4 text-center backdrop-blur-sm">
       <span className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
         <Plus size={15} />
       </span>
@@ -103,7 +107,7 @@ function EmptyState({ title, description }) {
 
 function Chip({ children, onRemove }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-[#F8FBFF] px-2.5 py-1 text-[0.76rem] font-semibold text-[#202124]">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 text-[0.76rem] font-medium text-[#202124] shadow-[0_1px_2px_rgba(17,24,39,0.03)] backdrop-blur-sm">
       {children}
       {onRemove && (
         <button type="button" onClick={onRemove} className="rounded-full p-0.5 text-[#9AA0A6] transition hover:bg-[#FCE8E6] hover:text-[#C5221F]">
@@ -129,10 +133,10 @@ function SmallProfileCard({ icon: Icon, title, summary, children, action, defaul
   }
 
   return (
-    <section ref={sectionRef} className="rounded-[28px] border border-[#D7E6FF] bg-white p-4 shadow-[0_10px_30px_rgba(17,24,39,0.025)] transition hover:border-[#C8DCF8] sm:p-5">
-      <div className={`${isOpen ? 'mb-4 border-b border-[#E5EEFB] pb-3' : ''} flex items-start justify-between gap-3`}>
+    <section ref={sectionRef} className="rounded-[28px] border border-white/50 bg-white/40 p-4 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_12px_30px_rgba(17,24,39,0.05)] backdrop-blur-xl transition hover:bg-white/55 sm:p-5">
+      <div className={`${isOpen ? 'mb-4 border-b border-white/40 pb-3' : ''} flex items-start justify-between gap-3`}>
         <div className="flex min-w-0 gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8] ring-1 ring-black/[0.04]">
             <Icon size={18} />
           </span>
           <div className="min-w-0">
@@ -145,7 +149,7 @@ function SmallProfileCard({ icon: Icon, title, summary, children, action, defaul
           <button
             type="button"
             onClick={() => handleToggle(!open)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] transition hover:border-[#1A73E8] hover:bg-[#F8FBFF] hover:text-[#1A73E8]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 text-[#5F6368] ring-1 ring-white/70 transition hover:bg-white hover:text-[#1A73E8]"
             aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
           >
             <ChevronDown size={17} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -472,20 +476,21 @@ export default function StudentProfile() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
-      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+    <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="mb-8"
+          className="mb-7"
         >
           <div>
-            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+            <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
               Profile
             </h1>
-            <p className="mt-3 max-w-4xl whitespace-nowrap text-[0.98rem] leading-7 text-[#5F6368] max-lg:whitespace-normal">
-              Keep your skills, education, causes, and links in one connected view so the whole page feels like part of the same workspace.
+            <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
+              Keep your skills, education, causes, and links in one clear view for NGOs and stronger matches.
             </p>
           </div>
         </motion.header>
@@ -494,22 +499,24 @@ export default function StudentProfile() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_10px_30px_rgba(17,24,39,0.03)] sm:p-7"
+          className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
         >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[24px] border border-[#D7E6FF] bg-[#F8FBFF]">
+              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full bg-white shadow-[0_8px_24px_rgba(26,115,232,0.14)] ring-4 ring-white">
                 <AvatarDisplay src={avatarSrc} name={displayName} size="xl" className="h-full w-full" />
               </div>
 
               <div className="min-w-0">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.72rem] font-semibold uppercase text-[#1A73E8]">
-                  <GraduationCap size={13} />
-                  Student profile
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-[1.9rem] font-semibold tracking-[-0.015em] text-[#202124]">
+                    {displayName}
+                  </h2>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.7rem] font-medium text-[#1A73E8]">
+                    <GraduationCap size={12} />
+                    Student profile
+                  </span>
                 </div>
-                <h2 className="truncate text-[2rem] font-semibold text-[#202124]">
-                  {displayName}
-                </h2>
                 <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.94rem] font-semibold text-[#5F6368]">
                   <span>{profileTitle}</span>
                   {universitySummary && (
@@ -534,9 +541,9 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] p-3 sm:min-w-[280px]">
+            <div className="grid w-full shrink-0 grid-cols-3 gap-3 rounded-[22px] bg-white/40 p-3 ring-1 ring-white/50 backdrop-blur-md sm:w-[280px]">
               {profileFacts.map(fact => (
-                <div key={fact.label} className="text-center">
+                <div key={fact.label} className="rounded-2xl bg-white/45 px-3 py-3 text-center ring-1 ring-white/60">
                   <p className="text-[1.25rem] font-semibold text-[#202124]">{fact.value}</p>
                   <p className="mt-1 text-[0.72rem] font-semibold text-[#5F6368]">{fact.label}</p>
                 </div>
@@ -606,12 +613,12 @@ export default function StudentProfile() {
               )}
             />
 
-            <div className="mb-3 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+            <div className="mb-3 overflow-hidden rounded-[24px] bg-white/40 ring-1 ring-white/50 backdrop-blur-md">
               {visibleSkills.length > 0 ? (
                 Object.entries(skillsByCategory).map(([category, categorySkills]) => (
                   <div
                     key={category}
-                    className="grid gap-3 border-b border-[#E5EEFB] px-4 py-4 last:border-b-0 md:grid-cols-[180px_minmax(0,1fr)] md:items-start"
+                    className="grid gap-3 border-b border-white/40 px-4 py-4 last:border-b-0 md:grid-cols-[180px_minmax(0,1fr)] md:items-start"
                   >
                     <div>
                       <span className="inline-flex rounded-full bg-[#E8F0FE] px-3 py-1 text-[0.72rem] font-semibold uppercase text-[#1A73E8]">{category}</span>
@@ -638,12 +645,12 @@ export default function StudentProfile() {
             </div>
 
             {editingSkills && (
-            <div className="mx-auto max-w-2xl rounded-[24px] border border-[#E5EEFB] bg-[#FBFCFE] p-3">
+            <div className="mx-auto max-w-2xl rounded-[24px] bg-white/40 p-3 ring-1 ring-white/50 backdrop-blur-md">
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setSkillDropdownOpen(open => !open)}
-                  className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-[#E5EEFB] bg-[#F8FBFF] px-4 py-3 text-left transition hover:border-[#1A73E8] hover:bg-white"
+                  className="flex w-full items-center justify-between gap-3 rounded-[20px] bg-white/55 px-4 py-3 text-left ring-1 ring-white/60 transition hover:bg-white"
                 >
                   <div>
                     <p className="text-[0.72rem] font-semibold uppercase text-[#9AA0A6]">Add skill</p>
@@ -655,11 +662,11 @@ export default function StudentProfile() {
                 </button>
 
                 {skillDropdownOpen && (
-                  <div className="mt-2 overflow-hidden rounded-[20px] border border-[#E5EEFB] bg-white shadow-[0_14px_32px_rgba(17,24,39,0.08)]">
+                  <div className="mt-2 overflow-hidden rounded-[20px] bg-white shadow-[0_14px_32px_rgba(17,24,39,0.08)] ring-1 ring-white/70">
                     <div className="max-h-[260px] overflow-y-auto px-3 py-2 [scrollbar-color:#9DBCF5_transparent] [scrollbar-width:thin]">
                       {skillDropdownGroups.length > 0 ? (
                         skillDropdownGroups.map(group => (
-                          <div key={group.category} className="border-b border-[#E5EEFB] py-2.5 last:border-b-0">
+                          <div key={group.category} className="border-b border-[#F1F3F4] py-2.5 last:border-b-0">
                             <div className="mb-2">
                               <p className="text-[0.7rem] font-semibold uppercase text-[#1A73E8]">
                                 {group.category}
@@ -672,7 +679,7 @@ export default function StudentProfile() {
                                   key={`${group.category}-${skill}`}
                                   onClick={() => addSkillToDraft(skill)}
                                   disabled={savingSkills}
-                                  className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.76rem] font-semibold text-[#202124] transition hover:border-[#1A73E8] hover:bg-[#E8F0FE] hover:text-[#1A73E8] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-full border border-[#F1F3F4] bg-white px-2.5 py-1 text-[0.76rem] font-medium text-[#202124] transition hover:border-[#1A73E8] hover:bg-[#E8F0FE] hover:text-[#1A73E8] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {skill}
                                 </button>
@@ -686,13 +693,13 @@ export default function StudentProfile() {
                         </div>
                       )}
                     </div>
-                    <form onSubmit={handleCustomSkillSubmit} className="border-t border-[#E5EEFB] px-3 py-2.5">
+                    <form onSubmit={handleCustomSkillSubmit} className="border-t border-[#F1F3F4] px-3 py-2.5">
                       <p className="mb-2 text-[0.7rem] font-semibold uppercase text-[#1A73E8]">Other</p>
                       <div className="flex gap-2">
                         <input
                           value={customSkillDraft}
                           onChange={event => setCustomSkillDraft(event.target.value)}
-                          className="min-w-0 flex-1 rounded-full border border-[#E5EEFB] bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-[#202124] outline-none transition placeholder:font-medium placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-3 focus:ring-[#1A73E8]/10"
+                          className="min-w-0 flex-1 rounded-full border border-[#DADCE0] bg-white px-3 py-1.5 text-[0.78rem] font-medium text-[#202124] outline-none transition placeholder:font-medium placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/10"
                           placeholder="Type a skill"
                         />
                         <button
@@ -727,9 +734,9 @@ export default function StudentProfile() {
               />
 
               {projects.length > 0 ? (
-                <div className="mb-4 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+                <div className="mb-4 overflow-hidden rounded-[24px] bg-white/40 ring-1 ring-white/50 backdrop-blur-md">
                   {projects.map((project, index) => (
-                    <div key={`${project.title}-${index}`} className="flex gap-4 border-b border-[#E5EEFB] p-4 last:border-b-0">
+                    <div key={`${project.title}-${index}`} className="flex gap-4 border-b border-white/40 p-4 last:border-b-0">
                       <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                         <Briefcase size={18} />
                       </span>
@@ -760,7 +767,7 @@ export default function StudentProfile() {
               ) : null}
 
               {editingProjects && (
-                <div className="rounded-[24px] border border-[#E5EEFB] bg-[#F8FBFF] p-4">
+                <div className="rounded-[24px] bg-white/40 p-4 ring-1 ring-white/50 backdrop-blur-md">
                   <div className="space-y-3">
                     <div>
                       <FieldLabel>Project title</FieldLabel>
@@ -799,9 +806,9 @@ export default function StudentProfile() {
             />
 
             {educations.length > 0 ? (
-              <div className="mb-4 overflow-hidden rounded-[24px] border border-[#E5EEFB] bg-white">
+              <div className="mb-4 overflow-hidden rounded-[24px] bg-white/40 ring-1 ring-white/50 backdrop-blur-md">
                 {educations.map((education, index) => (
-                  <div key={`${education.field}-${index}`} className="flex gap-4 border-b border-[#E5EEFB] p-4 last:border-b-0">
+                  <div key={`${education.field}-${index}`} className="flex gap-4 border-b border-white/40 p-4 last:border-b-0">
                     <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
                       <GraduationCap size={18} />
                     </span>
@@ -833,7 +840,7 @@ export default function StudentProfile() {
             ) : null}
 
             {editingEducation && (
-              <div className="rounded-[24px] border border-[#E5EEFB] bg-[#F8FBFF] p-4">
+              <div className="rounded-[24px] bg-white/40 p-4 ring-1 ring-white/50 backdrop-blur-md">
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
                     <FieldLabel>Field of study</FieldLabel>
@@ -853,7 +860,7 @@ export default function StudentProfile() {
                       <option>Diploma</option>
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 self-end rounded-2xl border border-[#E5EEFB] bg-white px-4 py-3 text-[0.82rem] font-semibold text-[#202124]">
+                  <label className="flex items-center gap-2 self-end rounded-2xl bg-white/70 px-4 py-3 text-[0.82rem] font-semibold text-[#202124] ring-1 ring-white/70">
                     <input type="checkbox" checked={educationDraft.isCurrent || false} onChange={event => setEducationDraft(prev => ({ ...prev, isCurrent: event.target.checked }))} />
                     Currently studying
                   </label>
@@ -987,7 +994,7 @@ export default function StudentProfile() {
               ) : (
                 <div className="space-y-3">
                   {Object.entries(linksDraft).filter(([, value]) => value).map(([key, value]) => (
-                    <a key={key} href={value} target="_blank" rel="noreferrer" className="block truncate rounded-2xl border border-[#E5EEFB] bg-[#F8FBFF] px-3.5 py-2.5 text-[0.8rem] font-semibold text-[#1A73E8] transition hover:border-[#1A73E8] hover:bg-white">
+                    <a key={key} href={value} target="_blank" rel="noreferrer" className="block truncate rounded-2xl bg-white/55 px-3.5 py-2.5 text-[0.8rem] font-semibold text-[#1A73E8] ring-1 ring-white/60 transition hover:bg-white">
                       {key}: {value}
                     </a>
                   ))}

@@ -82,69 +82,87 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(10,18,48,0.7)', backdropFilter:'blur(12px)' }}
+      style={{ background:'rgba(15,23,42,0.42)', backdropFilter:'blur(14px)' }}
       onClick={onClose}>
       <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
         exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col"
-        style={{ boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight:'92vh' }}
+        className="flex w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-[#DDE3EC] bg-white"
+        style={{ boxShadow:'0 24px 80px rgba(15,23,42,0.22)', maxHeight:'92vh' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header Section */}
-        <div className="sticky top-0 bg-gradient-to-br from-[#0D183D] to-[#1a2952] border-b border-[rgba(13,24,61,0.2)] px-8 py-7">
-          <div className="flex items-start justify-between gap-6 mb-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-extrabold text-[#FFB703] mb-2 uppercase tracking-wider">
-                {opp.orgName || opp.name || 'Organization'}
+        <div className="sticky top-0 z-10 border-b border-[#E6EAF0] bg-white px-5 py-4 sm:px-6">
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+            <div className="min-w-0">
+              <p className="mb-2 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-[#1A73E8]">
+                Student opportunity
               </p>
-              <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">{opp.title}</h1>
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={opp.orgName || opp.name} size={44} radius="0.625rem"/>
-                <div>
-                  <p className="text-[16px] font-bold text-white">{opp.orgName || opp.name}</p>
-                  {opp.category && <p className="text-[13px] text-[#B0CCFF]">{opp.category}</p>}
-                </div>
+              <h1 className="max-w-3xl text-[clamp(1.35rem,2.4vw,1.95rem)] font-semibold leading-tight tracking-[-0.04em] text-[#202124]">{opp.title}</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.78rem] text-[#5F6368]">
+                <span className="inline-flex items-center gap-2">
+                  <GradientAvatar name={opp.orgName || opp.name} size={28} radius="0.55rem" />
+                  <span className="font-semibold text-[#202124]">{opp.orgName || opp.name}</span>
+                </span>
+                {opp.category && (
+                  <>
+                    <span className="hidden h-1 w-1 rounded-full bg-[#C9D2E1] sm:inline-block" />
+                    <span>{opp.category}</span>
+                  </>
+                )}
               </div>
             </div>
-            </div>
-
-          <div className="flex items-center gap-3 justify-between">
-            <div className="flex items-center gap-2 flex-wrap">
-              {opp.location && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.location}</span>
-              )}
-              {opp.workMode && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.workMode}</span>
-              )}
-              {opp.weeklyHours && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.weeklyHours}</span>
-              )}
-              {opp.duration && (
-                <span className="text-[12px] px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">{opp.duration}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:justify-end">
               <Link to={`/ngo-profile/${opp.ngoId}`}
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-[12px] font-semibold bg-[#FFB703] text-white hover:opacity-90 transition-all whitespace-nowrap">
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#D7E6FF] bg-white px-3.5 py-2 text-[0.72rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF] whitespace-nowrap">
                 View NGO Profile
+                <ArrowRight size={13} />
               </Link>
-              <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white">
-                <X size={20}/>
+              <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E6EAF0] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FAFC]">
+                <X size={17}/>
               </button>
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#F1F3F6] pt-3 text-[0.72rem] font-medium text-[#5F6368]">
+            {opp.location && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={13} className="text-[#9AA0A6]" />
+                {opp.location}
+              </span>
+            )}
+            {opp.workMode && (
+              <span className="inline-flex items-center gap-1.5">
+                <Globe size={13} className="text-[#9AA0A6]" />
+                {opp.workMode}
+              </span>
+            )}
+            {opp.weeklyHours && (
+              <span className="inline-flex items-center gap-1.5">
+                <Clock size={13} className="text-[#9AA0A6]" />
+                {opp.weeklyHours}
+              </span>
+            )}
+            {opp.duration && (
+              <span className="inline-flex items-center gap-1.5">
+                <Briefcase size={13} className="text-[#9AA0A6]" />
+                {opp.duration}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto bg-[#F8F9FB]">
-          <div className="px-8 py-10 space-y-8 max-w-3xl mx-auto">
+        <div className="flex-1 overflow-y-auto bg-[#FAFBFD]">
+          <div className="mx-auto max-w-4xl space-y-5 px-6 py-8 sm:px-8">
 
             {/* ━━━━━━━━━━━━━━━━━━ ABOUT THIS ROLE ━━━━━━━━━━━━━━━━━━ */}
             {(opp.description || opp.missionImpact) && (
-              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">About this role</h2>
-                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">
+              <div className="relative overflow-hidden rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                <span className="absolute inset-y-7 left-0 w-1 rounded-r-full bg-[#1A73E8]" />
+                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Role overview</p>
+                <h2 className="mb-4 text-[1.15rem] font-semibold text-[#202124]">About this role</h2>
+                <p className="whitespace-pre-wrap text-[0.92rem] leading-7 text-[#5F6368]">
                   {opp.description || opp.missionImpact}
                 </p>
               </div>
@@ -152,58 +170,66 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
             {/* ━━━━━━━━━━━━━━━━━━ MISSION & IMPACT ━━━━━━━━━━━━━━━━━━ */}
             {opp.missionImpact && opp.description && (
-              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Why this matters</h2>
-                <p className="text-[15px] leading-relaxed text-[#4B6382] whitespace-pre-wrap">{opp.missionImpact}</p>
+              <div className="relative overflow-hidden rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                <p className="relative mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Impact</p>
+                <h2 className="relative mb-4 text-[1.15rem] font-semibold text-[#202124]">Why this matters</h2>
+                <p className="whitespace-pre-wrap text-[0.92rem] leading-7 text-[#5F6368]">{opp.missionImpact}</p>
               </div>
             )}
 
             {/* ━━━━━━━━━━━━━━━━━━ QUICK INFO CARDS ━━━━━━━━━━━━━━━━━━ */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {opp.location && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Location</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.location}</p>
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <MapPin size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Location</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.location}</p>
                 </div>
               )}
               {opp.workMode && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Work Mode</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.workMode}</p>
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <Globe size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Work Mode</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.workMode}</p>
                 </div>
               )}
               {opp.weeklyHours && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Hours/Week</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.weeklyHours}</p>
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <Clock size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Hours/Week</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.weeklyHours}</p>
                 </div>
               )}
               {opp.duration && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Duration</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.duration}</p>
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <Briefcase size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Duration</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.duration}</p>
                 </div>
               )}
               {opp.deadline && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Deadline</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <Clock size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Deadline</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">
                     {new Date(opp.deadline).toLocaleDateString()}
                   </p>
                 </div>
               )}
               {(opp.category || opp.field) && (
-                <div className="bg-white rounded-xl p-4 border border-[rgba(13,24,61,0.08)]">
-                  <p className="text-[10px] font-bold text-[#4B6382] uppercase mb-2">Category</p>
-                  <p className="text-[14px] font-bold text-[#0D183D]">{opp.category || opp.field || 'Not specified'}</p>
+                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                  <Briefcase size={15} className="mb-3 text-[#1A73E8]" />
+                  <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Category</p>
+                  <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.category || opp.field || 'Not specified'}</p>
                 </div>
               )}
             </div>
 
             {/* ━━━━━━━━━━━━━━━━━━ REQUIRED SKILLS ━━━━━━━━━━━━━━━━━━ */}
             {opp.skills && opp.skills.length > 0 && (
-              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Required skills</h2>
+              <div className="rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">What helps here</p>
+                <h2 className="mb-5 text-[1.15rem] font-semibold text-[#202124]">Required skills</h2>
                 <div className="flex flex-wrap gap-3">
                   {opp.skills.map((s, i) => {
                     let skillName = '', skillLevel = ''
@@ -227,7 +253,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
                     if (!skillName) return null
                     return (
-                      <span key={i} className="px-4 py-2.5 rounded-full text-[13px] font-semibold bg-[#FFB703]/10 text-[#92610a] border border-[#FFB703]/30">
+                      <span key={i} className="rounded-full border border-[#D7E6FF] bg-[#F8FBFF] px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8]">
                         {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
                       </span>
                     )
@@ -238,11 +264,12 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
             {/* ━━━━━━━━━━━━━━━━━━ LANGUAGES ━━━━━━━━━━━━━━━━━━ */}
             {opp.languages && opp.languages.length > 0 && (
-              <div className="bg-white rounded-2xl p-8 border border-[rgba(13,24,61,0.08)]">
-                <h2 className="text-[20px] font-bold text-[#0D183D] mb-5">Required languages</h2>
+              <div className="rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Communication</p>
+                <h2 className="mb-5 text-[1.15rem] font-semibold text-[#202124]">Required languages</h2>
                 <div className="flex flex-wrap gap-3">
                   {opp.languages.map((lang, i) => (
-                    <span key={i} className="px-4 py-2.5 rounded-full text-[13px] font-semibold bg-[#3B82F6]/10 text-[#1E40AF] border border-[#3B82F6]/30">
+                    <span key={i} className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-4 py-2 text-[0.78rem] font-semibold text-[#3C4043]">
                       {lang}
                     </span>
                   ))}
@@ -255,14 +282,13 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         </div>
 
         {/* Footer - Sticky with gradient */}
-        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-white/95 border-t border-[rgba(13,24,61,0.08)] px-8 py-6 flex gap-3 shadow-lg">
+        <div className="sticky bottom-0 flex gap-3 border-t border-[#E8EBF0] bg-white px-8 py-5 shadow-[0_-10px_28px_rgba(15,23,42,0.05)]">
           <button onClick={onClose}
-            className="flex-1 px-6 py-3.5 rounded-xl text-[14px] font-semibold border border-[rgba(13,24,61,0.1)] text-[#4B6382] hover:bg-[#F8F9FB] transition-all">
+            className="flex-1 rounded-full border border-[#E6EAF0] px-6 py-3.5 text-[0.86rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#F8FAFC]">
             Cancel
           </button>
           <button onClick={onApply}
-            className="flex-1 px-6 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ background:'#FFB703', boxShadow: '0 4px 16px rgba(255,183,3,0.25)' }}>
+            className="flex-1 rounded-full bg-[#1A73E8] px-6 py-3.5 text-[0.86rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95 active:scale-95">
             Apply now
           </button>
         </div>
@@ -304,7 +330,7 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
     setStep('success')
   }
 
-  const iStyle = k => ({ background:'white', color:'#0D183D', border:`1.5px solid ${focusKey===k?'#FFB703':'rgba(13,24,61,0.1)'}` })
+  const iStyle = k => ({ background:'white', color:'#202124', border:`1.5px solid ${focusKey===k?'#1A73E8':'#E6EAF0'}` })
 
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
@@ -328,9 +354,9 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
             <h2 className="text-[1.3rem] font-extrabold text-[#0D183D] mb-2">Application sent!</h2>
             <p className="text-[13px] text-[#4B6382] mb-2">Your application to <strong>{ngo.name}</strong> is on its way.</p>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-              style={{ background:'rgba(255,183,3,0.08)', border:'1px solid rgba(255,183,3,0.2)' }}>
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"/>
-              <span className="text-[12px] font-semibold" style={{ color:'#D99E00' }}>Status: Under Review</span>
+              style={{ background:'#E8F0FE', border:'1px solid #D7E6FF' }}>
+              <span className="w-2 h-2 rounded-full bg-[#1A73E8] shrink-0"/>
+              <span className="text-[12px] font-semibold text-[#1A73E8]">Status: Under Review</span>
             </div>
             <button onClick={onClose} className="px-8 py-3 rounded-2xl text-[13px] font-semibold text-white hover:opacity-90"
               style={{ background:'#0D183D' }}>
@@ -340,7 +366,7 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
         ) : (
           <>
             <div className="px-6 pt-5 pb-4 shrink-0"
-              style={{ background:'linear-gradient(160deg,#FFF7E6,#F0EEFF)', borderBottom:'1px solid rgba(13,24,61,0.07)' }}>
+              style={{ background:'#FFFFFF', borderBottom:'1px solid #E8EBF0' }}>
               <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6382] hover:bg-black/[0.06]">
                 <X size={14}/>
               </button>
@@ -357,12 +383,12 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background:'#FFB703' }}>
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background:'#1A73E8' }}>
                       <Sparkles size={11} className="text-white"/>
                     </div>
                     <p className="text-[12px] font-extrabold text-[#0D183D]">AI-generated message</p>
                   </div>
-                  <button onClick={regen} className={`flex items-center gap-1 text-[11px] font-semibold ${gen?'opacity-50':''}`} style={{ color:'#FFB703' }}>
+                  <button onClick={regen} className={`flex items-center gap-1 text-[11px] font-semibold ${gen?'opacity-50':''}`} style={{ color:'#1A73E8' }}>
                     <RefreshCw size={11} className={gen?'animate-spin':''}/> Regenerate
                   </button>
                 </div>
@@ -405,7 +431,7 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
               style={{ borderColor:'rgba(13,24,61,0.08)', background:'#FAFAFA' }}>
               <button onClick={onClose} className="flex-1 py-3 rounded-2xl text-[13px] font-semibold border text-[#4B6382] hover:bg-[rgba(13,24,61,0.03)] transition-colors" style={{ borderColor:'rgba(13,24,61,0.12)' }}>Cancel</button>
               <button onClick={submit} className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background:'#FFB703', boxShadow:'0 4px 16px rgba(255,183,3,0.3)', flex:2 }}>
+                style={{ background:'#1A73E8', boxShadow:'0 8px 20px rgba(26,115,232,0.22)', flex:2 }}>
                 <Send size={13}/> Submit application →
               </button>
             </div>
