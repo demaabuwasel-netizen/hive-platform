@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   AlertCircle,
-  ArrowRight,
   Bookmark,
   Briefcase,
   ChevronRight,
@@ -82,7 +81,7 @@ export default function Saved() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className={`mb-8 ${!loading && !error && items.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
+          className="mb-8"
         >
           <div>
             <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
@@ -91,17 +90,7 @@ export default function Saved() {
             <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
               Keep your favorite roles in one clean workspace and come back when you are ready to apply.
             </p>
-            <Link
-              to="/opportunities"
-              className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.88rem] font-semibold text-white shadow-[0_8px_22px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558C0]"
-            >
-              Browse more
-              <ArrowRight size={16} />
-            </Link>
           </div>
-          {!loading && !error && items.length > 0 && (
-            <img src={savedIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
-          )}
         </motion.header>
 
         <section className="rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)]">

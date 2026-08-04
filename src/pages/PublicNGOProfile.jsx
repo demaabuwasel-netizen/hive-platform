@@ -5,7 +5,6 @@ import {
   ArrowLeft, Globe, Loader2, ExternalLink, Heart,
   Share2, AlertCircle, MapPin, Users, Briefcase, Target
 } from 'lucide-react'
-import { useApp } from '../context/AppContext'
 import { loadNgoProfile } from '../services/storage'
 import { fetchNgoOpportunities } from '../services/opportunities'
 import GradientAvatar from '../components/GradientAvatar'
@@ -66,17 +65,20 @@ function NGOOpportunityCard({ opp, onViewDetails }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group relative cursor-pointer overflow-hidden rounded-[20px] border border-[#E1E7F0] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#BFD7FF] hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]"
+      className="group flex h-full cursor-pointer flex-col rounded-[24px] border border-[#E1E7F0] bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#BFD7FF] hover:shadow-[0_18px_42px_rgba(60,64,67,0.08)]"
       onClick={() => onViewDetails(opp)}
     >
-      <span className="absolute inset-x-0 top-0 h-1 bg-[#E8F0FE] transition-colors group-hover:bg-[#1A73E8]" />
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <h3 className="line-clamp-2 flex-1 text-[0.95rem] font-semibold leading-tight text-[#202124] transition-colors group-hover:text-[#1A73E8]">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <h3 className="line-clamp-2 text-[1.12rem] font-semibold leading-snug tracking-[-0.03em] text-[#202124] transition-colors group-hover:text-[#1A73E8]">
           {opp.title}
         </h3>
         <button
-          onClick={handleSaveClick}
-          className="flex-shrink-0 rounded-lg border border-transparent p-2 transition-colors hover:border-[#E6EAF0] hover:bg-[#F8FAFC]"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleSaveClick()
+          }}
+          className="flex-shrink-0 rounded-full border border-transparent p-2 transition-colors hover:border-[#E6EAF0] hover:bg-[#F8FAFC]"
+          aria-label="Save opportunity"
         >
           <svg className="h-[18px] w-[18px] text-[#5F6368]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-5-7 5V5z" />
@@ -84,52 +86,54 @@ function NGOOpportunityCard({ opp, onViewDetails }) {
         </button>
       </div>
 
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {opp.location && (
-          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-2.5 py-1 text-[0.72rem] text-[#5F6368]">
+          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-3 py-1.5 text-[0.76rem] font-medium text-[#5F6368]">
             {opp.location}
           </span>
         )}
         {opp.workMode && (
-          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-2.5 py-1 text-[0.72rem] text-[#5F6368]">
+          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-3 py-1.5 text-[0.76rem] font-medium text-[#5F6368]">
             {opp.workMode}
           </span>
         )}
         {opp.weeklyHours && (
-          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-2.5 py-1 text-[0.72rem] text-[#5F6368]">
+          <span className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-3 py-1.5 text-[0.76rem] font-medium text-[#5F6368]">
             {opp.weeklyHours} hrs/week
           </span>
         )}
       </div>
 
       {opp.description && (
-        <p className="mb-3 line-clamp-2 text-[0.8rem] leading-relaxed text-[#5F6368]">
+        <p className="mb-5 line-clamp-3 text-[0.9rem] leading-7 text-[#5F6368]">
           {opp.description}
         </p>
       )}
 
-      {opp.skills && opp.skills.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3">
-          {opp.skills.slice(0, 2).map((s, idx) => (
-            <SkillChip key={idx} skill={s} />
-          ))}
-          {opp.skills.length > 2 && (
-            <span className="text-[0.7rem] font-medium text-[#5F6368]">
-              +{opp.skills.length - 2} more
-            </span>
-          )}
-        </div>
-      )}
+      <div className="mt-auto">
+        {opp.skills && opp.skills.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {opp.skills.slice(0, 2).map((s, idx) => (
+              <SkillChip key={idx} skill={s} />
+            ))}
+            {opp.skills.length > 2 && (
+              <span className="rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-semibold text-[#5F6368]">
+                +{opp.skills.length - 2}
+              </span>
+            )}
+          </div>
+        )}
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onViewDetails(opp)
-        }}
-        className="w-full rounded-full bg-[#1A73E8] py-2.5 text-[0.76rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-px hover:shadow-[0_12px_26px_rgba(26,115,232,0.24)]"
-      >
-        View opportunity
-      </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onViewDetails(opp)
+          }}
+          className="w-full rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-px hover:bg-[#1558B0] hover:shadow-[0_14px_30px_rgba(26,115,232,0.24)]"
+        >
+          View opportunity
+        </button>
+      </div>
     </motion.div>
   )
 }
@@ -192,57 +196,57 @@ export default function PublicNGOProfile() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F5F7FB]">
-      <div className="mx-auto max-w-6xl px-6 py-8 lg:px-10">
+    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
+      <div className="mx-auto w-full max-w-[1180px] px-5 py-7 sm:px-8 lg:px-10">
         <motion.button
           onClick={() => navigate(-1)}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          className="mb-7 flex items-center gap-2 text-[0.86rem] font-semibold text-[#5F6368] transition-colors hover:text-[#202124]"
+          className="mb-8 inline-flex items-center gap-2 text-[0.86rem] font-semibold text-[#5F6368] transition-colors hover:text-[#202124]"
         >
           <ArrowLeft size={18} />
           Back
         </motion.button>
 
         <motion.header
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-7 border-b border-[#DDE3EC] pb-7"
+          className="mb-10"
         >
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-end">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[#DDE3EC] bg-white p-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="flex h-[86px] w-[86px] shrink-0 items-center justify-center rounded-[24px] border border-[#DDE3EC] bg-white p-1.5 shadow-[0_12px_30px_rgba(60,64,67,0.07)]">
                 {ngoProfile?.imageUrl ? (
                   <img
                     src={ngoProfile.imageUrl}
                     alt={ngoProfile.name}
-                    className="h-full w-full rounded-[16px] object-cover"
+                    className="h-full w-full rounded-[18px] object-cover"
                   />
                 ) : (
-                  <GradientAvatar name={ngoProfile.name} size={72} radius="0.9rem" />
+                  <GradientAvatar name={ngoProfile.name} size={74} radius="1rem" />
                 )}
               </div>
 
               <div className="min-w-0">
-                <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[#1A73E8]">
+                <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#1A73E8]">
                   Organization profile
                 </p>
-                <h1 className="max-w-3xl text-[clamp(2.15rem,5vw,4rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[#202124]">
+                <h1 className="text-[clamp(2.7rem,6vw,5.6rem)] font-normal leading-[0.96] tracking-[-0.075em] text-[#202124]">
                   {ngoProfile.name}
                 </h1>
               </div>
             </div>
 
             {(ngoProfile.website || ngoProfile.instagram || ngoProfile.twitter) && (
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="flex flex-wrap gap-2.5 lg:pt-4">
                 {ngoProfile.website && (
                   <a
                     href={ngoProfile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.84rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition-opacity hover:opacity-95"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.86rem] font-semibold text-white shadow-[0_10px_26px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#1558B0]"
                   >
-                    <Globe size={15} />
+                    <Globe size={16} />
                     Website
                     <ExternalLink size={13} />
                   </a>
@@ -252,7 +256,7 @@ export default function PublicNGOProfile() {
                     href={ngoProfile.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-white px-3.5 py-2.5 text-[0.82rem] font-semibold text-[#3C4043] transition-colors hover:bg-[#F8FAFC]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-4 py-2.5 text-[0.84rem] font-semibold text-[#3C4043] transition-all hover:-translate-y-0.5 hover:border-[#C8D2E0]"
                   >
                     <Heart size={15} />
                     Instagram
@@ -263,7 +267,7 @@ export default function PublicNGOProfile() {
                     href={ngoProfile.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-white px-3.5 py-2.5 text-[0.82rem] font-semibold text-[#3C4043] transition-colors hover:bg-[#F8FAFC]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-4 py-2.5 text-[0.84rem] font-semibold text-[#3C4043] transition-all hover:-translate-y-0.5 hover:border-[#C8D2E0]"
                   >
                     <Share2 size={15} />
                     Social
@@ -272,162 +276,181 @@ export default function PublicNGOProfile() {
               </div>
             )}
           </div>
-        </motion.header>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8 grid gap-3 md:grid-cols-3"
-        >
-          {[
-            ngoProfile.location && { label: 'Location', value: ngoProfile.location, icon: MapPin },
-            ngoProfile.orgSize && { label: 'Team size', value: ngoProfile.orgSize, icon: Users },
-            { label: 'Open roles', value: `${ngoOpps.length} opportunity${ngoOpps.length !== 1 ? 'ies' : ''}`, icon: Briefcase },
-          ].filter(Boolean).map(item => (
-            <div key={item.label} className="flex items-center gap-3 rounded-[18px] border border-[#E1E7F0] bg-white px-4 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8]">
-                <item.icon size={16} />
-              </span>
+          <div className="mt-9 grid gap-4 border-y border-[#E1E7F0] py-5 sm:grid-cols-2 xl:grid-cols-4">
+            {ngoProfile.location && (
               <div>
-                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">{item.label}</p>
-                <p className="mt-0.5 text-[0.86rem] font-semibold text-[#202124]">{item.value}</p>
+                <p className="mb-2 flex items-center gap-2 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#80868B]">
+                  <MapPin size={15} />
+                  Location
+                </p>
+                <p className="text-[0.98rem] font-semibold text-[#202124]">{ngoProfile.location}</p>
               </div>
+            )}
+            {ngoProfile.orgSize && (
+              <div>
+                <p className="mb-2 flex items-center gap-2 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#80868B]">
+                  <Users size={15} />
+                  Team size
+                </p>
+                <p className="text-[0.98rem] font-semibold text-[#202124]">{ngoProfile.orgSize}</p>
+              </div>
+            )}
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#80868B]">
+                <Briefcase size={15} />
+                Open roles
+              </p>
+              <p className="text-[0.98rem] font-semibold text-[#202124]">{ngoOpps.length} role{ngoOpps.length !== 1 ? 's' : ''}</p>
             </div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16 }}
-          className="mb-12 grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]"
-        >
-          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             {ngoProfile.tags && ngoProfile.tags.length > 0 && (
-              <section className="rounded-[22px] border border-[#D7E6FF] bg-[#F8FBFF] p-5">
-                <p className="mb-3 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Focus areas</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ngoProfile.tags.map((tag, i) => (
-                    <span
-                      key={i}
-                      className="rounded-full border border-[#D7E6FF] bg-white px-2.5 py-1 text-[0.7rem] font-medium text-[#1A73E8]"
-                    >
+              <div>
+                <p className="mb-2 flex items-center gap-2 text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#80868B]">
+                  <Target size={15} />
+                  Focus
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {ngoProfile.tags.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.76rem] font-semibold text-[#1A73E8]">
                       {tag}
                     </span>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {ngoProfile.preferred_skills && ngoProfile.preferred_skills.length > 0 && (
-              <section className="rounded-[22px] border border-[#E1E7F0] bg-white p-5">
-                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Student fit</p>
-                <h2 className="mb-4 text-[1.02rem] font-semibold text-[#202124]">Preferred skills</h2>
-                <div className="flex flex-wrap gap-2">
-                  {ngoProfile.preferred_skills.map((skill, i) => (
-                    <SkillChip key={i} skill={skill} variant="blue" />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {ngoProfile.project_types && ngoProfile.project_types.length > 0 && (
-              <section className="rounded-[22px] border border-[#E1E7F0] bg-white p-5">
-                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Work style</p>
-                <h2 className="mb-4 text-[1.02rem] font-semibold text-[#202124]">Project types</h2>
-                <div className="flex flex-wrap gap-2">
-                  {ngoProfile.project_types.map((type, i) => (
-                    <span
-                      key={i}
-                      className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-3 py-1.5 text-[0.76rem] font-medium text-[#3C4043]"
-                    >
-                      {type}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-          </aside>
-
-          <section className="space-y-5">
-            {ngoProfile.description && (
-              <div className="relative overflow-hidden rounded-[24px] border border-[#E1E7F0] bg-white p-7">
-                <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Who they are</p>
-                <h2 className="mb-4 text-[1.28rem] font-semibold tracking-[-0.02em] text-[#202124]">About us</h2>
-                <p className="whitespace-pre-wrap text-[0.94rem] leading-8 text-[#5F6368]">
-                  {ngoProfile.description}
-                </p>
               </div>
             )}
+          </div>
+        </motion.header>
 
-            {ngoProfile.mission && (
-              <div className="relative overflow-hidden rounded-[24px] border border-[#D7E6FF] bg-[#F8FBFF] p-7">
-                <Target size={18} className="mb-3 text-[#1A73E8]" />
-                <p className="relative mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Purpose</p>
-                <h2 className="relative mb-4 text-[1.28rem] font-semibold tracking-[-0.02em] text-[#202124]">Our mission</h2>
-                <p className="whitespace-pre-wrap text-[0.94rem] leading-8 text-[#5F6368]">
-                  {ngoProfile.mission}
-                </p>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="space-y-5"
+        >
+          {ngoProfile.description && (
+            <section className="grid gap-7 rounded-[30px] border border-[#E1E7F0] bg-white p-7 shadow-[0_18px_50px_rgba(60,64,67,0.055)] sm:p-9 lg:grid-cols-[210px_minmax(0,1fr)]">
+              <div className="lg:border-r lg:border-[#EEF2F7] lg:pr-8">
+                <p className="text-[0.76rem] font-semibold uppercase tracking-[0.18em] text-[#5F6368]">About</p>
+                <h2 className="mt-3 text-[1.55rem] font-normal tracking-[-0.04em] text-[#202124]">Who they are</h2>
               </div>
-            )}
-
-            <div className="grid gap-5 md:grid-cols-2">
-              {ngoProfile.communities && (
-                <div className="rounded-[24px] border border-[#E1E7F0] bg-white p-6">
-                  <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Community</p>
-                  <h2 className="mb-4 text-[1.05rem] font-semibold text-[#202124]">Communities we serve</h2>
-                  <p className="whitespace-pre-wrap text-[0.88rem] leading-7 text-[#5F6368]">
-                    {ngoProfile.communities}
-                  </p>
-                </div>
-              )}
-
-              {ngoProfile.helpNeeded && (
-                <div className="rounded-[24px] border border-[#E1E7F0] bg-white p-6">
-                  <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Support needs</p>
-                  <h2 className="mb-4 text-[1.05rem] font-semibold text-[#202124]">What we need help with</h2>
-                  <p className="whitespace-pre-wrap text-[0.88rem] leading-7 text-[#5F6368]">
-                    {ngoProfile.helpNeeded}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <section className="pt-3">
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">Student roles</p>
-                  <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-[#202124]">
-                    Open opportunities
-                  </h2>
-                </div>
-                <p className="text-[0.84rem] text-[#5F6368]">{ngoOpps.length} role{ngoOpps.length !== 1 ? 's' : ''} available</p>
-              </div>
-
-              {ngoOpps.length === 0 ? (
-                <div className="rounded-[22px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] p-12 text-center">
-                  <AlertCircle size={32} className="mx-auto mb-3 text-[#1A73E8]" />
-                  <p className="text-[0.9rem] text-[#5F6368]">
-                    This organization doesn't have any open opportunities right now.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-5 sm:grid-cols-2">
-                  {ngoOpps.map((opp) => (
-                    <NGOOpportunityCard
-                      key={opp.id}
-                      opp={opp}
-                      onViewDetails={(opp) => {
-                        navigate(`/opportunities?detail=${opp.id}`)
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+              <p className="max-w-3xl whitespace-pre-wrap text-[1.02rem] leading-9 text-[#3C4043]">
+                {ngoProfile.description}
+              </p>
             </section>
-          </section>
+          )}
+
+          {ngoProfile.mission && (
+            <section className="grid gap-7 rounded-[30px] border border-[#D7E6FF] bg-white p-7 shadow-[0_18px_50px_rgba(26,115,232,0.05)] sm:p-9 lg:grid-cols-[210px_minmax(0,1fr)]">
+              <div className="lg:border-r lg:border-[#E8F0FE] lg:pr-8">
+                <p className="text-[0.76rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">Mission</p>
+                <h2 className="mt-3 text-[1.55rem] font-normal tracking-[-0.04em] text-[#202124]">Where they are going</h2>
+              </div>
+              <p className="max-w-3xl whitespace-pre-wrap text-[1.02rem] leading-9 text-[#3C4043]">
+                {ngoProfile.mission}
+              </p>
+            </section>
+          )}
+
+          {(ngoProfile.communities || ngoProfile.helpNeeded) && (
+            <section className="grid gap-8 rounded-[30px] border border-[#E1E7F0] bg-white p-7 shadow-[0_18px_50px_rgba(60,64,67,0.055)] sm:p-9 lg:grid-cols-[210px_minmax(0,1fr)]">
+              <div className="lg:border-r lg:border-[#EEF2F7] lg:pr-8">
+                <p className="text-[0.76rem] font-semibold uppercase tracking-[0.18em] text-[#5F6368]">Impact</p>
+                <h2 className="mt-3 text-[1.55rem] font-normal tracking-[-0.04em] text-[#202124]">How students fit in</h2>
+              </div>
+              <div className="grid gap-5 md:grid-cols-2">
+                {ngoProfile.communities && (
+                  <div className="rounded-[24px] bg-[#F8FAFD] p-5">
+                    <h3 className="mb-3 text-[1.08rem] font-semibold tracking-[-0.025em] text-[#202124]">Communities served</h3>
+                    <p className="whitespace-pre-wrap text-[0.98rem] leading-8 text-[#3C4043]">
+                      {ngoProfile.communities}
+                    </p>
+                  </div>
+                )}
+                {ngoProfile.helpNeeded && (
+                  <div className="rounded-[24px] bg-[#F8FAFD] p-5">
+                    <h3 className="mb-3 text-[1.08rem] font-semibold tracking-[-0.025em] text-[#202124]">Support needed</h3>
+                    <p className="whitespace-pre-wrap text-[0.98rem] leading-8 text-[#3C4043]">
+                      {ngoProfile.helpNeeded}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {((ngoProfile.preferred_skills && ngoProfile.preferred_skills.length > 0) || (ngoProfile.project_types && ngoProfile.project_types.length > 0)) && (
+            <section className="grid gap-8 rounded-[30px] border border-[#E1E7F0] bg-white p-7 shadow-[0_18px_50px_rgba(60,64,67,0.055)] sm:p-9 lg:grid-cols-[210px_minmax(0,1fr)]">
+              <div className="lg:border-r lg:border-[#EEF2F7] lg:pr-8">
+                <p className="text-[0.76rem] font-semibold uppercase tracking-[0.18em] text-[#5F6368]">Student fit</p>
+                <h2 className="mt-3 text-[1.55rem] font-normal tracking-[-0.04em] text-[#202124]">Good to know</h2>
+              </div>
+              <div className="grid gap-7 md:grid-cols-2">
+                {ngoProfile.preferred_skills && ngoProfile.preferred_skills.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-[1.05rem] font-semibold tracking-[-0.025em] text-[#202124]">Preferred skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {ngoProfile.preferred_skills.map((skill, i) => (
+                        <SkillChip key={i} skill={skill} variant="blue" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {ngoProfile.project_types && ngoProfile.project_types.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-[1.05rem] font-semibold tracking-[-0.025em] text-[#202124]">Project types</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {ngoProfile.project_types.map((type, i) => (
+                        <span key={i} className="rounded-full border border-[#DADCE0] bg-[#F8FAFD] px-3.5 py-2 text-[0.78rem] font-medium text-[#3C4043]">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
         </motion.div>
+
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mt-10"
+        >
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="mb-3 text-[0.76rem] font-semibold uppercase tracking-[0.2em] text-[#1A73E8]">Student roles</p>
+              <h2 className="text-[2.35rem] font-normal tracking-[-0.06em] text-[#202124]">
+                Open opportunities
+              </h2>
+            </div>
+            <p className="text-[0.92rem] font-medium text-[#5F6368]">
+              {ngoOpps.length} role{ngoOpps.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
+
+          {ngoOpps.length === 0 ? (
+            <div className="rounded-[24px] border border-dashed border-[#DADCE0] bg-white p-12 text-center">
+              <AlertCircle size={32} className="mx-auto mb-3 text-[#1A73E8]" />
+              <p className="text-[0.9rem] text-[#5F6368]">
+                This organization doesn't have any open opportunities right now.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+              {ngoOpps.map((opp) => (
+                <NGOOpportunityCard
+                  key={opp.id}
+                  opp={opp}
+                  onViewDetails={(opp) => {
+                    navigate(`/opportunities?detail=${opp.id}`)
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </motion.section>
       </div>
     </main>
   )

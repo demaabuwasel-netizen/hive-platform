@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import applicationIllustration from '../assets/application.png'
 import applicationEmptyIllustration from '../assets/img1.jpg'
 import { motion } from 'framer-motion'
 import {
@@ -120,11 +119,13 @@ export default function Applications() {
   const isDetailLoading = Boolean(selectedApp?.opportunityId) && !selectedOpp && !selectedError
   const statusMeta = selectedApp ? getStatusMeta(selectedApp.status) : null
   const StatusIcon = statusMeta?.icon
+  const selectedNgoId = selectedOpp?.ngo_id || selectedOpp?.ngoId || selectedApp?.ngoId
+  const selectedNgoName = selectedOpp?.org_name || selectedOpp?.orgName || selectedApp?.ngoName || 'Organization'
   const primaryDetails = selectedOpp ? [
-    { label: 'Location', value: formatField(selectedOpp.location) },
-    { label: 'Category', value: formatField(selectedOpp.category || selectedOpp.field) },
-    { label: 'Work mode', value: formatField(selectedOpp.work_mode) },
-    { label: 'Hours/week', value: formatField(selectedOpp.weekly_hours) },
+    { label: 'Location', value: formatField(selectedOpp.location), tint: '#E8F0FE', accent: '#1A73E8' },
+    { label: 'Category', value: formatField(selectedOpp.category || selectedOpp.field), tint: '#E6F4EA', accent: '#188038' },
+    { label: 'Work mode', value: formatField(selectedOpp.work_mode), tint: '#FEF7E0', accent: '#F29900' },
+    { label: 'Hours/week', value: formatField(selectedOpp.weekly_hours), tint: '#F3E8FD', accent: '#A142F4' },
   ] : []
   const skillLabels = (selectedOpp?.skills || []).map(formatSkill).filter(Boolean)
   const languageLabels = (selectedOpp?.languages || []).map(formatLanguage).filter(Boolean)
@@ -136,7 +137,7 @@ export default function Applications() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className={`mb-8 ${!loading && apps.length > 0 ? 'flex items-start justify-between gap-6' : ''}`}
+          className="mb-8"
         >
           <div>
             <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
@@ -146,17 +147,14 @@ export default function Applications() {
               Manage the roles you have applied to and review the full opportunity on the right.
             </p>
           </div>
-          {!loading && apps.length > 0 && (
-            <img src={applicationIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
-          )}
         </motion.header>
 
-        <section className="grid items-start gap-6 md:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="grid items-start gap-6 md:grid-cols-[330px_minmax(0,1fr)] xl:grid-cols-[330px_minmax(0,1fr)]">
           <motion.aside
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.28 }}
-            className="rounded-[30px] border border-[#E5EEFB] bg-white p-4 shadow-[0_12px_34px_rgba(17,24,39,0.04)] overflow-y-auto md:sticky md:top-6"
+            className="overflow-y-auto rounded-[28px] border border-[#E5EEFB] bg-white p-4 shadow-[0_12px_34px_rgba(17,24,39,0.04)] md:sticky md:top-6"
             style={{ height: '600px' }}
           >
             <div className="mb-4 flex items-center justify-between gap-3 px-1">
@@ -166,13 +164,6 @@ export default function Applications() {
                   {loading ? 'Loading...' : `${apps.length} application${apps.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
-              <Link
-                to="/opportunities"
-                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8] transition-transform hover:-translate-y-0.5"
-                aria-label="Browse opportunities"
-              >
-                <ChevronRight size={18} />
-              </Link>
             </div>
 
             <div className="space-y-3">
@@ -181,7 +172,7 @@ export default function Applications() {
                   {[0, 1, 2].map(i => (
                     <div
                       key={i}
-                      className="h-24 animate-pulse rounded-[24px] border border-[#E5EEFB] bg-white"
+                      className="h-[94px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE]"
                     />
                   ))}
                 </div>
@@ -199,7 +190,6 @@ export default function Applications() {
               ) : (
                 apps.map((app, index) => {
                   const cfg = getStatusMeta(app.status)
-                  const Icon = cfg.icon
                   const selected = selectedAppId === app.id
 
                   return (
@@ -209,31 +199,22 @@ export default function Applications() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
-                      className={`group w-full rounded-[24px] border p-4 text-left transition-all ${
+                      className={`group w-full rounded-[22px] border p-4 text-left transition-all ${
                         selected
                           ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
                           : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                          <p className={`line-clamp-1 text-[0.95rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
                             {app.role || 'Position'}
                           </p>
-                          <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
+                          <p className="mt-1.5 truncate text-[0.76rem] text-[#5F6368]">
                             {app.ngoName || 'Organization'}
                           </p>
                         </div>
                         <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${selected ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] ${cfg.bg} ${cfg.color}`}>
-                          <Icon size={9} />
-                          {cfg.label}
-                        </span>
-                        <span className="text-[0.76rem] font-semibold text-[#1A73E8]">
-                          View
-                        </span>
                       </div>
                     </motion.button>
                   )
@@ -247,7 +228,7 @@ export default function Applications() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+            className="flex flex-col overflow-hidden rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
             style={{
               borderColor: 'rgba(209,224,255,0.95)',
             }}
@@ -263,14 +244,27 @@ export default function Applications() {
               </div>
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
-                <div className="shrink-0 border-b border-[#E5EEFB] px-8 py-6">
-                  <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#EAF1FF] px-3.5 py-2 text-[0.82rem] font-semibold text-[#1A73E8]">
-                      <Sparkles size={14} />
-                      Opportunity details
+                <div className="shrink-0 border-b border-[#D7E6FF] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_55%,#EEF4FF_100%)] px-10 py-9">
+                  <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between sm:gap-16">
+                    <div className="min-w-0">
+                      <h2 className="text-[2.25rem] font-semibold leading-tight text-[#202124] sm:text-[2.75rem]">
+                        {selectedApp.role || 'Position'}
+                      </h2>
+                      {selectedNgoId ? (
+                        <Link
+                          to={`/ngo-profile/${selectedNgoId}`}
+                          className="mt-2 inline-flex text-[0.98rem] font-medium text-[#5F6368] transition-colors hover:text-[#1A73E8]"
+                        >
+                          {selectedNgoName}
+                        </Link>
+                      ) : (
+                        <p className="mt-2 text-[0.98rem] text-[#5F6368]">
+                          {selectedNgoName}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-4 pt-1">
                       {statusMeta && (
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.82rem] font-semibold ${statusMeta.bg} ${statusMeta.color}`}>
                           <StatusIcon size={14} />
@@ -288,16 +282,9 @@ export default function Applications() {
                       </button>
                     </div>
                   </div>
-
-                  <h2 className="text-[2.25rem] font-semibold leading-tight text-[#202124] sm:text-[2.75rem]">
-                    {selectedApp.role || 'Position'}
-                  </h2>
-                  <p className="mt-2 text-[0.98rem] text-[#5F6368]">
-                    {selectedOpp?.org_name || selectedOpp?.orgName || selectedApp.ngoName || 'Organization'}
-                  </p>
                 </div>
 
-                <div className="px-8 py-6">
+                <div className="px-10 py-10">
                   {!selectedApp.opportunityId ? (
                     <NoticeCard>This application is not linked to a published opportunity yet.</NoticeCard>
                   ) : isDetailLoading ? (
@@ -310,9 +297,9 @@ export default function Applications() {
                     <NoticeCard tone="error">Could not load the opportunity details.</NoticeCard>
                   ) : (
                     <>
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mb-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                         {primaryDetails.map(item => (
-                          <MetricCard key={item.label} label={item.label} value={item.value} />
+                          <MetricCard key={item.label} label={item.label} value={item.value} tint={item.tint} accent={item.accent} />
                         ))}
                       </div>
 
@@ -366,13 +353,37 @@ function NoticeCard({ children, tone = 'default' }) {
   )
 }
 
-function MetricCard({ label, value }) {
+function MetricCard({ label, value, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
-    <div className="rounded-2xl bg-[#F8FAFD] p-4">
-      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
+    <div
+      className="group relative overflow-hidden rounded-[22px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_22px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(17,24,39,0.08)]"
+      style={{ borderColor: `${accent}1F` }}
+    >
+      <span
+        className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{ background: `linear-gradient(90deg, ${accent}, ${tint})` }}
+      />
+      <svg
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+        viewBox="0 0 300 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z"
+          fill={tint}
+          opacity="0.52"
+        />
+        <path
+          d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z"
+          fill={tint}
+          opacity="0.82"
+        />
+      </svg>
+      <p className="relative z-10 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#202124]">
         {label}
       </p>
-      <p className="mt-2 truncate text-[1rem] font-semibold text-[#202124]">
+      <p className="relative z-10 mt-2 truncate text-[1rem] font-semibold text-[#202124]">
         {value}
       </p>
     </div>

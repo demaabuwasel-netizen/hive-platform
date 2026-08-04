@@ -754,21 +754,27 @@ function StudentView() {
           </div>
         </aside>
 
-        <section
-          className="min-h-[560px] rounded-[32px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-          {!selectedRole ? (
-            <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                <Briefcase size={22} />
+        <div className="relative">
+          <img
+            src={ngoInterviewImg}
+            alt=""
+            className="pointer-events-none absolute -top-[187px] right-8 z-10 w-full max-w-md"
+          />
+          <section
+            className="min-h-[560px] rounded-[32px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+            style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+            {!selectedRole ? (
+              <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                  <Briefcase size={22} />
+                </div>
+                <p className="text-[1rem] font-semibold text-[#202124]">Choose a role</p>
+                <p className="mt-2 max-w-sm text-[0.86rem] leading-6 text-[#5F6368]">
+                  Select an applied role on the left to start practicing interviews.
+                </p>
               </div>
-              <p className="text-[1rem] font-semibold text-[#202124]">Choose a role</p>
-              <p className="mt-2 max-w-sm text-[0.86rem] leading-6 text-[#5F6368]">
-                Select an applied role on the left to start practicing interviews.
-              </p>
-            </div>
-          ) : (
-            <div className="p-6 lg:p-8">
+            ) : (
+              <div className="p-6 lg:p-8">
               <div className="rounded-[30px] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_52%,#EEF4FF_100%)] px-6 py-6">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
@@ -930,9 +936,10 @@ function StudentView() {
                     <ArrowRight size={15} />
                   </button>
                 </div>
-            </div>
-          )}
-        </section>
+              </div>
+            )}
+          </section>
+        </div>
       </motion.div>
     )
   }
@@ -2751,7 +2758,7 @@ export default function Interviews() {
             <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
               {isNGO
                 ? 'Pick a posted role and practice with a generated student profile'
-                : 'Practice mock interviews for the roles you applied to, with help from Hive as you answer.'}
+                : 'Practice mock interviews for the roles you applied to.'}
             </p>
           )}
         </motion.header>
