@@ -6,6 +6,7 @@ import {
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, PlayCircle, StopCircle, Heart,
   FileText, CheckCircle2, Target, MessageCircle, Info, Layers,
+  X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -339,6 +340,12 @@ function getNextStudentCategory(categoryId) {
   return next?.id || 'opening'
 }
 
+function getStudentQuestionTarget(answer) {
+  const words = answer.trim().split(/\s+/).filter(Boolean)
+  const hasSpecificSignal = /\b(project|because|example|learned|built|created|helped|worked|team|result|impact|challenge|support|feedback)\b/i.test(answer)
+  return words.length >= 45 && hasSpecificSignal ? 2 : 3
+}
+
 function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
   const firstName = profile?.name?.split(' ')[0] || 'there'
   const profileSkills = getStudentProfileSkills(profile)
@@ -349,26 +356,32 @@ function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
     opening: [
       `Hi ${firstName}, thanks for joining. To start, can you tell me a little about yourself and what drew you to the ${role.title} role at ${role.orgName}?`,
       `Welcome, ${firstName}. Give me the short version of who you are, what you study, and why this opportunity caught your eye.`,
+      `What is one thing from your background that would help you contribute to ${role.title}?`,
     ],
     motivation: [
       `Why does ${role.orgName}'s work feel meaningful to you, and how does this role connect to what you want to learn?`,
       `When you applied for ${role.title}, what part of the mission or role made you think, "I want to help with this"?`,
+      `What would make this opportunity feel successful for you personally?`,
     ],
     skills: [
       `Can you walk me through a specific example where you used ${roleSkill}, and what your personal contribution was?`,
       `This role may need ${roleSkill}. What would you feel confident doing right away, and where would you ask for support?`,
+      `If the team asked you to use ${roleSkill} next week, how would you approach the task?`,
     ],
     mission: [
       `How would you make sure your work in ${role.title} is useful for the people ${role.orgName} serves?`,
       `Tell me about a time you had to understand someone else's needs before building or suggesting a solution.`,
+      `How would you check that your work is helping the NGO's actual goals?`,
     ],
     scenario: [
       `Imagine you are given an unclear task in this role and the deadline is close. What would you do first?`,
       `If you got stuck while working on ${role.title}, how would you communicate that to the NGO team?`,
+      `If feedback changed the direction of your work, how would you respond and adjust?`,
     ],
     close: [
       `What support would help you do your best work in this role, and what questions would you ask the team before starting?`,
       `Before we finish, what should I remember about you as a ${field} student applying for ${role.title}?`,
+      `Is there anything about your availability, goals, or learning needs that you would want the team to know?`,
     ],
   }
 
@@ -379,11 +392,9 @@ function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
 function explainStudentQuestion(question, role, profile, categoryId) {
   const profileSkills = getStudentProfileSkills(profile)
   const strongestSkill = role.skills[0] || profileSkills[0] || 'your strongest relevant skill'
-  const firstName = profile?.name?.split(' ')[0] || 'you'
-
   const explainers = {
     opening: {
-      purpose: `They want to see how clearly ${firstName} introduces themselves and whether the role feels intentional, not random.`,
+      purpose: 'They want to see how clearly you introduce yourself and whether the role feels intentional, not random.',
       simpler: `Tell me who you are and why you applied for this role.`,
       tips: [
         'Use a 30-45 second answer.',
@@ -476,13 +487,14 @@ function StudentView() {
   const [draftAnswer, setDraftAnswer] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [explainOpen, setExplainOpen] = useState(false)
-  const [exampleOpen, setExampleOpen] = useState(false)
   const [openInsightKeys, setOpenInsightKeys] = useState(() => new Set())
   const [descriptionOpen, setDescriptionOpen] = useState(false)
   const [activePrepSection, setActivePrepSection] = useState('summary')
   const [openPrepQuestionStage, setOpenPrepQuestionStage] = useState(null)
   const recognitionRef = useRef(null)
   const messageIdRef = useRef(0)
+  const questionCardRef = useRef(null)
+  const coachPanelRef = useRef(null)
 
   useEffect(() => {
     if (!user?.id) return
@@ -556,7 +568,6 @@ function StudentView() {
     setDraftAnswer('')
     setIsRecording(false)
     setExplainOpen(false)
-    setExampleOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
   }
@@ -577,9 +588,22 @@ function StudentView() {
     setDraftAnswer('')
     setIsRecording(false)
     setExplainOpen(false)
-    setExampleOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
+  }
+
+  function openQuestionCoach() {
+    setExplainOpen(true)
+    window.setTimeout(() => {
+      coachPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 80)
+  }
+
+  function closeQuestionCoach() {
+    setExplainOpen(false)
+    window.setTimeout(() => {
+      questionCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
   }
 
   // The AI drives category progression — the student answers, it decides what's next.
@@ -588,20 +612,28 @@ function StudentView() {
     const answer = draftAnswer.trim()
     if (!answer || !selectedRole) return
 
-    const isLastCategory = activeCategory === 'close'
     const answeredCategory = activeCategory
+    const answersInCategory = transcript.filter(message => message.from === 'student' && message.category === answeredCategory).length + 1
+    const questionsInCategory = transcript.filter(message => message.from === 'ai' && message.category === answeredCategory).length
+    const questionTarget = getStudentQuestionTarget(answer)
+    const shouldStayInCategory = answersInCategory < questionTarget
+    const isLastCategory = activeCategory === 'close'
 
-    if (isLastCategory) {
-      setTranscript(prev => [...prev, { id: nextMessageId('student'), from: 'student', text: answer, category: answeredCategory }])
+    if (isLastCategory && !shouldStayInCategory) {
+      setTranscript(prev => [
+        ...prev,
+        { id: nextMessageId('student'), from: 'student', text: answer, category: answeredCategory },
+      ])
       setDraftAnswer('')
       setExplainOpen(false)
-      setExampleOpen(false)
       setPracticeFinished(true)
+      setShowSummary(true)
       return
     }
 
-    const nextCategory = getNextStudentCategory(activeCategory)
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, transcript.length + 1)
+    const nextCategory = shouldStayInCategory ? answeredCategory : getNextStudentCategory(activeCategory)
+    const nextSeed = shouldStayInCategory ? questionsInCategory : transcript.length + 1
+    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed)
 
     setTranscript(prev => [
       ...prev,
@@ -611,7 +643,6 @@ function StudentView() {
     setActiveCategory(nextCategory)
     setDraftAnswer('')
     setExplainOpen(false)
-    setExampleOpen(false)
   }
 
   // Skips the current question with no answer recorded — the category still advances,
@@ -622,8 +653,8 @@ function StudentView() {
     if (activeCategory === 'close') {
       setDraftAnswer('')
       setExplainOpen(false)
-      setExampleOpen(false)
       setPracticeFinished(true)
+      setShowSummary(true)
       return
     }
 
@@ -637,7 +668,6 @@ function StudentView() {
     setActiveCategory(nextCategory)
     setDraftAnswer('')
     setExplainOpen(false)
-    setExampleOpen(false)
   }
 
   function handleVoiceToggle() {
@@ -953,7 +983,7 @@ function StudentView() {
           qaPairs.push({ id: message.id, question: message.text, answer })
         }
       })
-      const covered = qaPairs.length > 0
+      const covered = qaPairs.some(pair => Boolean(pair.answer?.trim()))
       const coach = explainStudentQuestion('', selectedRole, profile, category.id)
       return { ...category, qaPairs, covered, coach }
     })
@@ -965,21 +995,7 @@ function StudentView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <GradientAvatar name={selectedRole.orgName} size={54} radius="1.2rem" className="shrink-0" />
-            <div className="min-w-0">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.68rem] font-semibold text-[#1A73E8]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1A73E8] opacity-50" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#1A73E8]" />
-                </span>
-                Practice complete
-              </span>
-              <h2 className="mt-1.5 text-[1.6rem] font-semibold tracking-[-0.03em] text-[#202124]">Interview summary</h2>
-              <p className="truncate text-[0.86rem] text-[#5F6368]">{selectedRole.orgName} · {selectedRole.title}</p>
-            </div>
-          </div>
+        <div>
           <button
             onClick={() => {
               setPracticeStarted(false)
@@ -988,51 +1004,59 @@ function StudentView() {
               setTranscript([])
               setDraftAnswer('')
               setExplainOpen(false)
-              setExampleOpen(false)
               setOpenInsightKeys(new Set())
             }}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-white px-4 py-2 text-[0.82rem] font-semibold text-[#1A73E8] shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_20px_rgba(17,24,39,0.04)] transition-colors hover:bg-[#F8FBFF]">
-            <ArrowLeft size={14} />
-            Back to guide
+            className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
+            aria-label="Back to interview guide"
+            title="Back to interview guide">
+            <ArrowLeft size={19} />
           </button>
+          <div className="min-w-0">
+            <h2 className="text-[1.75rem] font-semibold tracking-[-0.03em] text-[#202124]">Interview summary</h2>
+            <p className="truncate text-[0.9rem] text-[#5F6368]">{selectedRole.orgName} · {selectedRole.title}</p>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           {[
-            { label: 'Questions answered', value: answeredCount, icon: MessageCircle, tint: '#E8F0FE', accent: '#1A73E8' },
-            { label: 'Steps covered', value: `${coveredCategories.length}/${STUDENT_INTERVIEW_CATEGORIES.length}`, icon: Layers, tint: '#F1F5F9', accent: '#0D183D' },
+            { label: 'Questions answered', value: answeredCount, hint: 'Student responses recorded', tint: '#E8F0FE', accent: '#1A73E8' },
+            { label: 'Steps covered', value: `${coveredCategories.length}/${STUDENT_INTERVIEW_CATEGORIES.length}`, hint: 'Sections with at least one answer', tint: '#F1F5F9', accent: '#4B6382' },
+            { label: 'Practice coverage', value: `${Math.round((coveredCategories.length / STUDENT_INTERVIEW_CATEGORIES.length) * 100)}%`, hint: 'Answered section coverage', tint: '#E6F4EA', accent: '#188038' },
           ].map((stat, statIndex) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-              className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+              className="group relative min-h-[190px] overflow-hidden rounded-[24px] border bg-white p-5 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
               style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110" style={{ background: stat.tint, color: stat.accent }}>
-                <stat.icon size={18} strokeWidth={2.15} />
+              <span
+                className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
+              />
+              <svg
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+                viewBox="0 0 300 100"
+                preserveAspectRatio="none"
+                aria-hidden="true">
+                <path
+                  d="M0,30 C62,58 96,8 154,28 C214,48 242,12 300,32 L300,100 L0,100 Z"
+                  fill={stat.tint}
+                  opacity="0.55"
+                />
+                <path
+                  d="M0,48 C66,26 112,60 172,42 C224,26 258,54 300,46 L300,100 L0,100 Z"
+                  fill={stat.tint}
+                  opacity="0.82"
+                />
+              </svg>
+              <div className="relative z-10">
+                <p className="text-[0.82rem] font-semibold text-[#5F6368]">{stat.label}</p>
+                <p className="mt-8 text-[2.45rem] font-semibold leading-none tracking-[-0.03em] text-[#202124]">{stat.value}</p>
+                <p className="mt-3 max-w-[13rem] text-[0.82rem] leading-5 text-[#5F6368]">{stat.hint}</p>
               </div>
-              <p className="relative z-10 mt-5 text-[2rem] font-semibold leading-none tracking-[-0.03em] text-[#202124]">{stat.value}</p>
-              <p className="relative z-10 mt-1.5 text-[0.8rem] font-medium text-[#5F6368]">{stat.label}</p>
             </motion.div>
           ))}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, delay: 0.1 }}
-            className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
-            style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-            <div className="relative z-10 flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110" style={{ background: '#F1F5F9', color: '#0D183D' }}>
-                <CheckCircle2 size={18} strokeWidth={2.15} />
-              </div>
-              <CompletionRing value={coveredCategories.length} total={STUDENT_INTERVIEW_CATEGORIES.length} color="#1A73E8" />
-            </div>
-            <p className="relative z-10 mt-5 text-[2rem] font-semibold leading-none tracking-[-0.03em] text-[#202124]">
-              {Math.round((coveredCategories.length / STUDENT_INTERVIEW_CATEGORIES.length) * 100)}%
-            </p>
-            <p className="relative z-10 mt-1.5 text-[0.8rem] font-medium text-[#5F6368]">Practice coverage</p>
-          </motion.div>
         </div>
 
         {categoriesRecap.map((category, index) => {
@@ -1051,28 +1075,26 @@ function StudentView() {
               style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
               <span className="block h-px bg-[#E8EBF0]" />
               <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F1F5F9] text-[#0D183D] ring-1 ring-[#E6EAF0] transition-transform duration-200 group-hover:scale-110">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F4F7FB] text-[#4B6382] ring-1 ring-[#E6EAF0] transition-transform duration-200 group-hover:scale-110">
                   <CategoryIcon size={18} strokeWidth={2.15} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Step {index + 1}</p>
                   <h2 className="text-[0.98rem] font-semibold text-[#202124]">{category.label}</h2>
                 </div>
-                <p className="hidden max-w-md truncate text-[0.8rem] text-[#9AA0A6] lg:block">{category.coach.purpose}</p>
                 <span
                   className="shrink-0 rounded-full px-2.5 py-1 text-[0.7rem] font-semibold"
                   style={category.covered
-                    ? { background: '#E8F0FE', color: '#1A73E8' }
-                    : { background: '#F1F3F4', color: '#9AA0A6' }}>
+                    ? { background: '#EEF4FF', color: '#3F6FB6' }
+                    : { background: '#F5F7FA', color: '#8A94A3' }}>
                   {category.covered ? `${category.qaPairs.length} question${category.qaPairs.length !== 1 ? 's' : ''}` : 'Not covered'}
                 </span>
               </div>
 
               <div className="grid gap-5 px-6 py-5 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div className="min-w-0">
-                  <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
-                    {category.covered ? 'Conversation' : 'Suggested focus'}
-                  </p>
+                  {category.covered && (
+                    <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Conversation</p>
+                  )}
                   {category.covered ? (
                     <div className="space-y-4">
                       {category.qaPairs.map((pair, pairIndex) => (
@@ -1100,7 +1122,6 @@ function StudentView() {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Coaching notes</p>
                   <div className="space-y-3">
                     <div
                       className="overflow-hidden rounded-[18px] border transition-colors"
@@ -1109,7 +1130,7 @@ function StudentView() {
                         onClick={() => toggleInsight(shownKey)}
                         className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
                         <span className="flex items-center gap-2 text-[0.8rem] font-semibold text-[#202124]">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#1A73E8] text-white">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF7EF] text-[#4F9D69] ring-1 ring-[#D7ECDD]">
                             <CheckCircle2 size={12} />
                           </span>
                           What you showed
@@ -1141,7 +1162,7 @@ function StudentView() {
                         onClick={() => toggleInsight(improveKey)}
                         className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
                         <span className="flex items-center gap-2 text-[0.8rem] font-semibold text-[#202124]">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#0D183D] text-white">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF2FF] text-[#5F8FD8] ring-1 ring-[#DDE9FB]">
                             <AlertCircle size={12} />
                           </span>
                           How to improve
@@ -1217,6 +1238,7 @@ function StudentView() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}>
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="relative">
       <section
         className="relative flex min-h-[700px] flex-col overflow-hidden rounded-[20px] border border-[#E3E7EE] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.06)] xl:h-[calc(100vh-96px)]">
         <div className="relative border-b border-[#E8EBF0] bg-white px-4 py-3 sm:px-5">
@@ -1274,6 +1296,7 @@ function StudentView() {
               {!practiceFinished && (
                 <AnimatePresence mode="wait">
                   <motion.div
+                    ref={questionCardRef}
                     key={`${activeCategory}-${currentQuestionMsg?.id}`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1290,220 +1313,167 @@ function StudentView() {
                 </AnimatePresence>
               )}
 
-              {practiceFinished && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mx-auto mt-6 max-w-md rounded-[20px] border border-[#E8EBF0] bg-white px-5 py-5 text-center shadow-[0_6px_22px_rgba(15,23,42,0.04)]">
-                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                    <CheckCircle2 size={20} />
-                  </div>
-                  <p className="text-[0.98rem] font-semibold text-[#202124]">Practice complete</p>
-                  <p className="mx-auto mt-1.5 max-w-xs text-[0.82rem] leading-6 text-[#5F6368]">
-                    You made it through all 5 steps. See how it went.
-                  </p>
-                  <button
-                    onClick={() => setShowSummary(true)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-2.5 text-[0.84rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
-                    <Sparkles size={14} />
-                    See summary
-                  </button>
-                </motion.div>
-              )}
             </div>
           </div>
 
           {!practiceFinished && (
             <div className="border-t border-[#E8EBF0] bg-white px-4 py-4 sm:px-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  {questionsAskedInCategory > 0 && (
-                    <span className="text-[0.76rem] text-[#9AA0A6]">
-                      {questionsAskedInCategory} question{questionsAskedInCategory === 1 ? '' : 's'} asked in {activeCategoryInfo.label.toLowerCase()}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setExplainOpen(open => !open)}
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.74rem] font-semibold ring-1 transition-colors ${
-                      explainOpen
-                        ? 'bg-[#E8F0FE] text-[#1A73E8] ring-[#C8DAF8]'
-                        : 'bg-white text-[#5F6368] ring-[#E5EEFB] hover:text-[#1A73E8]'
-                    }`}>
-                    <Info size={13} />
-                    Explain question
-                  </button>
-                  <button
-                    onClick={skipQuestion}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E5EEFB] bg-white px-3 py-1.5 text-[0.74rem] font-semibold text-[#5F6368] transition-colors hover:border-[#D7E6FF] hover:text-[#1A73E8]">
-                    {isLastCategory ? 'Skip' : `Skip to ${nextCategoryInfo?.label}`}
-                    <ArrowRight size={12} />
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence initial={false}>
-                {explainOpen && questionCoach && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mb-3 overflow-hidden">
-                    <div className="rounded-[20px] border border-[#DDE6F5] bg-[#F8FAFF] p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">Explain this question</p>
-                          <p className="mt-1 max-w-3xl text-[0.88rem] font-semibold leading-6 text-[#202124]">{questionCoach.question}</p>
-                        </div>
-                        <button
-                          onClick={() => setExplainOpen(false)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#5F6368] transition hover:bg-white hover:text-[#1A73E8]"
-                          aria-label="Close explanation">
-                          <X size={15} />
-                        </button>
-                      </div>
-                      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                        <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-[#E8EBF0]">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">In simple words</p>
-                          <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">{questionCoach.simpler}</p>
-                        </div>
-                        <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-[#E8EBF0]">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">What they expect</p>
-                          <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">{questionCoach.purpose}</p>
-                        </div>
-                        <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-[#E8EBF0]">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Tips</p>
-                          <div className="mt-2 space-y-2">
-                            {questionCoach.tips?.map(tip => (
-                              <p key={tip} className="flex gap-2 text-[0.82rem] leading-6 text-[#5F6368]">
-                                <CheckCircle2 size={14} className="mt-1 shrink-0 text-[#1A73E8]" />
-                                <span>{tip}</span>
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Unified composer — mic lives inside the input, matching the NGO practice room */}
-              <div className="rounded-[20px] bg-[#F8FAFC] p-2 ring-1 ring-[#E6EAF0] transition-all focus-within:bg-white focus-within:shadow-[0_10px_28px_rgba(26,115,232,0.10)] focus-within:ring-[#1A73E8]/35">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[#E8EBF0] px-1 pb-2">
-                  <button
-                    onClick={() => setExampleOpen(open => !open)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.74rem] font-semibold transition-colors ${
-                      exampleOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'text-[#5F6368] hover:bg-white hover:text-[#1A73E8]'
-                    }`}>
-                    <Sparkles size={13} />
-                    Example answer
-                  </button>
-                  {exampleOpen && (
-                    <button
-                      onClick={() => setDraftAnswer(exampleAnswer)}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[#1A73E8] px-3 py-1.5 text-[0.72rem] font-semibold text-white transition-opacity hover:opacity-95">
-                      Use as draft
-                      <ArrowRight size={12} />
-                    </button>
-                  )}
-                </div>
-                <AnimatePresence initial={false}>
-                  {exampleOpen && (
-                    <motion.p
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="mb-2 overflow-hidden rounded-2xl bg-white px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368] ring-1 ring-[#E8EBF0]">
-                      {exampleAnswer}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+              <div className="rounded-[16px] bg-[#F8FAFC] p-1.5 ring-1 ring-[#E6EAF0] transition-all focus-within:bg-white focus-within:shadow-[0_8px_20px_rgba(26,115,232,0.08)] focus-within:ring-[#1A73E8]/35">
                 <div className="flex items-end gap-1">
                   <button
                     onClick={handleVoiceToggle}
                     aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
                       isRecording ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'text-[#9AA0A6] hover:bg-[#F1F3F4] hover:text-[#5F6368]'
                     }`}>
-                    {isRecording ? <StopCircle size={16} /> : <Mic size={16} />}
+                    {isRecording ? <StopCircle size={15} /> : <Mic size={15} />}
                   </button>
                   <textarea
                     value={draftAnswer}
                     onChange={event => setDraftAnswer(event.target.value)}
                     rows={1}
                     placeholder={isRecording ? 'Listening...' : 'Type your answer here...'}
-                    className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent py-1.5 text-[0.88rem] leading-6 text-[#202124] outline-none placeholder:text-[#9AA0A6]"
+                    className="max-h-24 min-h-[32px] flex-1 resize-none bg-transparent py-1 text-[0.84rem] leading-6 text-[#202124] outline-none placeholder:text-[#9AA0A6]"
                   />
                   <button
                     onClick={sendAnswer}
                     disabled={!draftAnswer.trim()}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_4px_12px_rgba(26,115,232,0.3)] transition-all hover:scale-105 hover:bg-[#1765CC] disabled:scale-100 disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_4px_12px_rgba(26,115,232,0.25)] transition-all hover:scale-105 hover:bg-[#1765CC] disabled:scale-100 disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                     aria-label="Send answer">
-                    <Send size={15} />
+                    <Send size={14} />
                   </button>
                 </div>
               </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <button
+                  onClick={explainOpen ? closeQuestionCoach : openQuestionCoach}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.76rem] font-semibold ring-1 transition-colors ${
+                    explainOpen
+                      ? 'bg-[#E8F0FE] text-[#1A73E8] ring-[#C8DAF8]'
+                      : 'bg-white text-[#5F6368] ring-[#E5EEFB] hover:bg-[#F8FAFF] hover:text-[#1A73E8]'
+                  }`}>
+                  <Info size={14} />
+                  Explain question
+                </button>
+                <button
+                  onClick={skipQuestion}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.76rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#F8FAFF] hover:text-[#1A73E8]">
+                  {isLastCategory ? 'Skip' : `Skip to ${nextCategoryInfo?.label}`}
+                  <ArrowRight size={12} />
+                </button>
+              </div>
+
             </div>
           )}
         </div>
       </section>
+      <AnimatePresence initial={false}>
+        {explainOpen && questionCoach && (
+          <motion.div
+            ref={coachPanelRef}
+            initial={{ height: 0, opacity: 0, y: -6 }}
+            animate={{ height: 'auto', opacity: 1, y: 0 }}
+            exit={{ height: 0, opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="mt-3 overflow-hidden">
+            <div className="rounded-[16px] border border-[#E1E7F0] bg-white p-4 text-left shadow-[0_8px_22px_rgba(15,23,42,0.045)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Question coach</p>
+                  <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{questionCoach.simpler}</p>
+                </div>
+                <button
+                  onClick={closeQuestionCoach}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#5F6368] transition hover:bg-[#F8FAFC] hover:text-[#1A73E8]"
+                  aria-label="Close question coach">
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">What to show</p>
+                <p className="mt-1 text-[0.84rem] leading-6 text-[#3C4043]">{questionCoach.purpose}</p>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">How to answer</p>
+                <div className="mt-1.5 space-y-1.5">
+                  {questionCoach.tips?.map(tip => (
+                    <p key={tip} className="flex gap-2 text-[0.84rem] leading-6 text-[#3C4043]">
+                      <CheckCircle2 size={14} className="mt-1 shrink-0 text-[#1A73E8]" />
+                      <span>{tip}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-[#E1E7F0] bg-[#FAFBFD] p-3.5">
+                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Example answer</p>
+                <p className="mt-2 text-[0.84rem] leading-6 text-[#3C4043]">{exampleAnswer}</p>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => setDraftAnswer(exampleAnswer)}
+                    className="inline-flex items-center rounded-md bg-[#1A73E8] px-2.5 py-1.5 text-[0.7rem] font-semibold text-white transition-opacity hover:opacity-95">
+                    Insert answer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
 
       <aside
         className="relative flex max-h-none flex-col overflow-hidden rounded-[20px] border border-[#E3E7EE] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)] xl:sticky xl:top-6 xl:h-[calc(100vh-96px)]">
         <div className="relative flex shrink-0 items-center gap-3 border-b border-[#E8EBF0] px-4 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#0D183D] ring-1 ring-[#E6EAF0]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#4B6382] ring-1 ring-[#E6EAF0]">
             <Layers size={16} strokeWidth={2.15} />
           </span>
           <div className="min-w-0">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#5F6368]">Reference</p>
-            <p className="text-[0.95rem] font-semibold text-[#202124]">Practice context</p>
+            <p className="text-[1rem] font-semibold text-[#202124]">Practice context</p>
           </div>
         </div>
-        <div className="relative z-10 min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#FAFBFD] p-4">
-          <div className="space-y-4">
-            <div>
-              <p className="text-[1rem] font-semibold text-[#202124]">{selectedRole.title}</p>
-              <p className="mt-1 text-[0.84rem] text-[#5F6368]">{selectedRole.orgName}</p>
-            </div>
+        <div className="relative z-10 min-h-0 flex-1 space-y-2 overflow-y-auto bg-[#FAFBFD] p-3">
+          <div
+            className={`rounded-2xl border transition-colors ${
+              descriptionOpen ? 'border-[#C9D5E6] bg-white' : 'border-[#E6EAF0] bg-[#F8FAFC]'
+            }`}>
             <button
               onClick={() => setDescriptionOpen(!descriptionOpen)}
-              className="flex w-full items-start justify-between gap-3 rounded-2xl border border-[#E6EAF0] bg-[#F8FAFC] px-3.5 py-3 text-left transition hover:bg-white"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Job description</p>
-              </div>
-              <ChevronDown size={16} className={`shrink-0 text-[#5F6368] transition-transform ${descriptionOpen ? 'rotate-180' : ''}`} />
+              className={`sticky top-0 z-10 flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white ${
+                descriptionOpen ? 'rounded-t-2xl bg-white' : 'rounded-2xl bg-[#F8FAFC]'
+              }`}>
+              <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                  descriptionOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-white text-[#4B6382]'
+                }`}>
+                  <FileText size={14} />
+                </span>
+                Job description
+              </span>
+              {descriptionOpen ? <ChevronUp size={15} className="text-[#5F6368]" /> : <ChevronDown size={15} className="text-[#5F6368]" />}
             </button>
-            {descriptionOpen && (
-              <p className="rounded-2xl border border-[#E6EAF0] bg-white px-4 py-3 text-[0.84rem] leading-6 text-[#5F6368]">{selectedRole.description}</p>
-            )}
-            <div className="grid gap-2 text-[0.8rem] text-[#5F6368]">
-              <div className="rounded-2xl border border-[#E6EAF0] bg-white px-3 py-2">
-                <span className="font-semibold text-[#202124]">Work mode:</span> {selectedRole.workMode || 'Flexible'}
-              </div>
-              <div className="rounded-2xl border border-[#E6EAF0] bg-white px-3 py-2">
-                <span className="font-semibold text-[#202124]">Hours:</span> {selectedRole.weeklyHours || 'Not specified'}
-              </div>
-              <div className="rounded-2xl border border-[#E6EAF0] bg-white px-3 py-2">
-                <span className="font-semibold text-[#202124]">Your field:</span> {profile?.field || 'Not set yet'}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Role skills</p>
-              <div className="flex flex-wrap gap-2">
-                {(selectedRole.skills.length ? selectedRole.skills : getStudentProfileSkills(profile).slice(0, 4)).map(skill => (
-                  <span key={skill} className="rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.74rem] font-semibold text-[#1A73E8]">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <AnimatePresence initial={false}>
+              {descriptionOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="overflow-hidden rounded-b-2xl border-t border-[#E6EAF0]">
+                  <div className="px-4 py-4">
+                    <p className="text-[0.8rem] leading-6 text-[#5F6368]">{selectedRole.description}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
         </div>
       </aside>
       </div>
