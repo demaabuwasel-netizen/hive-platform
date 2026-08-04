@@ -183,9 +183,6 @@ export default function Messages() {
               Keep interview conversations and NGO updates organized in one clean workspace.
             </p>
           </div>
-          {!loading && conversationList.length > 0 && (
-            <img src={messagesIllustration} alt="" aria-hidden="true" className="hidden lg:block w-[190px] shrink-0 opacity-90 select-none pointer-events-none self-start" />
-          )}
         </motion.header>
 
         <section className="grid gap-6 md:grid-cols-[340px_minmax(0,1fr)]">

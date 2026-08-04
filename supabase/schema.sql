@@ -88,7 +88,7 @@ create table if not exists public.applications (
   status           text not null default 'submitted'
                    check (status in (
                      'submitted', 'under_review', 'shortlisted',
-                     'interview', 'accepted', 'rejected'
+                     'interview', 'accepted', 'completed', 'rejected'
                    )),
   submitted_at     timestamptz not null default now(),
   updated_at       timestamptz not null default now()
@@ -173,6 +173,14 @@ create policy "applications_insert" on public.applications
   for insert with check (auth.uid() = student_id);
 create policy "applications_update_ngo" on public.applications
   for update using (
+    exists (
+      select 1 from public.opportunities o
+      where o.id = opportunity_id and o.ngo_id = auth.uid()
+    )
+    or auth.uid() = ngo_id
+  );
+create policy "applications_delete_ngo" on public.applications
+  for delete using (
     exists (
       select 1 from public.opportunities o
       where o.id = opportunity_id and o.ngo_id = auth.uid()

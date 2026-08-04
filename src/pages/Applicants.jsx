@@ -26,7 +26,7 @@ function toDbStatus(uiStatus) {
 }
 
 function emptyStats() {
-  return { total: 0, new: 0, shortlisted: 0, interview: 0, accepted: 0, rejected: 0 }
+  return { total: 0, new: 0, shortlisted: 0, interview: 0, accepted: 0, completed: 0, rejected: 0 }
 }
 
 function applyRoleStatusChange(role, fromStatus, toStatus) {
@@ -174,11 +174,11 @@ export default function Applicants() {
     const previousStatus = statuses[id] ?? toUiStatus(app?.status)
     const role = roles.find(r => String(r.id) === String(app?.opportunityId))
     const previousRoleStatus = role?.status ?? null
-    const acceptedAfterChange = applicants.filter(a => {
+    const filledAfterChange = applicants.filter(a => {
       const nextStatus = a.id === id ? uiStatus : (statuses[a.id] ?? toUiStatus(a.status))
-      return nextStatus === 'accepted'
+      return nextStatus === 'accepted' || nextStatus === 'completed'
     }).length > 0
-    const nextRoleStatus = acceptedAfterChange
+    const nextRoleStatus = filledAfterChange
       ? 'paused'
       : (previousRoleStatus === 'paused' ? 'active' : previousRoleStatus)
 
@@ -200,6 +200,8 @@ export default function Applicants() {
     const msgs = {
       shortlisted: `${name} shortlisted`,
       interview:   'Interview scheduled',
+      accepted:    `${name} accepted`,
+      completed:   'Role completed. Certificate unlocked.',
       rejected:    `${name} passed`,
       new:         'Status reset',
     }

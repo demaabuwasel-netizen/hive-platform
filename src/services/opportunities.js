@@ -196,6 +196,16 @@ export async function setOpportunityStatus(id, ngoId, status) {
 }
 
 export async function deleteOpportunity(id, ngoId) {
+  const { error: applicationError } = await supabase
+    .from('applications')
+    .delete()
+    .eq('opportunity_id', id)
+    .eq('ngo_id', ngoId)
+
+  if (applicationError) {
+    console.warn('[deleteOpportunity] Could not delete related applications:', applicationError.message)
+  }
+
   const { error } = await supabase
     .from('opportunities')
     .delete()

@@ -13,6 +13,7 @@ const STATUS_CONFIG = {
   shortlisted: { label: 'Viewed',      color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
   interview:   { label: 'Interview',   color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
   accepted:    { label: 'Accepted',    color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
+  completed:   { label: 'Done',        color: 'text-[#1A73E8]', bg: 'bg-[#E8F0FE]' },
   rejected:    { label: 'Rejected',    color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
 }
 
@@ -151,7 +152,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                   }
                 }}
                 className={`group flex min-h-[86px] w-full cursor-pointer items-center gap-4 rounded-[24px] border px-4 py-3.5 text-left transition-all ${
-                  currentStatus === 'accepted'
+                  currentStatus === 'accepted' || currentStatus === 'completed'
                     ? 'border-[#D9F0E4] bg-[#F1FBF6] shadow-[0_10px_24px_rgba(24,128,56,0.06)] hover:bg-[#ECF9F0]'
                     : isActive
                     ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.12)]'
@@ -161,7 +162,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                 <div className="flex-1 min-w-0">
                   <div className="mb-1 flex items-center gap-2">
                     <span className={`truncate text-[0.96rem] font-semibold ${
-                      currentStatus === 'accepted' ? 'text-[#188038]' : 'text-[#202124]'
+                      currentStatus === 'accepted' || currentStatus === 'completed' ? 'text-[#188038]' : 'text-[#202124]'
                     }`}>{a.name}</span>
                     <span className={`inline-flex h-6 w-[58px] shrink-0 items-center justify-center rounded-full text-[0.62rem] font-semibold ${st.bg} ${st.color}`}>
                       {st.label}

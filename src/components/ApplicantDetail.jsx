@@ -59,6 +59,7 @@ const STATUS_CONFIG = {
   shortlisted: { label: 'Shortlisted', color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
   interview:   { label: 'Interview',   color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
   accepted:    { label: 'Accepted',    color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
+  completed:   { label: 'Completed',   color: 'text-[#1A73E8]', bg: 'bg-[#E8F0FE]' },
   rejected:    { label: 'Rejected',    color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
 }
 
@@ -231,7 +232,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
   const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
   const skills = (applicant.skills || []).map(skillName).filter(Boolean)
   const fit = fitLabel(applicant.match ?? 0)
-  const isAccepted = status === 'accepted'
+  const isAccepted = status === 'accepted' || status === 'completed'
 
   return (
     <div
@@ -439,7 +440,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
 
         <div className="flex items-center gap-2.5">
           {/* Step 1 — interview */}
-          {(status === 'interview' || status === 'accepted') ? (
+          {(status === 'interview' || status === 'accepted' || status === 'completed') ? (
             <button
               onClick={() => setInviteOpen(true)}
               className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
@@ -456,7 +457,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
           <ArrowRight size={15} className="shrink-0 text-[#9AA0A6]"/>
 
           {/* Step 2 — accept */}
-          {status === 'accepted' ? (
+          {(status === 'accepted' || status === 'completed') ? (
             <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E6F4EA] px-5 text-[0.85rem] font-medium text-[#188038]">
               <CheckCircle2 size={15} strokeWidth={2}/> Accepted
             </span>
@@ -471,6 +472,18 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
               <CheckCircle2 size={15} strokeWidth={2}/> Accept
             </button>
           )}
+
+          {status === 'completed' ? (
+            <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E8F0FE] px-5 text-[0.85rem] font-medium text-[#1A73E8]">
+              <CheckCircle2 size={15} strokeWidth={2}/> Completed
+            </span>
+          ) : status === 'accepted' ? (
+            <button
+              onClick={() => onStatusChange('completed')}
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E8F0FE] px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#D2E3FC]">
+              <CheckCircle2 size={15} strokeWidth={2}/> Complete role
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -482,7 +495,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
             onClose={() => setInviteOpen(false)}
             onSent={() => {
               setInviteOpen(false)
-              if (status !== 'interview' && status !== 'accepted') onStatusChange('interview')
+              if (status !== 'interview' && status !== 'accepted' && status !== 'completed') onStatusChange('interview')
             }}
           />
         )}

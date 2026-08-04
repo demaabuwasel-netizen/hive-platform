@@ -8,6 +8,7 @@ const STATUS_LABEL = {
   shortlisted:  'Shortlisted',
   interview:    'Interview scheduled',
   accepted:     'Accepted',
+  completed:    'Completed',
   rejected:     'Not selected',
 }
 
@@ -74,7 +75,7 @@ export async function fetchStudentApplications(studentId) {
     ngoMap = Object.fromEntries((ngos ?? []).map(n => [n.user_id, n.name]))
   }
 
-  return (data ?? []).map(row => {
+  return (data ?? []).filter(row => row.opportunity_id).map(row => {
     const app = dbToApp(row)
     // Add NGO name from the map if not already there
     if (!app.ngoName && row.ngo_id) {
@@ -266,7 +267,7 @@ export async function fetchNgoOpportunitiesWithApplicantCounts(ngoId) {
   const statMap = {}
   (appCounts ?? []).forEach(app => {
     if (!statMap[app.opportunity_id]) {
-      statMap[app.opportunity_id] = { total: 0, new: 0, shortlisted: 0, interview: 0, rejected: 0 }
+      statMap[app.opportunity_id] = { total: 0, new: 0, shortlisted: 0, interview: 0, accepted: 0, completed: 0, rejected: 0 }
     }
 
     const uiStatus = app.status === 'submitted' || app.status === 'under_review' ? 'new' : app.status
@@ -371,6 +372,8 @@ export function computeRoleStats(applicants) {
     new:         applicants.filter(a => a.status === 'submitted' || a.status === 'under_review').length,
     shortlisted: applicants.filter(a => a.status === 'shortlisted').length,
     interview:   applicants.filter(a => a.status === 'interview').length,
+    accepted:    applicants.filter(a => a.status === 'accepted').length,
+    completed:   applicants.filter(a => a.status === 'completed').length,
     rejected:    applicants.filter(a => a.status === 'rejected').length,
   }
 }

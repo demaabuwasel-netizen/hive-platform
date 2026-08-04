@@ -3,7 +3,7 @@ import { CheckCircle2, Users } from 'lucide-react'
 
 export default function RolesList({ roles, selectedRoleId, onSelectRole, loading }) {
   function isFilled(role) {
-    return (role.status || '').toLowerCase() === 'paused' || (role.stats?.accepted ?? 0) > 0
+    return (role.status || '').toLowerCase() === 'paused' || (role.stats?.accepted ?? 0) > 0 || (role.stats?.completed ?? 0) > 0
   }
 
   return (

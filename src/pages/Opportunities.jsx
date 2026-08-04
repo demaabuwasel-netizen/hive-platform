@@ -506,7 +506,7 @@ export default function Opportunities() {
   const selectedOppFilled = (selectedOpp?.status || '').toLowerCase() === 'paused'
   const selectedOppStatus = selectedOpp ? statusMeta(selectedOpp.status) : null
   const handleDeleteOpportunity = async (oppId) => {
-    if (!window.confirm('Are you sure you want to delete this opportunity? All related applications will also be deleted.')) {
+    if (!window.confirm('Are you sure you want to delete this opportunity? Students will no longer see this role in their applications.')) {
       return
     }
 
