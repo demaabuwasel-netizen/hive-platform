@@ -14,6 +14,14 @@ const LEVELS = [
 // Public export so callers (e.g. match scoring) can reference the same set
 export { LEVELS as SKILL_LEVELS }
 
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+  const bigint = parseInt(full, 16)
+  const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
 /**
  * SkillPicker
  *
@@ -23,6 +31,9 @@ export { LEVELS as SKILL_LEVELS }
  *   placeholder string
  *   levelLabel  string — shown in level-picker prompt:
  *                 "Your proficiency" (students) | "Minimum level required" (NGOs)
+ *   withLevel   bool — when false, picking a skill adds it immediately with no
+ *                 proficiency step, and chips are plain (no level, not re-editable)
+ *   accent      hex — focus border/ring + match-highlight color (default brand amber)
  */
 export default function SkillPicker({
   value       = [],
@@ -30,6 +41,8 @@ export default function SkillPicker({
   placeholder = 'Search skills…',
   levelLabel  = 'Your proficiency',
   extraSkills  = [],
+  withLevel   = true,
+  accent      = '#FFB703',
 }) {
   const [query,   setQuery]   = useState('')
   const [open,    setOpen]    = useState(false)
@@ -91,9 +104,12 @@ export default function SkillPicker({
     setQuery('')
     setOpen(false)
     setCustomMode(false)
+    if (!withLevel) {
+      onChange([...value, { name, level: '' }])
+      return
+    }
     setPending(name)
     setEditing(null)
-    inputRef.current?.focus()
   }
 
   function confirmLevel(name, level) {
@@ -187,8 +203,8 @@ export default function SkillPicker({
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all"
             style={{
               background:  'white',
-              border:      `1.5px solid ${open ? '#FFB703' : 'rgba(13,24,61,0.1)'}`,
-              boxShadow:   open ? '0 0 0 3px rgba(255,183,3,0.1)' : 'none',
+              border:      `1.5px solid ${open ? accent : 'rgba(13,24,61,0.1)'}`,
+              boxShadow:   open ? `0 0 0 3px ${hexToRgba(accent, 0.1)}` : 'none',
             }}>
             <Search size={13} className="shrink-0" style={{ color: '#4B6382' }} />
             <input
@@ -196,6 +212,7 @@ export default function SkillPicker({
               value={query}
               onChange={e => { setQuery(e.target.value); setOpen(true) }}
               onFocus={() => setOpen(true)}
+              onClick={() => setOpen(true)}
               onKeyDown={e => {
                 if (e.key === 'Escape') { setOpen(false); setQuery(''); setCustomMode(false) }
                 // Backspace on empty query removes the last chip
@@ -242,8 +259,7 @@ export default function SkillPicker({
 
                 {visibleGroups.map(({ cat, items }) => (
                   <div key={cat.cat}>
-                    <p className="px-4 pt-3 pb-1 text-[9px] font-extrabold uppercase tracking-widest"
-                      style={{ color: cat.color }}>
+                    <p className="px-4 pt-3 pb-1 text-[9px] font-extrabold uppercase tracking-widest text-[#8A93A6]">
                       {cat.cat}
                     </p>
                     {items.map(skill => (
@@ -256,7 +272,7 @@ export default function SkillPicker({
                         style={{ color: '#0D183D' }}>
                         {/* Highlight matching portion */}
                         {query
-                          ? highlightMatch(skill, query)
+                          ? highlightMatch(skill, query, accent)
                           : skill}
                       </button>
                     ))}
@@ -336,18 +352,26 @@ export default function SkillPicker({
                             borderColor: isEditing ? 'rgba(13,24,61,0.22)' : 'rgba(125,153,190,0.16)',
                             boxShadow: isEditing ? '0 0 0 3px rgba(13,24,61,0.04)' : 'none',
                           }}>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(skill)}
-                            className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#4B6382] transition-colors hover:text-[#202124]">
-                            <span className="max-w-[9rem] truncate font-semibold">
-                              {skill.name}
+                          {withLevel ? (
+                            <button
+                              type="button"
+                              onClick={() => startEdit(skill)}
+                              className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#4B6382] transition-colors hover:text-[#202124]">
+                              <span className="max-w-[9rem] truncate font-semibold">
+                                {skill.name}
+                              </span>
+                              <span className="text-[#C7CFDD]">/</span>
+                              <span className="text-[10px] text-[#6B7280]">
+                                {skill.level || 'Level'}
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex min-w-0 items-center text-[11px] font-semibold text-[#202124]">
+                              <span className="max-w-[9rem] truncate">
+                                {skill.name}
+                              </span>
                             </span>
-                            <span className="text-[#C7CFDD]">/</span>
-                            <span className="text-[10px] text-[#6B7280]">
-                              {skill.level || 'Level'}
-                            </span>
-                          </button>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); remove(skill.name) }}
@@ -370,13 +394,13 @@ export default function SkillPicker({
 }
 
 // Wrap the matched substring in a bold span
-function highlightMatch(skill, query) {
+function highlightMatch(skill, query, accent = '#FFB703') {
   const idx = skill.toLowerCase().indexOf(query.toLowerCase())
   if (idx === -1) return skill
   return (
     <>
       {skill.slice(0, idx)}
-      <strong style={{ color: '#FFB703' }}>{skill.slice(idx, idx + query.length)}</strong>
+      <strong style={{ color: accent }}>{skill.slice(idx, idx + query.length)}</strong>
       {skill.slice(idx + query.length)}
     </>
   )

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { User, Menu, X } from 'lucide-react'
 import HiveLogo from '../HiveLogo'
 
-export default function OnboardingLayout({ children, showNavigation = true, onExitOnboarding = null }) {
+export default function OnboardingLayout({ children, showNavigation = true, onExitOnboarding = null, onSwitchRole = null, switchRoleLabel = 'Switch role instead' }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const navigate = useNavigate()
@@ -21,13 +21,17 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
     navigate('/', { replace: true })
   }
 
+  const handleSwitchRoleClick = async () => {
+    setShowConfirm(false)
+    if (onSwitchRole) await onSwitchRole()
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAF6EA] via-[#FFFBF5] to-[#FCF8EF]">
-      {/* Subtle radial glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-1/4 w-96 h-96 bg-[#FFB400] rounded-full opacity-5 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#0B163F] rounded-full opacity-3 blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#F5F7FB]">
+      {/* Subtle ambient wash — matches dashboard hero background */}
+      <div
+        className="fixed inset-0 pointer-events-none overflow-hidden bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]"
+      />
 
       {/* Confirmation Dialog */}
       <AnimatePresence>
@@ -44,24 +48,32 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl p-6 max-w-sm border border-[#E6E8EF] shadow-lg"
+              className="bg-white rounded-[28px] p-6 max-w-sm border border-[rgba(26,115,232,0.10)] shadow-xl"
             >
-              <h3 className="text-lg font-bold text-[#0B163F] mb-2">Leave onboarding?</h3>
-              <p className="text-sm text-[#4E6385] mb-6">
-                Your progress will not be saved. Are you sure you want to leave?
+              <h3 className="text-lg font-bold text-[#202124] mb-2">Leave onboarding?</h3>
+              <p className="text-sm text-[#5F6368] mb-6">
+                Your progress here won't be saved. What would you like to do?
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 px-4 py-2.5 rounded-[14px] bg-white border-2 border-[#E6E8EF] text-[#0B163F] font-semibold text-xs transition-all hover:border-[#D4D8E0]"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#DADCE0] text-[#202124] font-semibold text-xs transition-all hover:bg-[#F5F7FB]"
                 >
                   No, continue
                 </button>
+                {onSwitchRole && (
+                  <button
+                    onClick={handleSwitchRoleClick}
+                    className="w-full px-4 py-2.5 rounded-2xl bg-[#E8F0FE] text-[#1A73E8] font-semibold text-xs transition-all hover:bg-[#DCEAFD]"
+                  >
+                    {switchRoleLabel}
+                  </button>
+                )}
                 <button
                   onClick={handleConfirmExit}
-                  className="flex-1 px-4 py-2.5 rounded-[14px] bg-[#FF4D4F] text-white font-semibold text-xs transition-all hover:shadow-lg"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[#FF4D4F] text-white font-semibold text-xs transition-all hover:shadow-lg"
                 >
-                  Yes, leave
+                  Log out and leave
                 </button>
               </div>
             </motion.div>
@@ -71,7 +83,7 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
 
       {/* Header */}
       {showNavigation && (
-        <div className="sticky top-0 z-50 backdrop-blur-sm bg-[#FFFBF5]/80 border-b border-[#E6E8EF]/40">
+        <div className="sticky top-0 z-50 backdrop-blur-sm bg-[#F5F7FB]/80 border-b border-[rgba(26,115,232,0.08)]">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <button
               onClick={handleLogoClick}
@@ -81,10 +93,10 @@ export default function OnboardingLayout({ children, showNavigation = true, onEx
               <HiveLogo size={20} nameSize="text-[1.3rem]" />
             </button>
             <button
-              className="p-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"
+              className="p-2 rounded-lg hover:bg-white transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <User size={20} className="text-[#0B163F]" />
+              <User size={20} className="text-[#202124]" />
             </button>
           </div>
         </div>

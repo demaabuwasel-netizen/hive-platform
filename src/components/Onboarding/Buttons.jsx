@@ -9,8 +9,8 @@ export function PrimaryButton({ children, onClick, disabled = false, loading = f
       disabled={disabled || loading}
       whileHover={{ scale: disabled ? 1 : 1.02 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      className={`px-6 py-3 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs transition-all flex items-center gap-2 justify-center min-w-[130px] ${
-        disabled || loading ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-lg hover:shadow-[rgba(11,22,63,0.15)]'
+      className={`px-6 py-3 rounded-2xl bg-[#1A73E8] text-white font-semibold text-xs transition-all flex items-center gap-2 justify-center min-w-[130px] ${
+        disabled || loading ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-lg hover:shadow-[rgba(26,115,232,0.25)]'
       } ${className}`}
     >
       {loading ? (
@@ -40,8 +40,8 @@ export function SecondaryButton({ children, onClick, disabled = false, className
       disabled={disabled}
       whileHover={{ scale: disabled ? 1 : 1.02 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      className={`px-6 py-3 rounded-[14px] bg-white border-2 border-[#E6E8EF] text-[#0B163F] font-semibold text-xs transition-all ${
-        disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-[#D4D8E0] hover:shadow-sm'
+      className={`px-6 py-3 rounded-2xl bg-white border border-[#DADCE0] text-[#202124] font-semibold text-xs transition-all ${
+        disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#F5F7FB] hover:shadow-sm'
       } ${className}`}
     >
       {children}

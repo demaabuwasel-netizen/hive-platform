@@ -1,61 +1,35 @@
 import { motion } from 'framer-motion'
 
 export default function Stepper({ steps, currentStep }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="mb-12 flex justify-center"
-    >
-      <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-[#E6E8EF] shadow-sm">
-        <div className="flex items-center gap-4">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center gap-4">
-              {/* Step indicator */}
-              <div className="flex flex-col items-center gap-1.5">
-                <motion.button
-                  type="button"
-                  disabled
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs transition-all"
-                  animate={{
-                    background: index <= currentStep ? '#0B163F' : '#F5F7FB',
-                    color: index <= currentStep ? '#FFFFFF' : '#9CA3AF',
-                    boxShadow: index <= currentStep
-                      ? '0 4px 12px rgba(11, 22, 63, 0.15)'
-                      : 'none',
-                  }}
-                  style={{
-                    border: '1.5px solid',
-                    borderColor: index <= currentStep ? '#0B163F' : '#E6E8EF',
-                  }}
-                >
-                  {index < currentStep ? (
-                    <span className="text-sm">✓</span>
-                  ) : (
-                    <span className="font-semibold">{index + 1}</span>
-                  )}
-                </motion.button>
-                <span className="text-[9px] font-semibold text-[#4E6385] whitespace-nowrap">
-                  {step.title}
-                </span>
-              </div>
+  const total = steps.length
+  const progress = total > 1 ? (currentStep / (total - 1)) * 100 : 100
+  const activeTitle = steps[currentStep]?.title
 
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <motion.div
-                  className="h-px bg-[#E6E8EF]"
-                  animate={{
-                    background: index < currentStep ? '#0B163F' : '#E6E8EF',
-                    width: index < currentStep ? 32 : 32,
-                  }}
-                  transition={{ duration: 0.3 }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+  return (
+    <div className="mb-8">
+      <div className="relative h-[3px] w-full rounded-full bg-[#E8EAED]">
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full bg-[#1A73E8]"
+          initial={false}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+        />
+        <motion.div
+          className="absolute top-1/2 h-2.5 w-2.5 rounded-full bg-[#1A73E8] ring-4 ring-[rgba(26,115,232,0.15)]"
+          initial={false}
+          animate={{ left: `${progress}%` }}
+          transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+          style={{ translateX: '-50%', translateY: '-50%' }}
+        />
       </div>
-    </motion.div>
+      <div className="mt-3.5 flex items-baseline justify-between">
+        <span className="text-[11px] font-medium text-[#9AA0A6]">
+          Step {currentStep + 1} of {total}
+        </span>
+        <span className="text-[12px] font-semibold text-[#202124]">
+          {activeTitle}
+        </span>
+      </div>
+    </div>
   )
 }

@@ -4,14 +4,14 @@ export function FormField({ label, required = false, error = null, children, hel
   return (
     <div>
       {label && (
-        <label className="block text-xs font-semibold text-[#0B163F] mb-2">
+        <label className="block text-xs font-semibold text-[#202124] mb-2">
           {label}
-          {required && <span className="text-[#FFB400] ml-1">*</span>}
+          {required && <span className="text-[#1A73E8] ml-1">*</span>}
         </label>
       )}
       {children}
       {helper && !error && (
-        <p className="text-[10px] text-[#4E6385] mt-1.5 leading-relaxed">{helper}</p>
+        <p className="text-[10px] text-[#5F6368] mt-1.5 leading-relaxed">{helper}</p>
       )}
       {error && (
         <motion.p
@@ -40,12 +40,12 @@ export function TextInput({ label, placeholder, value, onChange, required = fals
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#202124] placeholder-[#9CA3AF] focus:outline-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
               ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F] focus:shadow-sm'
-              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+              : 'border-[#DADCE0] bg-white hover:border-[#D4D8E0] focus:border-[#1A73E8] focus:shadow-sm focus:shadow-[rgba(26,115,232,0.12)]'
           }`}
         />
       </div>
@@ -65,12 +65,12 @@ export function SelectInput({ label, placeholder, options = [], value, onChange,
         <select
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] focus:outline-none appearance-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#202124] focus:outline-none appearance-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
               ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
-              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+              : 'border-[#DADCE0] bg-white hover:border-[#D4D8E0] focus:border-[#1A73E8] focus:shadow-sm focus:shadow-[rgba(26,115,232,0.12)]'
           }`}
           style={{
             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239CA3AF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e")`,
@@ -106,12 +106,12 @@ export function TextArea({ label, placeholder, value, onChange, required = false
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#0B163F] placeholder-[#9CA3AF] focus:outline-none resize-none ${
+          className={`w-full px-4 py-3 rounded-[16px] border-2 transition-all font-medium text-sm text-[#202124] placeholder-[#9CA3AF] focus:outline-none resize-none ${
             Icon ? 'pl-11' : ''
           } ${
             error
               ? 'border-[#FF4D4F] bg-[#FFF1F0] focus:border-[#FF4D4F]'
-              : 'border-[#E6E8EF] bg-white hover:border-[#D4D8E0] focus:border-[#0B163F] focus:shadow-sm focus:shadow-[rgba(11,22,63,0.08)]'
+              : 'border-[#DADCE0] bg-white hover:border-[#D4D8E0] focus:border-[#1A73E8] focus:shadow-sm focus:shadow-[rgba(26,115,232,0.12)]'
           }`}
         />
       </div>
@@ -144,8 +144,8 @@ export function ChipSelector({ label, options = [], value = [], onChange, requir
               whileTap={{ scale: 0.98 }}
               className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all ${
                 isSelected
-                  ? 'bg-[#0B163F] text-white shadow-md'
-                  : 'bg-white border-2 border-[#E6E8EF] text-[#0B163F] hover:border-[#FFB400] hover:shadow-sm'
+                  ? 'bg-[#1A73E8] text-white shadow-md'
+                  : 'bg-white border-2 border-[#DADCE0] text-[#202124] hover:border-[#1A73E8] hover:shadow-sm'
               }`}
             >
               {opt.label || opt}

@@ -1,30 +1,32 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Sparkles, Heart, CheckCircle2, Target, TrendingUp, Shield, Rocket, Check, X } from 'lucide-react'
+import { User, Sparkles, Heart, CheckCircle2, Shield, Rocket, Check, GraduationCap, Edit3, Trash2, Plus, BookOpen, Building2, Award } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { saveOnboardingDraft, studentProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
-import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
+import SkillPicker from '../components/SkillPicker'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
-import { TextInput, SelectInput, TextArea, ChipSelector } from '../components/Onboarding/FormInputs'
+import { TextInput, TextArea, ChipSelector } from '../components/Onboarding/FormInputs'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
+// The stepper only tracks the form steps — the final "Complete" screen is a
+// plain review/confirmation screen and isn't counted as a step in it.
 const STEPS = [
-  { id: 'profile', title: 'Profile', number: 1 },
-  { id: 'skills', title: 'Skills', number: 2 },
-  { id: 'causes', title: 'Causes', number: 3 },
-  { id: 'links', title: 'Links', number: 4 },
-  { id: 'complete', title: 'Complete', number: 5 },
+  { id: 'profile', title: 'Profile' },
+  { id: 'skills', title: 'Skills' },
+  { id: 'education', title: 'Education' },
+  { id: 'causes', title: 'Causes' },
+  { id: 'links', title: 'Links' },
 ]
+const COMPLETE_STEP = STEPS.length
 
-const SKILL_CATEGORIES = [
-  'Programming', 'Data & AI', 'Design', 'Marketing', 'Research',
-  'Writing', 'Languages', 'Community Work', 'Project Management',
-  'Graphic Design', 'Video Production', 'Social Media', 'Other'
-]
+const EDUCATION_EMPTY = { field: '', university: '', degreeType: '', description: '', isCurrent: false }
+
+const inputClass = 'w-full rounded-2xl border border-[#DADCE0] bg-white px-3.5 py-3 text-[0.88rem] text-[#202124] placeholder:text-[#9AA0A6] outline-none transition focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15'
+const primaryPillClass = 'inline-flex items-center gap-1.5 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.82rem] font-semibold text-white shadow-[0_4px_12px_rgba(26,115,232,0.25)] transition hover:bg-[#1765CC]'
+const softPillClass = 'inline-flex items-center gap-1.5 rounded-full border border-[#DADCE0] bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-[#1A73E8] transition hover:bg-[#F5F7FB]'
 
 const CAUSES = [
   'Youth Empowerment', 'Women Empowerment', 'Education', 'Environment',
@@ -39,7 +41,7 @@ function hasDraftData(d) {
 }
 
 export default function StudentOnboarding() {
-  const { completeOnboarding, markOnboardingDone, user, profile, logout } = useApp()
+  const { completeOnboarding, markOnboardingDone, user, updateRole, logout } = useApp()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [data, setData] = useState({})
@@ -47,161 +49,65 @@ export default function StudentOnboarding() {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [saveStatus, setSaveStatus] = useState('idle')
-  const [welcomeBack, setWelcomeBack] = useState(false)
-  const [newSkillId, setNewSkillId] = useState('')
-  const [newSkillLevel, setNewSkillLevel] = useState('Intermediate')
-  const [newExp, setNewExp] = useState({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-  const [editingExpIndex, setEditingExpIndex] = useState(null)
+  const [educationDraft, setEducationDraft] = useState(EDUCATION_EMPTY)
+  const [editingEducation, setEditingEducation] = useState(false)
+  const [editingEducationIndex, setEditingEducationIndex] = useState(null)
 
   const restoredRef = useRef(false)
   const debounceTimer = useRef(null)
 
-  const SKILLS_LIST = {
-    'Programming': [
-      { name: 'Python', level: 'Intermediate' },
-      { name: 'JavaScript', level: 'Advanced' },
-      { name: 'React', level: 'Advanced' },
-      { name: 'Java', level: 'Intermediate' },
-      { name: 'SQL', level: 'Intermediate' },
-      { name: 'Node.js', level: 'Advanced' },
-      { name: 'TypeScript', level: 'Advanced' },
-      { name: 'C++', level: 'Beginner' },
-    ],
-    'Data & AI': [
-      { name: 'Machine Learning', level: 'Advanced' },
-      { name: 'Data Analysis', level: 'Advanced' },
-      { name: 'TensorFlow', level: 'Intermediate' },
-      { name: 'Pandas', level: 'Advanced' },
-      { name: 'Statistics', level: 'Intermediate' },
-      { name: 'Deep Learning', level: 'Advanced' },
-    ],
-    'Tools & Platforms': [
-      { name: 'Git', level: 'Advanced' },
-      { name: 'Docker', level: 'Intermediate' },
-      { name: 'AWS', level: 'Intermediate' },
-      { name: 'Google Cloud', level: 'Beginner' },
-      { name: 'Figma', level: 'Advanced' },
-      { name: 'Linux', level: 'Intermediate' },
-    ],
-    'Soft Skills': [
-      { name: 'Communication', level: 'Advanced' },
-      { name: 'Leadership', level: 'Advanced' },
-      { name: 'Project Management', level: 'Intermediate' },
-      { name: 'Problem Solving', level: 'Advanced' },
-      { name: 'Teamwork', level: 'Advanced' },
-    ],
-    'Design': [
-      { name: 'UI Design', level: 'Advanced' },
-      { name: 'UX Design', level: 'Advanced' },
-      { name: 'Graphic Design', level: 'Intermediate' },
-      { name: 'Web Design', level: 'Advanced' },
-      { name: 'Prototyping', level: 'Intermediate' },
-    ],
-    'Marketing': [
-      { name: 'Digital Marketing', level: 'Advanced' },
-      { name: 'Content Writing', level: 'Advanced' },
-      { name: 'Social Media', level: 'Advanced' },
-      { name: 'SEO', level: 'Intermediate' },
-      { name: 'Email Marketing', level: 'Intermediate' },
-    ],
+  const handleSaveEducation = () => {
+    const hasContent = educationDraft.field || educationDraft.university || educationDraft.degreeType
+    if (!hasContent) { setEditingEducation(false); return }
+    const existing = Array.isArray(data.educations) ? data.educations : []
+    const updated = editingEducationIndex !== null
+      ? existing.map((e, i) => i === editingEducationIndex ? educationDraft : e)
+      : [...existing, educationDraft]
+    update('educations', updated)
+    setEducationDraft(EDUCATION_EMPTY)
+    setEditingEducationIndex(null)
+    setEditingEducation(false)
   }
 
-  const SKILL_LEVEL_COLORS = {
-    'Beginner': { bg: '#FEE2E2', color: '#B91C1C' },
-    'Intermediate': { bg: '#FEF3C7', color: '#92400E' },
-    'Advanced': { bg: '#D1FAE5', color: '#065F46' },
-    'Expert': { bg: '#EDE9FE', color: '#5B21B6' },
+  const handleDeleteEducation = (index) => {
+    const existing = Array.isArray(data.educations) ? data.educations : []
+    update('educations', existing.filter((_, i) => i !== index))
   }
 
-  const handleAddSkill = () => {
-    if (!newSkillId.trim()) return
-    const [category, skillName] = newSkillId.split('||')
-    if (!skillName || !category) return
-
-    // Check if skill already exists
-    const existingSkills = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
-    if (existingSkills.some(s => s.name === skillName)) return
-
-    const updatedSkills = [...existingSkills, { name: skillName, level: newSkillLevel, category }]
-    update('skillsWithLevel', updatedSkills)
-    setNewSkillId('')
-    setNewSkillLevel('Intermediate')
+  const startEducationEdit = (education = EDUCATION_EMPTY, index = null) => {
+    setEducationDraft(education)
+    setEditingEducationIndex(index)
+    setEditingEducation(true)
   }
 
-  const handleRemoveSkill = (index) => {
-    const skillsWithLevel = Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []
-    const updated = skillsWithLevel.filter((_, i) => i !== index)
-    update('skillsWithLevel', updated)
-  }
-
-  const handleSaveExperience = () => {
-    const experiences = Array.isArray(data.experiences) ? data.experiences : []
-    if (editingExpIndex !== null) {
-      const updated = [...experiences]
-      updated[editingExpIndex] = newExp
-      update('experiences', updated)
-      setEditingExpIndex(null)
-    } else if (newExp.title || newExp.description) {
-      update('experiences', [...experiences, newExp])
-    }
-    setNewExp({ title: '', organization: '', startDate: '', endDate: '', location: '', description: '' })
-  }
-
-  const handleRemoveExperience = (index) => {
-    const experiences = Array.isArray(data.experiences) ? data.experiences : []
-    const updated = experiences.filter((_, i) => i !== index)
-    update('experiences', updated)
-  }
-
-  const doSave = useCallback(async (d, s) => {
+  // Progress is kept in this browser only (localStorage) so a refresh doesn't
+  // lose it — nothing is written to Supabase until the final "Create profile"
+  // step. That way, if someone abandons onboarding partway through, no
+  // partial profile is ever created.
+  const saveLocal = useCallback((d, s) => {
     if (!user?.id) return
-    setSaveStatus('saving')
-    const ok = await saveOnboardingDraft(user.id, 'student', d, s)
     try { localStorage.setItem(LS_KEY(user.id), JSON.stringify({ data: d, step: s, ts: Date.now() })) } catch {}
-    if (ok) {
-      setSaveStatus('saved')
-      setTimeout(() => setSaveStatus(st => st === 'saved' ? 'idle' : st), 2500)
-    } else {
-      setSaveStatus('error')
-      setTimeout(() => setSaveStatus(st => st === 'error' ? 'idle' : st), 3000)
-    }
   }, [user?.id])
 
   const saveDraft = useCallback((d, s) => {
     clearTimeout(debounceTimer.current)
-    debounceTimer.current = setTimeout(() => doSave(d, s), 750)
-  }, [doSave])
-
-  const saveDraftNow = useCallback((d, s) => {
-    clearTimeout(debounceTimer.current)
-    return doSave(d, s)
-  }, [doSave])
+    debounceTimer.current = setTimeout(() => saveLocal(d, s), 400)
+  }, [saveLocal])
 
   useEffect(() => {
     if (!user?.id) return
-    const dbStep = user.onboardingStep ?? 0
-    const dbData = studentProfileToData(profile)
-    let localStep = dbStep
-    let localData = dbData
     try {
       const raw = localStorage.getItem(LS_KEY(user.id))
       if (raw) {
         const backup = JSON.parse(raw)
-        if (typeof backup.step === 'number' && backup.step > dbStep) {
-          localStep = backup.step
-          localData = { ...dbData, ...backup.data }
+        if (backup.data && typeof backup.step === 'number' && hasDraftData(backup.data)) {
+          setData(backup.data)
+          setStep(Math.min(backup.step, COMPLETE_STEP))
         }
       }
     } catch {}
-    const hasAny = localStep > 0 || hasDraftData(localData)
-    if (hasAny) {
-      setData(localData)
-      setStep(Math.min(localStep, STEPS.length - 1))
-      setWelcomeBack(true)
-    }
     restoredRef.current = true
-  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     if (!restoredRef.current) return
@@ -229,9 +135,9 @@ export default function StudentOnboarding() {
 
   async function next() {
     if (!validate()) return
-    if (step < STEPS.length - 1) {
+    if (step < COMPLETE_STEP) {
       const nextStep = step + 1
-      await saveDraftNow(data, nextStep)
+      saveLocal(data, nextStep)
       setStep(nextStep)
     } else {
       setSubmitting(true)
@@ -249,7 +155,7 @@ export default function StudentOnboarding() {
           bio: data.bio?.trim() || null,
           skills: skillNames,
           skillsWithLevel: skillsWithLevel,
-          experiences: Array.isArray(data.experiences) ? data.experiences : [],
+          educations: Array.isArray(data.educations) ? data.educations : [],
           interests: data.causes || [],
           languages: data.languages || [],
           motivation: data.motivation?.trim() || null,
@@ -279,35 +185,34 @@ export default function StudentOnboarding() {
   }
 
   async function handleExitOnboarding() {
-    // Cancel any pending saves immediately
+    // Nothing has been saved to Supabase yet at this point — progress only
+    // lives in localStorage — so leaving just means discarding it locally.
     clearTimeout(debounceTimer.current)
-
-    // Clear save status so no "saved" message shows
-    setSaveStatus('idle')
-
-    // Clear localStorage completely
     try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
 
-    // Clear database draft by saving empty data
-    if (user?.id) {
-      try {
-        await saveOnboardingDraft(user.id, 'student', {}, 0)
-      } catch {}
-    }
-
-    // Clear all local state
     setData({})
     setStep(0)
     setErrors({})
     setDone(false)
     setSubmitting(false)
     setSubmitError('')
-    setWelcomeBack(false)
-    setNewSkillId('')
-    setNewSkillLevel('Intermediate')
 
     // Log out and navigate away
     await logout()
+  }
+
+  async function handleSwitchRole() {
+    // Switching roles discards whatever was filled in for this role and
+    // starts the other role's onboarding fresh — nothing was saved yet.
+    clearTimeout(debounceTimer.current)
+    try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
+
+    setData({})
+    setStep(0)
+    setErrors({})
+
+    await updateRole('ngo')
+    navigate('/onboarding/ngo')
   }
 
   // Success screen
@@ -319,20 +224,20 @@ export default function StudentOnboarding() {
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45 }}
-            className="w-full max-w-md bg-white rounded-3xl p-8 border border-[#E6E8EF] text-center shadow-sm"
+            className="w-full max-w-md bg-white rounded-[28px] p-8 border border-[rgba(26,115,232,0.10)] text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="w-16 h-16 bg-[#FFB400]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-[#FFB400]/20"
+              className="w-16 h-16 bg-[#E8F0FE] rounded-2xl flex items-center justify-center mx-auto mb-6 border border-[rgba(26,115,232,0.20)]"
             >
-              <CheckCircle2 size={32} className="text-[#FFB400]" strokeWidth={1.5} />
+              <CheckCircle2 size={32} className="text-[#1A73E8]" strokeWidth={1.5} />
             </motion.div>
-            <h2 className="text-2xl font-bold text-[#0B163F] mb-2">
+            <h2 className="text-2xl font-bold text-[#202124] mb-2">
               Profile created!
             </h2>
-            <p className="text-[#4E6385] text-sm mb-8">
+            <p className="text-[#5F6368] text-sm mb-8">
               You're ready to be matched with amazing opportunities that align with your skills and values.
             </p>
             <div className="flex flex-col gap-3">
@@ -352,13 +257,13 @@ export default function StudentOnboarding() {
   // Step 0: Profile
   if (step === 0) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="Let's start with your profile"
                 subtitle="This helps organizations understand who you are and what you're passionate about."
                 icon={User}
@@ -393,28 +298,6 @@ export default function StudentOnboarding() {
                   searchFields={['name']}
                 />
 
-                <TextInput
-                  label="University or school"
-                  placeholder="Where do you study?"
-                  value={data.university || ''}
-                  onChange={(val) => update('university', val)}
-                />
-
-                <TextInput
-                  label="Field of study"
-                  placeholder="Your major or field"
-                  value={data.field || ''}
-                  onChange={(val) => update('field', val)}
-                />
-
-                <SelectInput
-                  label="Year of study"
-                  placeholder="Select your year"
-                  value={data.graduationYear || ''}
-                  onChange={(val) => update('graduationYear', val)}
-                  options={['1st year', '2nd year', '3rd year', '4th year', '5th year', 'Graduate']}
-                />
-
                 <TextArea
                   label="Short bio"
                   placeholder="Tell us a bit about yourself. What drives you?"
@@ -423,7 +306,7 @@ export default function StudentOnboarding() {
                   rows={3}
                 />
 
-                <div className="pt-4 border-t border-[#E6E8EF] flex items-center gap-2 text-xs text-[#4E6385]">
+                <div className="pt-4 border-t border-[#DADCE0] flex items-center gap-2 text-xs text-[#5F6368]">
                   <Shield size={16} strokeWidth={1.5} />
                   Your information is secure and used only to improve your experience.
                 </div>
@@ -442,184 +325,28 @@ export default function StudentOnboarding() {
   // Step 1: Skills
   if (step === 1) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="What are your skills?"
                 subtitle="Tell us what you're good at. These help organizations find the right fit for their projects."
                 icon={Sparkles}
               >
                 <div className="space-y-4">
-                  {/* Display added skills by category */}
-                  {Array.isArray(data.skillsWithLevel) && data.skillsWithLevel.length > 0 && (
-                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] mb-4 uppercase tracking-wider">Selected Skills ({data.skillsWithLevel.length})</p>
-                      <div className="space-y-4">
-                        {(() => {
-                          const skillsByCategory = {}
-                          data.skillsWithLevel.forEach(skill => {
-                            const category = skill.category || 'Other'
-                            if (!skillsByCategory[category]) skillsByCategory[category] = []
-                            skillsByCategory[category].push(skill)
-                          })
-                          return Object.entries(skillsByCategory).map(([cat, skills]) => (
-                            <div key={cat}>
-                              <p className="text-xs font-semibold text-[#0B163F] mb-2">{cat}</p>
-                              <div className="flex flex-wrap gap-2">
-                                {skills.map((skill, idx) => {
-                                  const levelColors = SKILL_LEVEL_COLORS[skill.level] || SKILL_LEVEL_COLORS['Intermediate']
-                                  return (
-                                    <div key={`skill-${cat}-${idx}`} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
-                                      <p className="text-xs font-semibold text-[#0B163F]">{skill.name}</p>
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: levelColors.bg, color: levelColors.color }}>
-                                        {skill.level}
-                                      </span>
-                                      <button onClick={() => handleRemoveSkill(data.skillsWithLevel.indexOf(skill))} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                                        <X size={12} />
-                                      </button>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          ))
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Add skill section */}
-                  <div className="p-4 rounded-2xl border-2 border-[#E6E8EF] bg-white space-y-3">
-                    <div>
-                      <label className="text-xs font-semibold text-[#0B163F] block mb-2">Select a skill to add</label>
-                      <select value={newSkillId} onChange={e => setNewSkillId(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                        <option value="">Choose a skill...</option>
-                        {Object.entries(SKILLS_LIST).map(([category, skills]) => (
-                          <optgroup key={category} label={category}>
-                            {skills.map(skill => (
-                              <option key={skill.name} value={`${category}||${skill.name}`}>
-                                {skill.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#0B163F] block mb-2">Your expertise level</label>
-                      <select value={newSkillLevel} onChange={e => setNewSkillLevel(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                        <option>Beginner</option>
-                        <option>Intermediate</option>
-                        <option>Advanced</option>
-                        <option>Expert</option>
-                      </select>
-                    </div>
-
-                    <PrimaryButton onClick={handleAddSkill} className="w-full">
-                      Add the skill
-                    </PrimaryButton>
-                  </div>
-
-                  {/* EXPERIENCE SECTION */}
-                  <div className="pt-4 border-t border-[#E6E8EF]">
-                    <p className="text-xs font-semibold text-[#0B163F] mb-3 uppercase tracking-wider">Work Experience</p>
-
-                    {/* Display added experiences */}
-                    {Array.isArray(data.experiences) && data.experiences.length > 0 && (
-                      <div className="mb-4 space-y-3">
-                        {data.experiences.map((exp, idx) => (
-                          <div key={idx} className="group p-3 rounded-lg bg-[#FAF6EA] border border-[#E6E8EF] hover:border-[#D4D8E0]">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="text-xs font-semibold text-[#0B163F]">{exp.title}</p>
-                                {exp.organization && <p className="text-[10px] text-[#4E6385]">{exp.organization}</p>}
-                                {exp.location && <p className="text-[10px] text-[#4E6385]">{exp.location}</p>}
-                              </div>
-                              <button
-                                onClick={() => handleRemoveExperience(idx)}
-                                className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <X size={12} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add experience form */}
-                    <div className="p-4 rounded-2xl border-2 border-[#E6E8EF] bg-white space-y-3">
-                      <div>
-                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Job title</label>
-                        <TextInput
-                          placeholder="e.g., Marketing Manager"
-                          value={newExp.title || ''}
-                          onChange={(val) => setNewExp({...newExp, title: val})}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Organization</label>
-                        <TextInput
-                          placeholder="e.g., Company name"
-                          value={newExp.organization || ''}
-                          onChange={(val) => setNewExp({...newExp, organization: val})}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-[#0B163F] block mb-2">Start date</label>
-                          <input
-                            type="date"
-                            value={newExp.startDate || ''}
-                            onChange={(e) => setNewExp({...newExp, startDate: e.target.value})}
-                            className="w-full px-3 py-2 rounded-lg text-xs border border-[#E6E8EF] outline-none focus:border-[#0B163F]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-[#0B163F] block mb-2">End date</label>
-                          <input
-                            type="date"
-                            value={newExp.endDate || ''}
-                            onChange={(e) => setNewExp({...newExp, endDate: e.target.value})}
-                            className="w-full px-3 py-2 rounded-lg text-xs border border-[#E6E8EF] outline-none focus:border-[#0B163F]"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Location (optional)</label>
-                        <TextInput
-                          placeholder="e.g., New York, NY"
-                          value={newExp.location || ''}
-                          onChange={(val) => setNewExp({...newExp, location: val})}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-[#0B163F] block mb-2">Description (optional)</label>
-                        <TextArea
-                          placeholder="Describe your role and accomplishments"
-                          value={newExp.description || ''}
-                          onChange={(val) => setNewExp({...newExp, description: val})}
-                          rows={2}
-                        />
-                      </div>
-
-                      <PrimaryButton onClick={handleSaveExperience} className="w-full">
-                        Add experience
-                      </PrimaryButton>
-                    </div>
+                  {/* Skills */}
+                  <div>
+                    <label className="text-xs font-semibold text-[#202124] block mb-2">Your skills</label>
+                    <SkillPicker
+                      value={Array.isArray(data.skillsWithLevel) ? data.skillsWithLevel : []}
+                      onChange={(v) => update('skillsWithLevel', v)}
+                      placeholder="Search skills… (e.g. Python, Design, Leadership)"
+                      withLevel={false}
+                      accent="#1A73E8"
+                    />
                   </div>
                 </div>
 
@@ -635,16 +362,179 @@ export default function StudentOnboarding() {
     )
   }
 
-  // Step 2: Causes
+  // Step 2: Education
   if (step === 2) {
+    const educations = Array.isArray(data.educations) ? data.educations : []
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
+                title="Your education"
+                subtitle="Add your field of study, school, and degree so organizations understand your background."
+                subtitleNoWrap
+                icon={GraduationCap}
+              >
+                <div className="space-y-4">
+                  {educations.length > 0 && (
+                    <div className="overflow-hidden rounded-[24px] bg-[#F8F9FB] ring-1 ring-[#DADCE0]">
+                      {educations.map((education, index) => (
+                        <div key={`${education.field}-${index}`} className="flex gap-4 border-b border-[#DADCE0] p-4 last:border-b-0">
+                          <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                            <GraduationCap size={18} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-[1rem] font-semibold text-[#202124]">{education.field || 'Education'}</p>
+                                <p className="mt-1 text-[0.84rem] text-[#5F6368]">{education.university || 'School not set'}</p>
+                                {(education.degreeType || education.isCurrent) && (
+                                  <p className="mt-2 inline-flex rounded-full bg-[#E8F0FE] px-2.5 py-1 text-[0.74rem] font-semibold text-[#1A73E8]">
+                                    {[education.degreeType, education.isCurrent ? 'Current' : ''].filter(Boolean).join(' · ')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-1">
+                                <button type="button" className="rounded-full p-2 text-[#5F6368] transition hover:bg-[#E8F0FE] hover:text-[#1A73E8]" onClick={() => startEducationEdit(education, index)}>
+                                  <Edit3 size={14} />
+                                </button>
+                                <button type="button" className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6]" onClick={() => handleDeleteEducation(index)}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                            {education.description && <p className="mt-3 text-[0.84rem] leading-6 text-[#5F6368]">{education.description}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!editingEducation && educations.length === 0 && (
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => startEducationEdit()}
+                        className={softPillClass}
+                      >
+                        <Plus size={14} />
+                        Add your education
+                      </button>
+                    </div>
+                  )}
+
+                  {!editingEducation && educations.length > 0 && (
+                    <button type="button" onClick={() => startEducationEdit()} className={softPillClass}>
+                      <Plus size={14} />
+                      Add another
+                    </button>
+                  )}
+
+                  {editingEducation && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="rounded-[24px] bg-white p-5 border border-[rgba(26,115,232,0.14)] shadow-[0_8px_28px_rgba(26,115,232,0.10)]"
+                    >
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-[#9AA0A6]">
+                            <BookOpen size={12} /> Field of study
+                          </label>
+                          <input className={inputClass} value={educationDraft.field} onChange={(e) => setEducationDraft(prev => ({ ...prev, field: e.target.value }))} placeholder="Computer Science" />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 flex items-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-[#9AA0A6]">
+                            <Building2 size={12} /> University / school
+                          </label>
+                          <input className={inputClass} value={educationDraft.university} onChange={(e) => setEducationDraft(prev => ({ ...prev, university: e.target.value }))} placeholder="Tel Aviv University" />
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="mb-1.5 flex items-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-[#9AA0A6]">
+                          <Award size={12} /> Degree type
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {["Bachelor's", "Master's", 'Certificate', 'Diploma'].map(type => {
+                            const selected = educationDraft.degreeType === type
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() => setEducationDraft(prev => ({ ...prev, degreeType: prev.degreeType === type ? '' : type }))}
+                                className={`rounded-full px-3.5 py-2 text-[0.78rem] font-semibold transition ${
+                                  selected
+                                    ? 'bg-[#1A73E8] text-white shadow-[0_4px_10px_rgba(26,115,232,0.25)]'
+                                    : 'border border-[#DADCE0] bg-white text-[#5F6368] hover:border-[#1A73E8] hover:text-[#1A73E8]'
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <label className="mt-4 inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-4 py-2 text-[0.8rem] font-semibold text-[#202124] transition hover:bg-[#F5F7FB]">
+                        <input type="checkbox" className="accent-[#1A73E8]" checked={educationDraft.isCurrent || false} onChange={(e) => setEducationDraft(prev => ({ ...prev, isCurrent: e.target.checked }))} />
+                        Currently studying
+                      </label>
+
+                      <div className="mt-4">
+                        <label className="mb-1.5 block text-[0.68rem] font-semibold uppercase tracking-wide text-[#9AA0A6]">Description (optional)</label>
+                        <textarea
+                          className={`${inputClass} resize-none`}
+                          rows={3}
+                          value={educationDraft.description}
+                          onChange={(e) => setEducationDraft(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Relevant courses, projects, or achievements"
+                        />
+                      </div>
+
+                      <div className="mt-5 flex items-center gap-4">
+                        <button type="button" onClick={handleSaveEducation} className={primaryPillClass}>
+                          <Check size={14} />
+                          Save education
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingEducation(false); setEditingEducationIndex(null); setEducationDraft(EDUCATION_EMPTY) }}
+                          className="text-[0.82rem] font-semibold text-[#5F6368] transition hover:text-[#202124]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                </div>
+              </FormCard>
+            </div>
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 3: Causes
+  if (step === 3) {
+    return (
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <div className="flex justify-center">
+            <div className="w-full max-w-5xl">
+              <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="What causes matter to you?"
                 subtitle="Select the causes and issues you're passionate about helping."
                 icon={Heart}
@@ -677,16 +567,16 @@ export default function StudentOnboarding() {
     )
   }
 
-  // Step 3: Links
-  if (step === 3) {
+  // Step 4: Links
+  if (step === 4) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="Where can organizations learn more?"
                 subtitle="Add optional links that help organizations understand your work."
                 icon={Shield}
@@ -724,85 +614,48 @@ export default function StudentOnboarding() {
     )
   }
 
-  // Step 4: Complete
-  if (step === 4) {
+  // Step 5: Complete
+  if (step === 5) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to NGO instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
-            <div className="w-full max-w-5xl">
-              <FormCard
-                title="You're all set!"
-                subtitle="Review your profile and get started finding opportunities."
-                icon={Rocket}
-              >
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                    <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-1">Profile</p>
-                    <p className="text-base font-semibold text-[#0B163F]">{data.name || 'Your profile'}</p>
-                    {data.field && <p className="text-sm text-[#4E6385]">{data.field} at {data.university || 'your university'}</p>}
+            <div className="w-full max-w-md">
+              <FormCard>
+                <div className="flex flex-col items-center py-6 text-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.05 }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                    style={{ background: '#E8F0FE' }}
+                  >
+                    <Rocket size={34} className="text-[#1A73E8]" strokeWidth={1.5} />
+                  </motion.div>
+
+                  <h2 className="text-2xl font-semibold text-[#202124] mb-2">
+                    You're all set!
+                  </h2>
+                  <p className="max-w-sm text-sm leading-relaxed text-[#5F6368]">
+                    We'll match you with opportunities that fit your skills and values.
+                  </p>
+
+                  <div className="mt-8 flex gap-3">
+                    <SecondaryButton onClick={back}>Back</SecondaryButton>
+                    <PrimaryButton
+                      onClick={next}
+                      loading={submitting}
+                    >
+                      Create profile
+                    </PrimaryButton>
                   </div>
 
-                  {data.skills?.length > 0 && (
-                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Skills</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.skills.slice(0, 4).map(s => (
-                          <span key={s} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
-                            {s}
-                          </span>
-                        ))}
-                        {data.skills.length > 4 && (
-                          <span className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#4E6385] border border-[#E6E8EF]">
-                            +{data.skills.length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {data.causes?.length > 0 && (
-                    <div className="p-4 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <p className="text-xs font-semibold text-[#4E6385] uppercase tracking-wider mb-2">Causes You Care About</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.causes.slice(0, 4).map(c => (
-                          <span key={c} className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#0B163F] border border-[#E6E8EF]">
-                            {c}
-                          </span>
-                        ))}
-                        {data.causes.length > 4 && (
-                          <span className="px-3 py-1 bg-white rounded-full text-xs font-semibold text-[#4E6385] border border-[#E6E8EF]">
-                            +{data.causes.length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  {submitError && (
+                    <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-2xl border border-[#FFCCC7] font-medium">
+                      {submitError}
+                    </motion.p>
                   )}
                 </div>
-
-                <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
-                  <p className="text-sm text-[#4E6385]">
-                    <strong className="text-[#0B163F]">What happens next?</strong> We'll match you with opportunities that align with your skills and values. You can browse opportunities, apply to projects, and start making an impact.
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>Back</SecondaryButton>
-                  <PrimaryButton
-                    onClick={next}
-                    loading={submitting}
-                  >
-                    Create profile
-                  </PrimaryButton>
-                </div>
-
-                {submitError && (
-                  <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-2xl border border-[#FFCCC7] font-medium">
-                    {submitError}
-                  </motion.p>
-                )}
               </FormCard>
             </div>
           </div>

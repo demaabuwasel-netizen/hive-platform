@@ -277,6 +277,7 @@ export function studentProfileToData(profile) {
     field:        profile.field        ?? '',
     university:   profile.university   ?? '',
     skills:       profile.skills       ?? [],
+    educations:   profile.educations   ?? [],
     courses:      profile.courses      ?? [],
     interests:    profile.interests    ?? [],
     experience:   profile.experience   ?? '',

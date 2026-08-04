@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Building2, Target, Zap, CheckCircle2, Rocket, Shield, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { saveOnboardingDraft, ngoProfileToData } from '../services/storage'
 import { COUNTRIES } from '../utils/countries'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
-import Stepper from '../components/Onboarding/Stepper'
 import FormCard from '../components/Onboarding/FormCard'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
 import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
@@ -42,7 +40,7 @@ function hasDraftData(d) {
 }
 
 export default function NGOOnboarding() {
-  const { completeOnboarding, markOnboardingDone, user, profile, logout } = useApp()
+  const { completeOnboarding, markOnboardingDone, user, updateRole, logout } = useApp()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [data, setData] = useState({})
@@ -50,8 +48,6 @@ export default function NGOOnboarding() {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [saveStatus, setSaveStatus] = useState('idle')
-  const [welcomeBack, setWelcomeBack] = useState(false)
 
   const [newPreferredSkill, setNewPreferredSkill] = useState('')
   const [newProjectType, setNewProjectType] = useState('')
@@ -109,54 +105,34 @@ export default function NGOOnboarding() {
     update('projectTypes', currentTypes.filter(t => t !== type))
   }
 
-  const doSave = useCallback(async (d, s) => {
+  // Progress is kept in this browser only (localStorage) so a refresh doesn't
+  // lose it — nothing is written to Supabase until the final "Create profile"
+  // step. That way, if someone abandons onboarding partway through, no
+  // partial profile is ever created.
+  const saveLocal = useCallback((d, s) => {
     if (!user?.id) return
-    setSaveStatus('saving')
-    const ok = await saveOnboardingDraft(user.id, 'ngo', d, s)
     try { localStorage.setItem(LS_KEY(user.id), JSON.stringify({ data: d, step: s, ts: Date.now() })) } catch {}
-    if (ok) {
-      setSaveStatus('saved')
-      setTimeout(() => setSaveStatus(st => st === 'saved' ? 'idle' : st), 2500)
-    } else {
-      setSaveStatus('error')
-      setTimeout(() => setSaveStatus(st => st === 'error' ? 'idle' : st), 3000)
-    }
   }, [user?.id])
 
   const saveDraft = useCallback((d, s) => {
     clearTimeout(debounceTimer.current)
-    debounceTimer.current = setTimeout(() => doSave(d, s), 750)
-  }, [doSave])
-
-  const saveDraftNow = useCallback((d, s) => {
-    clearTimeout(debounceTimer.current)
-    return doSave(d, s)
-  }, [doSave])
+    debounceTimer.current = setTimeout(() => saveLocal(d, s), 400)
+  }, [saveLocal])
 
   useEffect(() => {
     if (!user?.id) return
-    const dbStep = user.onboardingStep ?? 0
-    const dbData = ngoProfileToData(profile)
-    let localStep = dbStep
-    let localData = dbData
     try {
       const raw = localStorage.getItem(LS_KEY(user.id))
       if (raw) {
         const backup = JSON.parse(raw)
-        if (typeof backup.step === 'number' && backup.step > dbStep) {
-          localStep = backup.step
-          localData = { ...dbData, ...backup.data }
+        if (backup.data && typeof backup.step === 'number' && hasDraftData(backup.data)) {
+          setData(backup.data)
+          setStep(Math.min(backup.step, STEPS.length - 1))
         }
       }
     } catch {}
-    const hasAny = localStep > 0 || hasDraftData(localData)
-    if (hasAny) {
-      setData(localData)
-      setStep(Math.min(localStep, STEPS.length - 1))
-      setWelcomeBack(true)
-    }
     restoredRef.current = true
-  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     if (!restoredRef.current) return
@@ -189,7 +165,7 @@ export default function NGOOnboarding() {
     }
     if (step < STEPS.length - 1) {
       const nextStep = step + 1
-      await saveDraftNow(data, nextStep)
+      saveLocal(data, nextStep)
       setStep(nextStep)
     } else {
       setSubmitting(true)
@@ -227,39 +203,40 @@ export default function NGOOnboarding() {
   }
 
   async function handleExitOnboarding() {
-    // Cancel any pending saves immediately
+    // Nothing has been saved to Supabase yet at this point — progress only
+    // lives in localStorage — so leaving just means discarding it locally.
     clearTimeout(debounceTimer.current)
-
-    // Clear save status so no "saved" message shows
-    setSaveStatus('idle')
-
-    // Clear localStorage completely
     try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
 
-    // Clear database draft by saving empty data
-    if (user?.id) {
-      try {
-        await saveOnboardingDraft(user.id, 'ngo', {}, 0)
-      } catch {}
-    }
-
-    // Clear all local state
     setData({})
     setStep(0)
     setErrors({})
     setDone(false)
     setSubmitting(false)
     setSubmitError('')
-    setWelcomeBack(false)
 
     // Log out and navigate away
     await logout()
   }
 
+  async function handleSwitchRole() {
+    // Switching roles discards whatever was filled in for this role and
+    // starts the other role's onboarding fresh — nothing was saved yet.
+    clearTimeout(debounceTimer.current)
+    try { localStorage.removeItem(LS_KEY(user.id)) } catch {}
+
+    setData({})
+    setStep(0)
+    setErrors({})
+
+    await updateRole('student')
+    navigate('/onboarding/student')
+  }
+
   // Success screen
   if (done) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <div className="flex justify-center items-center min-h-[60vh]">
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
@@ -298,13 +275,13 @@ export default function NGOOnboarding() {
   // Step 0: Organization
   if (step === 0) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="Tell us about your organization"
                 subtitle="This helps Hive understand your work and match you with the right opportunities."
                 icon={Building2}
@@ -387,13 +364,13 @@ export default function NGOOnboarding() {
   // Step 1: Mission
   if (step === 1) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="Tell us about your mission"
                 subtitle="Help us understand the impact you're creating and the communities you serve."
                 icon={Target}
@@ -445,13 +422,13 @@ export default function NGOOnboarding() {
   // Step 2: Focus Areas
   if (step === 2) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="What are your focus areas?"
                 subtitle="Select the causes and areas your organization impacts."
                 icon={Zap}
@@ -619,13 +596,13 @@ export default function NGOOnboarding() {
   // Step 3: Verification
   if (step === 3) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="Build trust"
                 subtitle="Help students and funders learn more about your organization. All fields are optional."
                 icon={CheckCircle2}
@@ -688,13 +665,13 @@ export default function NGOOnboarding() {
   // Step 4: Complete
   if (step === 4) {
     return (
-      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding}>
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <Stepper steps={STEPS} currentStep={step} />
-
           <div className="flex justify-center">
             <div className="w-full max-w-5xl">
               <FormCard
+                steps={STEPS}
+                currentStep={step}
                 title="You're all set!"
                 subtitle="Review your profile and get started."
                 icon={Rocket}

@@ -3,16 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import HiveLogo from '../components/HiveLogo'
-import cardsBackground from '../assets/cards_background.png'
 import { AlertCircle, X } from 'lucide-react'
-
-function HexBg() {
-  return (
-    <div className="absolute inset-0 pointer-events-none"
-      style={{ backgroundImage: `url(${cardsBackground})`, backgroundSize: 'auto', backgroundRepeat: 'repeat', opacity: 0.1 }}
-      aria-hidden="true" />
-  )
-}
 
 const STUDENT_PERKS = ['Describe your skills & goals in your own words', 'Get AI-matched with NGOs that need you', 'Build a real portfolio doing work that matters']
 const NGO_PERKS     = ['Describe your mission in plain language', 'Get matched with students whose skills fit your needs', 'Every match comes with a clear explanation']
@@ -28,8 +19,8 @@ export default function RoleSelection() {
     try {
       // Clear any old drafts before selecting a new role
       try {
-        const studentDraftKey = `onboarding_draft_student_${user?.id}`
-        const ngoDraftKey = `onboarding_draft_ngo_${user?.id}`
+        const studentDraftKey = `hive_ob_student_${user?.id}`
+        const ngoDraftKey = `hive_ob_ngo_${user?.id}`
         localStorage.removeItem(studentDraftKey)
         localStorage.removeItem(ngoDraftKey)
       } catch {}
@@ -44,8 +35,8 @@ export default function RoleSelection() {
   async function handleConfirmExit() {
     // Clear any draft data from localStorage
     try {
-      const studentDraftKey = `onboarding_draft_student_${user?.id}`
-      const ngoDraftKey = `onboarding_draft_ngo_${user?.id}`
+      const studentDraftKey = `hive_ob_student_${user?.id}`
+      const ngoDraftKey = `hive_ob_ngo_${user?.id}`
       localStorage.removeItem(studentDraftKey)
       localStorage.removeItem(ngoDraftKey)
     } catch {}
@@ -55,9 +46,12 @@ export default function RoleSelection() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF7E6] flex flex-col relative overflow-hidden">
-      <HexBg />
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-honey-300 opacity-10 blur-3xl pointer-events-none" aria-hidden="true"/>
+    <div className="min-h-screen bg-[#F5F7FB] flex flex-col relative overflow-hidden">
+      {/* Ambient gradient wash — matches dashboard hero background */}
+      <div
+        className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]"
+        aria-hidden="true"
+      />
 
       {/* Top bar */}
       <div className="p-6 relative">
@@ -83,10 +77,10 @@ export default function RoleSelection() {
             >
               <HiveLogo size={48} showName={false} />
             </motion.div>
-            <h1 className="text-3xl font-extrabold text-[#0D183D] mb-2">
+            <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] mb-2">
               Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
             </h1>
-            <p className="text-[#4B6382] text-base">
+            <p className="text-[#5F6368] text-base">
               Who are you joining as? We'll personalise your experience.
             </p>
           </div>
@@ -100,35 +94,31 @@ export default function RoleSelection() {
               whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={() => select('student')}
               disabled={loading}
-              className={`card text-left group border-2 border-transparent hover:border-honey-300 hover:shadow-glow-honey transition-all duration-200 relative overflow-hidden ${
+              className={`text-left group bg-white rounded-[28px] p-6 border border-[rgba(26,115,232,0.10)] shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)] hover:border-[rgba(26,115,232,0.35)] transition-all duration-200 ${
                 loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
               }`}
             >
-              {/* Hex watermark */}
-              <div className="absolute -top-4 -right-4 opacity-[0.07]" aria-hidden="true">
-                <svg width="80" height="91" viewBox="0 0 28 32" fill="none">
-                  <polygon points="14,0 28,8 28,24 14,32 0,24 0,8" stroke="#F59E0B" strokeWidth="1.5"/>
-                </svg>
-              </div>
-
-              <div className="w-14 h-14 bg-honey-100 rounded-2xl flex items-center justify-center text-3xl mb-5">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-5" style={{ background: '#E8F0FE' }}>
                 🎓
               </div>
-              <h2 className="text-xl font-extrabold text-[#0D183D] mb-2 group-hover:text-honey-600 transition-colors">
+              <h2 className="text-xl font-semibold text-[#202124] mb-2 group-hover:text-[#1A73E8] transition-colors">
                 I'm a Student
               </h2>
-              <p className="text-[#4B6382] text-sm leading-relaxed mb-5">
+              <p className="text-[#5F6368] text-sm leading-relaxed mb-5">
                 I want to build real-world experience by contributing to meaningful projects.
               </p>
               <ul className="space-y-2 mb-6">
                 {STUDENT_PERKS.map(t => (
-                  <li key={t} className="flex items-start gap-2 text-sm text-navy-600">
-                    <span className="text-honey-500 font-bold mt-0.5 shrink-0">✓</span>
+                  <li key={t} className="flex items-start gap-2 text-sm text-[#3C4043]">
+                    <span className="font-bold mt-0.5 shrink-0" style={{ color: '#1A73E8' }}>✓</span>
                     {t}
                   </li>
                 ))}
               </ul>
-              <span className="btn-honey text-sm py-2.5 px-5 inline-block">
+              <span
+                className="text-sm font-semibold py-2.5 px-5 inline-block rounded-2xl text-white transition-colors"
+                style={{ background: '#1A73E8' }}
+              >
                 {loading ? 'Loading...' : 'Continue as Student →'}
               </span>
             </motion.button>
@@ -139,43 +129,39 @@ export default function RoleSelection() {
               whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={() => select('ngo')}
               disabled={loading}
-              className={`card text-left group border-2 border-transparent hover:border-navy-300 transition-all duration-200 relative overflow-hidden ${
+              className={`text-left group bg-white rounded-[28px] p-6 border border-[rgba(52,168,83,0.10)] shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)] hover:border-[rgba(52,168,83,0.35)] transition-all duration-200 ${
                 loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
               }`}
             >
-              {/* Hex watermark */}
-              <div className="absolute -top-4 -right-4 opacity-[0.06]" aria-hidden="true">
-                <svg width="80" height="91" viewBox="0 0 28 32" fill="none">
-                  <polygon points="14,0 28,8 28,24 14,32 0,24 0,8" stroke="#2d5a9e" strokeWidth="1.5"/>
-                </svg>
-              </div>
-
-              <div className="w-14 h-14 bg-navy-100 rounded-2xl flex items-center justify-center text-3xl mb-5">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-5" style={{ background: '#E6F4EA' }}>
                 🌍
               </div>
-              <h2 className="text-xl font-extrabold text-[#0D183D] mb-2 group-hover:text-navy-600 transition-colors">
+              <h2 className="text-xl font-semibold text-[#202124] mb-2 group-hover:text-[#188038] transition-colors">
                 I represent an NGO
               </h2>
-              <p className="text-[#4B6382] text-sm leading-relaxed mb-5">
+              <p className="text-[#5F6368] text-sm leading-relaxed mb-5">
                 We need skilled student volunteers to help our organisation grow and deliver impact.
               </p>
               <ul className="space-y-2 mb-6">
                 {NGO_PERKS.map(t => (
-                  <li key={t} className="flex items-start gap-2 text-sm text-navy-600">
-                    <span className="text-navy-400 font-bold mt-0.5 shrink-0">✓</span>
+                  <li key={t} className="flex items-start gap-2 text-sm text-[#3C4043]">
+                    <span className="font-bold mt-0.5 shrink-0" style={{ color: '#188038' }}>✓</span>
                     {t}
                   </li>
                 ))}
               </ul>
-              <span className="btn-navy text-sm py-2.5 px-5 inline-block">
+              <span
+                className="text-sm font-semibold py-2.5 px-5 inline-block rounded-2xl text-white transition-colors"
+                style={{ background: '#188038' }}
+              >
                 {loading ? 'Loading...' : 'Continue as NGO →'}
               </span>
             </motion.button>
           </div>
 
-          <p className="text-center text-xs text-navy-400 mt-8">
+          <p className="text-center text-xs text-[#5F6368] mt-8">
             Not sure yet?{' '}
-            <Link to="/" className="text-navy-600 font-medium hover:underline">Go back to the homepage</Link>
+            <Link to="/" className="text-[#1A73E8] font-medium hover:underline">Go back to the homepage</Link>
           </p>
         </motion.div>
       </div>
@@ -191,30 +177,30 @@ export default function RoleSelection() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full"
+            className="bg-white rounded-[28px] shadow-xl p-8 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#FFECEB' }}>
                 <AlertCircle size={20} style={{ color: '#FF4D4F' }} />
               </div>
-              <h3 className="text-lg font-extrabold text-[#0D183D]">Leave onboarding?</h3>
+              <h3 className="text-lg font-semibold text-[#202124]">Leave onboarding?</h3>
             </div>
 
-            <p className="text-[13px] text-[#4B6382] mb-6">
+            <p className="text-[13px] text-[#5F6368] mb-6">
               Are you sure you want to go back? Any unsaved progress will be cleared.
             </p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirmExit(false)}
-                className="flex-1 px-4 py-3 rounded-xl font-semibold text-[12px] border-2 border-[#0D183D] text-[#0D183D] hover:bg-[#F8F9FB] transition-colors"
+                className="flex-1 px-4 py-3 rounded-2xl font-semibold text-[12px] border border-[#DADCE0] text-[#202124] hover:bg-[#F5F7FB] transition-colors"
               >
                 No, continue
               </button>
               <button
                 onClick={handleConfirmExit}
-                className="flex-1 px-4 py-3 rounded-xl font-semibold text-[12px] text-white transition-colors"
+                className="flex-1 px-4 py-3 rounded-2xl font-semibold text-[12px] text-white transition-colors"
                 style={{ background: '#FF4D4F' }}
               >
                 Yes, leave
