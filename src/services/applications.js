@@ -12,8 +12,16 @@ const STATUS_LABEL = {
   rejected:     'Not selected',
 }
 
+export function isCertificateUnlocked(app) {
+  return app?.status === 'completed'
+    || Boolean(app?.links?.certificateUnlockedAt)
+    || Boolean(app?.links?.certificateUnlocked)
+    || Boolean(app?.links?.hiveCertificate?.unlockedAt)
+}
+
 function dbToApp(row) {
   if (!row) return null
+  const certificateUnlocked = isCertificateUnlocked(row)
   return {
     id:            row.id,
     studentId:     row.student_id,
@@ -22,8 +30,8 @@ function dbToApp(row) {
     message:       row.message,
     availability:  row.availability,
     links:         row.links        ?? {},
-    status:        row.status,
-    statusLabel:   STATUS_LABEL[row.status] ?? row.status,
+    status:        certificateUnlocked ? 'completed' : row.status,
+    statusLabel:   certificateUnlocked ? STATUS_LABEL.completed : (STATUS_LABEL[row.status] ?? row.status),
     submittedAt:   row.submitted_at,
     // joined fields (when fetched with selects)
     ngoName:       row.opportunities?.org_name ?? row.ngo_profiles?.name ?? null,
@@ -75,14 +83,20 @@ export async function fetchStudentApplications(studentId) {
     ngoMap = Object.fromEntries((ngos ?? []).map(n => [n.user_id, n.name]))
   }
 
-  return (data ?? []).filter(row => row.opportunity_id).map(row => {
-    const app = dbToApp(row)
-    // Add NGO name from the map if not already there
-    if (!app.ngoName && row.ngo_id) {
-      app.ngoName = ngoMap[row.ngo_id] || 'NGO'
-    }
-    return app
-  })
+  return (data ?? [])
+    .filter(row => row.opportunity_id)
+    // Only hide the specific case where someone else was accepted/started in
+    // this role — a plain "not selected" (rejected) application still shows
+    // normally, same as before.
+    .filter(row => !row.links?.roleFilledByOther)
+    .map(row => {
+      const app = dbToApp(row)
+      // Add NGO name from the map if not already there
+      if (!app.ngoName && row.ngo_id) {
+        app.ngoName = ngoMap[row.ngo_id] || 'NGO'
+      }
+      return app
+    })
 }
 
 // NGO: fetch all applications to a specific opportunity
@@ -122,11 +136,133 @@ export async function fetchNgoApplications(ngoId) {
 
 // NGO: update application status
 export async function updateApplicationStatus(applicationId, status) {
-  const { error } = await supabase
+  const completedAt = status === 'completed' ? new Date().toISOString() : null
+  const { data, error } = await supabase
     .from('applications')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status, updated_at: completedAt ?? new Date().toISOString() })
     .eq('id', applicationId)
-  if (error) throw new Error(error.message)
+    .select('id, status, links')
+    .maybeSingle()
+  if (!error) {
+    if (!data) throw new Error('Application status was not updated. Please refresh and try again.')
+    return data
+  }
+
+  if (status !== 'completed') throw new Error(error.message)
+
+  const { data: existing, error: selectError } = await supabase
+    .from('applications')
+    .select('id, status, links')
+    .eq('id', applicationId)
+    .maybeSingle()
+  if (selectError) throw new Error(selectError.message)
+  if (!existing) throw new Error('Application status was not updated. Please refresh and try again.')
+
+  const { data: fallback, error: fallbackError } = await supabase
+    .from('applications')
+    .update({
+      updated_at: completedAt,
+      links: {
+        ...(existing.links ?? {}),
+        certificateUnlockedAt: completedAt,
+        certificateUnlocked: true,
+        hiveCertificate: { unlockedAt: completedAt },
+      },
+    })
+    .eq('id', applicationId)
+    .select('id, status, links')
+    .maybeSingle()
+  if (fallbackError) throw new Error(fallbackError.message)
+  if (!fallback) throw new Error('Certificate was not unlocked. Please refresh and try again.')
+  return fallback
+}
+
+// NGO: when one applicant is accepted for a role, everyone else still in the
+// running (not already rejected/accepted/completed) is marked "not selected."
+// Without this, other applicants' status would stay stuck at whatever it was
+// (e.g. "Under review") forever, with no signal the role was filled — this is
+// what makes the role disappear from their own Applications/Interviews view.
+// Note: this does NOT set status to 'rejected' — that would make it
+// indistinguishable from a real "not selected" decision, which should keep
+// showing to the student normally. This only flags that the role went to
+// someone else, which is the one thing that hides it from their view.
+export async function markOtherApplicantsRoleFilled(opportunityId, keepApplicationId) {
+  const { data: rows, error: selectError } = await supabase
+    .from('applications')
+    .select('id, student_id, status, links')
+    .eq('opportunity_id', opportunityId)
+    .neq('id', keepApplicationId)
+    .in('status', ['submitted', 'under_review', 'shortlisted', 'interview'])
+  if (selectError) throw new Error(selectError.message)
+  if (!rows?.length) return []
+
+  const updated = await Promise.all(rows.map(async row => {
+    const { data, error } = await supabase
+      .from('applications')
+      .update({
+        links: { ...(row.links ?? {}), roleFilledByOther: true },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', row.id)
+      .select('id, student_id, status, links')
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    return data
+  }))
+
+  return updated.filter(Boolean)
+}
+
+export async function completeAcceptedApplicationsForOpportunity(opportunityId, ngoId) {
+  const completedAt = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('applications')
+    .update({
+      status: 'completed',
+      updated_at: completedAt,
+      links: {
+        certificateUnlockedAt: completedAt,
+        certificateUnlocked: true,
+        hiveCertificate: { unlockedAt: completedAt },
+      },
+    })
+    .eq('opportunity_id', opportunityId)
+    .eq('ngo_id', ngoId)
+    .eq('status', 'accepted')
+    .select('id, student_id, status, links')
+
+  if (!error) return data ?? []
+
+  const { data: acceptedRows, error: selectError } = await supabase
+    .from('applications')
+    .select('id, student_id, status, links')
+    .eq('opportunity_id', opportunityId)
+    .eq('ngo_id', ngoId)
+    .eq('status', 'accepted')
+
+  if (selectError) throw new Error(selectError.message)
+  if (!acceptedRows?.length) throw new Error(error.message)
+
+  const updatedRows = await Promise.all(acceptedRows.map(async row => {
+    const { data: updated, error: updateError } = await supabase
+      .from('applications')
+      .update({
+        updated_at: completedAt,
+        links: {
+          ...(row.links ?? {}),
+          certificateUnlockedAt: completedAt,
+          certificateUnlocked: true,
+          hiveCertificate: { unlockedAt: completedAt },
+        },
+      })
+      .eq('id', row.id)
+      .select('id, student_id, status, links')
+      .maybeSingle()
+    if (updateError) throw new Error(updateError.message)
+    return updated
+  }))
+
+  return updatedRows.filter(Boolean)
 }
 
 // ── Skill helpers ─────────────────────────────────────────────────────────────
@@ -143,6 +279,7 @@ function toSkillObjects(raw) {
 async function fetchStudentProfilesFor(studentIds) {
   const baseColumns = 'user_id, field, university, skills, languages, bio, interests, links, experience, goals'
   const columnSets = [
+    `${baseColumns}, country, city, educations, projects`,
     `${baseColumns}, country, city, educations`,
     `${baseColumns}, country, city`,
     baseColumns,
@@ -213,6 +350,7 @@ export async function fetchNgoApplicants(ngoId) {
       experience:       prof.experience ?? '',
       goals:            prof.goals      ?? '',
       educations:       Array.isArray(prof.educations) ? prof.educations : [],
+      projects:         Array.isArray(prof.projects) ? prof.projects : [],
       opportunityTitle: app.opportunities?.title ?? '',
       opportunityId:    app.opportunity_id,
       status:           app.status,
@@ -220,11 +358,24 @@ export async function fetchNgoApplicants(ngoId) {
       submittedAt:      app.submitted_at,
       match:            matchResult.score,
       matchReasons:     matchResult.strengths.slice(0, 3),
+      skillMatches:      matchResult.skillMatches,
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
       studentLocation:  [prof.city, prof.country].filter(Boolean).join(', '),
     }
   })
+}
+
+// Student: delete (withdraw) their own application. RLS already restricts
+// this to the student's own rows, but the studentId check here means a
+// caller mistake fails loudly instead of silently deleting nothing.
+export async function deleteApplication(applicationId, studentId) {
+  const { error } = await supabase
+    .from('applications')
+    .delete()
+    .eq('id', applicationId)
+    .eq('student_id', studentId)
+  if (error) throw new Error(error.message)
 }
 
 // Check if a student already applied to an opportunity
@@ -269,7 +420,7 @@ export async function fetchNgoOpportunitiesWithApplicantCounts(ngoId) {
   if (countError) throw new Error(countError.message)
 
   // Build a map of opportunity_id -> visible totals plus status counts.
-  const statMap = {}
+  const statMap = {};
   (appCounts ?? []).forEach(app => {
     if (!statMap[app.opportunity_id]) {
       statMap[app.opportunity_id] = { total: 0, new: 0, shortlisted: 0, interview: 0, accepted: 0, completed: 0, rejected: 0 }
@@ -358,6 +509,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       experience:       prof.experience ?? '',
       goals:            prof.goals      ?? '',
       educations:       Array.isArray(prof.educations) ? prof.educations : [],
+      projects:         Array.isArray(prof.projects) ? prof.projects : [],
       opportunityTitle: app.opportunities?.title ?? '',
       opportunityId:    app.opportunity_id,
       status:           app.status,
@@ -365,6 +517,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       submittedAt:      app.submitted_at,
       match:            matchResult.score,
       matchReasons:     matchResult.strengths.slice(0, 3),
+      skillMatches:      matchResult.skillMatches,
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
     }
@@ -377,14 +530,14 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
 export async function fetchAcceptedApplicantForOpportunity(opportunityId) {
   const { data, error } = await supabase
     .from('applications')
-    .select('id, student_id, status')
+    .select('id, student_id, status, links, updated_at')
     .eq('opportunity_id', opportunityId)
     .in('status', ['accepted', 'completed'])
-    .order('submitted_at', { ascending: false })
+    .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   if (!data?.length) return null
 
-  const row = data[0]
+  const row = data.find(isCertificateUnlocked) ?? data.find(app => app.status === 'completed') ?? data.find(app => app.status === 'accepted') ?? data[0]
   const { data: userRow } = await supabase
     .from('users')
     .select('id, name')
@@ -395,7 +548,7 @@ export async function fetchAcceptedApplicantForOpportunity(opportunityId) {
     id: row.id,
     studentId: row.student_id,
     name: userRow?.name ?? 'Applicant',
-    status: row.status,
+    status: isCertificateUnlocked(row) ? 'completed' : row.status,
   }
 }
 

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchStudentApplications } from '../services/applications'
+import { fetchStudentApplications, deleteApplication } from '../services/applications'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 
@@ -64,6 +64,27 @@ export default function Applications() {
   const [loading, setLoading] = useState(true)
   const [selectedAppId, setSelectedAppId] = useState(null)
   const [detail, setDetail] = useState({ id: null, data: null, error: null })
+  const [deletingId, setDeletingId] = useState(null)
+
+  async function handleDeleteApplication(appId) {
+    if (!user?.id || deletingId) return
+    if (!confirm('Are you sure you want to delete this application? This can\'t be undone.')) return
+
+    setDeletingId(appId)
+    try {
+      await deleteApplication(appId, user.id)
+      setApps(prev => {
+        const next = prev.filter(a => a.id !== appId)
+        setSelectedAppId(current => (current === appId ? (next[0]?.id ?? null) : current))
+        return next
+      })
+    } catch (err) {
+      console.error('Failed to delete application:', err.message)
+      alert('Could not delete this application. Please try again.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) return
@@ -273,12 +294,9 @@ export default function Applications() {
                         </span>
                       )}
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this application?')) {
-                            setSelectedAppId(null)
-                          }
-                        }}
-                        className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6]">
+                        onClick={() => handleDeleteApplication(selectedApp.id)}
+                        disabled={deletingId === selectedApp.id}
+                        className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6] disabled:opacity-50">
                         <Trash2 size={18} />
                       </button>
                     </div>

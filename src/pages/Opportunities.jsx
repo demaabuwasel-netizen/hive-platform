@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { submitApplication, fetchAcceptedApplicantForOpportunity, updateApplicationStatus } from '../services/applications'
+import {
+  submitApplication,
+  fetchAcceptedApplicantForOpportunity,
+  updateApplicationStatus,
+  completeAcceptedApplicationsForOpportunity,
+} from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Briefcase, Users, Search,
@@ -301,13 +306,9 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
 function ApplyModal({ ngo, user, studentId, onClose }) {
   const [step, setStep]     = useState('form')
-  const [message, setMsg]   = useState(() => generateAppMessage(user, ngo))
-  const [links, setLinks]   = useState({ linkedin:'', github:'', portfolio:'' })
-  const [avail, setAvail]   = useState('')
+  const [message, setMsg]   = useState('')
   const [gen, setGen]       = useState(false)
   const [focusKey, setFocus] = useState(null)
-
-  const AVAIL_OPTIONS = ['Immediately','1–5 hrs/week','5–10 hrs/week','10–15 hrs/week','15–20 hrs/week','20+ hrs/week']
 
   function regen() {
     setGen(true)
@@ -321,8 +322,8 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
         opportunityId: ngo.id,
         ngoId:         ngo.ngoId ?? String(ngo.id),
         message,
-        availability:  avail,
-        links,
+        availability:  null,
+        links:         {},
       })
     } catch (err) {
       console.error('Apply error:', err)
@@ -382,48 +383,24 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background:'#1A73E8' }}>
-                      <Sparkles size={11} className="text-white"/>
-                    </div>
-                    <p className="text-[12px] font-extrabold text-[#0D183D]">AI-generated message</p>
-                  </div>
+                  <p className="text-[12px] font-extrabold text-[#0D183D]">Your message</p>
                   <button onClick={regen} className={`flex items-center gap-1 text-[11px] font-semibold ${gen?'opacity-50':''}`} style={{ color:'#1A73E8' }}>
-                    <RefreshCw size={11} className={gen?'animate-spin':''}/> Regenerate
+                    {gen ? (
+                      <RefreshCw size={11} className="animate-spin"/>
+                    ) : (
+                      <Sparkles size={11}/>
+                    )}
+                    {message.trim() ? 'Regenerate with AI' : 'Write with AI'}
                   </button>
                 </div>
                 <textarea value={message} onChange={e => setMsg(e.target.value)} rows={7}
                   onFocus={()=>setFocus('msg')} onBlur={()=>setFocus(null)}
-                  className="w-full px-4 py-3 rounded-xl text-[12px] outline-none resize-none"
+                  placeholder="Write a short note to the NGO, or press “Write with AI” to generate one."
+                  className="w-full px-4 py-3 rounded-xl text-[12px] outline-none resize-none placeholder-[#4B6382]/50"
                   style={{ ...iStyle('msg'), lineHeight:1.65 }}/>
-                <p className="text-[10px] text-[#4B6382] mt-1">✏️ Edit freely before sending.</p>
-              </div>
-
-              <div>
-                <p className="text-[12px] font-semibold text-[#0D183D] mb-2">Availability</p>
-                <div className="flex flex-wrap gap-2">
-                  {AVAIL_OPTIONS.map(a => (
-                    <button key={a} onClick={() => setAvail(a)}
-                      className="px-3.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all"
-                      style={avail===a?{background:'#0D183D',color:'white',borderColor:'#0D183D'}:{background:'white',color:'#4B6382',borderColor:'rgba(13,24,61,0.1)'}}>
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2.5">
-                <p className="text-[12px] font-semibold text-[#0D183D]">Links <span className="text-[11px] font-normal text-[#4B6382]">(optional)</span></p>
-                {[{k:'linkedin',lbl:'LinkedIn'},{k:'github',lbl:'GitHub'},{k:'portfolio',lbl:'Portfolio'}].map(({k,lbl}) => (
-                  <div key={k} className="flex items-center gap-3">
-                    <span className="text-[11px] text-[#4B6382] w-16 shrink-0">{lbl}</span>
-                    <input value={links[k]} onChange={e=>setLinks(l=>({...l,[k]:e.target.value}))}
-                      placeholder={`${lbl} URL`}
-                      onFocus={()=>setFocus(k)} onBlur={()=>setFocus(null)}
-                      className="flex-1 px-3 py-2.5 rounded-xl text-[12px] outline-none placeholder-[#4B6382]/40"
-                      style={iStyle(k)}/>
-                  </div>
-                ))}
+                {message.trim() && (
+                  <p className="text-[10px] text-[#4B6382] mt-1">✏️ Edit freely before sending.</p>
+                )}
               </div>
             </div>
 
@@ -500,6 +477,7 @@ export default function Opportunities() {
   const [applyingTo, setApplyingTo] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [acceptedApplicant, setAcceptedApplicant] = useState(null)
+  const [acceptedApplicantLoading, setAcceptedApplicantLoading] = useState(false)
   const [completingRole, setCompletingRole] = useState(false)
 
   const selectedOpp = isNGO && ngoOpps.length > 0
@@ -512,21 +490,36 @@ export default function Opportunities() {
   // which application to mark complete. (Rendering already guards on
   // selectedOppFilled, so a stale value here just never gets shown.)
   useEffect(() => {
-    if (!isNGO || !selectedOpp?.id || !selectedOppFilled) return
+    if (!isNGO || !selectedOpp?.id || !selectedOppFilled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAcceptedApplicant(null)
+      setAcceptedApplicantLoading(false)
+      return
+    }
     let cancelled = false
+    setAcceptedApplicantLoading(true)
+    setAcceptedApplicant(null)
     fetchAcceptedApplicantForOpportunity(selectedOpp.id)
       .then(applicant => { if (!cancelled) setAcceptedApplicant(applicant) })
       .catch(() => { if (!cancelled) setAcceptedApplicant(null) })
+      .finally(() => { if (!cancelled) setAcceptedApplicantLoading(false) })
     return () => { cancelled = true }
   }, [isNGO, selectedOpp?.id, selectedOppFilled])
 
   async function handleCompleteRole() {
-    if (!acceptedApplicant?.id || completingRole) return
+    if (!selectedOpp?.id || !user?.id || !acceptedApplicant?.id || completingRole) return
+    const previousApplicant = acceptedApplicant
     setCompletingRole(true)
+    setAcceptedApplicant(prev => (prev ? { ...prev, status: 'completed' } : prev))
     try {
-      await updateApplicationStatus(acceptedApplicant.id, 'completed')
-      setAcceptedApplicant(prev => (prev ? { ...prev, status: 'completed' } : prev))
+      const completedRows = await completeAcceptedApplicationsForOpportunity(selectedOpp.id, user.id)
+      if (completedRows.length === 0 && previousApplicant.status !== 'completed') {
+        await updateApplicationStatus(previousApplicant.id, 'completed')
+      }
+      const refreshedApplicant = await fetchAcceptedApplicantForOpportunity(selectedOpp.id)
+      setAcceptedApplicant(refreshedApplicant ?? { ...previousApplicant, status: 'completed' })
     } catch (err) {
+      setAcceptedApplicant(previousApplicant)
       console.error('Error completing role:', err)
       setNgoError('Failed to complete role: ' + err.message)
     } finally {
@@ -1105,22 +1098,51 @@ export default function Opportunities() {
                     </div>
 
                     <div className="mt-5 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-end" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-                      {selectedOppFilled && acceptedApplicant && (
-                        acceptedApplicant.status === 'completed' ? (
-                          <span className="inline-flex items-center justify-center gap-2 rounded-full bg-[#E8F0FE] px-4 py-2.5 text-[0.84rem] font-semibold text-[#1A73E8] sm:mr-auto">
-                            <CheckCircle2 size={15} />
-                            Role completed — certificate sent to {acceptedApplicant.name.split(' ')[0]}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={handleCompleteRole}
-                            disabled={completingRole}
-                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.84rem] font-semibold text-white transition-colors hover:bg-[#1765CC] disabled:opacity-50 sm:mr-auto"
-                          >
-                            <CheckCircle2 size={15} />
-                            {completingRole ? 'Completing...' : `Complete role for ${acceptedApplicant.name.split(' ')[0]}`}
-                          </button>
-                        )
+                      {selectedOppFilled && (
+                        <div className="w-full sm:mr-auto sm:max-w-xl">
+                          {acceptedApplicantLoading ? (
+                            <div className="flex items-center gap-3 rounded-[18px] border border-[#E5EEFB] bg-[#FBFCFE] px-4 py-3 text-[0.84rem] font-semibold text-[#5F6368]">
+                              <RefreshCw size={15} className="animate-spin text-[#1A73E8]" />
+                              Loading selected student...
+                            </div>
+                          ) : acceptedApplicant?.status === 'completed' ? (
+                            <div className="flex items-start gap-3 rounded-[18px] border border-[#D7E6FF] bg-[#F8FBFF] px-4 py-3">
+                              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                                <CheckCircle2 size={16} />
+                              </span>
+                              <div>
+                                <p className="text-[0.9rem] font-semibold text-[#202124]">Role completed for {acceptedApplicant.name.split(' ')[0]}</p>
+                                <p className="mt-0.5 text-[0.78rem] text-[#5F6368]">
+                                  Their certificate is now available in the student dashboard.
+                                </p>
+                              </div>
+                            </div>
+                          ) : acceptedApplicant ? (
+                            <div className="rounded-[18px] border border-[#D7E6FF] bg-[#F8FBFF] p-3">
+                              <div className="mb-3">
+                                <p className="text-[0.9rem] font-semibold text-[#202124]">Finish this placement</p>
+                                <p className="mt-0.5 text-[0.78rem] text-[#5F6368]">
+                                  Mark {acceptedApplicant.name.split(' ')[0]} as completed and unlock their certificate.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleCompleteRole}
+                                disabled={completingRole}
+                                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-[#1A73E8] px-4 text-[0.84rem] font-semibold text-white transition-colors hover:bg-[#1765CC] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                              >
+                                {completingRole ? <RefreshCw size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                                {completingRole ? 'Completing role...' : `Complete role for ${acceptedApplicant.name.split(' ')[0]}`}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="rounded-[18px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-4 py-3">
+                              <p className="text-[0.88rem] font-semibold text-[#202124]">No accepted student found</p>
+                              <p className="mt-0.5 text-[0.78rem] text-[#5F6368]">
+                                Accept a student from Applicants before completing this role.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       )}
                       <button
                         onClick={() => handleDeleteOpportunity(selectedOpp.id)}

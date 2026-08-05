@@ -151,30 +151,36 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                     onSelectApplicant(a)
                   }
                 }}
-                className={`group flex min-h-[86px] w-full cursor-pointer items-center gap-4 rounded-[24px] border px-4 py-3.5 text-left transition-all ${
-                  currentStatus === 'accepted' || currentStatus === 'completed'
-                    ? 'border-[#D9F0E4] bg-[#F1FBF6] shadow-[0_10px_24px_rgba(24,128,56,0.06)] hover:bg-[#ECF9F0]'
-                    : isActive
+                className={`group grid min-h-[82px] w-full cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-all ${
+                  isActive
                     ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.12)]'
+                    : currentStatus === 'accepted' || currentStatus === 'completed'
+                    ? 'border-[#D7E6FF] bg-[linear-gradient(180deg,#FFFFFF,#F8FBFF)] shadow-[0_10px_24px_rgba(26,115,232,0.07)] hover:border-[#BFD7FF] hover:shadow-[0_14px_28px_rgba(26,115,232,0.09)]'
                     : 'border-[#E5EEFB] bg-white/80 shadow-[0_8px_20px_rgba(60,64,67,0.03)] hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:bg-white hover:shadow-[0_14px_28px_rgba(60,64,67,0.055)]'
                 }`}>
                 <GradientAvatar name={a.name} size={44} radius="0.9rem" className="shadow-none"/>
                 <div className="flex-1 min-w-0">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className={`truncate text-[0.96rem] font-semibold ${
-                      currentStatus === 'accepted' || currentStatus === 'completed' ? 'text-[#188038]' : 'text-[#202124]'
-                    }`}>{a.name}</span>
-                    <span className={`inline-flex h-6 w-[58px] shrink-0 items-center justify-center rounded-full text-[0.62rem] font-semibold ${st.bg} ${st.color}`}>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-[0.96rem] font-semibold text-[#202124]">{a.name}</span>
+                    <span className={`inline-flex h-6 shrink-0 items-center justify-center rounded-full px-2.5 text-[0.62rem] font-semibold ${
+                      currentStatus === 'accepted' || currentStatus === 'completed'
+                        ? 'bg-[#E8F0FE] text-[#1A73E8]'
+                        : `${st.bg} ${st.color}`
+                    }`}>
                       {st.label}
                     </span>
                   </div>
-                  <p className="mb-3 truncate text-[0.76rem] text-[#5F6368]">
-                    {a.field}{a.uni ? ` · ${a.uni}` : ''}
-                  </p>
+                  {(a.field || a.uni) && (
+                    <p className="mt-1 truncate text-[0.76rem] text-[#5F6368]">
+                      {a.field}{a.uni ? ` · ${a.uni}` : ''}
+                    </p>
+                  )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className={`inline-flex h-8 items-center justify-center rounded-full px-3 text-[0.72rem] font-semibold text-[#1A73E8] ${
-                    isActive ? 'bg-white' : 'bg-[#E8F0FE]'
+                  <span className={`inline-flex h-8 items-center justify-center rounded-full border px-3 text-[0.72rem] font-semibold text-[#1A73E8] ${
+                    isActive || currentStatus === 'accepted' || currentStatus === 'completed'
+                      ? 'border-[#D7E6FF] bg-white'
+                      : 'border-transparent bg-[#E8F0FE]'
                   }`}>
                     {a.match}% match
                   </span>

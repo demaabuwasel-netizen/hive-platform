@@ -9,7 +9,8 @@ import ApplicantDetail from '../components/ApplicantDetail'
 import {
   fetchNgoApplicants,
   fetchOpportunityApplicantsWithMatches,
-  updateApplicationStatus
+  updateApplicationStatus,
+  markOtherApplicantsRoleFilled
 } from '../services/applications'
 import { fetchNgoOpportunities, setOpportunityStatus } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
@@ -209,6 +210,21 @@ export default function Applicants() {
 
     try {
       await updateApplicationStatus(id, toDbStatus(uiStatus))
+
+      // Accepting someone closes the role for everyone else still in the
+      // running. Their status/label here doesn't change (they weren't
+      // formally rejected) — this only flags the role as filled by someone
+      // else, which is what hides it from their own Applications view.
+      if (uiStatus === 'accepted' && app?.opportunityId) {
+        try {
+          await markOtherApplicantsRoleFilled(app.opportunityId, id)
+        } catch (err) {
+          // Non-fatal — the accepted candidate's status already saved; the
+          // others just won't be flagged until next reload.
+          console.warn('Could not flag other applicants\' role as filled:', err.message)
+        }
+      }
+
       if (app?.opportunityId && nextRoleStatus && nextRoleStatus !== previousRoleStatus) {
         await setOpportunityStatus(app.opportunityId, user.id, nextRoleStatus)
         try {

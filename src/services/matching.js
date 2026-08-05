@@ -415,5 +415,21 @@ export function computeMatch(studentProfile, opportunity) {
     fld.match && `🎓 ${p.field} relevant to this role`,
   ].filter(Boolean)
 
-  return { score, breakdown, strengths, partialMatches, missingRequirements, reasons, headline, suggestedQuestions, explanations }
+  return {
+    score,
+    breakdown,
+    strengths,
+    partialMatches,
+    missingRequirements,
+    reasons,
+    headline,
+    suggestedQuestions,
+    explanations,
+    skillMatches: {
+      matched: sk.matched,
+      partial: sk.partial,
+      missing: sk.missing,
+      required: o.skills ?? [],
+    },
+  }
 }

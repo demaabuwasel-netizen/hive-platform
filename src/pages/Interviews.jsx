@@ -6,11 +6,11 @@ import {
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, PlayCircle, StopCircle, Heart,
   FileText, CheckCircle2, Target, MessageCircle, Info, Layers,
-  X,
+  X, Trash2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
-import { fetchStudentApplications } from '../services/applications'
+import { fetchStudentApplications, deleteApplication } from '../services/applications'
 import { fetchNgoOpportunities, fetchOpportunity } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
 import ngoInterviewImg from '../assets/ngo interview.PNG'
@@ -491,6 +491,7 @@ function StudentView() {
   const [descriptionOpen, setDescriptionOpen] = useState(false)
   const [activePrepSection, setActivePrepSection] = useState('summary')
   const [openPrepQuestionStage, setOpenPrepQuestionStage] = useState(null)
+  const [deletingAppId, setDeletingAppId] = useState(null)
   const recognitionRef = useRef(null)
   const messageIdRef = useRef(0)
   const questionCardRef = useRef(null)
@@ -570,6 +571,32 @@ function StudentView() {
     setExplainOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
+  }
+
+  async function handleDeleteApp(appId) {
+    if (!user?.id || deletingAppId) return
+    if (!confirm('Delete this application? This can\'t be undone, and it\'ll remove it from your Applications list too.')) return
+
+    setDeletingAppId(appId)
+    try {
+      await deleteApplication(appId, user.id)
+      const remaining = apps.filter(a => a.id !== appId)
+      setApps(remaining)
+      setRoleDetails(prev => {
+        const next = { ...prev }
+        delete next[appId]
+        return next
+      })
+      if (selectedAppId === appId) {
+        if (remaining[0]) selectRole(remaining[0].id)
+        else setSelectedAppId(null)
+      }
+    } catch (err) {
+      console.error('Failed to delete application:', err.message)
+      alert('Could not delete this application. Please try again.')
+    } finally {
+      setDeletingAppId(null)
+    }
   }
 
   function openPractice() {
@@ -759,26 +786,36 @@ function StudentView() {
               const role = buildStudentRole(app, roleDetails[app.id])
               const active = String(app.id) === String(selectedAppId)
               return (
-                <button
+                <div
                   key={app.id}
-                  onClick={() => selectRole(app.id)}
-                  className={`group w-full rounded-[22px] border px-4 py-3.5 text-left transition-all ${
+                  className={`group w-full rounded-[22px] border px-4 py-3.5 transition-all ${
                     active
                       ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
                       : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
                   }`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                        {role.title}
-                      </p>
-                      <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
-                        {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
-                      </p>
+                  <button onClick={() => selectRole(app.id)} className="w-full text-left">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                          {role.title}
+                        </p>
+                        <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
+                          {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                        </p>
+                      </div>
+                      <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                     </div>
-                    <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+                  </button>
+                  <div className="mt-2.5 flex justify-end border-t pt-2" style={{ borderColor: 'rgba(26,115,232,0.08)' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteApp(app.id) }}
+                      disabled={deletingAppId === app.id}
+                      className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-medium text-[#C5221F] transition-colors hover:bg-[#FCE8E6] disabled:opacity-50">
+                      <Trash2 size={12} />
+                      {deletingAppId === app.id ? 'Deleting…' : 'Delete'}
+                    </button>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>

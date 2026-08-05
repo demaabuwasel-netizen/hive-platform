@@ -26,6 +26,7 @@ create table if not exists public.student_profiles (
   courses      text[]  not null default '{}',
   interests    text[]  not null default '{}',
   experience   text,
+  projects     jsonb   not null default '[]',
   goals        text,
   languages    jsonb   not null default '[]',   -- [{lang: string, level: string}]
   availability text,
@@ -187,6 +188,8 @@ create policy "applications_delete_ngo" on public.applications
     )
     or auth.uid() = ngo_id
   );
+create policy "applications_delete_student" on public.applications
+  for delete using (auth.uid() = student_id);
 
 -- saved_opportunities: only the student who saved can read/write
 create policy "saved_opportunities_all" on public.saved_opportunities

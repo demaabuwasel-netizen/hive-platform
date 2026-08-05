@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { fetchStudentApplications } from '../services/applications'
+import { fetchStudentApplications, isCertificateUnlocked } from '../services/applications'
 import { computeMatch } from '../services/matching'
 import { fetchActiveOpportunities } from '../services/opportunities'
 import dashboardIllustration from '../assets/student dashboard.PNG'
@@ -351,6 +351,7 @@ function MatchCard({ match, index, onOpen }) {
 
 export default function StudentDashboard() {
   const { user, profile } = useApp()
+  const userId = user?.id
   const navigate = useNavigate()
   const matchesRef = useRef(null)
   const firstName = user?.name?.split(' ')[0] || 'there'
@@ -362,19 +363,35 @@ export default function StudentDashboard() {
   const [topMatches, setTopMatches] = useState([])
   const [loadingMatches, setLoadingMatches] = useState(true)
 
-  useEffect(() => {
-    if (!user?.id) return
+  const loadApplications = useCallback(async () => {
+    if (!userId) return
+    try {
+      const apps = await fetchStudentApplications(userId)
+      setApplications(apps)
+      setAppCount(apps.length)
+      setInterviewCount(apps.filter(a => a.status === 'interview').length)
+    } catch {
+      setApplications([])
+    }
+  }, [userId])
 
-    fetchStudentApplications(user.id)
-      .then(apps => {
-        setApplications(apps)
-        setAppCount(apps.length)
-        setInterviewCount(apps.filter(a => a.status === 'interview').length)
-      })
-      .catch(() => {
-        setApplications([])
-      })
-  }, [user?.id])
+  useEffect(() => {
+    if (!userId) return
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === 'visible') loadApplications()
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadApplications()
+    window.addEventListener('focus', loadApplications)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+
+    return () => {
+      window.removeEventListener('focus', loadApplications)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
+  }, [loadApplications, userId])
 
   useEffect(() => {
     if (!user?.id) return
@@ -425,14 +442,17 @@ export default function StudentDashboard() {
     {
       icon: Award,
       label: 'Certificates',
-      hint: `${applications.filter(app => app.status === 'completed').length} ready`,
+      hint: `${applications.filter(isCertificateUnlocked).length} ready`,
       tint: '#E6F4EA',
       accent: '#188038',
-      onClick: () => setCertificateOpen(true),
+      onClick: () => {
+        loadApplications()
+        setCertificateOpen(true)
+      },
     },
   ].map(action => ({ ...action, onClick: action.onClick ?? (() => navigate(action.to)) }))
 
-  const completedApplications = applications.filter(app => app.status === 'completed')
+  const completedApplications = applications.filter(isCertificateUnlocked)
   const studentName = profile?.name || user?.name || 'Student'
 
   async function getCertificateHtml(app) {

@@ -46,6 +46,7 @@ function dbToStudent(row) {
     experience:        row.experience,
     experiences:       row.experiences         ?? [],
     educations:        row.educations          ?? [],
+    projects:          row.projects            ?? [],
     goals:             row.goals,
     motivation:        row.motivation,
     languages:         row.languages           ?? [],
@@ -89,6 +90,7 @@ function studentToDb(userId, profile) {
     experience:        profile.experience?.trim()        || null,
     experiences:       profile.experiences      ?? [],
     educations:        profile.educations       ?? [],
+    projects:          profile.projects         ?? [],
     goals:             profile.goals?.trim()             || null,
     motivation:        profile.motivation?.trim()        || null,
     languages:         profile.languages        ?? [],
@@ -125,12 +127,13 @@ export async function saveStudentProfile(userId, profile) {
       .upsert(payload, { onConflict: 'user_id' })
       .abortSignal(controller.signal)
 
-    // country/city need the add_student_location.sql migration — if it hasn't run
-    // yet, retry without them so onboarding never breaks on the missing columns.
-    if (error && /country|city/.test(error.message) && /column/i.test(error.message)) {
-      const { country, city, ...fallbackPayload } = payload
+    // Some profile columns are additive migrations. If a local database is behind,
+    // retry without them so the rest of the profile can still save.
+    if (error && /country|city|projects/.test(error.message) && /column/i.test(error.message)) {
+      const { country, city, projects, ...fallbackPayload } = payload
       void country
       void city
+      void projects
       ;({ error } = await supabase
         .from('student_profiles')
         .upsert(fallbackPayload, { onConflict: 'user_id' })
@@ -278,6 +281,7 @@ export function studentProfileToData(profile) {
     university:   profile.university   ?? '',
     skills:       profile.skills       ?? [],
     educations:   profile.educations   ?? [],
+    projects:     profile.projects     ?? [],
     courses:      profile.courses      ?? [],
     interests:    profile.interests    ?? [],
     experience:   profile.experience   ?? '',
