@@ -2,100 +2,31 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft, MapPin, BookOpen, Briefcase, Heart, Target, CheckCircle2,
-  ExternalLink, TrendingUp
+  ArrowLeft, MapPin, GraduationCap, Briefcase, Heart, Target,
+  ExternalLink, Calendar, Globe,
 } from 'lucide-react'
 import { loadStudentProfile } from '../services/storage'
+import { groupSkills } from '../data/skills'
+import GradientAvatar from '../components/GradientAvatar'
 
-function parseSkill(s) {
-  if (!s) return { name: '', level: '' }
-  if (typeof s === 'string') {
-    if (s.includes('{')) {
-      try {
-        const parsed = JSON.parse(s)
-        return { name: parsed.name || s, level: parsed.level || '' }
-      } catch {
-        return { name: s, level: '' }
-      }
-    }
-    return { name: s, level: '' }
-  }
-  if (typeof s === 'object') {
-    return { name: s.name || '', level: s.level || '' }
-  }
-  return { name: '', level: '' }
+function hasContent(obj) {
+  return obj && (typeof obj === 'string' ? obj.trim().length > 0 : Array.isArray(obj) ? obj.length > 0 : false)
 }
 
-function categorizeSkills(skills) {
-  const CATEGORIES = {
-    'Frontend': ['react', 'vue', 'angular', 'svelte', 'html', 'css', 'tailwind', 'bootstrap', 'nextjs', 'gatsby'],
-    'Backend': ['nodejs', 'node.js', 'express', 'django', 'flask', 'fastapi', 'spring', 'rails', 'php', 'laravel'],
-    'Programming': ['javascript', 'python', 'typescript', 'java', 'cpp', 'c++', 'c#', 'go', 'rust', 'kotlin', 'swift'],
-    'Data & AI': ['machine learning', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy', 'data analysis'],
-    'DevOps & Tools': ['docker', 'kubernetes', 'git', 'github', 'aws', 'azure', 'gcp', 'terraform', 'jenkins', 'linux'],
-  }
-
-  const grouped = {}
-  Object.keys(CATEGORIES).forEach(cat => {
-    grouped[cat] = []
-  })
-  grouped['Other'] = []
-
-  if (!skills || !Array.isArray(skills)) return grouped
-
-  skills.forEach(s => {
-    const { name, level } = parseSkill(s)
-    if (!name) return
-
-    const lowerName = name.toLowerCase()
-    let found = false
-
-    for (const [category, keywords] of Object.entries(CATEGORIES)) {
-      if (keywords.some(kw => lowerName.includes(kw))) {
-        grouped[category].push({ name, level })
-        found = true
-        break
-      }
-    }
-
-    if (!found) {
-      grouped['Other'].push({ name, level })
-    }
-  })
-
-  return grouped
-}
-
-function AvatarInitials({ name, size = 64 }) {
-  if (!name) return null
-
-  const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
-  const colors = [
-    'bg-rose-100',
-    'bg-blue-100',
-    'bg-emerald-100',
-    'bg-purple-100',
-    'bg-amber-100',
-    'bg-pink-100',
-    'bg-cyan-100',
-  ]
-
-  const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  const bgColor = colors[hash % colors.length]
-
+function SectionCard({ icon: Icon, title, children }) {
   return (
-    <div
-      className={`${bgColor} rounded-2xl flex items-center justify-center text-[#4B6382] font-bold`}
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-[28px] border bg-white p-6"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
-      {initials}
-    </div>
+      <h2 className="mb-4 flex items-center gap-2 text-[0.95rem] font-semibold text-[#202124]">
+        <Icon size={16} className="text-[#1A73E8]" strokeWidth={2}/>
+        {title}
+      </h2>
+      {children}
+    </motion.div>
   )
 }
 
@@ -107,10 +38,11 @@ export default function StudentPublicProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const handleBack = () => {
-    const backTo = searchParams.get('backTo')
-    const opportunityId = searchParams.get('opportunity')
+  const backTo = searchParams.get('backTo')
+  const opportunityId = searchParams.get('opportunity')
+  const backLabel = backTo === 'applicants' ? 'Back to applicants' : backTo === 'matches' ? 'Back to matches' : 'Back'
 
+  const handleBack = () => {
     if (backTo === 'applicants' && opportunityId) {
       navigate(`/applicants?opportunity=${opportunityId}`)
     } else {
@@ -165,18 +97,18 @@ export default function StudentPublicProfile() {
 
   if (loading) {
     return (
-      <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-10">
+      <main className="flex-1 bg-[#F5F7FB] overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-6 py-10 lg:px-8">
           <div className="animate-pulse space-y-6">
-            <div className="h-40 bg-gray-300 rounded-2xl" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="h-44 rounded-[28px] bg-[#E8F0FE]" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-4">
-                <div className="h-32 bg-gray-300 rounded-2xl" />
-                <div className="h-32 bg-gray-300 rounded-2xl" />
+                <div className="h-32 rounded-[28px] bg-[#F1F3F4]" />
+                <div className="h-32 rounded-[28px] bg-[#F1F3F4]" />
               </div>
               <div className="space-y-4">
-                <div className="h-32 bg-gray-300 rounded-2xl" />
-                <div className="h-32 bg-gray-300 rounded-2xl" />
+                <div className="h-32 rounded-[28px] bg-[#F1F3F4]" />
+                <div className="h-32 rounded-[28px] bg-[#F1F3F4]" />
               </div>
             </div>
           </div>
@@ -187,278 +119,250 @@ export default function StudentPublicProfile() {
 
   if (error || !profile) {
     return (
-      <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-10">
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={() => handleBack()}
-            className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8"
+      <main className="flex-1 bg-[#F5F7FB] overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-6 py-10 lg:px-8">
+          <button
+            onClick={handleBack}
+            className="mb-8 inline-flex items-center gap-2 text-[0.85rem] font-semibold text-[#1A73E8] hover:text-[#1765CC]"
           >
             <ArrowLeft size={16} />
-            Back
-          </motion.button>
-          <div className="text-center py-20 bg-white rounded-2xl p-8">
-            <p className="text-[#0D183D] font-semibold mb-2">{error ? 'Unable to load profile' : 'Student profile not found'}</p>
-            <p className="text-[#4B6382] mb-6">{error || 'This student profile could not be found.'}</p>
+            {backLabel}
+          </button>
+          <div className="rounded-[28px] border bg-white p-10 text-center" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+            <p className="mb-2 font-semibold text-[#202124]">{error ? 'Unable to load profile' : 'Student profile not found'}</p>
+            <p className="text-[#5F6368]">{error || 'This student profile could not be found.'}</p>
           </div>
         </div>
       </main>
     )
   }
 
-  const grouped = categorizeSkills(profile.skills)
-  const formattedLanguages = profile.languages?.map(l => {
+  const formattedLanguages = (profile.languages || []).map(l => {
     if (typeof l === 'string') return l
     if (typeof l === 'object' && l.lang) return `${l.lang}${l.level ? ` (${l.level})` : ''}`
     return null
-  }).filter(Boolean) || []
-  const hasContent = (obj) => obj && (typeof obj === 'string' ? obj.trim().length > 0 : Array.isArray(obj) ? obj.length > 0 : false)
+  }).filter(Boolean)
+
+  const hasLinks = profile.links?.linkedin || profile.links?.github || profile.links?.portfolio
 
   return (
-    <main className="flex-1 bg-[#F8F9FB] overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-8 py-8">
+    <main className="flex-1 bg-[#F5F7FB] overflow-y-auto">
+      <div className="max-w-5xl mx-auto px-6 py-8 lg:px-8">
 
-        {/* Back Button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => handleBack()}
-          className="flex items-center gap-2 text-[#FFB703] hover:text-[#D99E00] font-semibold mb-8 text-sm"
+        <button
+          onClick={handleBack}
+          className="mb-6 inline-flex items-center gap-2 text-[0.85rem] font-semibold text-[#1A73E8] hover:text-[#1765CC]"
         >
           <ArrowLeft size={16} />
-          Back to Applicants
-        </motion.button>
+          {backLabel}
+        </button>
 
-        {/* ═══ HERO HEADER CARD ═══ */}
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-[#0D183D] to-[#1a2a4e] rounded-2xl p-8 mb-8 text-white"
+          className="mb-6 rounded-[28px] border bg-white p-7"
+          style={{ borderColor: 'rgba(26,115,232,0.10)' }}
         >
-          <div className="flex gap-6 items-start">
-            <AvatarInitials name={profile.name} size={88} />
-
-            <div className="flex-1">
-              <h1 className="text-[32px] font-bold mb-1">{profile.name}</h1>
-              <p className="text-[#FFB703] font-semibold text-[15px] mb-4">{profile.field || 'Student'}</p>
-
-              {/* Key Info Pills */}
-              <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-start gap-5">
+            <GradientAvatar name={profile.name} size={72} radius="1.35rem" className="shrink-0 shadow-sm ring-2 ring-white"/>
+            <div className="min-w-0 flex-1">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.76rem] font-semibold text-[#1A73E8]">
+                Student profile
+              </div>
+              <h1 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.03em] text-[#202124] sm:text-[2.1rem]">
+                {profile.name}
+              </h1>
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                {profile.field && (
+                  <span className="inline-flex items-center rounded-full bg-[#F1F3F4] px-3 py-1 text-[0.78rem] font-medium text-[#3C4043]">
+                    {profile.field}
+                  </span>
+                )}
                 {profile.university && (
-                  <div className="bg-white/15 rounded-full px-4 py-2 text-[13px] font-medium flex items-center gap-2 backdrop-blur-sm border border-white/20">
-                    <BookOpen size={14} />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1 text-[0.78rem] font-medium text-[#3C4043]">
+                    <GraduationCap size={12} strokeWidth={2}/>
                     {profile.university}
-                  </div>
+                  </span>
                 )}
                 {profile.city && (
-                  <div className="bg-white/15 rounded-full px-4 py-2 text-[13px] font-medium flex items-center gap-2 backdrop-blur-sm border border-white/20">
-                    <MapPin size={14} />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1 text-[0.78rem] font-medium text-[#3C4043]">
+                    <MapPin size={12} strokeWidth={2}/>
                     {profile.city}
-                  </div>
+                  </span>
                 )}
               </div>
             </div>
+
+            <button
+              onClick={() => navigate(`/interview-message/${studentId}`, { state: { fromProfile: true } })}
+              className="inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-2.5 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC]"
+            >
+              <Calendar size={15} strokeWidth={2}/>
+              Interview
+            </button>
           </div>
         </motion.div>
 
-        {/* ═══ MAIN CONTENT GRID ═══ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Content grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* LEFT COLUMN: Main Profile Content */}
           <div className="lg:col-span-2 space-y-6">
-
-            {/* About / Who They Are */}
             {hasContent(profile.bio) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h2 className="text-[15px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
-                  <Heart size={16} className="text-[#FFB703]" />
-                  About
-                </h2>
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile.bio}</p>
-              </motion.div>
+              <SectionCard icon={Heart} title="About">
+                <p className="text-[0.9rem] leading-7 text-[#5F6368]">{profile.bio}</p>
+              </SectionCard>
             )}
 
-            {/* Career Goals */}
-            {hasContent(profile.goals) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h2 className="text-[15px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
-                  <Target size={16} className="text-[#FFB703]" />
-                  Career Goals
-                </h2>
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile.goals}</p>
-              </motion.div>
-            )}
-
-            {/* Skills - Categorized */}
-            {profile.skills && profile.skills.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h2 className="text-[15px] font-bold text-[#0D183D] mb-5 flex items-center gap-2">
-                  <TrendingUp size={16} className="text-[#FFB703]" />
-                  Skills
-                </h2>
-                <div className="space-y-5">
-                  {Object.entries(grouped).map(([category, skills]) => (
-                    skills.length > 0 && (
-                      <div key={category}>
-                        <p className="text-[11px] font-bold text-[#4B6382] uppercase tracking-widest mb-3">{category}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {skills.map(({ name }, i) => (
-                            <div
-                              key={i}
-                              className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#E8F0FE] text-[#1A73E8]"
-                            >
-                              {name}
-                            </div>
-                          ))}
-                        </div>
+            <SectionCard icon={Globe} title="Skills">
+              {profile.skills?.length > 0 ? (
+                <div className="overflow-hidden rounded-[24px] bg-white/40 ring-1 ring-white/50 backdrop-blur-md">
+                  {groupSkills(profile.skills).map(({ cat, items }) => (
+                    <div
+                      key={cat.cat}
+                      className="grid gap-3 border-b border-white/40 px-4 py-4 last:border-b-0 md:grid-cols-[160px_minmax(0,1fr)] md:items-start"
+                    >
+                      <div>
+                        <span className="inline-flex rounded-full bg-[#E8F0FE] px-3 py-1 text-[0.7rem] font-semibold uppercase text-[#1A73E8]">{cat.cat}</span>
+                        <p className="mt-2 text-[0.74rem] font-semibold text-[#9AA0A6]">{items.length} added</p>
                       </div>
-                    )
+                      <div className="flex flex-wrap gap-2">
+                        {items.map(item => (
+                          <span
+                            key={item.name}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 text-[0.76rem] font-medium text-[#202124] shadow-[0_1px_2px_rgba(17,24,39,0.03)] backdrop-blur-sm"
+                          >
+                            {item.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              ) : (
+                <p className="text-[0.86rem] text-[#9AA0A6]">No skills added yet.</p>
+              )}
+            </SectionCard>
 
-            {/* Experience */}
+            <SectionCard icon={GraduationCap} title="Education">
+              {profile.educations?.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {profile.educations.map((edu, i) => (
+                    <div key={i} className="flex gap-4 rounded-2xl bg-[#F8F9FA] p-4 transition-colors hover:bg-[#F1F3F4]">
+                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                        <GraduationCap size={18} strokeWidth={2}/>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[0.92rem] font-semibold text-[#202124]">{edu.field || 'Education'}</p>
+                        <p className="mt-0.5 text-[0.84rem] text-[#5F6368]">{edu.university || 'School not set'}</p>
+                        {(edu.degreeType || edu.isCurrent) && (
+                          <p className="mt-1.5 text-[0.78rem] font-medium text-[#1A73E8]">
+                            {[edu.degreeType, edu.isCurrent ? 'Current' : ''].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                        {edu.description && <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">{edu.description}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : profile.university ? (
+                <div className="flex gap-4 rounded-2xl bg-[#F8F9FA] p-4">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                    <GraduationCap size={18} strokeWidth={2}/>
+                  </span>
+                  <div>
+                    <p className="text-[0.92rem] font-semibold text-[#202124]">{profile.field || 'Field not set'}</p>
+                    <p className="mt-0.5 text-[0.84rem] text-[#5F6368]">{profile.university}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[0.86rem] text-[#9AA0A6]">No education added yet.</p>
+              )}
+            </SectionCard>
+
+            {/* Projects don't persist to the database anywhere in the app yet
+                (a pre-existing gap, not specific to this page), so this shows
+                empty until that's fixed. */}
+            <SectionCard icon={Briefcase} title="Projects">
+              {profile.projects?.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {profile.projects.map((project, i) => (
+                    <div key={i} className="flex gap-4 rounded-2xl bg-[#F8F9FA] p-4 transition-colors hover:bg-[#F1F3F4]">
+                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
+                        <Briefcase size={18} strokeWidth={2}/>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[0.92rem] font-semibold text-[#202124]">{project.title || 'Project'}</p>
+                        {project.link && (
+                          <a href={project.link} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-[0.84rem] text-[#1A73E8] hover:underline">
+                            View project →
+                          </a>
+                        )}
+                        {project.description && <p className="mt-2 text-[0.82rem] leading-6 text-[#5F6368]">{project.description}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[0.86rem] text-[#9AA0A6]">No projects added yet.</p>
+              )}
+            </SectionCard>
+
             {hasContent(profile.experience) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h2 className="text-[15px] font-bold text-[#0D183D] mb-3 flex items-center gap-2">
-                  <Briefcase size={16} className="text-[#FFB703]" />
-                  Experience
-                </h2>
-                <p className="text-[13px] leading-relaxed text-[#4B6382]">{profile.experience}</p>
-              </motion.div>
+              <SectionCard icon={Briefcase} title="Experience">
+                <p className="whitespace-pre-line text-[0.9rem] leading-7 text-[#5F6368]">{profile.experience}</p>
+              </SectionCard>
             )}
 
+            {hasContent(profile.goals) && (
+              <SectionCard icon={Target} title="Career goals">
+                <p className="whitespace-pre-line text-[0.9rem] leading-7 text-[#5F6368]">{profile.goals}</p>
+              </SectionCard>
+            )}
           </div>
 
-          {/* RIGHT COLUMN: Sidebar Info & Actions */}
+          {/* Sidebar */}
           <div className="space-y-6">
-
-            {/* Overall Match Summary */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6 sticky top-8"
-            >
-              <h3 className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Overall Match</h3>
-              <div className="mb-4">
-                <div className="text-[28px] font-bold text-[#10B981] mb-1">–</div>
-                <p className="text-[12px] text-[#4B6382] font-medium">Awaiting evaluation</p>
-              </div>
-              <div className="space-y-2 text-[12px]">
-                <p className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-2">Key strengths</p>
-                <div className="flex items-start gap-2 text-[#4B6382]">
-                  <CheckCircle2 size={13} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
-                  <span>Motivated candidate</span>
-                </div>
-                <div className="flex items-start gap-2 text-[#4B6382]">
-                  <CheckCircle2 size={13} className="text-[#FFB703] mt-0.5 flex-shrink-0" />
-                  <span>Relevant background</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="space-y-3"
-            >
-              <button
-                onClick={() => navigate(`/interview-message/${studentId}`, { state: { fromProfile: true } })}
-                className="w-full py-3 px-4 rounded-xl bg-[#0D183D] hover:opacity-90 text-white font-semibold text-[13px] transition-all"
-              >
-                📅 Interview
-              </button>
-              <button className="w-full py-3 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-all">
-                ✕ Reject
-              </button>
-            </motion.div>
-
-            {/* Education */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-            >
-              <h3 className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Education</h3>
-              {profile.university && (
-                <div className="space-y-1">
-                  <p className="text-[13px] font-semibold text-[#0D183D]">{profile.university}</p>
-                  {profile.field && <p className="text-[12px] text-[#4B6382]">{profile.field}</p>}
-                </div>
-              )}
-            </motion.div>
-
-            {/* Languages */}
             {formattedLanguages.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-white rounded-2xl border border-[rgba(13,24,61,0.08)] p-6"
-              >
-                <h3 className="text-[11px] font-bold text-[#0D183D] uppercase tracking-widest mb-3">Languages</h3>
+              <SectionCard icon={Globe} title="Languages">
                 <div className="flex flex-wrap gap-2">
                   {formattedLanguages.map((lang, i) => (
-                    <span key={i} className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-blue-100 text-blue-700">
+                    <span key={i} className="inline-flex items-center rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] font-medium text-[#3C4043]">
                       {lang}
                     </span>
                   ))}
                 </div>
-              </motion.div>
+              </SectionCard>
             )}
 
-            {/* Links */}
-            {(profile.links?.linkedin || profile.links?.github || profile.links?.portfolio) && (
+            {hasLinks && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
                 className="space-y-2"
               >
                 {profile.links?.linkedin && (
                   <a href={profile.links.linkedin} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[rgba(13,24,61,0.02)] text-[13px] font-semibold text-[#0D183D] transition-colors">
+                    className="flex items-center justify-between rounded-2xl border bg-white px-4 py-3 text-[0.85rem] font-semibold text-[#202124] transition-colors hover:bg-[#F8FBFF]"
+                    style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
                     LinkedIn
-                    <ExternalLink size={13} />
+                    <ExternalLink size={14} className="text-[#1A73E8]"/>
                   </a>
                 )}
                 {profile.links?.github && (
                   <a href={profile.links.github} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[rgba(13,24,61,0.02)] text-[13px] font-semibold text-[#0D183D] transition-colors">
+                    className="flex items-center justify-between rounded-2xl border bg-white px-4 py-3 text-[0.85rem] font-semibold text-[#202124] transition-colors hover:bg-[#F8FBFF]"
+                    style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
                     GitHub
-                    <ExternalLink size={13} />
+                    <ExternalLink size={14} className="text-[#1A73E8]"/>
                   </a>
                 )}
                 {profile.links?.portfolio && (
                   <a href={profile.links.portfolio} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-white border border-[rgba(13,24,61,0.08)] hover:bg-[rgba(13,24,61,0.02)] text-[13px] font-semibold text-[#0D183D] transition-colors">
+                    className="flex items-center justify-between rounded-2xl border bg-white px-4 py-3 text-[0.85rem] font-semibold text-[#202124] transition-colors hover:bg-[#F8FBFF]"
+                    style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
                     Portfolio
-                    <ExternalLink size={13} />
+                    <ExternalLink size={14} className="text-[#1A73E8]"/>
                   </a>
                 )}
               </motion.div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { submitApplication } from '../services/applications'
+import { submitApplication, fetchAcceptedApplicantForOpportunity, updateApplicationStatus } from '../services/applications'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Briefcase, Users, Search,
@@ -499,12 +499,40 @@ export default function Opportunities() {
   const [viewingOpp, setViewingOpp] = useState(null)
   const [applyingTo, setApplyingTo] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [acceptedApplicant, setAcceptedApplicant] = useState(null)
+  const [completingRole, setCompletingRole] = useState(false)
 
   const selectedOpp = isNGO && ngoOpps.length > 0
     ? normalizeNgoOpportunity(ngoOpps.find(o => String(o.id) === String(selectedOppId)) || ngoOpps[0])
     : null
   const selectedOppFilled = (selectedOpp?.status || '').toLowerCase() === 'paused'
   const selectedOppStatus = selectedOpp ? statusMeta(selectedOpp.status) : null
+
+  // Once a role is filled, find out who was accepted so "Complete role" knows
+  // which application to mark complete. (Rendering already guards on
+  // selectedOppFilled, so a stale value here just never gets shown.)
+  useEffect(() => {
+    if (!isNGO || !selectedOpp?.id || !selectedOppFilled) return
+    let cancelled = false
+    fetchAcceptedApplicantForOpportunity(selectedOpp.id)
+      .then(applicant => { if (!cancelled) setAcceptedApplicant(applicant) })
+      .catch(() => { if (!cancelled) setAcceptedApplicant(null) })
+    return () => { cancelled = true }
+  }, [isNGO, selectedOpp?.id, selectedOppFilled])
+
+  async function handleCompleteRole() {
+    if (!acceptedApplicant?.id || completingRole) return
+    setCompletingRole(true)
+    try {
+      await updateApplicationStatus(acceptedApplicant.id, 'completed')
+      setAcceptedApplicant(prev => (prev ? { ...prev, status: 'completed' } : prev))
+    } catch (err) {
+      console.error('Error completing role:', err)
+      setNgoError('Failed to complete role: ' + err.message)
+    } finally {
+      setCompletingRole(false)
+    }
+  }
   const handleDeleteOpportunity = async (oppId) => {
     if (!window.confirm('Are you sure you want to delete this opportunity? Students will no longer see this role in their applications.')) {
       return
@@ -764,7 +792,7 @@ export default function Opportunities() {
                       No opportunities yet
                     </div>
                   ) : (
-                    ngoOpps.map((opp, i) => {
+                    ngoOpps.map((opp) => {
                       const normalized = normalizeNgoOpportunity(opp)
                       const active = String(selectedOppId) === String(opp.id)
                       const status = statusMeta(normalized.status)
@@ -1077,6 +1105,23 @@ export default function Opportunities() {
                     </div>
 
                     <div className="mt-5 flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-end" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+                      {selectedOppFilled && acceptedApplicant && (
+                        acceptedApplicant.status === 'completed' ? (
+                          <span className="inline-flex items-center justify-center gap-2 rounded-full bg-[#E8F0FE] px-4 py-2.5 text-[0.84rem] font-semibold text-[#1A73E8] sm:mr-auto">
+                            <CheckCircle2 size={15} />
+                            Role completed — certificate sent to {acceptedApplicant.name.split(' ')[0]}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={handleCompleteRole}
+                            disabled={completingRole}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-2.5 text-[0.84rem] font-semibold text-white transition-colors hover:bg-[#1765CC] disabled:opacity-50 sm:mr-auto"
+                          >
+                            <CheckCircle2 size={15} />
+                            {completingRole ? 'Completing...' : `Complete role for ${acceptedApplicant.name.split(' ')[0]}`}
+                          </button>
+                        )
+                      )}
                       <button
                         onClick={() => handleDeleteOpportunity(selectedOpp.id)}
                         disabled={deleting === selectedOpp.id}

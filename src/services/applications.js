@@ -136,19 +136,25 @@ function toSkillObjects(raw) {
 }
 
 // NGO: rich applicant list — joins applications, users, student_profiles, opportunities
-// Loads student profiles for a set of ids. Tries to include country/city (used by the
-// Analytics map); if the add_student_location.sql migration hasn't run yet, those columns
-// don't exist and Supabase rejects the whole select — so retry with the base columns.
+// Loads student profiles for a set of ids. Tries to include country/city/educations
+// (newer columns); if a migration hasn't run yet on this environment and a column
+// doesn't exist, Supabase rejects the whole select — so retry with narrower column
+// sets until one succeeds, so the rest of the profile still loads.
 async function fetchStudentProfilesFor(studentIds) {
   const baseColumns = 'user_id, field, university, skills, languages, bio, interests, links, experience, goals'
-  let { data, error } = await supabase
-    .from('student_profiles')
-    .select(`${baseColumns}, country, city`)
-    .in('user_id', studentIds)
-  if (error) {
-    ;({ data } = await supabase.from('student_profiles').select(baseColumns).in('user_id', studentIds))
+  const columnSets = [
+    `${baseColumns}, country, city, educations`,
+    `${baseColumns}, country, city`,
+    baseColumns,
+  ]
+  for (const columns of columnSets) {
+    const { data, error } = await supabase
+      .from('student_profiles')
+      .select(columns)
+      .in('user_id', studentIds)
+    if (!error) return data
   }
-  return data
+  return []
 }
 
 export async function fetchNgoApplicants(ngoId) {
@@ -206,6 +212,7 @@ export async function fetchNgoApplicants(ngoId) {
       links:            prof.links      ?? {},
       experience:       prof.experience ?? '',
       goals:            prof.goals      ?? '',
+      educations:       Array.isArray(prof.educations) ? prof.educations : [],
       opportunityTitle: app.opportunities?.title ?? '',
       opportunityId:    app.opportunity_id,
       status:           app.status,
@@ -216,8 +223,6 @@ export async function fetchNgoApplicants(ngoId) {
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
       studentLocation:  [prof.city, prof.country].filter(Boolean).join(', '),
-      year:             '',
-      projects:         [],
     }
   })
 }
@@ -352,6 +357,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       links:            prof.links      ?? {},
       experience:       prof.experience ?? '',
       goals:            prof.goals      ?? '',
+      educations:       Array.isArray(prof.educations) ? prof.educations : [],
       opportunityTitle: app.opportunities?.title ?? '',
       opportunityId:    app.opportunity_id,
       status:           app.status,
@@ -363,6 +369,34 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       location:         app.opportunities?.location ?? '',
     }
   })
+}
+
+// NGO: fetch the accepted (or already-completed) applicant for a filled opportunity —
+// used by the Opportunities page's "Complete role" action, which only needs to know
+// who to mark complete, not the full applicant/match profile.
+export async function fetchAcceptedApplicantForOpportunity(opportunityId) {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('id, student_id, status')
+    .eq('opportunity_id', opportunityId)
+    .in('status', ['accepted', 'completed'])
+    .order('submitted_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  if (!data?.length) return null
+
+  const row = data[0]
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('id, name')
+    .eq('id', row.student_id)
+    .maybeSingle()
+
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    name: userRow?.name ?? 'Applicant',
+    status: row.status,
+  }
 }
 
 // Helper: Compute stats from applicants array

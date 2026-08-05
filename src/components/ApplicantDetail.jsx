@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Calendar, CheckCircle2, UserRound, ArrowRight,
-  X, Send, RotateCcw, Loader, Link2, Sparkles, MapPin,
+  Calendar, CheckCircle2, UserRound,
+  X, Send, RotateCcw, Loader, MapPin,
+  GraduationCap, ExternalLink, Briefcase,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { sendInterviewMessage } from '../services/messages'
@@ -36,31 +38,15 @@ function skillName(skill) {
   return typeof skill === 'string' ? skill : (skill?.name ?? '')
 }
 
-function MatchRing({ score }) {
-  const r = 24, circ = 2 * Math.PI * r
-  const color = score >= 90 ? '#188038' : '#1A73E8'
-  return (
-    <svg width="58" height="58" viewBox="0 0 58 58" aria-label={`${score}% match`}>
-      <circle cx="29" cy="29" r={r} fill="none" stroke="#F1F3F4" strokeWidth="4"/>
-      <motion.circle cx="29" cy="29" r={r} fill="none"
-        stroke={color} strokeWidth="4" strokeDasharray={circ}
-        strokeLinecap="round" transform="rotate(-90 29 29)"
-        initial={{ strokeDashoffset: circ }}
-        animate={{ strokeDashoffset: circ * (1 - score / 100) }}
-        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}/>
-      <text x="29" y="29" textAnchor="middle" dominantBaseline="central"
-        fontSize="12" fontWeight="600" fill="#202124">{score}%</text>
-    </svg>
-  )
-}
-
+// Status carries the one deliberate accent color in the header — everything
+// else in this component is neutral gray/white/blue-link, on purpose.
 const STATUS_CONFIG = {
-  new:         { label: 'New',         color: 'text-[#1A73E8]', bg: 'bg-[#E8F0FE]' },
-  shortlisted: { label: 'Shortlisted', color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
-  interview:   { label: 'Interview',   color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
-  accepted:    { label: 'Accepted',    color: 'text-[#188038]', bg: 'bg-[#E6F4EA]' },
-  completed:   { label: 'Completed',   color: 'text-[#1A73E8]', bg: 'bg-[#E8F0FE]' },
-  rejected:    { label: 'Rejected',    color: 'text-[#5F6368]', bg: 'bg-[#F1F3F4]' },
+  new:         { label: 'New',         hex: '#1A73E8' },
+  shortlisted: { label: 'Shortlisted', hex: '#5F6368' },
+  interview:   { label: 'Interview',   hex: '#188038' },
+  accepted:    { label: 'Accepted',    hex: '#188038' },
+  completed:   { label: 'Completed',   hex: '#1A73E8' },
+  rejected:    { label: 'Rejected',    hex: '#5F6368' },
 }
 
 // Plain uppercase section label — matches the Opportunity details box's "Role overview" / "Skills" style
@@ -72,11 +58,10 @@ function SectionLabel({ children }) {
   )
 }
 
-
-function fitLabel(score) {
-  if (score >= 80) return { text: 'Strong fit', color: '#188038' }
-  if (score >= 60) return { text: 'Good fit', color: '#1A73E8' }
-  return { text: 'Possible fit', color: '#5F6368' }
+function fitText(score) {
+  if (score >= 80) return 'Strong fit'
+  if (score >= 60) return 'Good fit'
+  return 'Possible fit'
 }
 
 function buildInviteMessage(applicant) {
@@ -191,6 +176,48 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
   )
 }
 
+// A row: small muted label to the left, chips flowing freely to the right —
+// used identically for Skills and Languages so the two read as one system.
+function ChipRow({ label, items }) {
+  return (
+    <div>
+      <p className="text-[0.76rem] font-medium text-[#9AA0A6]">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {items.map(item => (
+          <span
+            key={item}
+            className="rounded-full border border-[#E8EAED] px-3 py-1 text-[0.8rem] text-[#3C4043]"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// A single Education / Project row — icon, title, subtitle, no card chrome.
+function InfoRow({ icon: Icon, title, subtitle, tag, link, description }) {
+  return (
+    <div className="flex gap-3.5">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1F3F4] text-[#5F6368]">
+        <Icon size={16} strokeWidth={2}/>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[0.9rem] font-semibold text-[#202124]">{title}</p>
+        {subtitle && <p className="mt-0.5 text-[0.82rem] text-[#5F6368]">{subtitle}</p>}
+        {tag && <p className="mt-1 text-[0.78rem] font-medium text-[#1A73E8]">{tag}</p>}
+        {link && (
+          <a href={link} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-[0.82rem] text-[#1A73E8] hover:underline">
+            View project →
+          </a>
+        )}
+        {description && <p className="mt-1.5 text-[0.8rem] leading-6 text-[#5F6368]">{description}</p>}
+      </div>
+    </div>
+  )
+}
+
 export default function ApplicantDetail({ applicant, loading, status, onStatusChange }) {
   const [inviteOpen, setInviteOpen] = useState(false)
 
@@ -200,15 +227,13 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
         className="min-h-[620px] rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
         <div className="flex items-start gap-4">
-          <div className="h-16 w-16 shrink-0 animate-pulse rounded-[1.35rem] bg-[#F1F3F4]" />
+          <div className="h-14 w-14 shrink-0 animate-pulse rounded-2xl bg-[#F1F3F4]" />
           <div className="min-w-0 flex-1">
-            <div className="h-[30px] w-36 animate-pulse rounded-full bg-[#E8F0FE]" />
-            <div className="mt-4 h-[58px] w-80 max-w-full animate-pulse rounded-2xl bg-[#F1F3F4]" />
-            <div className="mt-3 h-5 w-56 animate-pulse rounded-full bg-[#F1F4F9]" />
-            <div className="mt-2 h-4 w-44 animate-pulse rounded-full bg-[#F8FAFC]" />
+            <div className="h-7 w-48 animate-pulse rounded-full bg-[#F1F3F4]" />
+            <div className="mt-3 h-4 w-72 max-w-full animate-pulse rounded-full bg-[#F1F4F9]" />
           </div>
         </div>
-        <div className="mt-7 min-h-[380px] animate-pulse rounded-[28px] border border-[#E5EEFB] bg-[#FBFCFE]" />
+        <div className="mt-7 min-h-[380px] animate-pulse rounded-[24px] bg-[#FBFCFE]" />
       </div>
     )
   }
@@ -218,7 +243,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
       <div
         className="flex min-h-[620px] flex-col items-center justify-center rounded-[36px] border bg-white p-8 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
         style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F1F3F4] text-[#5F6368]">
           <UserRound size={24} strokeWidth={1.8} />
         </div>
         <h3 className="text-[1.05rem] font-semibold text-[#202124]">Select an applicant</h3>
@@ -231,206 +256,140 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
 
   const st = STATUS_CONFIG[status] ?? STATUS_CONFIG.new
   const skills = (applicant.skills || []).map(skillName).filter(Boolean)
-  const fit = fitLabel(applicant.match ?? 0)
-  const isAccepted = status === 'accepted' || status === 'completed'
+  const divider = { borderColor: 'rgba(0,0,0,0.06)' }
 
   return (
     <div
-      className="rounded-[36px] border p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-      style={{
-        background: isAccepted ? 'linear-gradient(180deg, #F4FBF7 0%, #FFFFFF 38%)' : '#FFFFFF',
-        borderColor: isAccepted ? 'rgba(24,128,56,0.18)' : 'rgba(26,115,232,0.10)',
-      }}>
+      className="rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
 
-      {/* Identity header — pill badge, big name, status + match ring */}
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-        <div className="flex min-w-0 max-w-4xl items-start gap-4">
-          <GradientAvatar name={applicant.name} size={64} radius="1.35rem" className="shrink-0 shadow-sm ring-2 ring-white"/>
-          <div className="min-w-0">
-            <div
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold"
-              style={{
-                background: isAccepted ? 'rgba(24,128,56,0.10)' : '#E8F0FE',
-                color: isAccepted ? '#188038' : '#1A73E8',
-              }}>
-              <Sparkles size={13} />
-              {isAccepted ? 'Accepted applicant' : 'Student details'}
-            </div>
-            <h2 className="mt-4 text-[2rem] font-semibold tracking-[-0.04em] text-[#202124] sm:text-[2.4rem]">
+      {/* Header — name + one quiet metadata line, one deliberate accent color */}
+      <div className="flex items-start gap-4">
+        <GradientAvatar name={applicant.name} size={56} radius="1.2rem" className="shrink-0"/>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-[#202124]">
               {applicant.name}
             </h2>
-            <p className="mt-2 max-w-2xl text-[0.9rem] leading-6 text-[#5F6368]">
-              {applicant.field}{applicant.uni ? ` · ${applicant.uni}` : ''}
-              {applicant.opportunityTitle ? ` · ${applicant.opportunityTitle}` : ''}
-            </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#9AA0A6]">
-              <span className="flex items-center gap-1.5">
-                <Calendar size={12} strokeWidth={2}/>
-                Applied {formatDate(applicant.submittedAt) || '—'}
+            <Link
+              to={`/student-profile/${applicant.studentId}?backTo=applicants&opportunity=${applicant.opportunityId}`}
+              className="inline-flex shrink-0 items-center gap-1 text-[0.8rem] font-medium text-[#1A73E8] hover:underline">
+              View full profile
+              <ExternalLink size={12} strokeWidth={2}/>
+            </Link>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[0.84rem] font-semibold" style={{ color: st.hex }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: st.hex }} />
+              {st.label}
+            </span>
+            <span className="text-[0.84rem] text-[#5F6368]">
+              {applicant.match}% match · {fitText(applicant.match ?? 0)}
+            </span>
+            {applicant.field && (
+              <span className="text-[0.84rem] text-[#5F6368]">{applicant.field}</span>
+            )}
+            {applicant.uni && (
+              <span className="inline-flex items-center gap-1 text-[0.84rem] text-[#5F6368]">
+                <GraduationCap size={13} strokeWidth={2}/>
+                {applicant.uni}
               </span>
-              {applicant.studentLocation && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={12} strokeWidth={2}/>
-                  {applicant.studentLocation}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4 self-start">
-          <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-[0.78rem] font-semibold ${st.bg} ${st.color}`}>
-            {st.label}
-          </span>
-          <div className="flex shrink-0 flex-col items-center gap-1">
-            <MatchRing score={applicant.match}/>
-            <span className="text-[0.76rem] font-semibold" style={{ color: fit.color }}>{fit.text}</span>
+            )}
+            {applicant.studentLocation && (
+              <span className="inline-flex items-center gap-1 text-[0.84rem] text-[#5F6368]">
+                <MapPin size={13} strokeWidth={2}/>
+                {applicant.studentLocation}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 text-[0.84rem] text-[#5F6368]">
+              <Calendar size={13} strokeWidth={2}/>
+              Applied {formatDate(applicant.submittedAt) || '—'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Details card — tile grid + sectioned content, same shell as Opportunity details */}
-      <div className="mt-7 rounded-[28px] border bg-white p-6" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-        <div className="grid gap-6">
-          {/* About */}
-          {applicant.bio && (
-            <div>
-              <SectionLabel>About</SectionLabel>
-              <p className="mt-3 text-[0.94rem] leading-8 text-[#5F6368]">
-                {applicant.bio}
-              </p>
-            </div>
-          )}
-
-          {/* Skills & languages — plain flowing text, same quiet register as About; a divider separates the two */}
-          {(skills.length > 0 || applicant.languages?.length > 0) && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <SectionLabel>Skills</SectionLabel>
-              <div className="mt-3 flex flex-col gap-3.5">
-                {groupSkills(applicant.skills).map(({ cat, items }) => (
-                  <div key={cat.cat}>
-                    <p className="text-[0.85rem] font-semibold text-[#202124]">{cat.cat}</p>
-                    <p className="mt-1 text-[0.94rem] leading-7 text-[#5F6368]">
-                      {items.map(item => item.name).join(', ')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {applicant.languages?.length > 0 && (
-                <div className="mt-4 border-t pt-4" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-                  <p className="text-[0.85rem] font-semibold text-[#202124]">Languages</p>
-                  <p className="mt-1 text-[0.94rem] leading-7 text-[#5F6368]">
-                    {applicant.languages.join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Experience & Goals — side by side */}
-          {(applicant.experience || applicant.goals) && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {applicant.experience && (
-                  <div>
-                    <SectionLabel>Experience</SectionLabel>
-                    <p className="mt-3 whitespace-pre-line text-[0.88rem] leading-7 text-[#5F6368]">
-                      {applicant.experience}
-                    </p>
-                  </div>
-                )}
-                {applicant.goals && (
-                  <div>
-                    <SectionLabel>Goals</SectionLabel>
-                    <p className="mt-3 whitespace-pre-line text-[0.88rem] leading-7 text-[#5F6368]">
-                      {applicant.goals}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Interests */}
-          {applicant.interests?.length > 0 && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <SectionLabel>Interests</SectionLabel>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {applicant.interests.map(interest => (
-                  <span
-                    key={interest}
-                    className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] text-[#5F6368]"
-                  >
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Links — email intentionally omitted; NGOs reach students through the platform, not directly */}
-          {Object.values(applicant.links || {}).some(Boolean) && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <SectionLabel>Links</SectionLabel>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {Object.entries(applicant.links || {}).map(([label, href]) =>
-                  href ? (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F0FE] px-3.5 py-1.5 text-[0.8rem] font-medium capitalize text-[#1A73E8] transition-all hover:-translate-y-0.5 hover:bg-[#D8E7FE]"
-                    >
-                      <Link2 size={13} strokeWidth={2} />
-                      {label}
-                    </a>
-                  ) : null
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Application message — in the student's voice, chat-style */}
-          {applicant.message && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <SectionLabel>Application message</SectionLabel>
-              <div className="mt-3 flex items-start gap-2.5">
-                <GradientAvatar name={applicant.name} size={28} radius="0.7rem" className="mt-0.5 shrink-0"/>
-                <div className="flex-1 rounded-2xl rounded-tl-md bg-[#F8F9FA] px-4 py-3.5">
-                  <p className="whitespace-pre-line text-[0.88rem] leading-7 text-[#3C4043]">
-                    {applicant.message}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Why they match — green callout, the positive signal */}
-          {applicant.matchReasons?.length > 0 && (
-            <div className="border-t pt-5" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <div className="rounded-[18px] border px-4 py-4" style={{ borderColor: 'rgba(24,128,56,0.16)', background: '#F7FCF9' }}>
-                <SectionLabel>Why they match</SectionLabel>
-                <div className="mt-3 flex flex-col gap-2.5">
-                  {applicant.matchReasons.map((r, i) => (
-                    <div key={i} className="flex items-start gap-2.5 text-[0.85rem] leading-6 text-[#3C4043]">
-                      <CheckCircle2 size={15} strokeWidth={2} className="mt-0.5 shrink-0 text-[#188038]"/>
-                      <span>{formatMatchReason(r)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Skills & Languages */}
+      <div className="mt-8 flex flex-col gap-5 border-t pt-6" style={divider}>
+        <SectionLabel>Skills</SectionLabel>
+        {skills.length > 0 ? (
+          <div className="-mt-2 flex flex-col gap-5">
+            {groupSkills(applicant.skills).map(({ cat, items }) => (
+              <ChipRow key={cat.cat} label={cat.cat} items={items.map(i => i.name)} />
+            ))}
+            {applicant.languages?.length > 0 && (
+              <ChipRow label="Languages" items={applicant.languages} />
+            )}
+          </div>
+        ) : (
+          <p className="-mt-2 text-[0.86rem] text-[#9AA0A6]">No skills added yet.</p>
+        )}
       </div>
+
+      {/* Education */}
+      <div className="mt-7 border-t pt-6" style={divider}>
+        <SectionLabel>Education</SectionLabel>
+        {applicant.educations?.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-4">
+            {applicant.educations.map((edu, i) => (
+              <InfoRow
+                key={i}
+                icon={GraduationCap}
+                title={edu.field || 'Education'}
+                subtitle={edu.university || 'School not set'}
+                tag={(edu.degreeType || edu.isCurrent) && [edu.degreeType, edu.isCurrent ? 'Current' : ''].filter(Boolean).join(' · ')}
+                description={edu.description}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-[0.86rem] text-[#9AA0A6]">No education added yet.</p>
+        )}
+      </div>
+
+      {/* Projects — don't persist to the database anywhere in the app yet
+          (a pre-existing gap, not specific to this page), so this shows
+          empty until that's fixed. */}
+      <div className="mt-7 border-t pt-6" style={divider}>
+        <SectionLabel>Projects</SectionLabel>
+        {applicant.projects?.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-4">
+            {applicant.projects.map((project, i) => (
+              <InfoRow
+                key={i}
+                icon={Briefcase}
+                title={project.title || 'Project'}
+                link={project.link}
+                description={project.description}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-[0.86rem] text-[#9AA0A6]">No projects added yet.</p>
+        )}
+      </div>
+
+      {/* Why they match — text and a single accent icon, no colored fill */}
+      {applicant.matchReasons?.length > 0 && (
+        <div className="mt-7 border-t pt-6" style={divider}>
+          <SectionLabel>Why they match</SectionLabel>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {applicant.matchReasons.map((r, i) => (
+              <div key={i} className="flex items-start gap-2.5 text-[0.86rem] leading-6 text-[#3C4043]">
+                <CheckCircle2 size={15} strokeWidth={2} className="mt-0.5 shrink-0 text-[#188038]"/>
+                <span>{formatMatchReason(r)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Footer actions — hiring flow: reject | step 1 interview → step 2 accept */}
-      <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-6" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t pt-6" style={divider}>
         <button
           onClick={() => onStatusChange(status === 'rejected' ? 'new' : 'rejected')}
-          className={`h-10 rounded-full px-5 text-[0.85rem] font-medium transition-colors ${
+          className={`h-9 rounded-full px-4 text-[0.82rem] font-medium transition-colors ${
             status === 'rejected'
               ? 'text-[#5F6368] hover:bg-[#F1F3F4]'
               : 'text-[#D93025] hover:bg-[#FCE8E6]'
@@ -438,54 +397,52 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
           {status === 'rejected' ? 'Undo reject' : 'Reject'}
         </button>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Step 1 — interview */}
           {(status === 'interview' || status === 'accepted' || status === 'completed') ? (
             <button
               onClick={() => setInviteOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DADCE0] bg-white px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
-              <CheckCircle2 size={15} strokeWidth={2}/> Interview sent
+              className="h-9 rounded-full border border-[#DADCE0] px-4 text-[0.82rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+              Interview sent
             </button>
           ) : (
             <button
               onClick={() => setInviteOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-5 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC]">
-              <Calendar size={15} strokeWidth={2}/> Move to interview
+              className="h-9 rounded-full bg-[#1A73E8] px-4 text-[0.82rem] font-medium text-white transition-colors hover:bg-[#1765CC]">
+              Move to interview
             </button>
           )}
 
-          <ArrowRight size={15} className="shrink-0 text-[#9AA0A6]"/>
-
           {/* Step 2 — accept */}
           {(status === 'accepted' || status === 'completed') ? (
-            <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E6F4EA] px-5 text-[0.85rem] font-medium text-[#188038]">
-              <CheckCircle2 size={15} strokeWidth={2}/> Accepted
+            <span className="inline-flex h-9 items-center rounded-full bg-[#E6F4EA] px-4 text-[0.82rem] font-medium text-[#188038]">
+              Accepted
             </span>
           ) : (
             <button
               onClick={() => onStatusChange('accepted')}
-              className={`inline-flex h-10 items-center gap-2 rounded-full px-5 text-[0.85rem] font-medium transition-colors ${
+              className={`h-9 rounded-full px-4 text-[0.82rem] font-medium transition-colors ${
                 status === 'interview'
                   ? 'bg-[#188038] text-white hover:bg-[#137333]'
-                  : 'border border-[#DADCE0] bg-white text-[#5F6368] hover:bg-[#F8F9FA] hover:text-[#188038]'
+                  : 'border border-[#DADCE0] text-[#5F6368] hover:bg-[#F8F9FA]'
               }`}>
-              <CheckCircle2 size={15} strokeWidth={2}/> Accept
+              Accept
             </button>
           )}
 
-          {status === 'completed' ? (
-            <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E8F0FE] px-5 text-[0.85rem] font-medium text-[#1A73E8]">
-              <CheckCircle2 size={15} strokeWidth={2}/> Completed
+          {status === 'completed' && (
+            <span className="inline-flex h-9 items-center rounded-full bg-[#E8F0FE] px-4 text-[0.82rem] font-medium text-[#1A73E8]">
+              Completed
             </span>
-          ) : status === 'accepted' ? (
-            <button
-              onClick={() => onStatusChange('completed')}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-[#E8F0FE] px-5 text-[0.85rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#D2E3FC]">
-              <CheckCircle2 size={15} strokeWidth={2}/> Complete role
-            </button>
-          ) : null}
+          )}
         </div>
       </div>
+
+      {status === 'accepted' && (
+        <p className="mt-3 text-[0.78rem] text-[#9AA0A6]">
+          Once the role wraps up, mark it complete from the Opportunities page — that unlocks their certificate.
+        </p>
+      )}
 
       {/* Interview invitation modal */}
       <AnimatePresence>

@@ -1,23 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, Target, Zap, CheckCircle2, Rocket, Shield, X } from 'lucide-react'
+import { Building2, Target, Zap, Sparkles, CheckCircle2, Rocket, Shield, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { COUNTRIES } from '../utils/countries'
 import OnboardingLayout from '../components/Onboarding/OnboardingLayout'
 import FormCard from '../components/Onboarding/FormCard'
+import SkillPicker from '../components/SkillPicker'
 import SearchableSelect from '../components/Onboarding/SearchableSelect'
 import { TextInput, SelectInput, TextArea, ChipSelector, FormField } from '../components/Onboarding/FormInputs'
-import PhoneInput from '../components/Onboarding/PhoneInput'
 import { PrimaryButton, SecondaryButton } from '../components/Onboarding/Buttons'
 
+// The stepper only tracks the form steps — the final "Complete" screen is a
+// plain review/confirmation screen and isn't counted as a step in it.
 const STEPS = [
-  { id: 'organization', title: 'Organization', number: 1 },
-  { id: 'mission', title: 'Mission', number: 2 },
-  { id: 'focus', title: 'Focus Areas', number: 3 },
-  { id: 'verification', title: 'Verification', number: 4 },
-  { id: 'complete', title: 'Complete', number: 5 },
+  { id: 'organization', title: 'Organization' },
+  { id: 'mission', title: 'Mission' },
+  { id: 'focus', title: 'Focus Areas' },
+  { id: 'skills', title: 'Skills & Projects' },
+  { id: 'verification', title: 'Verification' },
 ]
+const COMPLETE_STEP = STEPS.length
 
 const CAUSES = [
   'Education', 'Youth Empowerment', 'Women Empowerment', 'Health',
@@ -49,7 +52,6 @@ export default function NGOOnboarding() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
-  const [newPreferredSkill, setNewPreferredSkill] = useState('')
   const [newProjectType, setNewProjectType] = useState('')
 
   const restoredRef = useRef(false)
@@ -80,18 +82,6 @@ export default function NGOOnboarding() {
     'Marketing Strategy',
     'Other',
   ]
-
-  const handleAddPreferredSkill = (skill) => {
-    const currentSkills = Array.isArray(data.preferredSkills) ? data.preferredSkills : []
-    if (!currentSkills.includes(skill)) {
-      update('preferredSkills', [...currentSkills, skill])
-    }
-  }
-
-  const handleRemovePreferredSkill = (skill) => {
-    const currentSkills = Array.isArray(data.preferredSkills) ? data.preferredSkills : []
-    update('preferredSkills', currentSkills.filter(s => s !== skill))
-  }
 
   const handleAddProjectType = (type) => {
     const currentTypes = Array.isArray(data.projectTypes) ? data.projectTypes : []
@@ -127,7 +117,7 @@ export default function NGOOnboarding() {
         const backup = JSON.parse(raw)
         if (backup.data && typeof backup.step === 'number' && hasDraftData(backup.data)) {
           setData(backup.data)
-          setStep(Math.min(backup.step, STEPS.length - 1))
+          setStep(Math.min(backup.step, COMPLETE_STEP))
         }
       }
     } catch {}
@@ -163,7 +153,7 @@ export default function NGOOnboarding() {
       console.log('Validation failed. Errors:', errors)
       return
     }
-    if (step < STEPS.length - 1) {
+    if (step < COMPLETE_STEP) {
       const nextStep = step + 1
       saveLocal(data, nextStep)
       setStep(nextStep)
@@ -304,40 +294,24 @@ export default function NGOOnboarding() {
                   error={errors.name}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <SearchableSelect
-                    label="Country"
-                    placeholder="Select your country"
-                    value={data.country || ''}
-                    onChange={(val) => update('country', val)}
-                    required
-                    error={errors.country}
-                    options={COUNTRIES.map(c => ({ ...c, value: c.name }))}
-                    formatOption={(opt) => opt.name}
-                    searchFields={['name']}
-                  />
-
-                  <TextInput
-                    label="City (optional)"
-                    placeholder="Enter your city"
-                    value={data.city || ''}
-                    onChange={(val) => update('city', val)}
-                  />
-                </div>
-
-                <PhoneInput
-                  label="Phone number"
-                  value={data.phone || ''}
-                  onChange={(val) => update('phone', val)}
+                <SearchableSelect
+                  label="Country"
+                  placeholder="Select your country"
+                  value={data.country || ''}
+                  onChange={(val) => update('country', val)}
                   required
+                  error={errors.country}
+                  options={COUNTRIES.map(c => ({ ...c, value: c.name }))}
+                  formatOption={(opt) => opt.name}
+                  searchFields={['name']}
                 />
 
-                <TextArea
-                  label="About your organization"
-                  placeholder="Describe your mission, who you serve, and how your organization operates."
-                  value={data.about || ''}
-                  onChange={(val) => update('about', val)}
-                  rows={4}
+                <SelectInput
+                  label="Organization size"
+                  placeholder="How many people work in your organization?"
+                  value={data.orgSize || ''}
+                  onChange={(val) => update('orgSize', val)}
+                  options={ORG_SIZES}
                 />
 
                 <div className="pt-4 border-t border-[#E6E8EF] flex items-center gap-2 text-xs text-[#4E6385]">
@@ -376,6 +350,14 @@ export default function NGOOnboarding() {
                 icon={Target}
               >
                 <TextArea
+                  label="About your organization"
+                  placeholder="Describe your mission, who you serve, and how your organization operates."
+                  value={data.about || ''}
+                  onChange={(val) => update('about', val)}
+                  rows={3}
+                />
+
+                <TextArea
                   label="Mission statement"
                   placeholder="What is your core mission and why does it matter?"
                   value={data.mission || ''}
@@ -389,22 +371,6 @@ export default function NGOOnboarding() {
                   value={data.communities || ''}
                   onChange={(val) => update('communities', val)}
                   rows={3}
-                />
-
-                <SelectInput
-                  label="Organization size"
-                  placeholder="How many people work in your organization?"
-                  value={data.orgSize || ''}
-                  onChange={(val) => update('orgSize', val)}
-                  options={ORG_SIZES}
-                />
-
-                <TextArea
-                  label="What help do you need?"
-                  placeholder="Be specific about the projects, skills, or support you're looking for."
-                  value={data.helpNeeded || ''}
-                  onChange={(val) => update('helpNeeded', val)}
-                  rows={4}
                 />
 
                 <div className="flex gap-3 pt-6">
@@ -433,6 +399,14 @@ export default function NGOOnboarding() {
                 subtitle="Select the causes and areas your organization impacts."
                 icon={Zap}
               >
+                <TextArea
+                  label="What help do you need?"
+                  placeholder="Be specific about the projects, skills, or support you're looking for."
+                  value={data.helpNeeded || ''}
+                  onChange={(val) => update('helpNeeded', val)}
+                  rows={4}
+                />
+
                 <ChipSelector
                   label="Causes you support"
                   options={CAUSES}
@@ -441,86 +415,53 @@ export default function NGOOnboarding() {
                   multi={true}
                 />
 
-                {/* Preferred Student Skills */}
+                <div className="flex gap-3 pt-6">
+                  <SecondaryButton onClick={back}>Back</SecondaryButton>
+                  <PrimaryButton onClick={next}>Continue</PrimaryButton>
+                </div>
+              </FormCard>
+            </div>
+          </div>
+        </motion.div>
+      </OnboardingLayout>
+    )
+  }
+
+  // Step 3: Skills & Projects
+  if (step === 3) {
+    return (
+      <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <div className="flex justify-center">
+            <div className="w-full max-w-5xl">
+              <FormCard
+                steps={STEPS}
+                currentStep={step}
+                title="What skills and projects are you looking for?"
+                subtitle="Tell us what kind of student support and project work you're hoping to find."
+                icon={Sparkles}
+              >
                 <div>
-                  <label className="text-xs font-semibold text-[#0B163F] block mb-2">Preferred student skills (select one or more)</label>
-                  {/* Display selected skills */}
-                  {Array.isArray(data.preferredSkills) && data.preferredSkills.length > 0 && (
-                    <div className="mb-3 p-3 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
-                      <div className="flex flex-wrap gap-2">
-                        {data.preferredSkills.map((skill, idx) => (
-                          <div key={idx} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
-                            <p className="text-xs font-semibold text-[#0B163F]">{skill}</p>
-                            <button onClick={() => handleRemovePreferredSkill(skill)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* Dropdown + custom input */}
-                  <div className="space-y-2">
-                    <select
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          if (e.target.value === 'other') {
-                            setNewPreferredSkill('')
-                          } else {
-                            handleAddPreferredSkill(e.target.value)
-                          }
-                          e.target.value = ''
-                        }
-                      }}
-                      className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
-                      <option value="">Select a skill...</option>
-                      {PREFERRED_SKILLS.map(skill => (
-                        <option key={skill} value={skill}>{skill}</option>
-                      ))}
-                      <option value="other">Other (type custom)</option>
-                    </select>
-                    {/* Custom input for "Other" */}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Type custom skill..."
-                        value={newPreferredSkill}
-                        onChange={(e) => setNewPreferredSkill(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && newPreferredSkill.trim()) {
-                            handleAddPreferredSkill(newPreferredSkill.trim())
-                            setNewPreferredSkill('')
-                          }
-                        }}
-                        className="flex-1 px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] placeholder-[#9CA3AF]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (newPreferredSkill.trim()) {
-                            handleAddPreferredSkill(newPreferredSkill.trim())
-                            setNewPreferredSkill('')
-                          }
-                        }}
-                        className="px-4 py-2.5 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs hover:shadow-sm transition-all"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
+                  <label className="text-xs font-semibold text-[#202124] block mb-2">Preferred student skills</label>
+                  <SkillPicker
+                    value={(Array.isArray(data.preferredSkills) ? data.preferredSkills : []).map(s => ({ name: s, level: '' }))}
+                    onChange={(v) => update('preferredSkills', v.map(s => s.name))}
+                    placeholder="Search skills… (e.g. Web Development, Grant Writing)"
+                    withLevel={false}
+                    accent="#1A73E8"
+                    extraSkills={PREFERRED_SKILLS}
+                  />
                 </div>
 
                 {/* Project Categories */}
                 <div>
-                  <label className="text-xs font-semibold text-[#0B163F] block mb-2">Project categories you offer (select one or more)</label>
-                  {/* Display selected project types */}
+                  <label className="text-xs font-semibold text-[#202124] block mb-2">Project categories you offer</label>
                   {Array.isArray(data.projectTypes) && data.projectTypes.length > 0 && (
-                    <div className="mb-3 p-3 rounded-2xl bg-[#FAF6EA] border border-[#E6E8EF]">
+                    <div className="mb-3 p-3 rounded-2xl bg-[#F8F9FB] border border-[#DADCE0]">
                       <div className="flex flex-wrap gap-2">
                         {data.projectTypes.map((type, idx) => (
-                          <div key={idx} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E6E8EF] hover:border-[#D4D8E0]">
-                            <p className="text-xs font-semibold text-[#0B163F]">{type}</p>
+                          <div key={idx} className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#DADCE0] hover:border-[#D4D8E0]">
+                            <p className="text-xs font-semibold text-[#202124]">{type}</p>
                             <button onClick={() => handleRemoveProjectType(type)} className="p-0.5 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
                               <X size={12} />
                             </button>
@@ -529,7 +470,6 @@ export default function NGOOnboarding() {
                       </div>
                     </div>
                   )}
-                  {/* Dropdown + custom input */}
                   <div className="space-y-2">
                     <select
                       onChange={(e) => {
@@ -542,15 +482,14 @@ export default function NGOOnboarding() {
                           e.target.value = ''
                         }
                       }}
-                      className="w-full px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] appearance-none cursor-pointer"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230B163F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
+                      className="w-full px-4 py-2.5 rounded-2xl text-xs border-2 border-[#DADCE0] outline-none focus:border-[#1A73E8] bg-white text-[#202124] appearance-none cursor-pointer"
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239CA3AF' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', paddingRight: '2.5rem' }}>
                       <option value="">Select a project type...</option>
                       {PROJECT_TYPES.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                       <option value="other">Other (type custom)</option>
                     </select>
-                    {/* Custom input for "Other" */}
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -563,7 +502,7 @@ export default function NGOOnboarding() {
                             setNewProjectType('')
                           }
                         }}
-                        className="flex-1 px-4 py-2.5 rounded-[14px] text-xs border-2 border-[#E6E8EF] outline-none focus:border-[#0B163F] bg-white text-[#0B163F] placeholder-[#9CA3AF]"
+                        className="flex-1 px-4 py-2.5 rounded-2xl text-xs border-2 border-[#DADCE0] outline-none focus:border-[#1A73E8] bg-white text-[#202124] placeholder-[#9CA3AF]"
                       />
                       <button
                         type="button"
@@ -573,7 +512,7 @@ export default function NGOOnboarding() {
                             setNewProjectType('')
                           }
                         }}
-                        className="px-4 py-2.5 rounded-[14px] bg-[#0B163F] text-white font-semibold text-xs hover:shadow-sm transition-all"
+                        className="px-4 py-2.5 rounded-2xl bg-[#1A73E8] text-white font-semibold text-xs hover:bg-[#1765CC] transition-all"
                       >
                         Add
                       </button>
@@ -593,8 +532,8 @@ export default function NGOOnboarding() {
     )
   }
 
-  // Step 3: Verification
-  if (step === 3) {
+  // Step 4: Verification
+  if (step === 4) {
     return (
       <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -662,161 +601,48 @@ export default function NGOOnboarding() {
     )
   }
 
-  // Step 4: Complete
-  if (step === 4) {
+  // Step 5: Complete
+  if (step === 5) {
     return (
       <OnboardingLayout showNavigation onExitOnboarding={handleExitOnboarding} onSwitchRole={handleSwitchRole} switchRoleLabel="Switch to Student instead">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <div className="flex justify-center">
-            <div className="w-full max-w-5xl">
-              <FormCard
-                steps={STEPS}
-                currentStep={step}
-                title="You're all set!"
-                subtitle="Review your profile and get started."
-                icon={Rocket}
-              >
-                <div className="space-y-3">
-                  {/* Organization */}
-                  <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                    <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Organization</p>
-                    <p className="text-[13px] font-semibold text-[#0B163F]">{data.name || 'Your organization'}</p>
-                  </div>
-
-                  {/* Location & Phone */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {data.city && (
-                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Location</p>
-                        <p className="text-[13px] font-semibold text-[#0B163F]">{data.city}</p>
-                      </div>
-                    )}
-                    {data.phone && (
-                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Phone</p>
-                        <p className="text-[13px] font-semibold text-[#0B163F]">{data.phone}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Mission */}
-                  {data.mission && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Mission Statement</p>
-                      <p className="text-[13px] text-[#0B163F]">{data.mission}</p>
-                    </div>
-                  )}
-
-                  {/* Communities */}
-                  {data.communities && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Communities Served</p>
-                      <p className="text-[13px] text-[#0B163F]">{data.communities}</p>
-                    </div>
-                  )}
-
-                  {/* Organization Size */}
-                  {data.orgSize && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Organization Size</p>
-                      <p className="text-[13px] font-semibold text-[#0B163F]">{data.orgSize}</p>
-                    </div>
-                  )}
-
-                  {/* Help Needed */}
-                  {data.helpNeeded && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">What We Need Help With</p>
-                      <p className="text-[13px] text-[#0B163F]">{data.helpNeeded}</p>
-                    </div>
-                  )}
-
-                  {/* Focus Areas */}
-                  {data.causes?.length > 0 && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Focus Areas</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.causes.map(c => (
-                          <span key={c} className="px-3 py-1.5 bg-[#EC489320] rounded-full text-[11px] font-semibold text-[#EC4899]">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Preferred Skills */}
-                  {Array.isArray(data.preferredSkills) && data.preferredSkills.length > 0 && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Preferred Student Skills</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.preferredSkills.map((skill, i) => (
-                          <span key={i} className="px-3 py-1.5 bg-[#3B82F620] rounded-full text-[11px] font-semibold text-[#3B82F6]">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Project Types */}
-                  {Array.isArray(data.projectTypes) && data.projectTypes.length > 0 && (
-                    <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                      <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-2">Project Categories</p>
-                      <div className="flex flex-wrap gap-2">
-                        {data.projectTypes.map((type, i) => (
-                          <span key={i} className="px-3 py-1.5 bg-[#10B98120] rounded-full text-[11px] font-semibold text-[#10B981]">
-                            {type}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Links */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {data.website && (
-                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Website</p>
-                        <p className="text-[11px] text-[#3B82F6] truncate">{data.website}</p>
-                      </div>
-                    )}
-                    {data.instagram && (
-                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Instagram</p>
-                        <p className="text-[11px] text-[#3B82F6] truncate">{data.instagram}</p>
-                      </div>
-                    )}
-                    {data.twitter && (
-                      <div className="p-4 rounded-xl bg-white border border-[rgba(13,24,61,0.08)]">
-                        <p className="text-[10px] font-semibold text-[#4B6382] uppercase tracking-wider mb-1.5">Twitter</p>
-                        <p className="text-[11px] text-[#3B82F6] truncate">{data.twitter}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-[#E6E8EF]">
-                  <p className="text-sm text-[#4E6385]">
-                    <strong className="text-[#0B163F]">What happens next?</strong> You can now post projects, manage applications, and start collaborating with talented students.
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-6">
-                  <SecondaryButton onClick={back}>Back</SecondaryButton>
-                  <PrimaryButton
-                    onClick={next}
-                    loading={submitting}
+            <div className="w-full max-w-md">
+              <FormCard>
+                <div className="flex flex-col items-center py-6 text-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.05 }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                    style={{ background: '#E8F0FE' }}
                   >
-                    Create profile
-                  </PrimaryButton>
-                </div>
+                    <Rocket size={34} className="text-[#1A73E8]" strokeWidth={1.5} />
+                  </motion.div>
 
-                {submitError && (
-                  <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-2xl border border-[#FFCCC7] font-medium">
-                    {submitError}
-                  </motion.p>
-                )}
+                  <h2 className="text-2xl font-semibold text-[#202124] mb-2">
+                    You're all set!
+                  </h2>
+                  <p className="max-w-sm text-sm leading-relaxed text-[#5F6368]">
+                    You'll be able to post projects and start matching with students right away.
+                  </p>
+
+                  <div className="mt-8 flex gap-3">
+                    <SecondaryButton onClick={back}>Back</SecondaryButton>
+                    <PrimaryButton
+                      onClick={next}
+                      loading={submitting}
+                    >
+                      Create profile
+                    </PrimaryButton>
+                  </div>
+
+                  {submitError && (
+                    <motion.p className="text-sm text-[#FF4D4F] mt-4 p-3 bg-[#FFF1F0] rounded-2xl border border-[#FFCCC7] font-medium">
+                      {submitError}
+                    </motion.p>
+                  )}
+                </div>
               </FormCard>
             </div>
           </div>
