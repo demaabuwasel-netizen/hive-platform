@@ -22,6 +22,16 @@ export function isCertificateUnlocked(app) {
 function dbToApp(row) {
   if (!row) return null
   const certificateUnlocked = isCertificateUnlocked(row)
+  // Once a role is accepted/completed it's no longer 'active', and RLS only
+  // lets a non-owner student read an opportunity while it's active — so the
+  // joined `opportunities` fields below go null right when they matter most
+  // (the accepted student's own view, their certificate). roleSnapshot is a
+  // copy of title/category/location taken at accept/complete time (by the
+  // NGO, who can always read their own opportunity) and stashed on the
+  // application row itself, so it's always available here without needing
+  // any Supabase RLS change.
+  const roleSnapshot = row.links?.roleSnapshot
+  const opportunitySnapshot = toRoleSnapshot(row.opportunities)
   return {
     id:            row.id,
     studentId:     row.student_id,
@@ -33,16 +43,116 @@ function dbToApp(row) {
     status:        certificateUnlocked ? 'completed' : row.status,
     statusLabel:   certificateUnlocked ? STATUS_LABEL.completed : (STATUS_LABEL[row.status] ?? row.status),
     submittedAt:   row.submitted_at,
-    // joined fields (when fetched with selects)
+    // joined fields (when fetched with selects), falling back to the snapshot
     ngoName:       row.opportunities?.org_name ?? row.ngo_profiles?.name ?? null,
-    role:          row.opportunities?.title    ?? null,
-    location:      row.opportunities?.location ?? row.ngo_profiles?.location ?? null,
-    category:      row.opportunities?.category ?? null,
+    role:          row.opportunities?.title    ?? roleSnapshot?.title    ?? null,
+    location:      row.opportunities?.location ?? roleSnapshot?.location ?? row.ngo_profiles?.location ?? null,
+    category:      row.opportunities?.category ?? roleSnapshot?.category ?? null,
+    opportunity:   opportunitySnapshot,
   }
 }
 
-// Submit a new application
-export async function submitApplication({ studentId, opportunityId, ngoId, message, availability, links }) {
+// Full set of opportunity fields the student-facing detail views need —
+// shared by every place that builds or reads a roleSnapshot below.
+const SNAPSHOT_OPP_COLUMNS = 'title, category, field, location, description, mission_impact, skills, languages, work_mode, weekly_hours, duration, org_name'
+
+// Bump this whenever the fields captured in a roleSnapshot change. Without
+// it, an application that already has an *older, narrower* snapshot (e.g.
+// just title/category/location, from before description/skills/work_mode
+// were added) looks "already snapshotted" and the self-heal below would skip
+// it forever, leaving it permanently stuck with incomplete detail.
+const ROLE_SNAPSHOT_VERSION = 2
+
+function toRoleSnapshot(opp) {
+  if (!opp?.title) return null
+  return {
+    v:              ROLE_SNAPSHOT_VERSION,
+    title:          opp.title,
+    category:       opp.category       ?? null,
+    field:          opp.field          ?? null,
+    location:       opp.location       ?? null,
+    description:    opp.description    ?? null,
+    mission_impact: opp.mission_impact ?? null,
+    skills:         opp.skills         ?? [],
+    languages:      opp.languages      ?? [],
+    work_mode:      opp.work_mode      ?? null,
+    weekly_hours:   opp.weekly_hours   ?? null,
+    duration:       opp.duration       ?? null,
+    org_name:       opp.org_name       ?? null,
+  }
+}
+
+function isStaleRoleSnapshot(snapshot) {
+  return !snapshot?.title || snapshot.v !== ROLE_SNAPSHOT_VERSION
+}
+
+// Best-effort: snapshot an opportunity's full detail fields so they can be
+// stashed onto an application's own `links`. Called with the NGO's session,
+// which can always read an opportunity it owns (ngo_id = auth.uid()) no
+// matter its status — unlike a student, who RLS only lets read it while
+// 'active'. Returns null (never throws) so callers can treat this as
+// optional polish, not a hard requirement.
+async function snapshotOpportunityRole(opportunityId) {
+  if (!opportunityId) return null
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select(SNAPSHOT_OPP_COLUMNS)
+    .eq('id', opportunityId)
+    .maybeSingle()
+  if (error) return null
+  return toRoleSnapshot(data)
+}
+
+// Self-heals applications submitted before roleSnapshot existed, so their
+// title/detail view (and certificate, if applicable) don't stay stuck
+// missing forever once the opportunity itself is no longer 'active'. Uses
+// the opportunity fields already sitting in `row.opportunities` from the
+// NGO-side fetch that's calling this — no extra read needed, since the NGO
+// can always see their own opportunity regardless of its status.
+// Fire-and-forget: runs quietly in the background and never throws into the
+// caller, so it can be dropped into any NGO applicant list fetch for free.
+function backfillMissingRoleSnapshots(rows) {
+  (rows ?? [])
+    .filter(row => isStaleRoleSnapshot(row.links?.roleSnapshot))
+    .filter(row => Boolean(row.opportunities?.title))
+    .forEach(row => {
+      const roleSnapshot = toRoleSnapshot(row.opportunities)
+      if (!roleSnapshot) return
+      supabase
+        .from('applications')
+        .update({ links: { ...(row.links ?? {}), roleSnapshot } })
+        .eq('id', row.id)
+        .then(({ error }) => {
+          if (error) console.warn('[applications] roleSnapshot backfill failed:', error.message)
+        })
+    })
+}
+
+// Submit a new application.
+// opportunitySnapshot (optional): the opportunity object the student was
+// already looking at when they applied (camelCase, from services/opportunities'
+// dbToOpp — e.g. { title, category, workMode, weeklyHours, ... }). Captured
+// into `links.roleSnapshot` right now, while the opportunity is guaranteed to
+// still be 'active' and readable — this is what keeps this application's own
+// detail view (title, description, skills, etc.) working later even after
+// the opportunity itself goes paused/closed and RLS would otherwise hide it
+// from this student's join. No Supabase changes needed.
+export async function submitApplication({ studentId, opportunityId, ngoId, message, availability, links, opportunitySnapshot }) {
+  const roleSnapshot = opportunitySnapshot ? toRoleSnapshot({
+    title:          opportunitySnapshot.title,
+    category:       opportunitySnapshot.category,
+    field:          opportunitySnapshot.field,
+    location:       opportunitySnapshot.location,
+    description:    opportunitySnapshot.description,
+    mission_impact: opportunitySnapshot.missionImpact,
+    skills:         opportunitySnapshot.skills,
+    languages:      opportunitySnapshot.languages,
+    work_mode:      opportunitySnapshot.workMode,
+    weekly_hours:   opportunitySnapshot.weeklyHours,
+    duration:       opportunitySnapshot.duration,
+    org_name:       opportunitySnapshot.orgName,
+  }) : null
+
   const { data, error } = await supabase
     .from('applications')
     .insert({
@@ -51,7 +161,7 @@ export async function submitApplication({ studentId, opportunityId, ngoId, messa
       ngo_id:         ngoId,
       message,
       availability,
-      links: links ?? {},
+      links: { ...(links ?? {}), ...(roleSnapshot ? { roleSnapshot } : {}) },
       status: 'submitted',
     })
     .select()
@@ -66,7 +176,7 @@ export async function fetchStudentApplications(studentId) {
     .from('applications')
     .select(`
       *,
-      opportunities (id, title, category, location, ngo_id)
+      opportunities (id, ngo_id, ${SNAPSHOT_OPP_COLUMNS})
     `)
     .eq('student_id', studentId)
     .order('submitted_at', { ascending: false })
@@ -89,6 +199,11 @@ export async function fetchStudentApplications(studentId) {
     // this role — a plain "not selected" (rejected) application still shows
     // normally, same as before.
     .filter(row => !row.links?.roleFilledByOther)
+    // If the opportunity's title can't be read at all (RLS hides it once it's
+    // no longer active, or it's otherwise gone) AND there's no roleSnapshot
+    // fallback either, the UI has nothing real to show and would fall back
+    // to the literal word "Position" — hide those instead.
+    .filter(row => Boolean(row.opportunities?.title) || Boolean(row.links?.roleSnapshot?.title))
     .map(row => {
       const app = dbToApp(row)
       // Add NGO name from the map if not already there
@@ -137,9 +252,30 @@ export async function fetchNgoApplications(ngoId) {
 // NGO: update application status
 export async function updateApplicationStatus(applicationId, status) {
   const completedAt = status === 'completed' ? new Date().toISOString() : null
+
+  // Once a role is accepted/completed, the opportunity itself is usually no
+  // longer 'active' — snapshot its title/category/location onto this
+  // application's own `links` now, while the NGO can still read it (they own
+  // it). This is what keeps the student's own view — and their certificate —
+  // working afterward, without needing any Supabase RLS change.
+  let linksUpdate = null
+  if (status === 'accepted' || status === 'completed') {
+    const { data: existingRow } = await supabase
+      .from('applications')
+      .select('opportunity_id, links')
+      .eq('id', applicationId)
+      .maybeSingle()
+    const roleSnapshot = await snapshotOpportunityRole(existingRow?.opportunity_id)
+    if (roleSnapshot) linksUpdate = { ...(existingRow?.links ?? {}), roleSnapshot }
+  }
+
   const { data, error } = await supabase
     .from('applications')
-    .update({ status, updated_at: completedAt ?? new Date().toISOString() })
+    .update({
+      status,
+      updated_at: completedAt ?? new Date().toISOString(),
+      ...(linksUpdate ? { links: linksUpdate } : {}),
+    })
     .eq('id', applicationId)
     .select('id, status, links')
     .maybeSingle()
@@ -167,6 +303,7 @@ export async function updateApplicationStatus(applicationId, status) {
         certificateUnlockedAt: completedAt,
         certificateUnlocked: true,
         hiveCertificate: { unlockedAt: completedAt },
+        ...(linksUpdate?.roleSnapshot ? { roleSnapshot: linksUpdate.roleSnapshot } : {}),
       },
     })
     .eq('id', applicationId)
@@ -215,6 +352,10 @@ export async function markOtherApplicantsRoleFilled(opportunityId, keepApplicati
 
 export async function completeAcceptedApplicationsForOpportunity(opportunityId, ngoId) {
   const completedAt = new Date().toISOString()
+  // Snapshot the role's title/category/location once, up front, while the
+  // NGO can still read it — see snapshotOpportunityRole() above for why.
+  const roleSnapshot = await snapshotOpportunityRole(opportunityId)
+
   const { data, error } = await supabase
     .from('applications')
     .update({
@@ -224,6 +365,7 @@ export async function completeAcceptedApplicationsForOpportunity(opportunityId, 
         certificateUnlockedAt: completedAt,
         certificateUnlocked: true,
         hiveCertificate: { unlockedAt: completedAt },
+        ...(roleSnapshot ? { roleSnapshot } : {}),
       },
     })
     .eq('opportunity_id', opportunityId)
@@ -253,6 +395,7 @@ export async function completeAcceptedApplicationsForOpportunity(opportunityId, 
           certificateUnlockedAt: completedAt,
           certificateUnlocked: true,
           hiveCertificate: { unlockedAt: completedAt },
+          ...(roleSnapshot ? { roleSnapshot } : {}),
         },
       })
       .eq('id', row.id)
@@ -297,11 +440,16 @@ async function fetchStudentProfilesFor(studentIds) {
 export async function fetchNgoApplicants(ngoId) {
   const { data: apps, error } = await supabase
     .from('applications')
-    .select('*, opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field)')
+    .select('*, opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field, duration, org_name)')
     .eq('ngo_id', ngoId)
     .order('submitted_at', { ascending: false })
   if (error) throw new Error(error.message)
   if (!apps?.length) return []
+
+  // Quietly repair any accepted/completed application still missing its
+  // roleSnapshot (see backfillMissingRoleSnapshots for why) — this list
+  // already has everything needed, so it's free.
+  backfillMissingRoleSnapshots(apps)
 
   const studentIds = [...new Set(apps.map(a => a.student_id))]
 
@@ -453,7 +601,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
     .from('applications')
     .select(`
       *,
-      opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field)
+      opportunities(title, category, skills, location, description, mission_impact, work_mode, weekly_hours, languages, field, duration, org_name)
     `)
     .eq('opportunity_id', opportunityId)
     .eq('ngo_id', ngoId)
@@ -461,6 +609,11 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
 
   if (error) throw new Error(error.message)
   if (!apps?.length) return []
+
+  // Same quiet self-heal as fetchNgoApplicants — this is the fetch that runs
+  // whenever the NGO opens a specific role's applicant queue, so it's the
+  // most likely place to actually catch a stale accepted/completed row.
+  backfillMissingRoleSnapshots(apps)
 
   const studentIds = [...new Set(apps.map(a => a.student_id))]
 
@@ -538,6 +691,23 @@ export async function fetchAcceptedApplicantForOpportunity(opportunityId) {
   if (!data?.length) return null
 
   const row = data.find(isCertificateUnlocked) ?? data.find(app => app.status === 'completed') ?? data.find(app => app.status === 'accepted') ?? data[0]
+
+  // Quiet self-heal, same as the other NGO fetches — this fetch doesn't join
+  // opportunities, so it needs its own small read, but it only runs once for
+  // whichever applicant is actually shown on this "Complete role" panel.
+  if (isStaleRoleSnapshot(row.links?.roleSnapshot)) {
+    snapshotOpportunityRole(opportunityId).then(roleSnapshot => {
+      if (!roleSnapshot) return
+      supabase
+        .from('applications')
+        .update({ links: { ...(row.links ?? {}), roleSnapshot } })
+        .eq('id', row.id)
+        .then(({ error: updateError }) => {
+          if (updateError) console.warn('[applications] roleSnapshot backfill failed:', updateError.message)
+        })
+    })
+  }
+
   const { data: userRow } = await supabase
     .from('users')
     .select('id, name')

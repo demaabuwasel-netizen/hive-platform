@@ -324,6 +324,10 @@ function ApplyModal({ ngo, user, studentId, onClose }) {
         message,
         availability:  null,
         links:         {},
+        // Snapshot the role's details now, while it's guaranteed active and
+        // readable — keeps this application's detail view working later even
+        // if the role goes paused/closed.
+        opportunitySnapshot: ngo,
       })
     } catch (err) {
       console.error('Apply error:', err)

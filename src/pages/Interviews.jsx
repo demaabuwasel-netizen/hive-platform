@@ -314,6 +314,29 @@ function getStudentProfileSkills(profile = {}) {
   return []
 }
 
+// Builds a dbToOpp-shaped (camelCase) opportunity object out of the snapshot
+// saved on this application at apply/accept time — used when the live
+// opportunity can't be read (it's no longer 'active', so RLS hides it from
+// this student's fetch), so prep details still show the real role instead
+// of the generic placeholder copy below.
+function oppFromRoleSnapshot(snapshot) {
+  if (!snapshot?.title) return null
+  return {
+    title:         snapshot.title,
+    category:      snapshot.category ?? '',
+    field:         snapshot.field ?? '',
+    location:      snapshot.location ?? '',
+    description:   snapshot.description ?? '',
+    missionImpact: snapshot.mission_impact ?? '',
+    skills:        snapshot.skills ?? [],
+    languages:     snapshot.languages ?? [],
+    workMode:      snapshot.work_mode ?? '',
+    weeklyHours:   snapshot.weekly_hours ?? '',
+    duration:      snapshot.duration ?? '',
+    orgName:       snapshot.org_name ?? '',
+  }
+}
+
 function buildStudentRole(app, opportunity) {
   return {
     id: app?.id,
@@ -508,7 +531,7 @@ function StudentView() {
           nextApps.map(async app => {
             if (!app.opportunityId) return [app.id, null]
             const opportunity = await fetchOpportunity(app.opportunityId).catch(() => null)
-            return [app.id, opportunity]
+            return [app.id, opportunity ?? oppFromRoleSnapshot(app.links?.roleSnapshot)]
           })
         )
         setRoleDetails(Object.fromEntries(detailEntries))
@@ -786,36 +809,26 @@ function StudentView() {
               const role = buildStudentRole(app, roleDetails[app.id])
               const active = String(app.id) === String(selectedAppId)
               return (
-                <div
+                <button
                   key={app.id}
-                  className={`group w-full rounded-[22px] border px-4 py-3.5 transition-all ${
+                  onClick={() => selectRole(app.id)}
+                  className={`group w-full rounded-[22px] border px-4 py-3.5 text-left transition-all ${
                     active
                       ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
                       : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
                   }`}>
-                  <button onClick={() => selectRole(app.id)} className="w-full text-left">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                          {role.title}
-                        </p>
-                        <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
-                          {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
-                        </p>
-                      </div>
-                      <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {role.title}
+                      </p>
+                      <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
+                        {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                      </p>
                     </div>
-                  </button>
-                  <div className="mt-2.5 flex justify-end border-t pt-2" style={{ borderColor: 'rgba(26,115,232,0.08)' }}>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteApp(app.id) }}
-                      disabled={deletingAppId === app.id}
-                      className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-medium text-[#C5221F] transition-colors hover:bg-[#FCE8E6] disabled:opacity-50">
-                      <Trash2 size={12} />
-                      {deletingAppId === app.id ? 'Deleting…' : 'Delete'}
-                    </button>
+                    <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -995,7 +1008,14 @@ function StudentView() {
                 </motion.div>
               </AnimatePresence>
 
-                <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    onClick={() => handleDeleteApp(selectedApp.id)}
+                    disabled={deletingAppId === selectedApp.id}
+                    className="inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-[#C5221F] transition-colors hover:underline disabled:opacity-50">
+                    <Trash2 size={13} />
+                    {deletingAppId === selectedApp.id ? 'Deleting…' : 'Delete this application'}
+                  </button>
                   <button
                     onClick={openPractice}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">

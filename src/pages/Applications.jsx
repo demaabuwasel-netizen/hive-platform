@@ -16,6 +16,7 @@ import {
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchStudentApplications, deleteApplication } from '../services/applications'
+import { computeMatch } from '../services/matching'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 
@@ -39,6 +40,31 @@ function formatField(value, fallback = 'Not specified') {
   return String(value)
 }
 
+// Builds an opportunity-shaped object (matching a raw `opportunities` row)
+// out of the snapshot saved on this application at apply/accept time. Used
+// when the live opportunity can't be read anymore — e.g. it's no longer
+// active and RLS hides it from this student's join — so the detail panel
+// still has something real to show instead of an error.
+function oppFromRoleSnapshot(snapshot) {
+  if (!snapshot?.title) return null
+  return {
+    id:             snapshot.id             ?? null,
+    ngo_id:         snapshot.ngo_id         ?? null,
+    title:          snapshot.title,
+    category:       snapshot.category       ?? null,
+    field:          snapshot.field          ?? null,
+    location:       snapshot.location       ?? null,
+    description:    snapshot.description    ?? null,
+    mission_impact: snapshot.mission_impact ?? null,
+    skills:         snapshot.skills         ?? [],
+    languages:      snapshot.languages      ?? [],
+    work_mode:      snapshot.work_mode      ?? null,
+    weekly_hours:   snapshot.weekly_hours   ?? null,
+    duration:       snapshot.duration       ?? null,
+    org_name:       snapshot.org_name       ?? null,
+  }
+}
+
 function formatSkill(skill) {
   if (!skill) return ''
   if (typeof skill === 'string') {
@@ -59,7 +85,7 @@ function formatLanguage(language) {
 }
 
 export default function Applications() {
-  const { user } = useApp()
+  const { user, profile } = useApp()
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAppId, setSelectedAppId] = useState(null)
@@ -108,6 +134,10 @@ export default function Applications() {
     if (!selectedApp?.opportunityId) return
 
     let cancelled = false
+    const appOpportunity = oppFromRoleSnapshot(selectedApp.opportunity)
+    if (appOpportunity) {
+      setDetail({ id: selectedApp.opportunityId, data: appOpportunity, error: null })
+    }
 
     withTimeout(
       supabase
@@ -126,8 +156,19 @@ export default function Applications() {
         if (!cancelled) setDetail({ id: selectedApp.opportunityId, data, error: null })
       })
       .catch(err => {
-        console.error('[Applications] Failed to fetch opportunity:', err.message)
-        if (!cancelled) setDetail({ id: selectedApp.opportunityId, data: null, error: err.message })
+        // The live opportunity can be unreadable for a legitimate reason —
+        // it's no longer 'active' and RLS only lets a non-owner student read
+        // active ones. Fall back to the snapshot taken when this application
+        // was submitted/accepted instead of showing an error for something
+        // that isn't actually broken.
+        const fallback = appOpportunity || oppFromRoleSnapshot(selectedApp.links?.roleSnapshot)
+        if (cancelled) return
+        if (fallback) {
+          setDetail({ id: selectedApp.opportunityId, data: fallback, error: null })
+        } else {
+          console.error('[Applications] Failed to fetch opportunity:', err.message)
+          setDetail({ id: selectedApp.opportunityId, data: null, error: err.message })
+        }
       })
 
     return () => {
@@ -143,14 +184,29 @@ export default function Applications() {
   const StatusIcon = statusMeta?.icon
   const selectedNgoId = selectedOpp?.ngo_id || selectedOpp?.ngoId || selectedApp?.ngoId
   const selectedNgoName = selectedOpp?.org_name || selectedOpp?.orgName || selectedApp?.ngoName || 'Organization'
+  const selectedCategory = selectedOpp?.category || selectedOpp?.field || selectedApp?.category
+  const matchScore = selectedOpp ? computeMatch(profile, {
+    skills:        selectedOpp.skills        ?? [],
+    category:      selectedCategory          ?? '',
+    title:         selectedOpp.title         ?? '',
+    description:   selectedOpp.description   ?? '',
+    missionImpact: selectedOpp.mission_impact ?? '',
+    workMode:      selectedOpp.work_mode     ?? '',
+    weeklyHours:   selectedOpp.weekly_hours  ?? null,
+    languages:     selectedOpp.languages     ?? [],
+    field:         selectedOpp.field         ?? '',
+    location:      selectedOpp.location      ?? selectedApp?.location ?? '',
+  }).score : null
+  const overviewText = selectedApp && selectedOpp
+    ? (selectedOpp.description || selectedOpp.mission_impact || 'No role description is available for this opportunity.')
+    : ''
   const primaryDetails = selectedOpp ? [
-    { label: 'Location', value: formatField(selectedOpp.location), tint: '#E8F0FE', accent: '#1A73E8' },
-    { label: 'Category', value: formatField(selectedOpp.category || selectedOpp.field), tint: '#E6F4EA', accent: '#188038' },
+    { label: 'Match', value: matchScore != null ? `${matchScore}%` : '—', tint: '#E8F0FE', accent: '#1A73E8' },
+    { label: 'Category', value: formatField(selectedCategory), tint: '#E6F4EA', accent: '#188038' },
     { label: 'Work mode', value: formatField(selectedOpp.work_mode), tint: '#FEF7E0', accent: '#F29900' },
     { label: 'Hours/week', value: formatField(selectedOpp.weekly_hours), tint: '#F3E8FD', accent: '#A142F4' },
   ] : []
   const skillLabels = (selectedOpp?.skills || []).map(formatSkill).filter(Boolean)
-  const languageLabels = (selectedOpp?.languages || []).map(formatLanguage).filter(Boolean)
 
   return (
     <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
@@ -316,7 +372,7 @@ export default function Applications() {
                     <NoticeCard tone="error">Could not load the opportunity details.</NoticeCard>
                   ) : (
                     <>
-                      <div className="mb-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {primaryDetails.map(item => (
                           <MetricCard key={item.label} label={item.label} value={item.value} tint={item.tint} accent={item.accent} />
                         ))}
@@ -324,27 +380,13 @@ export default function Applications() {
 
                       <DetailSection title="Role overview">
                         <p className="max-w-4xl text-[1rem] leading-8 text-[#5F6368]">
-                          {selectedOpp?.description || selectedOpp?.mission_impact || 'No role description is available for this opportunity.'}
+                          {overviewText}
                         </p>
                       </DetailSection>
-
-                      {selectedOpp?.mission_impact && selectedOpp.mission_impact !== selectedOpp.description && (
-                        <DetailSection title="Mission impact">
-                          <p className="max-w-4xl text-[1rem] leading-8 text-[#5F6368]">
-                            {selectedOpp.mission_impact}
-                          </p>
-                        </DetailSection>
-                      )}
 
                       {skillLabels.length > 0 && (
                         <DetailSection title="Required skills">
                           <ChipList items={skillLabels} color="blue" />
-                        </DetailSection>
-                      )}
-
-                      {languageLabels.length > 0 && (
-                        <DetailSection title="Required languages">
-                          <ChipList items={languageLabels} color="green" />
                         </DetailSection>
                       )}
 
@@ -375,7 +417,7 @@ function NoticeCard({ children, tone = 'default' }) {
 function MetricCard({ label, value, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
     <div
-      className="group relative overflow-hidden rounded-[22px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_22px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(17,24,39,0.08)]"
+      className="group relative flex min-h-[104px] flex-col items-center justify-center overflow-hidden rounded-2xl border bg-white p-4 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_22px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(17,24,39,0.08)]"
       style={{ borderColor: `${accent}1F` }}
     >
       <span
@@ -399,10 +441,10 @@ function MetricCard({ label, value, tint = '#E8F0FE', accent = '#1A73E8' }) {
           opacity="0.82"
         />
       </svg>
-      <p className="relative z-10 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#202124]">
+      <p className="relative z-10 text-[0.7rem] font-bold uppercase tracking-[0.1em] text-[#0B0C0E]">
         {label}
       </p>
-      <p className="relative z-10 mt-2 truncate text-[1rem] font-semibold text-[#202124]">
+      <p className="relative z-10 mt-3 max-w-full truncate text-[0.95rem] font-semibold text-[#202124]">
         {value}
       </p>
     </div>

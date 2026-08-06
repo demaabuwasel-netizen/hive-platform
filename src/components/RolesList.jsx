@@ -12,12 +12,14 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="min-w-0 flex-1 overflow-x-auto">
+        {/* Wraps to new lines instead of scrolling sideways — every role stays
+            visible without needing a left/right scroll on the page. */}
+        <div className="min-w-0 flex-1">
           {loading ? (
-            <div className="flex items-center gap-2.5 pb-1">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="shrink-0 pl-2 pr-1 text-[0.82rem] font-semibold text-[#5F6368]">Pick a role</p>
               {[0, 1, 2].map(i => (
-                <div key={i} className="h-[72px] min-w-[220px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-white/80" />
+                <div key={i} className="h-[64px] w-[168px] animate-pulse rounded-[18px] border border-[#E5EEFB] bg-white/80" />
               ))}
             </div>
           ) : roles.length === 0 ? (
@@ -28,7 +30,7 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5 pb-1">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="shrink-0 pl-2 pr-1 text-[0.82rem] font-semibold text-[#5F6368]">Pick a role</p>
               {roles.map((role, i) => {
                 const isActive = String(selectedRoleId) === String(role.id)
@@ -42,7 +44,7 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.12 }}
                     onClick={() => onSelectRole(role.id)}
-                    className={`min-w-[220px] rounded-[22px] border px-4 py-3 text-left transition-all ${
+                    className={`w-[168px] shrink-0 rounded-[18px] border px-3.5 py-2.5 text-left transition-all ${
                       isActive
                         ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_24px_rgba(26,115,232,0.12)]'
                         : filled
@@ -50,27 +52,26 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
                           : 'border-[#E5EEFB] bg-white/65 hover:border-[#D7E6FF] hover:bg-white'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className={`truncate text-[0.92rem] font-semibold ${
+                    <div className="flex items-start justify-between gap-1.5">
+                      <p className={`truncate text-[0.82rem] font-semibold ${
                         filled && !isActive ? 'text-[#188038]' : 'text-[#202124]'
                       }`}>
                         {role.title}
                       </p>
                       {filled && (
-                        <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#188038]" />
+                        <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#188038]" />
                       )}
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      <p className="truncate text-[0.74rem] text-[#5F6368]">
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <p className="min-w-0 flex-1 truncate text-[0.68rem] text-[#5F6368]">
                         {role.category || role.field || role.workMode || 'General opportunity'}
                       </p>
-                      <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.68rem] font-semibold ${
+                      <span className={`inline-flex h-5 shrink-0 items-center gap-1 rounded-full px-1.5 text-[0.62rem] font-semibold ${
                         isActive ? 'bg-white text-[#1A73E8]' : 'bg-[#F1F4F9] text-[#5F6368]'
                       }`}>
-                        <Users size={10} />
+                        <Users size={9} />
                         {stats.total ?? 0}
-                        {(stats.new ?? 0) > 0 && <span className="text-[#1A73E8]">· {stats.new} new</span>}
                       </span>
                     </div>
                   </motion.button>
