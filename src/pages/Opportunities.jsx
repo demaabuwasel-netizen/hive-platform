@@ -18,7 +18,6 @@ import { fetchActiveOpportunities, fetchNgoOpportunities, deleteOpportunity } fr
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
-import ngoOpportunityImg from '../assets/ngo opportunities2.PNG'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
@@ -927,11 +926,55 @@ export default function Opportunities() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <img
-                      src={ngoOpportunityImg}
-                      alt=""
-                      className="pointer-events-none absolute -top-[9.5rem] left-[65%] z-0 w-full max-w-sm -translate-x-1/2 select-none"
-                    />
+                    <div className="pointer-events-none absolute -top-[10rem] right-[-1.5rem] z-0 hidden h-64 w-full max-w-[660px] select-none overflow-hidden xl:block" aria-hidden="true">
+                      <svg
+                        className="h-full w-full"
+                        viewBox="0 0 660 256"
+                        fill="none"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="opportunityWaveFill" x1="160" y1="18" x2="628" y2="218" gradientUnits="userSpaceOnUse">
+                            <stop offset="0" stopColor="#E8F0FE" stopOpacity="0" />
+                            <stop offset="0.32" stopColor="#D7E6FF" stopOpacity="0.82" />
+                            <stop offset="0.66" stopColor="#E6F4EA" stopOpacity="0.58" />
+                            <stop offset="1" stopColor="#F5F7FB" stopOpacity="0" />
+                          </linearGradient>
+                          <linearGradient id="opportunityWaveLine" x1="92" y1="0" x2="660" y2="0" gradientUnits="userSpaceOnUse">
+                            <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
+                            <stop offset="0.26" stopColor="#1A73E8" stopOpacity="0.24" />
+                            <stop offset="0.58" stopColor="#34A853" stopOpacity="0.18" />
+                            <stop offset="1" stopColor="#F29900" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M112 128 C196 70 250 82 328 122 C410 164 494 152 660 62 L660 256 L112 256 Z"
+                          fill="url(#opportunityWaveFill)"
+                          opacity="0.92"
+                        />
+                        <path
+                          d="M76 110 C168 42 238 58 320 100 C406 144 496 140 646 42"
+                          stroke="url(#opportunityWaveLine)"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          opacity="0.88"
+                        />
+                        <path
+                          d="M162 148 C246 92 304 112 372 146 C448 184 516 174 650 98"
+                          stroke="#1A73E8"
+                          strokeWidth="2.6"
+                          strokeLinecap="round"
+                          opacity="0.13"
+                        />
+                        <path
+                          d="M238 184 C304 146 358 164 418 190 C486 218 544 204 632 154"
+                          stroke="#34A853"
+                          strokeWidth="2.6"
+                          strokeLinecap="round"
+                          opacity="0.12"
+                        />
+                      </svg>
+                    </div>
                     <motion.div
                     key={selectedOpp.id}
                     initial={false}
