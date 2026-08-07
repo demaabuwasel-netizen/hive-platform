@@ -3,8 +3,19 @@ import {
   ArrowRight, Target, Users, Zap, BarChart3,
   Brain, BadgeCheck, MessageSquare, Sparkles,
 } from 'lucide-react'
-import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter } from '../components/MarketingUI'
+import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter, HiveWaves } from '../components/MarketingUI'
 import forNGOImage from '../assets/for ngo.png'
+
+// A slim, text-free strip so the wave never sits behind a heading or copy —
+// just a clean divider between sections. Green tone for the NGOs page, to
+// tell it apart from the blue used on the Students page.
+function WaveDivider() {
+  return (
+    <div className="relative h-20 overflow-hidden sm:h-28">
+      <HiveWaves className="top-0 h-full" tone="green" />
+    </div>
+  )
+}
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -106,7 +117,8 @@ export default function ForNGOs() {
 
       <main>
         <section className="relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(11,132,255,0.06),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.04),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(11,132,255,0.03),transparent_26%)]" />
+          {/* Green/amber glow, kept to the left where the text sits — not behind the image. */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.07),transparent_30%),radial-gradient(circle_at_25%_90%,rgba(245,158,11,0.05),transparent_26%)]" />
           <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
             <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10">
               <div className="max-w-2xl">
@@ -274,6 +286,8 @@ export default function ForNGOs() {
           </div>
         </section>
 
+        <WaveDivider />
+
         {/* ── Feature strip ─────────────────────────────────────────────────── */}
         <section className="px-5 py-8 sm:px-8 lg:px-10">
           <FadeUp className="mx-auto max-w-5xl">
@@ -332,6 +346,8 @@ export default function ForNGOs() {
             </div>
           </div>
         </section>
+
+        <WaveDivider />
       </main>
 
       <SiteFooter />

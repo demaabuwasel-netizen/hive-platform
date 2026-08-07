@@ -3,8 +3,18 @@ import {
   ArrowRight, Sparkles, Users, Award, BarChart3, Search,
   BookOpen, Heart, Lightbulb,
 } from 'lucide-react'
-import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter } from '../components/MarketingUI'
+import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter, HiveWaves } from '../components/MarketingUI'
 import forStudentImage from '../assets/for student.png'
+
+// A slim, text-free strip so the wave never sits behind a heading or copy —
+// just a clean divider between sections. Blue tone for the Students page.
+function WaveDivider() {
+  return (
+    <div className="relative h-20 overflow-hidden sm:h-28">
+      <HiveWaves className="top-0 h-full" tone="blue" />
+    </div>
+  )
+}
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -130,7 +140,8 @@ export default function ForStudents() {
 
       <main>
         <section className="relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(11,132,255,0.06),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.04),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(11,132,255,0.03),transparent_26%)]" />
+          {/* Blue glow, kept to the left where the text sits — not behind the image. */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(11,132,255,0.07),transparent_30%),radial-gradient(circle_at_25%_90%,rgba(16,185,129,0.05),transparent_26%)]" />
           <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
             <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10">
               <div className="max-w-2xl">
@@ -290,6 +301,8 @@ export default function ForStudents() {
           </div>
         </section>
 
+        <WaveDivider />
+
         {/* ── FAQ ───────────────────────────────────────────────────────────── */}
         <section className="px-5 py-24 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-3xl">
@@ -326,6 +339,8 @@ export default function ForStudents() {
             </div>
           </div>
         </section>
+
+        <WaveDivider />
       </main>
 
       <SiteFooter />

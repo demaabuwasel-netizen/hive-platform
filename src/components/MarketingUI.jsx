@@ -1,17 +1,27 @@
 // Shared building blocks for the marketing/landing pages (Landing, ForStudents,
 // ForNGOs, About) — keeps their look identical without copy-pasting the same
 // footer and section chrome into every file.
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, ChevronDown, ChevronUp, Mail, ExternalLink } from 'lucide-react'
 import HiveLogo from './HiveLogo'
 
-// Soft, low-opacity wave accent for section backgrounds — same blue/green
-// palette used everywhere else on the marketing pages, just faded into the
-// background instead of being a UI element. `flip` mirrors it vertically so
-// it can bookend the top and bottom of a page. Purely decorative.
-export function HiveWaves({ className = '', flip = false }) {
+const WAVE_TONES = {
+  blue:  ['#0B84FF', '#10B981'],
+  green: ['#10B981', '#F59E0B'],
+}
+
+// Soft, low-opacity wave accent for section backgrounds — faded into the
+// background instead of being a UI element. `tone` picks the two-color
+// gradient ('blue' or 'green', default 'blue'); `flip` mirrors it vertically
+// so it can bookend the top and bottom of a page. Purely decorative — never
+// place it behind a section's heading/copy, only at empty section edges.
+export function HiveWaves({ className = '', flip = false, tone = 'blue' }) {
+  const uid = useId()
+  const [colorA, colorB] = WAVE_TONES[tone] ?? WAVE_TONES.blue
+  const idA = `hiveWaveA-${uid}`
+  const idB = `hiveWaveB-${uid}`
   return (
     <svg
       className={`pointer-events-none absolute inset-x-0 w-full select-none ${flip ? 'rotate-180' : ''} ${className}`}
@@ -21,20 +31,20 @@ export function HiveWaves({ className = '', flip = false }) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="hiveWaveA" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0B84FF" stopOpacity="0" />
-          <stop offset="0.35" stopColor="#0B84FF" stopOpacity="0.12" />
-          <stop offset="0.7" stopColor="#10B981" stopOpacity="0.09" />
-          <stop offset="1" stopColor="#10B981" stopOpacity="0" />
+        <linearGradient id={idA} x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={colorA} stopOpacity="0" />
+          <stop offset="0.35" stopColor={colorA} stopOpacity="0.12" />
+          <stop offset="0.7" stopColor={colorB} stopOpacity="0.09" />
+          <stop offset="1" stopColor={colorB} stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="hiveWaveB" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#0B84FF" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#0B84FF" stopOpacity="0.07" />
-          <stop offset="1" stopColor="#0B84FF" stopOpacity="0" />
+        <linearGradient id={idB} x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={colorA} stopOpacity="0" />
+          <stop offset="0.5" stopColor={colorA} stopOpacity="0.07" />
+          <stop offset="1" stopColor={colorA} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d="M0,160 C240,220 480,80 720,120 C960,160 1200,240 1440,140 L1440,320 L0,320 Z" fill="url(#hiveWaveA)" />
-      <path d="M0,200 C280,140 520,260 760,190 C1000,120 1240,220 1440,180 L1440,320 L0,320 Z" fill="url(#hiveWaveB)" />
+      <path d="M0,160 C240,220 480,80 720,120 C960,160 1200,240 1440,140 L1440,320 L0,320 Z" fill={`url(#${idA})`} />
+      <path d="M0,200 C280,140 520,260 760,190 C1000,120 1240,220 1440,180 L1440,320 L0,320 Z" fill={`url(#${idB})`} />
     </svg>
   )
 }
