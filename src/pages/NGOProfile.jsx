@@ -78,7 +78,7 @@ function EditButton({ onEdit, label }) {
   return (
     <button
       onClick={onEdit}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1A73E8]"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/70 text-[#5F6368] backdrop-blur-sm transition hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_6px_16px_rgba(17,24,39,0.06)]"
       aria-label={`Edit ${label}`}
     >
       <Edit2 size={14} />
@@ -91,7 +91,7 @@ function FieldActions({ saving, onSave, onCancel }) {
     <div className="mt-3 flex justify-end gap-2">
       <button
         onClick={onCancel}
-        className="h-9 rounded-full px-4 text-[0.82rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]"
+        className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 text-[0.82rem] font-medium text-[#1A73E8] backdrop-blur-sm transition hover:bg-white hover:shadow-[0_6px_16px_rgba(17,24,39,0.06)]"
       >
         Cancel
       </button>
@@ -295,73 +295,38 @@ export default function NGOProfile() {
   ].filter(Boolean)
 
   return (
-    <main className="relative min-h-screen bg-[#F5F7FB]">
-      {/* Soft ambient gradients — same treatment as the NGO dashboard */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
-
-      {/* Decorative wave sitting in the page background, top-right — bigger,
-          and tall enough that its lower half runs down behind the identity
-          card (the card renders after it in the DOM, so it naturally paints
-          on top). Each line fades in from nothing and fades out to nothing
-          at both ends via its gradient + rounded cap, instead of just being
-          cropped by the container edge. */}
-      <div className="pointer-events-none absolute -top-10 right-[-60px] z-0 h-[30rem] w-[42rem] select-none" aria-hidden="true">
-        <svg className="h-full w-full" viewBox="0 0 640 480" fill="none">
-          <defs>
-            <linearGradient id="ngoProfileWaveLine1" x1="60" y1="0" x2="600" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
-              <stop offset="0.22" stopColor="#1A73E8" stopOpacity="0.32" />
-              <stop offset="0.6" stopColor="#34A853" stopOpacity="0.26" />
-              <stop offset="1" stopColor="#34A853" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="ngoProfileWaveLine2" x1="40" y1="0" x2="600" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
-              <stop offset="0.28" stopColor="#A142F4" stopOpacity="0.2" />
-              <stop offset="0.68" stopColor="#1A73E8" stopOpacity="0.16" />
-              <stop offset="1" stopColor="#1A73E8" stopOpacity="0" />
-            </linearGradient>
-            {/* Radial glows instead of a flat-bottomed fill shape — a radial
-                gradient fades smoothly in every direction with no straight
-                edge anywhere, so there's nothing left to look "cut off". */}
-            <radialGradient id="ngoProfileWaveGlowA" cx="65%" cy="32%" r="60%">
-              <stop offset="0" stopColor="#1A73E8" stopOpacity="0.13" />
-              <stop offset="0.55" stopColor="#1A73E8" stopOpacity="0.05" />
-              <stop offset="1" stopColor="#1A73E8" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="ngoProfileWaveGlowB" cx="45%" cy="58%" r="55%">
-              <stop offset="0" stopColor="#34A853" stopOpacity="0.1" />
-              <stop offset="0.55" stopColor="#34A853" stopOpacity="0.04" />
-              <stop offset="1" stopColor="#34A853" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <rect x="0" y="0" width="640" height="480" fill="url(#ngoProfileWaveGlowA)" />
-          <rect x="0" y="0" width="640" height="480" fill="url(#ngoProfileWaveGlowB)" />
-          <path
-            d="M70,140 C160,80 250,190 340,130 C420,78 490,112 600,60"
-            stroke="url(#ngoProfileWaveLine1)" strokeWidth="6" strokeLinecap="round" fill="none"
-          />
-          <path
-            d="M50,230 C150,160 240,270 330,205 C410,150 480,185 600,150"
-            stroke="url(#ngoProfileWaveLine2)" strokeWidth="4" strokeLinecap="round" fill="none"
-          />
-        </svg>
-      </div>
+    <main className="relative min-h-screen bg-[#EEF4FF]">
+      {/* Same background treatment as the student's own profile page — a
+          layered blue-tinted gradient plus a large masked wave, instead of
+          the flatter gray/radial-only look this page used before. */}
+      <div className="pointer-events-none absolute inset-0 min-h-full bg-[linear-gradient(180deg,#EEF4FF_0%,#F3F7FF_46%,#EEF4FF_100%),radial-gradient(circle_at_18%_4%,rgba(26,115,232,0.10),transparent_46%),radial-gradient(circle_at_86%_0%,rgba(255,255,255,0.68),transparent_48%)]" />
+      <svg
+        className="pointer-events-none absolute right-[-9rem] top-6 h-80 w-[72rem] opacity-100"
+        viewBox="0 0 760 230"
+        fill="none"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 56%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 56%, transparent 100%)',
+        }}
+      >
+        <path
+          d="M78 108 C178 48 246 66 338 112 C444 166 538 148 760 42 L760 230 L78 230 Z"
+          fill="#E8F0FE"
+          opacity="0.62"
+        />
+        <path
+          d="M150 146 C250 90 326 112 420 154 C522 200 606 184 760 112 L760 230 L150 230 Z"
+          fill="#D7E6FF"
+          opacity="0.38"
+        />
+        <path d="M54 104 C154 42 236 64 334 110 C444 162 538 144 744 46" stroke="#1A73E8" strokeWidth="3.2" strokeLinecap="round" opacity="0.18" />
+        <path d="M146 148 C244 92 324 114 416 154 C520 198 600 182 748 112" stroke="#4C9AEF" strokeWidth="2.5" strokeLinecap="round" opacity="0.13" />
+        <path d="M292 182 C386 138 460 158 542 188 C622 216 684 198 752 160" stroke="#34A853" strokeWidth="2.2" strokeLinecap="round" opacity="0.075" />
+      </svg>
 
       <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
-        <motion.header
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="mb-7"
-        >
-          <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
-            Profile
-          </h1>
-          <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
-            Keep your organization story, mission, focus areas, and links in one clear view for students and stronger matches.
-          </p>
-        </motion.header>
-
         {/* Identity card */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}

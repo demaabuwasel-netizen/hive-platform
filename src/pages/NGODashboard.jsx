@@ -61,15 +61,9 @@ function QuickActionCard({ action, delay = 0, count = null }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, delay }}
-      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_18px_42px_rgba(26,115,232,0.12)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
-      {/* Accent strip revealed on hover */}
-      <span
-        className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        style={{ background: `linear-gradient(90deg, ${action.accent}, ${action.tint})` }}
-      />
-
       {/* Faded pastel waves in the card's own tint */}
       <svg
         className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
@@ -93,14 +87,14 @@ function QuickActionCard({ action, delay = 0, count = null }) {
 
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl shadow-[0_10px_20px_rgba(26,115,232,0.08)] ring-1 ring-white/80 transition-transform duration-200 group-hover:scale-110"
           style={{ background: action.tint, color: action.accent }}
         >
           <Icon size={18} strokeWidth={2.15} />
         </div>
 
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#1A73E8]"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-all duration-200 group-hover:translate-x-0.5 group-hover:bg-[#E8F0FE] group-hover:text-[#1A73E8] group-hover:shadow-[0_8px_18px_rgba(26,115,232,0.12)]"
           style={{ boxShadow: 'inset 0 0 0 1px rgba(17,24,39,0.05)' }}
         >
           <ChevronRight size={16} />
@@ -112,7 +106,7 @@ function QuickActionCard({ action, delay = 0, count = null }) {
           <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.title}</h3>
           {typeof count === 'number' && count > 0 && (
             <span
-              className="rounded-full px-2 py-0.5 text-[0.7rem] font-bold"
+              className="rounded-full px-2 py-0.5 text-[0.7rem] font-bold shadow-[0_8px_16px_rgba(26,115,232,0.07)] ring-1 ring-white/70"
               style={{ background: action.tint, color: action.accent }}
             >
               {count}
@@ -135,7 +129,7 @@ function RoleCard({ opportunity, applicantCount, index, onOpen }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.06 * index }}
-      className="group snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[260px] min-h-[190px] cursor-pointer rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_10px_26px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_18px_40px_rgba(26,115,232,0.10)]"
+      className="group snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[280px] min-h-[190px] cursor-pointer rounded-[24px] border bg-white p-4 shadow-[0_12px_30px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.92)_inset] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_22px_48px_rgba(26,115,232,0.13)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
       role="button"
       tabIndex={0}
@@ -171,7 +165,7 @@ function RoleCard({ opportunity, applicantCount, index, onOpen }) {
         </span>
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-3 py-3 transition-colors group-hover:border-[#D7E6FF] group-hover:bg-[#F8FBFF]">
+      <div className="mt-4 rounded-[20px] border border-[#E5EEFB] bg-[#FBFCFE] px-3.5 py-3.5 transition-colors group-hover:border-[#D7E6FF] group-hover:bg-[#F8FBFF]">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
           Overview
         </p>
@@ -340,7 +334,7 @@ export default function NGODashboard() {
   return (
     <main className="relative min-h-screen bg-[#F5F7FB]">
       {/* Soft ambient gradients */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_88%_0%,rgba(255,255,255,0.98),rgba(255,255,255,0.62)_32%,transparent_62%),radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.04),transparent_48%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
       <div className="relative mx-auto max-w-[1520px] px-6 pb-10 lg:px-10">
         <motion.header
@@ -372,8 +366,7 @@ export default function NGODashboard() {
           </div>
         </motion.header>
 
-        <section className="relative z-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+        <section className="relative z-10 rounded-[36px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,255,255,0.90),rgba(255,255,255,0.74))] px-5 py-6 shadow-[0_28px_82px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.95)_inset,0_0_0_1px_rgba(255,255,255,0.45)_inset] backdrop-blur-2xl">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Quick actions</h2>
@@ -408,14 +401,13 @@ export default function NGODashboard() {
         </section>
 
         <section
-          className="mt-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+          className="mt-10 rounded-[36px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,255,255,0.90),rgba(255,255,255,0.74))] px-5 py-6 shadow-[0_28px_82px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.95)_inset,0_0_0_1px_rgba(255,255,255,0.45)_inset] backdrop-blur-2xl"
         >
             <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Open roles</h2>
-                <span className="rounded-full border border-[#C6DAFC] bg-[#F7FAFF] px-3 py-1 text-[0.82rem] font-semibold text-[#1A73E8]">
+                <span className="rounded-full border border-[#C6DAFC] bg-white/80 px-3 py-1 text-[0.82rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.06)]">
                   {loading ? '...' : opportunities.length}
                 </span>
               </div>
@@ -428,8 +420,7 @@ export default function NGODashboard() {
               <button
                 type="button"
                 onClick={() => rolesRef.current?.scrollBy({ left: -420, behavior: 'smooth' })}
-                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
-                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/68 text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#1A73E8]"
                 aria-label="Scroll roles left"
               >
                 <ChevronLeft size={20} />
@@ -437,8 +428,7 @@ export default function NGODashboard() {
               <button
                 type="button"
                 onClick={() => rolesRef.current?.scrollBy({ left: 420, behavior: 'smooth' })}
-                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
-                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/68 text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#1A73E8]"
                 aria-label="Scroll roles right"
               >
                 <ChevronRight size={20} />
