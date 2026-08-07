@@ -369,7 +369,12 @@ export default function StudentDashboard() {
       const apps = await fetchStudentApplications(userId)
       setApplications(apps)
       setAppCount(apps.length)
-      setInterviewCount(apps.filter(a => a.status === 'interview').length)
+      // The Interviews page (/interviews) lists every applied role for
+      // practice, not just ones formally at the "interview" status — so
+      // this count needs to match that same total, or the quick-action
+      // badge here would show a different number than what's actually on
+      // the page it links to.
+      setInterviewCount(apps.length)
     } catch {
       setApplications([])
     }
@@ -434,7 +439,7 @@ export default function StudentDashboard() {
     {
       icon: MessageSquare,
       label: 'Interviews',
-      hint: `${interviewCount} active`,
+      hint: `${interviewCount} to prepare for`,
       to: '/interviews',
       tint: '#F3E8FD',
       accent: '#A142F4',
@@ -498,7 +503,7 @@ export default function StudentDashboard() {
         >
           <div className="max-w-3xl lg:mt-0 lg:translate-x-2 lg:translate-y-10">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#202124] sm:text-5xl">
-              Welcome {firstName}
+              Welcome {firstName},
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
               Manage opportunities, applications, and interviews

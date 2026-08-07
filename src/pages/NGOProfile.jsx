@@ -299,6 +299,54 @@ export default function NGOProfile() {
       {/* Soft ambient gradients — same treatment as the NGO dashboard */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
+      {/* Decorative wave sitting in the page background, top-right — bigger,
+          and tall enough that its lower half runs down behind the identity
+          card (the card renders after it in the DOM, so it naturally paints
+          on top). Each line fades in from nothing and fades out to nothing
+          at both ends via its gradient + rounded cap, instead of just being
+          cropped by the container edge. */}
+      <div className="pointer-events-none absolute -top-10 right-[-60px] z-0 h-[30rem] w-[42rem] select-none" aria-hidden="true">
+        <svg className="h-full w-full" viewBox="0 0 640 480" fill="none">
+          <defs>
+            <linearGradient id="ngoProfileWaveLine1" x1="60" y1="0" x2="600" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
+              <stop offset="0.22" stopColor="#1A73E8" stopOpacity="0.32" />
+              <stop offset="0.6" stopColor="#34A853" stopOpacity="0.26" />
+              <stop offset="1" stopColor="#34A853" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="ngoProfileWaveLine2" x1="40" y1="0" x2="600" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
+              <stop offset="0.28" stopColor="#A142F4" stopOpacity="0.2" />
+              <stop offset="0.68" stopColor="#1A73E8" stopOpacity="0.16" />
+              <stop offset="1" stopColor="#1A73E8" stopOpacity="0" />
+            </linearGradient>
+            {/* Radial glows instead of a flat-bottomed fill shape — a radial
+                gradient fades smoothly in every direction with no straight
+                edge anywhere, so there's nothing left to look "cut off". */}
+            <radialGradient id="ngoProfileWaveGlowA" cx="65%" cy="32%" r="60%">
+              <stop offset="0" stopColor="#1A73E8" stopOpacity="0.13" />
+              <stop offset="0.55" stopColor="#1A73E8" stopOpacity="0.05" />
+              <stop offset="1" stopColor="#1A73E8" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="ngoProfileWaveGlowB" cx="45%" cy="58%" r="55%">
+              <stop offset="0" stopColor="#34A853" stopOpacity="0.1" />
+              <stop offset="0.55" stopColor="#34A853" stopOpacity="0.04" />
+              <stop offset="1" stopColor="#34A853" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="640" height="480" fill="url(#ngoProfileWaveGlowA)" />
+          <rect x="0" y="0" width="640" height="480" fill="url(#ngoProfileWaveGlowB)" />
+          <path
+            d="M70,140 C160,80 250,190 340,130 C420,78 490,112 600,60"
+            stroke="url(#ngoProfileWaveLine1)" strokeWidth="6" strokeLinecap="round" fill="none"
+          />
+          <path
+            d="M50,230 C150,160 240,270 330,205 C410,150 480,185 600,150"
+            stroke="url(#ngoProfileWaveLine2)" strokeWidth="4" strokeLinecap="round" fill="none"
+          />
+        </svg>
+      </div>
+
       <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 12 }}
@@ -319,9 +367,9 @@ export default function NGOProfile() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
+          className="relative overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-[0_2px_8px_rgba(17,24,39,0.04),0_16px_40px_rgba(17,24,39,0.06)] backdrop-blur-xl"
         >
-          <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="relative z-10 flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
               <div className="relative h-28 w-28 shrink-0">
                 <div className="h-full w-full overflow-hidden rounded-full bg-white shadow-[0_8px_24px_rgba(26,115,232,0.14)] ring-4 ring-white">

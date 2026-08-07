@@ -12,26 +12,28 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        {/* Wraps to new lines instead of scrolling sideways — every role stays
-            visible without needing a left/right scroll on the page. */}
-        <div className="min-w-0 flex-1">
-          {loading ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="shrink-0 pl-2 pr-1 text-[0.82rem] font-semibold text-[#5F6368]">Pick a role</p>
-              {[0, 1, 2].map(i => (
-                <div key={i} className="h-[64px] w-[168px] animate-pulse rounded-[18px] border border-[#E5EEFB] bg-white/80" />
-              ))}
+        {roles.length === 0 && !loading ? (
+          <div className="flex min-h-[76px] w-full items-center justify-center rounded-[22px] border border-dashed border-[#D7E6FF] bg-white/70 px-5 text-center">
+            <div>
+              <p className="text-[0.9rem] font-semibold text-[#202124]">No opportunities yet</p>
+              <p className="mt-1 text-[0.78rem] text-[#5F6368]">Create a role to start receiving applicants.</p>
             </div>
-          ) : roles.length === 0 ? (
-            <div className="flex min-h-[76px] items-center justify-center rounded-[22px] border border-dashed border-[#D7E6FF] bg-white/70 px-5 text-center">
-              <div>
-                <p className="text-[0.9rem] font-semibold text-[#202124]">No opportunities yet</p>
-                <p className="mt-1 text-[0.78rem] text-[#5F6368]">Create a role to start receiving applicants.</p>
+          </div>
+        ) : (
+          <>
+            <p className="shrink-0 pl-2 pr-1 text-[0.82rem] font-semibold text-[#5F6368]">Pick a role</p>
+            {/* Shows ~4-5 roles at a time; the rest scroll left/right inside
+                this box only — capped width + min-w-0 keeps the scrolling
+                contained here instead of spilling out to the whole page. */}
+            <div className="min-w-0 max-w-[820px] flex-1 overflow-x-auto">
+            {loading ? (
+              <div className="flex items-center gap-2 pb-1">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-[64px] w-[168px] shrink-0 animate-pulse rounded-[18px] border border-[#E5EEFB] bg-white/80" />
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="shrink-0 pl-2 pr-1 text-[0.82rem] font-semibold text-[#5F6368]">Pick a role</p>
+            ) : (
+              <div className="flex items-center gap-2 pb-1">
               {roles.map((role, i) => {
                 const isActive = String(selectedRoleId) === String(role.id)
                 const filled = isFilled(role)
@@ -77,9 +79,11 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
                   </motion.button>
                 )
               })}
+              </div>
+            )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </section>
   )

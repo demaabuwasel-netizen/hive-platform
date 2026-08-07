@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Globe,
   Sparkles,
   Trash2,
   XCircle,
@@ -201,10 +202,10 @@ export default function Applications() {
     ? (selectedOpp.description || selectedOpp.mission_impact || 'No role description is available for this opportunity.')
     : ''
   const primaryDetails = selectedOpp ? [
-    { label: 'Match', value: matchScore != null ? `${matchScore}%` : '—', tint: '#E8F0FE', accent: '#1A73E8' },
-    { label: 'Category', value: formatField(selectedCategory), tint: '#E6F4EA', accent: '#188038' },
-    { label: 'Work mode', value: formatField(selectedOpp.work_mode), tint: '#FEF7E0', accent: '#F29900' },
-    { label: 'Hours/week', value: formatField(selectedOpp.weekly_hours), tint: '#F3E8FD', accent: '#A142F4' },
+    { label: 'Match', value: matchScore != null ? `${matchScore}%` : '—', icon: Sparkles, tint: '#E8F0FE', accent: '#1A73E8' },
+    { label: 'Category', value: formatField(selectedCategory), icon: Briefcase, tint: '#E6F4EA', accent: '#188038' },
+    { label: 'Work mode', value: formatField(selectedOpp.work_mode), icon: Globe, tint: '#FEF7E0', accent: '#F29900' },
+    { label: 'Hours/week', value: formatField(selectedOpp.weekly_hours), icon: Clock, tint: '#F3E8FD', accent: '#A142F4' },
   ] : []
   const skillLabels = (selectedOpp?.skills || []).map(formatSkill).filter(Boolean)
 
@@ -374,7 +375,7 @@ export default function Applications() {
                     <>
                       <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {primaryDetails.map(item => (
-                          <MetricCard key={item.label} label={item.label} value={item.value} tint={item.tint} accent={item.accent} />
+                          <MetricCard key={item.label} label={item.label} value={item.value} icon={item.icon} tint={item.tint} accent={item.accent} />
                         ))}
                       </div>
 
@@ -414,7 +415,7 @@ function NoticeCard({ children, tone = 'default' }) {
   )
 }
 
-function MetricCard({ label, value, tint = '#E8F0FE', accent = '#1A73E8' }) {
+function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
     <div
       className="group relative flex min-h-[104px] flex-col items-center justify-center overflow-hidden rounded-2xl border bg-white p-4 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_22px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(17,24,39,0.08)]"
@@ -441,9 +442,19 @@ function MetricCard({ label, value, tint = '#E8F0FE', accent = '#1A73E8' }) {
           opacity="0.82"
         />
       </svg>
-      <p className="relative z-10 text-[0.7rem] font-bold uppercase tracking-[0.1em] text-[#0B0C0E]">
-        {label}
-      </p>
+      <div className="relative z-10 flex items-center gap-2">
+        {Icon && (
+          <span
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: tint, color: accent }}
+          >
+            <Icon size={13} />
+          </span>
+        )}
+        <p className="text-[0.7rem] font-bold uppercase tracking-[0.1em] text-[#0B0C0E]">
+          {label}
+        </p>
+      </div>
       <p className="relative z-10 mt-3 max-w-full truncate text-[0.95rem] font-semibold text-[#202124]">
         {value}
       </p>
