@@ -186,9 +186,9 @@ function EmptyBlock({ icon: Icon, title }) {
 
 function PreviewSection({ icon: Icon, title, eyebrow, children }) {
   return (
-    <section className="rounded-[22px] border border-[#E8EAED] bg-white p-5 shadow-[0_8px_20px_rgba(60,64,67,0.035)]">
+    <section className="rounded-[24px] border border-white/75 bg-white/72 p-5 shadow-[0_14px_34px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-xl">
       <div className="mb-4 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#F1F3F4] text-[#5F6368]">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
           <Icon size={18} strokeWidth={2}/>
         </span>
         <SectionLabel eyebrow={eyebrow}>{title}</SectionLabel>
@@ -239,13 +239,13 @@ function MatchInsight({ score, reasons }) {
   const clampedScore = Math.min(Math.max(Number(score) || 0, 0), 100)
 
   return (
-    <section className="rounded-[22px] border border-[#D7E6FF] bg-white p-5 shadow-[0_8px_20px_rgba(60,64,67,0.035)]">
+    <section className="rounded-[24px] border border-white/75 bg-white/72 p-5 shadow-[0_14px_34px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="mb-1 text-[0.66rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Role alignment</p>
           <h3 className="text-[1rem] font-semibold text-[#202124]">Match insight</h3>
         </div>
-        <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-[#E8F0FE] px-3 text-[0.82rem] font-semibold text-[#174EA6]">
+        <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-[#E8F0FE] px-3 text-[0.82rem] font-semibold text-[#174EA6] shadow-[0_8px_18px_rgba(26,115,232,0.08)]">
           {clampedScore}% match
         </span>
       </div>
@@ -271,8 +271,8 @@ function MatchInsight({ score, reasons }) {
 function DecisionPanel({ status, statusLabel, onStatusChange, onInvite }) {
   if (status === 'accepted' || status === 'completed') {
     return (
-      <div className="border-t border-[#E5EEFB] bg-white px-5 py-5 sm:px-6">
-        <div className="flex items-center gap-3 rounded-[20px] bg-[#F8FBFF] p-4">
+      <div className="border-t border-white/70 bg-white/58 px-5 py-5 backdrop-blur-xl sm:px-6">
+        <div className="flex items-center gap-3 rounded-[22px] border border-white/75 bg-white/72 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.06)]">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
             <CheckCircle2 size={18} strokeWidth={2.2}/>
           </span>
@@ -293,7 +293,7 @@ function DecisionPanel({ status, statusLabel, onStatusChange, onInvite }) {
 
   if (status === 'rejected') {
     return (
-      <div className="border-t border-[#E5EEFB] bg-white px-5 py-5 sm:px-6">
+      <div className="border-t border-white/70 bg-white/58 px-5 py-5 backdrop-blur-xl sm:px-6">
         <button
           onClick={() => onStatusChange('new')}
           className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-[#DADCE0] bg-white px-4 text-[0.84rem] font-semibold text-[#3C4043] transition-colors hover:bg-[#F8F9FA]">
@@ -306,7 +306,7 @@ function DecisionPanel({ status, statusLabel, onStatusChange, onInvite }) {
   const isInterview = status === 'interview'
 
   return (
-    <div className="border-t border-[#E5EEFB] bg-white px-5 py-5 sm:px-6">
+    <div className="border-t border-white/70 bg-white/58 px-5 py-5 backdrop-blur-xl sm:px-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-[0.92rem] font-semibold text-[#202124]">Decision</p>
@@ -314,7 +314,7 @@ function DecisionPanel({ status, statusLabel, onStatusChange, onInvite }) {
             {isInterview ? 'Interview is the next checkpoint.' : 'Start with an interview invitation.'}
           </p>
         </div>
-        <span className="inline-flex h-9 items-center rounded-full bg-[#F8F9FA] px-3 text-[0.76rem] font-semibold text-[#5F6368]">
+        <span className="inline-flex h-9 items-center rounded-full bg-white/80 px-3 text-[0.76rem] font-semibold text-[#5F6368] shadow-[0_6px_14px_rgba(26,115,232,0.05)]">
           {statusLabel}
         </span>
       </div>
@@ -410,10 +410,9 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
 
   return (
     <div
-      className="overflow-hidden rounded-[28px] border bg-[#FBFCFE] shadow-[0_1px_0_rgba(17,24,39,0.02),0_16px_36px_rgba(17,24,39,0.055)]"
-      style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+      className="overflow-hidden rounded-[30px] border border-white/75 bg-white/68 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl">
 
-      <div className="bg-white p-5 sm:p-6">
+      <div className="border-b border-white/70 bg-white/48 p-5 backdrop-blur-xl sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_210px]">
           <div className="flex min-w-0 items-start gap-4">
             <GradientAvatar name={applicant.name} size={52} radius="1rem" className="shrink-0 shadow-sm"/>
@@ -423,7 +422,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
                   Applicant preview
                 </p>
                 <span className="h-1 w-1 rounded-full bg-[#DADCE0]" />
-                <span className="rounded-full bg-[#F1F3F4] px-2.5 py-1 text-[0.72rem] font-semibold text-[#3C4043]">
+                <span className="rounded-full bg-white/80 px-2.5 py-1 text-[0.72rem] font-semibold text-[#3C4043] shadow-[0_6px_14px_rgba(26,115,232,0.05)]">
                   {st.label}
                 </span>
               </div>
@@ -435,7 +434,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
                   <Sparkles size={14} strokeWidth={2}/>
                   {applicant.match}% match
                 </span>
-                <span className="inline-flex h-9 items-center gap-2 rounded-full bg-[#F8F9FA] px-3.5 text-[0.82rem] font-medium text-[#5F6368]">
+                <span className="inline-flex h-9 items-center gap-2 rounded-full bg-white/76 px-3.5 text-[0.82rem] font-medium text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.05)]">
                   <Calendar size={14} strokeWidth={2}/>
                   Applied {formatDate(applicant.submittedAt) || '-'}
                 </span>
@@ -446,7 +445,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
           <div className="flex items-start justify-start lg:justify-end">
             <Link
               to={`/student-profile/${applicant.studentId}?backTo=applicants&opportunity=${applicant.opportunityId}`}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-[#D7E6FF] bg-[#F8FBFF] px-4 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]">
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-white/80 bg-white/86 px-4 text-[0.82rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_24px_rgba(26,115,232,0.13)]">
               View full profile
               <ArrowRight size={14} strokeWidth={2}/>
             </Link>
@@ -454,7 +453,7 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
         </div>
       </div>
 
-      <div className="space-y-4 p-5 sm:p-6">
+      <div className="space-y-4 bg-[linear-gradient(180deg,rgba(248,251,255,0.68),rgba(255,255,255,0.42))] p-5 sm:p-6">
         <PreviewSection icon={Award} title="Skills" eyebrow="Matched to this role">
           {skills.length > 0 ? (
             <div>

@@ -28,7 +28,7 @@ const STUDENT_SETTINGS = [
 const NGO_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',     to: '/dashboard/ngo'                },
   { icon: Users,           label: 'Profile',       to: '/profile/ngo'                   },
-  { icon: Briefcase,       label: 'Opportunities', to: '/opportunities'                 },
+  { icon: Briefcase,       label: 'Roles',         to: '/opportunities'                 },
   { icon: Users,           label: 'Applicants',    to: '/applicants'                    },
   { icon: Zap,             label: 'Matches',       to: '/matches'                       },
   { icon: MessageSquare,   label: 'Interviews',    to: '/interviews'                    },
@@ -88,6 +88,7 @@ export default function DashboardLayout() {
     'Dashboard':     'nav.dashboard',
     'Matches':       'nav.matches',
     'Opportunities': 'nav.opportunities',
+    'Roles':         'Roles',
     'Applications':  'nav.applications',
     'Interviews':    'nav.interviews',
     'Saved':         'nav.saved',

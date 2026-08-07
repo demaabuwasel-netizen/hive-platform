@@ -274,6 +274,7 @@ function AppRoutes() {
         <Route path="/opportunities"     element={<Opportunities />} />
         <Route path="/applicants"        element={<Applicants />} />
         <Route path="/interviews"        element={<Interviews />} />
+        <Route path="/interviews/ngo/practice/:ngoOpportunityId" element={<Interviews />} />
         <Route path="/interviews/practice/saved/:opportunityId" element={<Interviews />} />
         <Route path="/interviews/practice/:applicationId" element={<Interviews />} />
         <Route path="/analytics"         element={<Analytics />} />

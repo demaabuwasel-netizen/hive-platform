@@ -292,32 +292,26 @@ export default function Applicants() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const selectedRole = roles.find(r => String(r.id) === String(selectedRoleId))
-  const totalApplicants = applicants.filter(a => (statuses[a.id] ?? toUiStatus(a.status)) !== 'rejected').length
   // One loading flag for the whole page: skeletons everywhere until the first
   // full roles+applicants load settles, then everything appears in one paint.
   const pageLoading = rolesLoading || applicantsLoading || !initialLoadDone
   return (
-    <div className="mx-auto max-w-[1520px] overflow-x-hidden px-6 py-10 lg:px-10">
+    <div className="mx-auto w-full max-w-[1520px] min-w-0 overflow-x-hidden px-6 py-10 lg:px-10">
 
-      {/* Header — locked to the same lg height as the Matches page header */}
       <div className="relative mb-8">
-        <div className="flex flex-col gap-4 lg:min-h-[182px] lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-[clamp(2.4rem,5vw,4.35rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
+        <div className="flex flex-col gap-4 lg:min-h-[170px] lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-[clamp(2.25rem,5vw,4.1rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
               Applicants
             </h1>
-            <p className="mt-5 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
-              {pageLoading
-                ? 'Loading your applicant queue...'
-                : selectedRole
-                  ? `Review ${totalApplicants} applicant${totalApplicants !== 1 ? 's' : ''} for ${selectedRole.title}.`
-                  : 'Choose a posted role to review its applicants.'}
+            <p className="mt-4 max-w-2xl text-[1rem] leading-7 text-[#5F6368]">
+              View your applicants and manage each role&apos;s next steps.
             </p>
           </div>
           <img
             src={ngoApplicantsImg}
             alt=""
-            className="pointer-events-none relative z-0 w-full max-w-sm select-none lg:max-w-md"
+            className="pointer-events-none relative z-0 w-full max-w-sm select-none drop-shadow-[0_22px_34px_rgba(26,115,232,0.10)] lg:-mt-6 lg:max-w-md"
           />
         </div>
       </div>
@@ -344,7 +338,7 @@ export default function Applicants() {
       {/* Main layout — left queue stays a fixed, compact width; right detail panel
           flexes to fill whatever's left, so the page never needs horizontal
           scrolling on standard laptop widths. */}
-      <div className="grid w-full items-start gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
+      <div className="grid w-full min-w-0 items-start gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
         <ApplicantsList
           applicants={applicants}
           selectedId={selected?.id}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search } from 'lucide-react'
+import { ArrowRight, Search } from 'lucide-react'
 import GradientAvatar from './GradientAvatar'
 
 function toUiStatus(dbStatus) {
@@ -41,8 +41,8 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
   }
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-[28px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)] xl:max-h-[calc(100vh-120px)] xl:min-h-[600px]">
-      <div className="min-w-0 border-b border-[rgba(26,115,232,0.10)] bg-[#FBFCFE] p-5">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-[30px] border border-white/75 bg-white/68 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl xl:max-h-[calc(100vh-120px)] xl:min-h-[600px]">
+      <div className="min-w-0 border-b border-white/70 bg-white/48 p-5 backdrop-blur-xl">
         <div className="mb-4 min-w-0">
           {loading ? (
             <>
@@ -66,13 +66,13 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
           )}
         </div>
 
-        <div className="flex h-12 items-center gap-2 rounded-[18px] border border-[#E5EEFB] bg-white px-3 shadow-[0_8px_20px_rgba(60,64,67,0.035)]">
+        <div className="flex h-12 items-center gap-2 rounded-[20px] border border-white/80 bg-white/72 px-3 shadow-[0_10px_24px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.9)_inset]">
           <Search size={14} className="shrink-0 text-[#5F6368]"/>
           <input value={q} onChange={e => setLocalQ(e.target.value)} placeholder="Search applicants"
             className="min-w-0 flex-1 bg-transparent text-[0.84rem] text-[#202124] outline-none placeholder:text-[#9AA0A6]"/>
         </div>
 
-        <div className="mt-3 grid h-10 w-full grid-cols-3 gap-1 rounded-[15px] bg-[#EEF3FB] p-1">
+        <div className="mt-3 grid h-10 w-full grid-cols-3 gap-1 rounded-full border border-white/80 bg-white/54 p-1 shadow-[0_8px_20px_rgba(26,115,232,0.05)]">
           {[
             { key: 'all', label: 'All', count: statusCounts.all },
             { key: 'new', label: 'New', count: statusCounts.new },
@@ -83,7 +83,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
               onClick={() => setFilter(key)}
               className={`h-8 rounded-[12px] px-2.5 text-[0.73rem] font-semibold transition-colors ${
                 filter === key
-                  ? 'bg-white text-[#1A73E8] shadow-[0_1px_4px_rgba(60,64,67,0.12)]'
+                  ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.10)]'
                   : 'text-[#5F6368] hover:text-[#202124]'
               }`}
             >
@@ -93,7 +93,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         </div>
       </div>
 
-      <div className="min-w-0 flex-1 space-y-3 overflow-y-auto p-5">
+      <div className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,251,255,0.68),rgba(255,255,255,0.42))] p-5">
       {/* Loading skeleton */}
       {loading && (
         <div className="space-y-3">
@@ -113,7 +113,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
       <AnimatePresence>
         {!loading && applicants.length === 0 && (
           <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-white/54 px-6 py-14 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
             <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants for this role yet</p>
             <p className="text-[0.82rem] text-[#5F6368]">Students will appear here once they apply.</p>
           </motion.div>
@@ -122,7 +122,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
         {/* No filter results */}
         {!loading && applicants.length > 0 && visible.length === 0 && (
           <motion.div initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-14 text-center">
+            className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#D7E6FF] bg-white/54 px-6 py-14 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
             <p className="mb-1 text-[0.95rem] font-semibold text-[#202124]">No applicants found</p>
             <p className="text-[0.82rem] text-[#5F6368]">Try adjusting your search or filter.</p>
           </motion.div>
@@ -151,12 +151,12 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                     onSelectApplicant(a)
                   }
                 }}
-                className={`group grid min-h-[82px] w-full cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-all ${
+                className={`group grid min-h-[88px] w-full cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] border px-4 py-4 text-left transition-all ${
                   isActive
-                    ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.12)]'
-                    : currentStatus === 'accepted' || currentStatus === 'completed'
-                    ? 'border-[#D7E6FF] bg-[linear-gradient(180deg,#FFFFFF,#F8FBFF)] shadow-[0_10px_24px_rgba(26,115,232,0.07)] hover:border-[#BFD7FF] hover:shadow-[0_14px_28px_rgba(26,115,232,0.09)]'
-                    : 'border-[#E5EEFB] bg-white/80 shadow-[0_8px_20px_rgba(60,64,67,0.03)] hover:-translate-y-0.5 hover:border-[#D7E6FF] hover:bg-white hover:shadow-[0_14px_28px_rgba(60,64,67,0.055)]'
+                    ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
+                  : currentStatus === 'accepted' || currentStatus === 'completed'
+                    ? 'border-[#D7E6FF] bg-white shadow-[0_10px_24px_rgba(26,115,232,0.07)] hover:border-[#BFD7FF] hover:shadow-[0_14px_28px_rgba(26,115,232,0.09)]'
+                    : 'border-white/75 bg-white shadow-[0_8px_20px_rgba(26,115,232,0.04)] hover:-translate-y-0.5 hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
                 }`}>
                 <GradientAvatar name={a.name} size={44} radius="0.9rem" className="shadow-none"/>
                 <div className="flex-1 min-w-0">
@@ -176,7 +176,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                     </p>
                   )}
                 </div>
-                <div className="shrink-0 text-right">
+                <div className="flex shrink-0 items-center gap-2 text-right">
                   <span className={`inline-flex h-8 items-center justify-center rounded-full border px-3 text-[0.72rem] font-semibold text-[#1A73E8] ${
                     isActive || currentStatus === 'accepted' || currentStatus === 'completed'
                       ? 'border-[#D7E6FF] bg-white'
@@ -184,6 +184,7 @@ export default function ApplicantsList({ applicants, selectedId, onSelectApplica
                   }`}>
                     {a.match}% match
                   </span>
+                  <ArrowRight size={16} className={`hidden shrink-0 transition-transform sm:block ${isActive ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                 </div>
               </motion.div>
             )

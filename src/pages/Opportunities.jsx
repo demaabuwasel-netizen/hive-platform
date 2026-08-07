@@ -429,7 +429,8 @@ function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
 function normalizeNgoOpportunity(opp = {}) {
   return {
     ...opp,
-    title: opp.title || 'Opportunity',
+    title: opp.title || 'Role',
+    orgName: opp.orgName || opp.org_name || opp.name || '',
     status: opp.status || 'draft',
     category: opp.category || opp.field || '',
     location: opp.location || '',
@@ -530,7 +531,7 @@ export default function Opportunities() {
     }
   }
   const handleDeleteOpportunity = async (oppId) => {
-    if (!window.confirm('Are you sure you want to delete this opportunity? Students will no longer see this role in their applications.')) {
+    if (!window.confirm('Are you sure you want to delete this role? Students will no longer see it in their applications.')) {
       return
     }
 
@@ -550,7 +551,7 @@ export default function Opportunities() {
       }
     } catch (err) {
       console.error('Error deleting opportunity:', err)
-      setNgoError('Failed to delete opportunity: ' + err.message)
+      setNgoError('Failed to delete role: ' + err.message)
     } finally {
       setDeleting(null)
     }
@@ -741,7 +742,7 @@ export default function Opportunities() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl translate-x-2 translate-y-3">
                 <h1 className="text-4xl font-bold tracking-[-0.04em] text-[#202124] sm:text-5xl">
-                  Opportunities
+                  Roles
                 </h1>
                 <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
                   Manage your posted roles and keep track of applicants from one clean workspace.
@@ -753,8 +754,7 @@ export default function Opportunities() {
               <motion.aside
                 initial={false}
                 animate={{ opacity: 1 }}
-                className="sticky top-6 h-fit rounded-[32px] border bg-white p-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-                style={{ borderColor: 'rgba(26,115,232,0.10)' }}
+                className="sticky top-6 h-fit rounded-[30px] border border-white/75 bg-white/70 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
               >
                 <div className="flex items-start justify-between gap-3 pb-4">
                   <div>
@@ -764,14 +764,29 @@ export default function Opportunities() {
                   <button
                     type="button"
                     onClick={() => navigate('/opportunities/new')}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8] transition-transform hover:-translate-y-0.5"
-                    aria-label="Create opportunity"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] transition-transform hover:-translate-y-0.5"
+                    aria-label="Create role"
                   >
                     <Plus size={16} />
                   </button>
                 </div>
 
-                <div className="max-h-[calc(100vh-232px)] space-y-2 overflow-y-auto pr-1">
+                <button
+                  type="button"
+                  onClick={() => navigate('/opportunities/new')}
+                  className="mb-4 flex w-full items-center gap-3 rounded-[24px] border border-[#BFD7FF] bg-[#F8FBFF] px-4 py-4 text-left shadow-[0_14px_34px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_18px_40px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.9)_inset]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#1A73E8] text-white shadow-[0_10px_22px_rgba(26,115,232,0.18)]">
+                    <Plus size={18} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[0.92rem] font-semibold text-[#202124]">Add a role</span>
+                    <span className="mt-0.5 block text-[0.78rem] leading-5 text-[#5F6368]">Create a new student role.</span>
+                  </span>
+                  <ArrowRight size={16} className="ml-auto shrink-0 text-[#1A73E8]" />
+                </button>
+
+                <div className="max-h-[calc(100vh-306px)] space-y-2 overflow-y-auto pr-1">
                   {loading ? (
                     [1, 2, 3].map(i => (
                       <div
@@ -781,59 +796,57 @@ export default function Opportunities() {
                       />
                     ))
                   ) : ngoOpps.length === 0 ? (
-                    <div
-                      className="rounded-[22px] border border-dashed bg-[#FBFCFE] px-4 py-6 text-center text-[0.86rem] text-[#5F6368]"
-                      style={{ borderColor: 'rgba(26,115,232,0.16)' }}
-                    >
-                      No opportunities yet
-                    </div>
+	                    <div className="rounded-[22px] border border-dashed border-[#D7E6FF] bg-white px-4 py-6 text-center text-[0.86rem] text-[#5F6368]">
+	                      No roles yet
+	                    </div>
                   ) : (
                     ngoOpps.map((opp) => {
                       const normalized = normalizeNgoOpportunity(opp)
                       const active = String(selectedOppId) === String(opp.id)
-                      const status = statusMeta(normalized.status)
-                      const filled = (normalized.status || '').toLowerCase() === 'paused'
-                      const isDraft = (normalized.status || '').toLowerCase() === 'draft'
-                      return (
-                        <button
-                          key={opp.id}
-                          onClick={() => setSelectedOppId(opp.id)}
-                          className={`group w-full rounded-[24px] border p-4 text-left transition-all ${
-                            filled
-                              ? 'border-[rgba(24,128,56,0.20)] bg-[#F2FBF6] hover:bg-[#EDFAF2]'
-                              : active
-                              ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
-                              : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${
-                                filled ? 'text-[#188038]' : 'text-[#202124]'
-                              }`}>
-                                {normalized.title}
-                              </p>
-                              <p className={`mt-1.5 flex items-center gap-2 text-[0.76rem] ${filled ? 'text-[#188038]' : 'text-[#5F6368]'}`}>
-                                {filled ? 'Someone works there' : (normalized.category || normalized.location || 'Open role')}
-                                {isDraft && (
-                                  <span
-                                    className="rounded-full px-2 py-0.5 text-[0.66rem] font-semibold"
-                                    style={{ background: status.bg, color: status.text }}
-                                  >
-                                    {status.label}
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                            <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${
-                              filled
-                                ? 'text-[#188038]'
-                                : active
-                                ? 'text-[#1A73E8]'
-                                : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'
-                            }`} />
-                          </div>
-                        </button>
+	                      const filled = (normalized.status || '').toLowerCase() === 'paused'
+	                      const isDraft = (normalized.status || '').toLowerCase() === 'draft'
+	                      const subtitle = normalized.category || normalized.location || normalized.workMode || `${normalized.applicantCount ?? 0} applicants`
+	                      const avatarName = normalized.orgName || 'Organization'
+	                      return (
+	                        <button
+	                          key={opp.id}
+	                          onClick={() => setSelectedOppId(opp.id)}
+	                          className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+	                            active
+	                              ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
+	                              : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+	                          }`}
+	                        >
+	                          <div className="flex items-start justify-between gap-3">
+	                            <div className="flex min-w-0 gap-3">
+	                              <GradientAvatar
+	                                name={avatarName}
+	                                size={40}
+	                                radius="0.95rem"
+	                                className="shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-2 ring-white/80"
+	                              />
+	                              <div className="min-w-0">
+	                              <p className="line-clamp-2 text-[0.95rem] font-semibold leading-snug text-[#202124]">
+	                                {normalized.title}
+	                              </p>
+	                              <p className="mt-1.5 flex items-center gap-2 text-[0.76rem] text-[#5F6368]">
+	                                <span className="truncate">{subtitle}</span>
+	                                {filled && (
+	                                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E6F4EA] text-[#188038]">
+	                                    <CheckCircle2 size={12} />
+	                                  </span>
+	                                )}
+	                                {isDraft && (
+	                                  <span className="rounded-full bg-[#EEF4FF] px-2 py-0.5 text-[0.66rem] font-semibold text-[#1A73E8]">
+	                                    Draft
+	                                  </span>
+	                                )}
+	                              </p>
+	                              </div>
+	                            </div>
+	                            <ArrowRight size={16} className={`mt-2 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+	                          </div>
+	                        </button>
                       )
                     })
                   )}
@@ -908,17 +921,17 @@ export default function Opportunities() {
                     </div>
                   </div>
                 ) : !selectedOpp ? (
-                  <div className="rounded-[32px] border bg-white p-8 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                      <Briefcase size={24} />
-                    </div>
-                    <h3 className="text-[1.05rem] font-semibold text-[#202124]">No opportunity selected</h3>
+	                  <div className="rounded-[32px] border border-white/75 bg-white/80 p-8 text-center shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
+	                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8] shadow-[0_14px_32px_rgba(26,115,232,0.14)]">
+	                      <Briefcase size={24} />
+	                    </div>
+	                    <h3 className="text-[1.05rem] font-semibold text-[#202124]">No role selected</h3>
                     <p className="mx-auto mt-2 max-w-lg text-[0.92rem] leading-7 text-[#5F6368]">
                       Choose a role on the left to view details, applicants, and quick actions.
                     </p>
                     <button
                       onClick={() => navigate('/opportunities/new')}
-                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.9rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)]"
+	                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.9rem] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.20)] transition-transform hover:-translate-y-0.5"
                     >
                       <Plus size={14} />
                       Create role
@@ -926,7 +939,7 @@ export default function Opportunities() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <div className="pointer-events-none absolute -top-[10rem] right-[-1.5rem] z-0 hidden h-64 w-full max-w-[660px] select-none overflow-hidden xl:block" aria-hidden="true">
+	                    <div className="pointer-events-none absolute -top-[8rem] right-[-1rem] z-0 hidden h-64 w-full max-w-[660px] select-none overflow-hidden xl:block" aria-hidden="true">
                       <svg
                         className="h-full w-full"
                         viewBox="0 0 660 256"
@@ -936,15 +949,15 @@ export default function Opportunities() {
                         <defs>
                           <linearGradient id="opportunityWaveFill" x1="160" y1="18" x2="628" y2="218" gradientUnits="userSpaceOnUse">
                             <stop offset="0" stopColor="#E8F0FE" stopOpacity="0" />
-                            <stop offset="0.32" stopColor="#D7E6FF" stopOpacity="0.82" />
-                            <stop offset="0.66" stopColor="#E6F4EA" stopOpacity="0.58" />
+	                            <stop offset="0.32" stopColor="#D7E6FF" stopOpacity="0.72" />
+	                            <stop offset="0.66" stopColor="#FFFFFF" stopOpacity="0.74" />
                             <stop offset="1" stopColor="#F5F7FB" stopOpacity="0" />
                           </linearGradient>
                           <linearGradient id="opportunityWaveLine" x1="92" y1="0" x2="660" y2="0" gradientUnits="userSpaceOnUse">
                             <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
                             <stop offset="0.26" stopColor="#1A73E8" stopOpacity="0.24" />
-                            <stop offset="0.58" stopColor="#34A853" stopOpacity="0.18" />
-                            <stop offset="1" stopColor="#F29900" stopOpacity="0" />
+	                            <stop offset="0.58" stopColor="#1A73E8" stopOpacity="0.12" />
+	                            <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
                           </linearGradient>
                         </defs>
                         <path
@@ -980,13 +993,17 @@ export default function Opportunities() {
                     initial={false}
 	                    animate={{ opacity: 1 }}
 	                    transition={{ duration: 0.12 }}
-	                    className="relative z-10 rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-	                    style={{
-                        background: selectedOppFilled ? 'linear-gradient(180deg, #F4FBF7 0%, #FFFFFF 38%)' : '#FFFFFF',
-                        borderColor: selectedOppFilled ? 'rgba(24,128,56,0.18)' : 'rgba(26,115,232,0.10)',
-                      }}
-	                  >
-	                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+		                    className="relative z-10 overflow-hidden rounded-[36px] border border-white/80 bg-white/80 p-8 shadow-[0_28px_80px_rgba(26,115,232,0.11),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl"
+		                    style={{
+	                        background: selectedOppFilled
+	                          ? 'linear-gradient(180deg, rgba(244,251,247,0.92) 0%, rgba(255,255,255,0.86) 42%, rgba(255,255,255,0.76) 100%)'
+	                          : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,251,255,0.76) 100%)',
+	                        borderColor: selectedOppFilled ? 'rgba(24,128,56,0.18)' : 'rgba(26,115,232,0.10)',
+	                      }}
+		                  >
+		                    <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[radial-gradient(circle_at_82%_0%,rgba(26,115,232,0.12),transparent_42%),linear-gradient(180deg,rgba(232,240,254,0.44),transparent)]" />
+		                    <div className="relative">
+		                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
 	                      <div className="max-w-4xl">
 	                        <div
 	                            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.76rem] font-semibold"
@@ -996,7 +1013,7 @@ export default function Opportunities() {
 	                            }}
 	                          >
 		                          <Sparkles size={13} />
-		                          {selectedOppFilled ? 'Filled role' : 'Opportunity details'}
+			                          {selectedOppFilled ? 'Filled role' : 'Role details'}
 		                        </div>
 		                        <h2 className="mt-4 text-[2rem] font-semibold tracking-[-0.04em] text-[#202124] sm:text-[2.4rem]">
 		                          {selectedOpp.title}
@@ -1022,7 +1039,7 @@ export default function Opportunities() {
 		                        )}
 	                        <button
 	                          onClick={() => navigate(`/applicants?opportunity=${selectedOpp.id}`)}
-	                          className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 transition-colors hover:bg-[#FBFCFE]"
+		                          className="inline-flex items-center gap-2 rounded-full border bg-white/90 px-3 py-1.5 shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-colors hover:bg-white"
 	                          style={{ borderColor: selectedOppFilled ? 'rgba(24,128,56,0.16)' : 'rgba(26,115,232,0.10)' }}
 	                        >
 	                          <Users size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
@@ -1033,7 +1050,7 @@ export default function Opportunities() {
 	                        </button>
                         <button
                           onClick={() => navigate(`/opportunities/new?edit=${selectedOpp.id}`)}
-                          className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 transition-colors hover:bg-[#FBFCFE]"
+	                          className="inline-flex items-center gap-2 rounded-full border bg-white/90 px-3 py-1.5 shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-colors hover:bg-white"
                           style={{ borderColor: selectedOppFilled ? 'rgba(24,128,56,0.16)' : 'rgba(26,115,232,0.10)' }}
                         >
                           <PencilLine size={14} className={selectedOppFilled ? 'text-[#188038]' : 'text-[#1A73E8]'} />
@@ -1044,7 +1061,7 @@ export default function Opportunities() {
                       </div>
                     </div>
 
-                    <div className="mt-7 rounded-[28px] border bg-white p-6" style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+	                    <div className="mt-7 rounded-[30px] border border-white/80 bg-white/75 p-6 shadow-[0_18px_52px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl">
                       <div className="grid gap-6">
                         <div>
                           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
@@ -1059,11 +1076,11 @@ export default function Opportunities() {
                             ].map(item => (
                               <div
                                 key={item.label}
-                                className="relative overflow-hidden rounded-[20px] border bg-[#FBFCFE] px-4 py-4 shadow-[0_1px_0_rgba(17,24,39,0.02)]"
-                                style={{ borderColor: 'rgba(26,115,232,0.08)' }}
+	                                className="relative overflow-hidden rounded-[22px] border border-white/75 bg-white px-4 py-4 shadow-[0_14px_30px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.9)_inset]"
+	                                style={{ borderColor: 'rgba(26,115,232,0.08)' }}
                               >
                                 <svg
-                                  className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
+	                                  className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full"
                                   viewBox="0 0 300 100"
                                   preserveAspectRatio="none"
                                   aria-hidden="true"
@@ -1071,12 +1088,12 @@ export default function Opportunities() {
                                   <path
                                     d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z"
                                     fill={item.tint}
-                                    opacity="0.55"
+	                                    opacity="0.42"
                                   />
                                   <path
                                     d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z"
                                     fill={item.tint}
-                                    opacity="0.85"
+	                                    opacity="0.58"
                                   />
                                 </svg>
 
@@ -1116,7 +1133,7 @@ export default function Opportunities() {
                                 const parsed = typeof s === 'string' ? s : (s?.name ?? '')
                                 if (!parsed) return null
                                 return (
-                                  <span key={i} className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] text-[#5F6368]">
+	                                  <span key={i} className="rounded-full border border-[#D7E6FF] bg-white/80 px-3 py-1.5 text-[0.8rem] text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.05)]">
                                     {parsed}
                                   </span>
                                 )
@@ -1132,7 +1149,7 @@ export default function Opportunities() {
                           <div className="mt-3 flex min-h-[32px] flex-wrap gap-2">
                             {selectedOpp.languages?.length > 0 ? (
                               selectedOpp.languages.map((lang, i) => (
-                                  <span key={i} className="rounded-full border border-[#E5EEFB] bg-[#FBFCFE] px-3 py-1.5 text-[0.8rem] text-[#5F6368]">
+	                                  <span key={i} className="rounded-full border border-[#D7E6FF] bg-white/80 px-3 py-1.5 text-[0.8rem] text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.05)]">
                                     {lang}
                                   </span>
                               ))
@@ -1191,17 +1208,18 @@ export default function Opportunities() {
                           )}
                         </div>
                       )}
-                      <button
-                        onClick={() => handleDeleteOpportunity(selectedOpp.id)}
-                        disabled={deleting === selectedOpp.id}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border bg-white px-4 py-2.5 text-[0.84rem] font-semibold text-[#B42318] transition-colors hover:bg-[#FFF9F9] disabled:opacity-50"
+	                      <button
+	                        onClick={() => handleDeleteOpportunity(selectedOpp.id)}
+	                        disabled={deleting === selectedOpp.id}
+	                        className="inline-flex items-center justify-center gap-2 rounded-full border bg-white/90 px-4 py-2.5 text-[0.84rem] font-semibold text-[#B42318] shadow-[0_10px_24px_rgba(180,35,24,0.06)] transition-colors hover:bg-white disabled:opacity-50"
                         style={{ borderColor: 'rgba(244,63,94,0.18)' }}
                       >
                         <Trash2 size={15} />
                         {deleting === selectedOpp.id ? 'Deleting...' : 'Delete role'}
                       </button>
-                      </div>
-                  </motion.div>
+	                      </div>
+	                      </div>
+	                  </motion.div>
                   </div>
                 )}
               </section>
