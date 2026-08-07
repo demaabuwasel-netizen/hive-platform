@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Target, Users, Zap, Search, BarChart3 } from 'lucide-react'
-import HiveLogo from '../components/HiveLogo'
+import {
+  ArrowRight, Target, Users, Zap, BarChart3,
+  Brain, BadgeCheck, MessageSquare, Sparkles,
+} from 'lucide-react'
+import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter } from '../components/MarketingUI'
 import forNGOImage from '../assets/for ngo.png'
 
 const NAV_LINKS = [
@@ -10,44 +13,96 @@ const NAV_LINKS = [
   { label: 'About Us', to: '/about' },
 ]
 
+const FEATURE_CARDS = [
+  {
+    icon: Target,
+    title: 'Mission-aligned matching',
+    desc: 'Find volunteers who care about your cause.',
+    accent: 'blue',
+  },
+  {
+    icon: Zap,
+    title: 'Smart skill matching',
+    desc: 'Surface candidates with the skills you need.',
+    accent: 'green',
+  },
+  {
+    icon: Users,
+    title: 'Verified students',
+    desc: 'Work with real, motivated volunteers.',
+    accent: 'amber',
+  },
+]
+
+const STEPS = [
+  {
+    number: '1',
+    icon: Users,
+    title: 'Create your profile',
+    desc: 'Tell us about your organization and mission.',
+    accent: 'blue',
+  },
+  {
+    number: '2',
+    icon: BarChart3,
+    title: 'Post volunteer roles',
+    desc: 'Describe what you need and who you\'re looking for.',
+    accent: 'green',
+  },
+  {
+    number: '3',
+    icon: Target,
+    title: 'Start collaborating',
+    desc: 'Connect with matched students and get to work.',
+    accent: 'amber',
+  },
+]
+
+const OLD_WAY = [
+  'A pile of resumes with no way to tell who\'s actually aligned with your cause',
+  'Slow back-and-forth over email just to schedule a first chat',
+  'No real signal on whether someone has the skills they claim',
+  'Manually re-posting the same role every time someone falls through',
+]
+
+const HIVE_WAY = [
+  { icon: Brain, text: 'Applicants arrive pre-ranked by fit to your mission and role' },
+  { icon: MessageSquare, text: 'Message and schedule interviews right inside Hive' },
+  { icon: BadgeCheck, text: 'Skills come from real profile data, not a claim on a page' },
+  { icon: Zap, text: 'One role stays open and matching until you\'ve filled it' },
+]
+
+const FAQ_ITEMS = [
+  {
+    q: 'Is Hive free for NGOs?',
+    a: 'Yes. Creating an organization profile and posting roles is completely free — there\'s no cost to start finding volunteers.',
+  },
+  {
+    q: 'How does the AI matching work for us?',
+    a: 'When you post a role, Hive scores every student against it using their skills, interests, values, and availability — so the applicants you see are already a strong fit, not just anyone who clicked apply.',
+  },
+  {
+    q: 'Can we message candidates before deciding?',
+    a: 'Yes. You can message applicants directly, invite them to an interview, and review their full profile before making any decision.',
+  },
+  {
+    q: 'How do we track everything once roles are posted?',
+    a: 'Every applicant, their status, and their match score lives in one dashboard — plus analytics on how your roles are performing over time.',
+  },
+  {
+    q: 'What happens once we accept someone?',
+    a: 'You can message them, coordinate the work, and once the role wraps up, mark it complete — that automatically unlocks a certificate for the student, recognizing the work they did with you.',
+  },
+  {
+    q: 'Do we need to be a large organization to join?',
+    a: 'Not at all. Hive works just as well for a single one-off project as it does for an NGO running dozens of ongoing roles.',
+  },
+]
+
 export default function ForNGOs() {
   return (
     <div className="min-h-screen overflow-hidden bg-white text-[#0D183D]">
-      <header className="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-10">
-          <Link to="/" className="shrink-0" aria-label="Hive home">
-            <HiveLogo size={44} />
-          </Link>
-
-          <nav className="hidden items-center gap-12 lg:flex">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden items-center gap-3 sm:flex">
-            <Link
-              to="/auth"
-              className="rounded-2xl px-5 py-2.5 text-sm font-medium text-[#202124] transition-colors hover:bg-black/[0.06]"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/auth?mode=signup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
-            >
-              Sign up
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader navLinks={NAV_LINKS} />
 
       <main>
         <section className="relative">
@@ -69,7 +124,7 @@ export default function ForNGOs() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-base leading-7 text-[#5F6368] sm:text-lg">
-                  Connect with motivated students who understand your cause and have the skills you need.
+                  Connect with motivated students who understand your cause and have the skills you need — matched by AI, not by luck.
                 </p>
 
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -103,26 +158,7 @@ export default function ForNGOs() {
         <section className="px-5 pb-20 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-7xl rounded-[2.5rem] border border-[#E6EAF0] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:p-8">
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {[
-                {
-                  icon: Target,
-                  title: 'Mission-aligned matching',
-                  desc: 'Find volunteers who care about your cause.',
-                  accent: 'blue',
-                },
-                {
-                  icon: Zap,
-                  title: 'Smart skill matching',
-                  desc: 'Surface candidates with the skills you need.',
-                  accent: 'green',
-                },
-                {
-                  icon: Users,
-                  title: 'Verified students',
-                  desc: 'Work with real, motivated volunteers.',
-                  accent: 'amber',
-                },
-              ].map(({ icon: Icon, title, desc, accent }) => {
+              {FEATURE_CARDS.map(({ icon: Icon, title, desc, accent }) => {
                 const styles = {
                   blue: 'bg-[#EAF2FF] text-[#0B84FF]',
                   green: 'bg-[#E5F6EA] text-[#10B981]',
@@ -156,29 +192,7 @@ export default function ForNGOs() {
             </div>
 
             <div className="mt-12 grid gap-8 lg:grid-cols-3">
-              {[
-                {
-                  number: '1',
-                  icon: Users,
-                  title: 'Create your profile',
-                  desc: 'Tell us about your organization and mission.',
-                  accent: 'blue',
-                },
-                {
-                  number: '2',
-                  icon: BarChart3,
-                  title: 'Post volunteer roles',
-                  desc: 'Describe what you need and who you\'re looking for.',
-                  accent: 'green',
-                },
-                {
-                  number: '3',
-                  icon: Target,
-                  title: 'Start collaborating',
-                  desc: 'Connect with matched students and get to work.',
-                  accent: 'amber',
-                },
-              ].map(step => {
+              {STEPS.map(step => {
                 const Icon = step.icon
                 const pill = {
                   blue: 'bg-[#EAF2FF] text-[#0B84FF]',
@@ -205,6 +219,97 @@ export default function ForNGOs() {
           </div>
         </section>
 
+        {/* ── The old way vs. the Hive way ─────────────────────────────────── */}
+        <section className="px-5 py-24 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-5xl">
+            <FadeUp className="mb-14 text-center">
+              <SectionLabel>Why NGOs choose Hive</SectionLabel>
+              <h2 className="text-3xl font-bold leading-[1.15] tracking-[-0.01em] text-[#202124] sm:text-4xl">
+                Stop sorting through resumes.<br />
+                <span className="text-[#0B84FF]">Start with people who fit.</span>
+              </h2>
+            </FadeUp>
+
+            <div className="relative grid gap-6 md:grid-cols-2">
+              <span className="absolute left-1/2 top-1/2 z-10 hidden h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#E6EAF0] bg-white text-xs font-bold text-[#8A8F98] shadow-[0_8px_20px_rgba(0,0,0,0.08)] md:flex">
+                VS
+              </span>
+
+              <FadeUp>
+                <div className="h-full rounded-[2rem] border border-[#E6EAF0] bg-[#F8F9FA] p-8">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8A8F98]">The old way</p>
+                  <div className="mt-6 space-y-5">
+                    {OLD_WAY.map(text => (
+                      <div key={text} className="flex items-start gap-3">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#B0B6BE]" />
+                        <p className="text-sm leading-6 text-[#8A8F98]">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FadeUp>
+
+              <FadeUp delay={0.08}>
+                <div className="h-full rounded-[2rem] border-2 border-[#0B84FF] bg-white p-8 shadow-[0_20px_50px_rgba(11,132,255,0.14)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0B84FF]">The Hive way</p>
+                  <div className="mt-6 space-y-5">
+                    {HIVE_WAY.map(({ icon: Icon, text }) => (
+                      <div key={text} className="flex items-start gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF2FF] text-[#0B84FF]">
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
+                        <p className="text-sm font-medium leading-6 text-[#202124]">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Link
+                    to="/auth?mode=signup&role=ngo"
+                    className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-[#0B84FF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(11,132,255,0.28)]"
+                  >
+                    Join as an NGO <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </FadeUp>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Feature strip ─────────────────────────────────────────────────── */}
+        <section className="px-5 py-8 sm:px-8 lg:px-10">
+          <FadeUp className="mx-auto max-w-5xl">
+            <div className="flex flex-wrap items-center justify-center gap-1 rounded-[1.5rem] border border-[#E6EAF0] bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+              {[
+                { icon: Sparkles, label: 'AI Matching' },
+                { icon: BadgeCheck, label: 'Applications' },
+                { icon: Brain, label: 'Analytics' },
+                { icon: MessageSquare, label: 'Messages' },
+              ].map(({ icon: Icon, label }, i) => (
+                <div key={label} className="flex items-center">
+                  {i > 0 && <span className="mx-1 hidden h-4 w-px bg-[#E6EAF0] sm:block" />}
+                  <div className="flex items-center gap-2 rounded-xl px-4 py-2 transition-colors hover:bg-[#F8FAFF]">
+                    <Icon className="h-4 w-4 text-[#8A8F98]" />
+                    <span className="text-sm font-medium text-[#5F6368]">{label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FadeUp>
+        </section>
+
+        {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+        <section className="px-5 py-24 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-3xl">
+            <FadeUp className="mb-14 text-center">
+              <SectionLabel>FAQ</SectionLabel>
+              <h2 className="text-3xl font-bold tracking-[-0.01em] text-[#202124] sm:text-4xl">Questions NGOs ask</h2>
+              <p className="mt-3 text-base text-[#5F6368]">Everything you need to know before posting your first role.</p>
+            </FadeUp>
+            <FadeUp>
+              <FAQAccordion items={FAQ_ITEMS} />
+            </FadeUp>
+          </div>
+        </section>
+
         <section className="px-5 py-20 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-5xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8A8F98]">
@@ -228,6 +333,8 @@ export default function ForNGOs() {
           </div>
         </section>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }

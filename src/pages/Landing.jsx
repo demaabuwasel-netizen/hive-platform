@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -22,16 +21,11 @@ import {
   Clock,
   TrendingUp,
   Lightbulb,
-  ChevronDown,
-  ChevronUp,
   CheckCircle2,
   MessageSquare,
   Award,
-  Building2,
-  Mail,
-  ExternalLink,
 } from 'lucide-react'
-import HiveLogo from '../components/HiveLogo'
+import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter } from '../components/MarketingUI'
 import chatgptImage from '../assets/ChatGPT Image Jul 11, 2026, 04_03_41 AM.png'
 import studentDashboard from '../assets/student dashboard.PNG'
 import ngoDashboard from '../assets/ngo dashboard.PNG'
@@ -178,29 +172,6 @@ const FAQ_ITEMS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function FadeUp({ children, delay = 0, className = '' }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-function SectionLabel({ children }) {
-  return (
-    <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
-      <span className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
-      {children}
-    </p>
-  )
-}
-
 function HexTile({ className = '', children, tone = 'blue', image = false }) {
   const tones = {
     blue: 'from-blue-50 to-blue-100 text-blue-700 ring-blue-100',
@@ -228,63 +199,13 @@ function HeroVisual() {
   )
 }
 
-function FAQItem({ q, a }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="border-b border-[#E6EAF0]">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="flex w-full items-center justify-between gap-6 py-5 text-left"
-      >
-        <span className="text-base font-semibold text-[#202124]">{q}</span>
-        {open
-          ? <ChevronUp className="h-5 w-5 shrink-0 text-[#0B84FF]" />
-          : <ChevronDown className="h-5 w-5 shrink-0 text-[#8A8F98]" />}
-      </button>
-      <motion.div
-        initial={false}
-        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.28, ease: 'easeInOut' }}
-        className="overflow-hidden"
-      >
-        <p className="pb-5 text-sm leading-7 text-[#5F6368]">{a}</p>
-      </motion.div>
-    </div>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function Landing() {
   return (
     <div className="min-h-screen overflow-hidden bg-white text-[#0D183D]">
 
-      {/* ── Nav (unchanged) ─────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-10">
-          <Link to="/" className="shrink-0" aria-label="Hive home">
-            <HiveLogo size={44} />
-          </Link>
-          <nav className="hidden items-center gap-12 lg:flex">
-            {NAV_LINKS.map(link => (
-              <Link key={link.label} to={link.to} className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="hidden items-center gap-3 sm:flex">
-            <Link to="/auth" className="rounded-2xl px-5 py-2.5 text-sm font-medium text-[#202124] transition-colors hover:bg-black/[0.06]">
-              Log in
-            </Link>
-            <Link
-              to="/auth?mode=signup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
-            >
-              Sign up <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader navLinks={NAV_LINKS} />
 
       <main>
 
@@ -645,11 +566,7 @@ function Landing() {
               <p className="mt-3 text-base text-[#5F6368]">Everything you need to know before getting started.</p>
             </FadeUp>
             <FadeUp>
-              <div className="rounded-[2rem] border border-[#E6EAF0] bg-white px-8 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
-                {FAQ_ITEMS.map(item => (
-                  <FAQItem key={item.q} q={item.q} a={item.a} />
-                ))}
-              </div>
+              <FAQAccordion items={FAQ_ITEMS} />
             </FadeUp>
           </div>
         </section>
@@ -687,74 +604,7 @@ function Landing() {
 
       </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#E6EAF0] bg-[#202124] px-5 pt-16 pb-10 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Brand */}
-            <div>
-              <HiveLogo size={36} className="brightness-0 invert" />
-              <p className="mt-4 max-w-xs text-sm leading-6 text-white/50">
-                Connecting students with NGOs and meaningful opportunities to create real change.
-              </p>
-              <div className="mt-6 flex gap-4">
-                {[ExternalLink, Mail].map((Icon, i) => (
-                  <button key={i} className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white/60 transition-colors hover:bg-white/20 hover:text-white">
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Product */}
-            <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/40">Product</p>
-              <div className="space-y-3">
-                {['How it works', 'For Students', 'For NGOs', 'About Us'].map(label => (
-                  <Link key={label} to="/" className="block text-sm text-white/60 transition-colors hover:text-white">
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Students */}
-            <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/40">Students</p>
-              <div className="space-y-3">
-                {['Browse opportunities', 'My applications', 'Interview practice', 'Saved roles', 'My profile'].map(label => (
-                  <Link key={label} to="/auth" className="block text-sm text-white/60 transition-colors hover:text-white">
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* NGOs */}
-            <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/40">NGOs</p>
-              <div className="space-y-3">
-                {['Post a role', 'View applicants', 'Analytics', 'Matches', 'Contact us'].map(label => (
-                  <Link key={label} to="/auth" className="block text-sm text-white/60 transition-colors hover:text-white">
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-            <p className="text-xs text-white/30">© {new Date().getFullYear()} Hive. All rights reserved.</p>
-            <div className="flex gap-6">
-              {['Privacy Policy', 'Terms of Service'].map(label => (
-                <Link key={label} to="/" className="text-xs text-white/30 transition-colors hover:text-white/60">
-                  {label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
     </div>
   )

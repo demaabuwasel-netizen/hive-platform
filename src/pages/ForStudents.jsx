@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, Users, Award, BarChart3, Search } from 'lucide-react'
-import HiveLogo from '../components/HiveLogo'
+import {
+  ArrowRight, Sparkles, Users, Award, BarChart3, Search,
+  BookOpen, Heart, Lightbulb,
+} from 'lucide-react'
+import { FadeUp, SectionLabel, FAQAccordion, SiteHeader, SiteFooter } from '../components/MarketingUI'
 import forStudentImage from '../assets/for student.png'
 
 const NAV_LINKS = [
@@ -11,44 +13,120 @@ const NAV_LINKS = [
   { label: 'About Us', to: '/about' },
 ]
 
+const FEATURE_CARDS = [
+  {
+    icon: Sparkles,
+    title: 'Meaningful opportunities',
+    desc: 'Work with organizations aligned with your values.',
+    accent: 'blue',
+  },
+  {
+    icon: BarChart3,
+    title: 'Build real portfolio',
+    desc: 'Create projects you can show employers.',
+    accent: 'green',
+  },
+  {
+    icon: Users,
+    title: 'Professional mentoring',
+    desc: 'Learn from experienced professionals.',
+    accent: 'amber',
+  },
+]
+
+const STEPS = [
+  {
+    number: '1',
+    icon: Users,
+    title: 'Build your profile',
+    desc: 'Share your skills, interests, and values with us.',
+    accent: 'blue',
+  },
+  {
+    number: '2',
+    icon: Search,
+    title: 'Discover opportunities',
+    desc: 'Browse or get matched with perfect roles.',
+    accent: 'green',
+  },
+  {
+    number: '3',
+    icon: Award,
+    title: 'Apply & connect',
+    desc: 'Apply to roles that excite you.',
+    accent: 'amber',
+  },
+  {
+    number: '4',
+    icon: Sparkles,
+    title: 'Start making impact',
+    desc: 'Work on meaningful projects.',
+    accent: 'blue',
+  },
+]
+
+const STUDENT_TILES = [
+  {
+    icon: BookOpen,
+    title: 'Real portfolio, not busywork',
+    desc: 'Every role is a project you can actually point to later — not another line that says "volunteer."',
+    color: '#0B84FF',
+    bg: '#EAF2FF',
+  },
+  {
+    icon: Award,
+    title: 'A certificate when you\'re done',
+    desc: 'Finish a role and it\'s unlocked automatically on your dashboard.',
+    color: '#10B981',
+    bg: '#E5F6EA',
+  },
+  {
+    icon: Heart,
+    title: 'No cold-email guessing',
+    desc: 'Message the NGO directly — no chasing replies through a form.',
+    color: '#E2445C',
+    bg: '#FDEEF1',
+  },
+  {
+    icon: Lightbulb,
+    title: 'Walk in ready',
+    desc: 'Practice the interview for a role before you ever have to actually give it.',
+    color: '#8B5CF6',
+    bg: '#F3EEFF',
+  },
+]
+
+const FAQ_ITEMS = [
+  {
+    q: 'Is Hive free for students?',
+    a: 'Yes. Hive is completely free for students. Create your profile, browse opportunities, and get matched — no fees, ever.',
+  },
+  {
+    q: 'Do I need experience to apply?',
+    a: 'No. Many roles on Hive are designed for students just starting out — what matters most is your interests and willingness to learn. Our AI looks at your whole profile, not just your resume.',
+  },
+  {
+    q: 'How does the matching actually work?',
+    a: 'When you build your profile, Hive looks at your skills, interests, availability, and goals, then scores every opportunity for how well it fits you. The higher the match, the more likely you are to thrive in that role.',
+  },
+  {
+    q: 'Can I apply to more than one opportunity?',
+    a: 'Absolutely. Save as many roles as you like, apply to as many as you want, and track every application from one dashboard.',
+  },
+  {
+    q: 'Can I prepare before an interview?',
+    a: 'Yes — Hive includes an interview practice tool tailored to each specific role, so you can rehearse answers and feel ready before you talk to an NGO.',
+  },
+  {
+    q: 'What happens when I finish a role?',
+    a: 'Once the NGO marks your role as complete, a certificate is unlocked on your dashboard that you can view or download — real proof of the impact you made.',
+  },
+]
+
 export default function ForStudents() {
   return (
     <div className="min-h-screen overflow-hidden bg-white text-[#0D183D]">
-      <header className="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8 lg:px-10">
-          <Link to="/" className="shrink-0" aria-label="Hive home">
-            <HiveLogo size={44} />
-          </Link>
-
-          <nav className="hidden items-center gap-12 lg:flex">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="text-sm font-medium text-[#5F6368] transition-colors hover:text-[#202124]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden items-center gap-3 sm:flex">
-            <Link
-              to="/auth"
-              className="rounded-2xl px-5 py-2.5 text-sm font-medium text-[#202124] transition-colors hover:bg-black/[0.06]"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/auth?mode=signup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#0B84FF] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(11,132,255,0.2)] transition-all hover:shadow-[0_10px_28px_rgba(11,132,255,0.3)] hover:-translate-y-0.5"
-            >
-              Sign up
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader navLinks={NAV_LINKS} />
 
       <main>
         <section className="relative">
@@ -57,7 +135,7 @@ export default function ForStudents() {
             <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10">
               <div className="max-w-2xl">
                 <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
-                  <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
                   Opportunities for students
                 </p>
 
@@ -70,7 +148,7 @@ export default function ForStudents() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-base leading-7 text-[#5F6368] sm:text-lg">
-                  Find meaningful opportunities that match your skills and values. Work on real projects that matter.
+                  Find meaningful opportunities that match your skills and values. Work on real projects that matter — and walk away with proof of the impact you made.
                 </p>
 
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -104,26 +182,7 @@ export default function ForStudents() {
         <section className="px-5 pb-20 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-7xl rounded-[2.5rem] border border-[#E6EAF0] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.08)] sm:p-8">
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {[
-                {
-                  icon: Sparkles,
-                  title: 'Meaningful opportunities',
-                  desc: 'Work with organizations aligned with your values.',
-                  accent: 'blue',
-                },
-                {
-                  icon: BarChart3,
-                  title: 'Build real portfolio',
-                  desc: 'Create projects you can show employers.',
-                  accent: 'green',
-                },
-                {
-                  icon: Users,
-                  title: 'Professional mentoring',
-                  desc: 'Learn from experienced professionals.',
-                  accent: 'amber',
-                },
-              ].map(({ icon: Icon, title, desc, accent }) => {
+              {FEATURE_CARDS.map(({ icon: Icon, title, desc, accent }) => {
                 const styles = {
                   blue: 'bg-[#EAF2FF] text-[#0B84FF]',
                   green: 'bg-[#E5F6EA] text-[#10B981]',
@@ -157,36 +216,7 @@ export default function ForStudents() {
             </div>
 
             <div className="mt-12 grid gap-8 lg:grid-cols-4">
-              {[
-                {
-                  number: '1',
-                  icon: Users,
-                  title: 'Build your profile',
-                  desc: 'Share your skills, interests, and values with us.',
-                  accent: 'blue',
-                },
-                {
-                  number: '2',
-                  icon: Search,
-                  title: 'Discover opportunities',
-                  desc: 'Browse or get matched with perfect roles.',
-                  accent: 'green',
-                },
-                {
-                  number: '3',
-                  icon: Award,
-                  title: 'Apply & connect',
-                  desc: 'Apply to roles that excite you.',
-                  accent: 'amber',
-                },
-                {
-                  number: '4',
-                  icon: Sparkles,
-                  title: 'Start making impact',
-                  desc: 'Work on meaningful projects.',
-                  accent: 'blue',
-                },
-              ].map(step => {
+              {STEPS.map(step => {
                 const Icon = step.icon
                 const pill = {
                   blue: 'bg-[#EAF2FF] text-[#0B84FF]',
@@ -213,6 +243,67 @@ export default function ForStudents() {
           </div>
         </section>
 
+        {/* ── Why students choose Hive — bento grid ────────────────────────── */}
+        <section className="px-5 py-24 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-6xl">
+            <FadeUp className="mb-12 max-w-2xl">
+              <SectionLabel>Why students choose Hive</SectionLabel>
+              <h2 className="text-3xl font-bold leading-[1.15] tracking-[-0.01em] text-[#202124] sm:text-4xl">
+                Not a listings board.<br />
+                <span className="text-[#0B84FF]">Something built around you.</span>
+              </h2>
+            </FadeUp>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
+              <FadeUp className="lg:col-span-2 lg:row-span-2">
+                <div className="flex h-full flex-col justify-between overflow-hidden rounded-[2rem] bg-[#0B84FF] p-8 text-white shadow-[0_20px_50px_rgba(11,132,255,0.28)]">
+                  <div>
+                    <Sparkles className="h-9 w-9 text-white/90" />
+                    <h3 className="mt-6 text-2xl font-bold leading-snug">
+                      Matched on who you are — not a keyword scan of your resume.
+                    </h3>
+                    <p className="mt-4 max-w-sm text-sm leading-6 text-white/75">
+                      Hive weighs your skills, causes you care about, and where you want to grow — the same picture an NGO would build over a first coffee, done automatically.
+                    </p>
+                  </div>
+                  <Link
+                    to="/auth?mode=signup&role=student"
+                    className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B84FF] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)]"
+                  >
+                    Join as a student <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </FadeUp>
+
+              {STUDENT_TILES.map(({ icon: Icon, title, desc, color, bg }, i) => (
+                <FadeUp key={title} delay={0.05 * (i + 1)}>
+                  <div className="flex h-full flex-col rounded-[2rem] border border-[#E6EAF0] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(11,132,255,0.1)]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: bg }}>
+                      <Icon className="h-5 w-5" style={{ color }} />
+                    </div>
+                    <h3 className="mt-4 text-base font-semibold text-[#202124]">{title}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-[#5F6368]">{desc}</p>
+                  </div>
+                </FadeUp>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+        <section className="px-5 py-24 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-3xl">
+            <FadeUp className="mb-14 text-center">
+              <SectionLabel>FAQ</SectionLabel>
+              <h2 className="text-3xl font-bold tracking-[-0.01em] text-[#202124] sm:text-4xl">Questions students ask</h2>
+              <p className="mt-3 text-base text-[#5F6368]">Everything you need to know before you apply.</p>
+            </FadeUp>
+            <FadeUp>
+              <FAQAccordion items={FAQ_ITEMS} />
+            </FadeUp>
+          </div>
+        </section>
+
         <section className="px-5 py-20 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-5xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8A8F98]">
@@ -236,6 +327,8 @@ export default function ForStudents() {
           </div>
         </section>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }
