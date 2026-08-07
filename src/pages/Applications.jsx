@@ -210,16 +210,17 @@ export default function Applications() {
   const skillLabels = (selectedOpp?.skills || []).map(formatSkill).filter(Boolean)
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[#F6F8FC]">
-      <div className="mx-auto max-w-[1480px] px-6 pb-8 pt-12 lg:px-10">
+    <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_12%_8%,rgba(26,115,232,0.08),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(232,240,254,0.64),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.62),rgba(245,247,251,0))]" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-10 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="mb-8"
+          className="mb-7"
         >
           <div>
-            <h1 className="text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]">
+            <h1 className="text-[clamp(2.1rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-[#202124]">
               Applications
             </h1>
             <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-[#5F6368]">
@@ -233,16 +234,19 @@ export default function Applications() {
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.28 }}
-            className="overflow-y-auto rounded-[28px] border border-[#E5EEFB] bg-white p-4 shadow-[0_12px_34px_rgba(17,24,39,0.04)] md:sticky md:top-6"
+            className="overflow-y-auto rounded-[30px] border border-white/75 bg-white/68 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl md:sticky md:top-6"
             style={{ height: '600px' }}
           >
             <div className="mb-4 flex items-center justify-between gap-3 px-1">
               <div>
-                <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Your applications</p>
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Your applications</p>
                 <p className="mt-1 text-[0.84rem] text-[#5F6368]">
                   {loading ? 'Loading...' : `${apps.length} application${apps.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
+                <Briefcase size={17} />
+              </span>
             </div>
 
             <div className="space-y-3">
@@ -251,12 +255,12 @@ export default function Applications() {
                   {[0, 1, 2].map(i => (
                     <div
                       key={i}
-                      className="h-[94px] animate-pulse rounded-[22px] border border-[#E5EEFB] bg-[#FBFCFE]"
+                      className="h-[94px] animate-pulse rounded-[24px] border border-white/70 bg-white/58 shadow-[0_8px_22px_rgba(26,115,232,0.05)]"
                     />
                   ))}
                 </div>
               ) : apps.length === 0 ? (
-                <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-[#F8FBFF] px-4 py-10 text-center">
+                <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-white/58 px-4 py-10 text-center shadow-[0_10px_24px_rgba(26,115,232,0.06)]">
                   <img src={applicationEmptyIllustration} alt="" className="mx-auto w-44 mb-4 select-none" />
                   <h3 className="text-sm font-semibold text-[#202124]">No applications yet</h3>
                   <p className="mx-auto mt-1.5 max-w-xs text-[0.75rem] leading-5 text-[#5F6368]">
@@ -278,20 +282,23 @@ export default function Applications() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
-                      className={`group w-full rounded-[22px] border p-4 text-left transition-all ${
+                      className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
                         selected
-                          ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
-                          : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
+                          ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
+                          : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
                       }`}
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className={`line-clamp-1 text-[0.95rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        <div className="flex min-w-0 gap-3">
+                          <GradientAvatar name={app.ngoName || app.role || 'Application'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
+                          <div className="min-w-0">
+                          <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
                             {app.role || 'Position'}
                           </p>
-                          <p className="mt-1.5 truncate text-[0.76rem] text-[#5F6368]">
+                          <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
                             {app.ngoName || 'Organization'}
                           </p>
+                          </div>
                         </div>
                         <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${selected ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                       </div>
@@ -307,10 +314,7 @@ export default function Applications() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col overflow-hidden rounded-[34px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-            style={{
-              borderColor: 'rgba(209,224,255,0.95)',
-            }}
+            className="flex flex-col overflow-hidden rounded-[34px] border border-white/75 bg-white/68 shadow-[0_26px_72px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
           >
             {!selectedApp ? (
               <div className="flex min-h-[360px] items-center justify-center px-8 py-16">
@@ -323,29 +327,43 @@ export default function Applications() {
               </div>
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
-                <div className="shrink-0 border-b border-[#D7E6FF] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_55%,#EEF4FF_100%)] px-10 py-9">
+                <div className="relative shrink-0 overflow-hidden border-b border-[#D7E6FF] bg-[#F8FBFF] px-10 py-9">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(232,240,254,0.62))]" aria-hidden="true" />
                   <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between sm:gap-16">
-                    <div className="min-w-0">
-                      <h2 className="text-[2.25rem] font-semibold leading-tight text-[#202124] sm:text-[2.75rem]">
-                        {selectedApp.role || 'Position'}
-                      </h2>
-                      {selectedNgoId ? (
-                        <Link
-                          to={`/ngo-profile/${selectedNgoId}`}
-                          className="mt-2 inline-flex text-[0.98rem] font-medium text-[#5F6368] transition-colors hover:text-[#1A73E8]"
-                        >
-                          {selectedNgoName}
-                        </Link>
-                      ) : (
-                        <p className="mt-2 text-[0.98rem] text-[#5F6368]">
-                          {selectedNgoName}
-                        </p>
-                      )}
+                    <div className="relative flex min-w-0 items-start gap-4">
+                      <GradientAvatar name={selectedNgoName} size={58} radius="1.15rem" className="mt-1 shrink-0 shadow-sm ring-4 ring-white/90" />
+                      <div className="min-w-0">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-[#D7E6FF] bg-white/78 px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] backdrop-blur-xl">
+                            Applied role
+                          </span>
+                          {selectedCategory && (
+                            <span className="rounded-full border border-white/80 bg-white/58 px-3 py-1.5 text-[0.72rem] font-semibold text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.06)] backdrop-blur-xl">
+                              {selectedCategory}
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-[clamp(2rem,3.5vw,2.75rem)] font-semibold leading-tight tracking-[-0.035em] text-[#202124]">
+                          {selectedApp.role || 'Position'}
+                        </h2>
+                        {selectedNgoId ? (
+                          <Link
+                            to={`/ngo-profile/${selectedNgoId}`}
+                            className="mt-2 inline-flex text-[0.98rem] font-medium text-[#5F6368] transition-colors hover:text-[#1A73E8]"
+                          >
+                            {selectedNgoName}
+                          </Link>
+                        ) : (
+                          <p className="mt-2 text-[0.98rem] text-[#5F6368]">
+                            {selectedNgoName}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-4 pt-1">
+                    <div className="relative flex shrink-0 items-center gap-4 pt-1">
                       {statusMeta && (
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.82rem] font-semibold ${statusMeta.bg} ${statusMeta.color}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/75 px-3 py-1.5 text-[0.82rem] font-semibold shadow-[0_8px_18px_rgba(26,115,232,0.08)] ${statusMeta.bg} ${statusMeta.color}`}>
                           <StatusIcon size={14} />
                           {statusMeta.label}
                         </span>
@@ -353,20 +371,20 @@ export default function Applications() {
                       <button
                         onClick={() => handleDeleteApplication(selectedApp.id)}
                         disabled={deletingId === selectedApp.id}
-                        className="rounded-full p-2 text-[#C5221F] transition hover:bg-[#FCE8E6] disabled:opacity-50">
+                        className="rounded-full border border-white/75 bg-white/58 p-2 text-[#C5221F] shadow-[0_8px_18px_rgba(197,34,31,0.06)] transition hover:bg-[#FCE8E6] disabled:opacity-50">
                         <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="px-10 py-10">
+                <div className="px-10 py-9">
                   {!selectedApp.opportunityId ? (
                     <NoticeCard>This application is not linked to a published opportunity yet.</NoticeCard>
                   ) : isDetailLoading ? (
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {[0, 1, 2, 3].map(i => (
-                        <div key={i} className="h-[92px] animate-pulse rounded-2xl bg-[#F1F5FE]" />
+                        <div key={i} className="h-[104px] animate-pulse rounded-[24px] border border-white/70 bg-white/58" />
                       ))}
                     </div>
                   ) : selectedError ? (
@@ -405,11 +423,11 @@ export default function Applications() {
 
 function NoticeCard({ children, tone = 'default' }) {
   const styles = tone === 'error'
-    ? 'border-red-100 bg-red-50 text-red-700'
-    : 'border-[#E5EEFB] bg-[#F8FAFD] text-[#5F6368]'
+    ? 'border-red-100 bg-red-50/80 text-red-700'
+    : 'border-white/75 bg-white/58 text-[#5F6368]'
 
   return (
-    <div className={`rounded-2xl border px-5 py-4 text-sm ${styles}`}>
+    <div className={`rounded-[22px] border px-5 py-4 text-sm shadow-[0_10px_24px_rgba(26,115,232,0.06)] backdrop-blur-xl ${styles}`}>
       {children}
     </div>
   )
@@ -418,15 +436,15 @@ function NoticeCard({ children, tone = 'default' }) {
 function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
     <div
-      className="group relative flex min-h-[104px] flex-col items-center justify-center overflow-hidden rounded-2xl border bg-white p-4 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_22px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(17,24,39,0.08)]"
-      style={{ borderColor: `${accent}1F` }}
+      className="group relative flex min-h-[132px] flex-col overflow-hidden rounded-[24px] border bg-white p-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+      style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
       <span
         className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
         style={{ background: `linear-gradient(90deg, ${accent}, ${tint})` }}
       />
       <svg
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
         viewBox="0 0 300 100"
         preserveAspectRatio="none"
         aria-hidden="true"
@@ -434,38 +452,38 @@ function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A7
         <path
           d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z"
           fill={tint}
-          opacity="0.52"
+          opacity="0.55"
         />
         <path
           d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z"
           fill={tint}
-          opacity="0.82"
+          opacity="0.85"
         />
       </svg>
-      <div className="relative z-10 flex items-center gap-2">
-        {Icon && (
-          <span
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: tint, color: accent }}
-          >
-            <Icon size={13} />
-          </span>
-        )}
-        <p className="text-[0.7rem] font-bold uppercase tracking-[0.1em] text-[#0B0C0E]">
+      <div className="relative z-10 flex items-start justify-between gap-4">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
+          style={{ background: tint, color: accent }}
+        >
+          {Icon && <Icon size={18} />}
+        </span>
+      </div>
+      <div className="relative z-10 mt-auto">
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#5F6368]">
           {label}
         </p>
+        <p className="mt-2 max-w-full truncate text-[1.08rem] font-semibold tracking-[-0.02em] text-[#202124]">
+          {value}
+        </p>
       </div>
-      <p className="relative z-10 mt-3 max-w-full truncate text-[0.95rem] font-semibold text-[#202124]">
-        {value}
-      </p>
     </div>
   )
 }
 
 function DetailSection({ title, children }) {
   return (
-    <section className="mt-7 border-t border-[#E5EEFB] pt-7">
-      <h3 className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
+    <section className="mt-7 border-t border-white/70 pt-7">
+      <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#8A94A3]">
         {title}
       </h3>
       <div className="mt-4">
@@ -483,7 +501,7 @@ function ChipList({ items, color }) {
   return (
     <div className="flex flex-wrap gap-2.5">
       {items.map((item, index) => (
-        <span key={`${item}-${index}`} className={`rounded-full border px-3.5 py-2 text-[0.86rem] font-semibold ${colors}`}>
+        <span key={`${item}-${index}`} className={`rounded-full border bg-white/58 px-3.5 py-2 text-[0.86rem] font-semibold shadow-[0_8px_18px_rgba(26,115,232,0.05)] backdrop-blur-xl ${colors}`}>
           {item}
         </span>
       ))}

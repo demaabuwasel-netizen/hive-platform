@@ -344,19 +344,7 @@ export default function StudentPublicProfile() {
               )}
             </SectionCard>
 
-            {interests.length > 0 && (
-              <SectionCard icon={Heart} tint="rgba(226,68,92,0.12)" accent="#E2445C" title="Causes" subtitle="What this student cares about" delay={0.05}>
-                <div className="flex flex-wrap gap-2">
-                  {interests.map(interest => (
-                    <span key={interest} className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[0.8rem] font-medium text-[#202124] backdrop-blur-sm">
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
-
-            <SectionCard icon={GraduationCap} tint="rgba(26,115,232,0.12)" accent="#1A73E8" title="Education" delay={0.07}>
+            <SectionCard icon={GraduationCap} tint="rgba(26,115,232,0.12)" accent="#1A73E8" title="Education" delay={0.05}>
               {profile.educations?.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {profile.educations.map((edu, i) => (
@@ -420,14 +408,42 @@ export default function StudentPublicProfile() {
               )}
             </SectionCard>
 
+            {(interests.length > 0 || formattedLanguages.length > 0) && (
+              <div className="grid gap-6 sm:grid-cols-2">
+                {interests.length > 0 && (
+                  <SectionCard icon={Heart} tint="rgba(226,68,92,0.12)" accent="#E2445C" title="Causes" subtitle="What this student cares about" delay={0.11}>
+                    <div className="flex flex-wrap gap-2">
+                      {interests.map(interest => (
+                        <span key={interest} className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[0.8rem] font-medium text-[#202124] backdrop-blur-sm">
+                          {interest}
+                        </span>
+                      ))}
+                    </div>
+                  </SectionCard>
+                )}
+
+                {formattedLanguages.length > 0 && (
+                  <SectionCard icon={Globe} tint="rgba(24,128,56,0.12)" accent="#188038" title="Languages" delay={0.13}>
+                    <div className="flex flex-wrap gap-2">
+                      {formattedLanguages.map((lang, i) => (
+                        <span key={i} className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[0.8rem] font-medium text-[#202124] backdrop-blur-sm">
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </SectionCard>
+                )}
+              </div>
+            )}
+
             {hasContent(profile.experience) && (
-              <SectionCard icon={Briefcase} tint="rgba(24,128,56,0.12)" accent="#188038" title="Experience" delay={0.11}>
+              <SectionCard icon={Briefcase} tint="rgba(24,128,56,0.12)" accent="#188038" title="Experience" delay={0.15}>
                 <p className="whitespace-pre-line text-[0.9rem] leading-7 text-[#5F6368]">{profile.experience}</p>
               </SectionCard>
             )}
 
             {hasContent(profile.goals) && (
-              <SectionCard icon={Target} tint="rgba(242,153,0,0.12)" accent="#F29900" title="Career goals" delay={0.13}>
+              <SectionCard icon={Target} tint="rgba(242,153,0,0.12)" accent="#F29900" title="Career goals" delay={0.17}>
                 <p className="whitespace-pre-line text-[0.9rem] leading-7 text-[#5F6368]">{profile.goals}</p>
               </SectionCard>
             )}
@@ -435,18 +451,6 @@ export default function StudentPublicProfile() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {formattedLanguages.length > 0 && (
-              <SectionCard icon={Globe} tint="rgba(24,128,56,0.12)" accent="#188038" title="Languages" delay={0.05}>
-                <div className="flex flex-wrap gap-2">
-                  {formattedLanguages.map((lang, i) => (
-                    <span key={i} className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[0.8rem] font-medium text-[#202124] backdrop-blur-sm">
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
-
             {hasLinks && (
               <SectionCard icon={Link2} tint="rgba(26,115,232,0.12)" accent="#1A73E8" title="Connect" delay={0.08}>
                 <div className="space-y-2">

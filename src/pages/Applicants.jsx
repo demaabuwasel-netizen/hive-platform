@@ -344,7 +344,7 @@ export default function Applicants() {
       {/* Main layout — left queue stays a fixed, compact width; right detail panel
           flexes to fill whatever's left, so the page never needs horizontal
           scrolling on standard laptop widths. */}
-      <div className="grid w-full items-start gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid w-full items-start gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
         <ApplicantsList
           applicants={applicants}
           selectedId={selected?.id}

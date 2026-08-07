@@ -25,11 +25,11 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
             {/* Shows ~4-5 roles at a time; the rest scroll left/right inside
                 this box only — capped width + min-w-0 keeps the scrolling
                 contained here instead of spilling out to the whole page. */}
-            <div className="min-w-0 max-w-[820px] flex-1 overflow-x-auto">
+            <div className="min-w-0 max-w-[900px] flex-1 overflow-x-auto">
             {loading ? (
               <div className="flex items-center gap-2 pb-1">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="h-[64px] w-[168px] shrink-0 animate-pulse rounded-[18px] border border-[#E5EEFB] bg-white/80" />
+                  <div key={i} className="h-[64px] w-[200px] shrink-0 animate-pulse rounded-[18px] border border-[#E5EEFB] bg-white/80" />
                 ))}
               </div>
             ) : (
@@ -46,7 +46,7 @@ export default function RolesList({ roles, selectedRoleId, onSelectRole, loading
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.12 }}
                     onClick={() => onSelectRole(role.id)}
-                    className={`w-[168px] shrink-0 rounded-[18px] border px-3.5 py-2.5 text-left transition-all ${
+                    className={`w-[200px] shrink-0 rounded-[18px] border px-3.5 py-2.5 text-left transition-all ${
                       isActive
                         ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_24px_rgba(26,115,232,0.12)]'
                         : filled

@@ -115,15 +115,9 @@ function QuickActionCard({ action, delay = 0, count = null }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, delay }}
       onClick={action.onClick}
-      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+      className="group relative overflow-hidden rounded-[24px] border bg-white p-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_18px_42px_rgba(26,115,232,0.12)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
-      {/* Accent strip revealed on hover */}
-      <span
-        className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        style={{ background: `linear-gradient(90deg, ${action.accent}, ${action.tint})` }}
-      />
-
       {/* Faded pastel waves in the card's own tint */}
       <svg
         className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
@@ -145,14 +139,14 @@ function QuickActionCard({ action, delay = 0, count = null }) {
 
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl shadow-[0_10px_20px_rgba(26,115,232,0.08)] ring-1 ring-white/80 transition-transform duration-200 group-hover:scale-110"
           style={{ background: action.tint, color: action.accent }}
         >
           <Icon size={18} strokeWidth={2.15} />
         </div>
 
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#1A73E8]"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8FAFC] text-[#9CA3AF] transition-all duration-200 group-hover:translate-x-0.5 group-hover:bg-[#E8F0FE] group-hover:text-[#1A73E8] group-hover:shadow-[0_8px_18px_rgba(26,115,232,0.12)]"
           style={{ boxShadow: 'inset 0 0 0 1px rgba(17,24,39,0.05)' }}
         >
           <ChevronRight size={16} />
@@ -164,7 +158,7 @@ function QuickActionCard({ action, delay = 0, count = null }) {
           <h3 className="text-[0.98rem] font-semibold text-[#202124]">{action.label}</h3>
           {typeof count === 'number' && count > 0 && (
             <span
-              className="rounded-full px-2 py-0.5 text-[0.7rem] font-bold"
+              className="rounded-full px-2 py-0.5 text-[0.7rem] font-bold shadow-[0_8px_16px_rgba(26,115,232,0.07)] ring-1 ring-white/70"
               style={{ background: action.tint, color: action.accent }}
             >
               {count}
@@ -184,9 +178,9 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-2xl overflow-hidden rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_28px_80px_rgba(60,64,67,0.18)]"
+        className="w-full max-w-2xl overflow-hidden rounded-[34px] border border-white bg-white shadow-[0_32px_90px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,1)_inset] backdrop-blur-2xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#EDF2FA] px-6 py-5">
+        <div className="flex items-start justify-between gap-4 border-b border-[#E8F0FE] bg-white px-6 py-5">
           <div>
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Certificates</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-[-0.045em] text-[#202124]">Completed roles</h2>
@@ -197,14 +191,14 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F8FAFC] text-[#5F6368] transition-colors hover:bg-[#EEF3FB]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/70 text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] transition-colors hover:bg-[#EEF3FB]"
             aria-label="Close certificates"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="max-h-[62vh] overflow-y-auto p-6">
+        <div className="max-h-[62vh] overflow-y-auto bg-white p-6">
           {certificates.length === 0 ? (
             <div className="rounded-[28px] border border-dashed border-[#D7E6FF] bg-[#FBFCFE] px-6 py-10 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -220,7 +214,7 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
               {certificates.map(certificate => (
                 <article
                   key={certificate.id}
-                  className="rounded-[26px] border border-[#E5EEFB] bg-[#FBFCFE] p-4"
+                className="rounded-[26px] border border-[#E5EEFB] bg-white p-4 shadow-[0_10px_24px_rgba(26,115,232,0.06)]"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
@@ -240,7 +234,7 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
                       <button
                         type="button"
                         onClick={() => onView(certificate)}
-                        className="inline-flex h-10 items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-4 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]"
+                        className="inline-flex h-10 items-center gap-2 rounded-full border border-[#D7E6FF] bg-white/80 px-4 text-[0.82rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] transition-colors hover:bg-white"
                       >
                         <Eye size={15} />
                         View
@@ -248,7 +242,7 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
                       <button
                         type="button"
                         onClick={() => onDownload(certificate)}
-                        className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-4 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[#1765CC]"
+                        className="inline-flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] px-4 text-[0.82rem] font-semibold text-white shadow-[0_10px_22px_rgba(26,115,232,0.25)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(26,115,232,0.32)]"
                       >
                         <Download size={15} />
                         Download
@@ -265,13 +259,60 @@ function CertificateModal({ certificates, studentName, onClose, onDownload, onVi
   )
 }
 
+function CertificatePreviewModal({ html, title, onClose }) {
+  if (!html) return null
+  const previewHtml = html.replace(
+    '</style>',
+    `
+      body { overflow: hidden; }
+      .certificate {
+        width: min(calc(100vw - 24px), calc((100vh - 24px) * 1.333));
+      }
+    </style>`
+  )
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#202124]/24 px-4 py-6 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex w-full max-w-3xl flex-col overflow-hidden rounded-[34px] border border-white bg-white shadow-[0_32px_90px_rgba(26,115,232,0.18),0_1px_0_rgba(255,255,255,1)_inset] backdrop-blur-2xl"
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-[#E8F0FE] bg-white px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#9AA0A6]">Certificate preview</p>
+            <h2 className="truncate text-[1.05rem] font-semibold text-[#202124]">{title || 'Completed role'}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] transition-colors hover:bg-[#EEF3FB]"
+            aria-label="Close certificate preview"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="bg-white p-4">
+          <iframe
+            title="Certificate preview"
+            srcDoc={previewHtml}
+            scrolling="no"
+            className="aspect-[1448/1086] w-full rounded-[24px] border border-[#E5EEFB] bg-white shadow-[0_18px_46px_rgba(26,115,232,0.10)]"
+          />
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 function MatchCard({ match, index, onOpen }) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.06 * index }}
-      className="group snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[280px] cursor-pointer rounded-[24px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_10px_26px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_18px_40px_rgba(26,115,232,0.10)]"
+      className="group snap-start shrink-0 w-full lg:w-[calc((100%-2rem)/3)] min-w-[280px] cursor-pointer rounded-[26px] border bg-white p-4 shadow-[0_12px_30px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.92)_inset] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:shadow-[0_22px_48px_rgba(26,115,232,0.13)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
       role="button"
       tabIndex={0}
@@ -303,7 +344,7 @@ function MatchCard({ match, index, onOpen }) {
         </span>
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-3 py-3 transition-colors group-hover:border-[#D7E6FF] group-hover:bg-[#F8FBFF]">
+      <div className="mt-4 rounded-[20px] border border-[#E5EEFB] bg-[#FBFCFE] px-3.5 py-3.5 transition-colors group-hover:border-[#D7E6FF] group-hover:bg-[#F8FBFF]">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">
           Overview
         </p>
@@ -320,27 +361,20 @@ function MatchCard({ match, index, onOpen }) {
         </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-[0.68rem] font-semibold">
-        <span className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[#5F6368]">{match.category}</span>
-        <span className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[#5F6368]">{match.workMode}</span>
-        <span className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[#5F6368]">{match.hours}</span>
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#E5EEFB] pt-4">
+        {[
+          { label: 'Category', value: match.category },
+          { label: 'Mode', value: match.workMode },
+          { label: 'Hours', value: match.hours },
+        ].map(item => (
+          <div key={item.label} className="min-w-0 rounded-2xl border border-[#E5EEFB] bg-white px-3 py-2.5">
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">{item.label}</p>
+            <p className="mt-1 truncate text-[0.76rem] font-semibold text-[#3C4043]">{item.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-3 border-t border-[#E5EEFB] pt-4">
-        <div className="flex min-w-0 flex-wrap gap-1.5">
-          {match.skills.length > 0 ? match.skills.map(skill => (
-            <span
-              key={skill}
-              className="max-w-[100px] truncate rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.68rem] font-semibold text-[#1A73E8]"
-            >
-              {skill}
-            </span>
-          )) : (
-            <span className="rounded-full border border-[#E5EEFB] bg-white px-2.5 py-1 text-[0.68rem] font-semibold text-[#1A73E8]">
-              Open role
-            </span>
-          )}
-        </div>
+      <div className="mt-4 flex justify-end">
         <span className="shrink-0 text-[0.78rem] font-semibold text-[#1A73E8] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           View role →
         </span>
@@ -360,6 +394,7 @@ export default function StudentDashboard() {
   const [interviewCount, setInterviewCount] = useState(0)
   const [applications, setApplications] = useState([])
   const [certificateOpen, setCertificateOpen] = useState(false)
+  const [certificatePreview, setCertificatePreview] = useState(null)
   const [topMatches, setTopMatches] = useState([])
   const [loadingMatches, setLoadingMatches] = useState(true)
 
@@ -483,16 +518,16 @@ export default function StudentDashboard() {
 
   async function viewCertificate(app) {
     const html = await getCertificateHtml(app)
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank', 'noopener,noreferrer')
-    setTimeout(() => URL.revokeObjectURL(url), 30000)
+    setCertificatePreview({
+      html,
+      title: app?.role || 'Completed role',
+    })
   }
 
   return (
     <main className="relative min-h-screen bg-[#F5F7FB]">
       {/* Soft ambient gradients */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_88%_0%,rgba(255,255,255,0.98),rgba(255,255,255,0.62)_32%,transparent_62%),radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.04),transparent_48%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
 
       <div className="relative mx-auto max-w-[1520px] px-6 pb-10 pt-6 lg:px-10 lg:pt-8">
         <motion.header
@@ -524,10 +559,7 @@ export default function StudentDashboard() {
           </div>
         </motion.header>
 
-        <section
-          className="relative z-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ borderColor: 'rgba(26,115,232,0.10)' }}
-        >
+        <section className="relative z-10 rounded-[36px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,255,255,0.90),rgba(255,255,255,0.74))] px-5 py-6 shadow-[0_28px_82px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.95)_inset,0_0_0_1px_rgba(255,255,255,0.45)_inset] backdrop-blur-2xl">
           <div className="mb-6">
             <div>
               <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Quick actions</h2>
@@ -547,19 +579,16 @@ export default function StudentDashboard() {
           </div>
         </section>
 
-        <section
-          className="mt-10 rounded-[36px] border bg-white px-5 py-6 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ borderColor: 'rgba(26,115,232,0.10)' }}
-        >
+        <section className="mt-10 rounded-[36px] border border-white/90 bg-[linear-gradient(145deg,rgba(255,255,255,0.90),rgba(255,255,255,0.74))] px-5 py-6 shadow-[0_28px_82px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.95)_inset,0_0_0_1px_rgba(255,255,255,0.45)_inset] backdrop-blur-2xl">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/75 bg-[#E8F0FE]/90 px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)]">
                 <Sparkles size={14} />
                 Top matches
               </div>
               <div className="flex items-center gap-3">
                 <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#202124]">Recommended for you</h2>
-                <span className="rounded-full border border-[#C6DAFC] bg-[#F7FAFF] px-3 py-1 text-[0.82rem] font-semibold text-[#1A73E8]">
+                <span className="rounded-full border border-[#C6DAFC] bg-white/80 px-3 py-1 text-[0.82rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.06)]">
                   {loadingMatches ? '...' : topMatches.length}
                 </span>
               </div>
@@ -572,8 +601,7 @@ export default function StudentDashboard() {
               <button
                 type="button"
                 onClick={() => matchesRef.current?.scrollBy({ left: -420, behavior: 'smooth' })}
-                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
-                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/68 text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#1A73E8]"
                 aria-label="Scroll matches left"
               >
                 <ChevronLeft size={20} />
@@ -581,8 +609,7 @@ export default function StudentDashboard() {
               <button
                 type="button"
                 onClick={() => matchesRef.current?.scrollBy({ left: 420, behavior: 'smooth' })}
-                className="flex h-11 w-11 items-center justify-center rounded-full border text-[#5F6368] transition-colors hover:bg-[#F8FAFC]"
-                style={{ borderColor: 'rgba(17,24,39,0.08)' }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/80 bg-white/68 text-[#5F6368] shadow-[0_10px_22px_rgba(26,115,232,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#1A73E8]"
                 aria-label="Scroll matches right"
               >
                 <ChevronRight size={20} />
@@ -644,6 +671,12 @@ export default function StudentDashboard() {
           onView={viewCertificate}
         />
       )}
+
+      <CertificatePreviewModal
+        html={certificatePreview?.html}
+        title={certificatePreview?.title}
+        onClose={() => setCertificatePreview(null)}
+      />
     </main>
   )
 }

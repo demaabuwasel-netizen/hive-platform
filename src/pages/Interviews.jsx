@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Clock, Sparkles, AlertCircle, Lightbulb, Briefcase, ArrowRight,
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
   Languages, Mic, PlayCircle, StopCircle, Heart,
-  FileText, CheckCircle2, Target, MessageCircle, Info, Layers,
+  FileText, CheckCircle2, Target, MessageCircle, Info, Layers, Volume2,
   X, Trash2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { fetchStudentApplications, deleteApplication } from '../services/applications'
 import { fetchNgoOpportunities, fetchOpportunity } from '../services/opportunities'
+import { fetchSavedOpportunities } from '../services/saved'
 import { withTimeout } from '../utils/withTimeout'
 import ngoInterviewImg from '../assets/ngo interview.PNG'
 
@@ -171,10 +172,28 @@ function smoothScrollToTop(fromEl, duration = 900) {
   animateScrollTop(getScrollParent(fromEl, true), 0, duration)
 }
 
+// A skill can arrive as a plain string ("Research"), a real object
+// ({ name, level, category }), or — since the skills column stores each one
+// as a JSON string — a string that's actually a JSON-encoded object
+// ('{"name":"Research","level":"Intermediate","category":"Other"}'). That
+// last case used to render as raw JSON text; this unwraps it to just the
+// name either way.
+function skillDisplayName(skill) {
+  if (typeof skill !== 'string') return skill?.name ?? ''
+  const trimmed = skill.trim()
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (parsed?.name) return parsed.name
+    } catch {
+      // Not actually JSON — fall through and use the raw string as-is.
+    }
+  }
+  return skill
+}
+
 function getSkillNames(skills = []) {
-  return skills
-    .map(skill => typeof skill === 'string' ? skill : skill?.name)
-    .filter(Boolean)
+  return skills.map(skillDisplayName).filter(Boolean)
 }
 
 function makeMockStudent(role) {
@@ -357,16 +376,34 @@ function buildStudentRole(app, opportunity) {
   }
 }
 
+function buildSavedStudentRole(saved) {
+  return {
+    id: saved?.opportunityId || saved?.id,
+    opportunityId: saved?.opportunityId,
+    title: saved?.title || 'Position',
+    orgName: saved?.orgName || 'Organization',
+    category: saved?.category || 'Opportunity',
+    field: saved?.field || saved?.category || 'community impact',
+    description: saved?.description || saved?.missionImpact || 'This saved role is connected to meaningful NGO work and gives you a chance to show your strengths.',
+    missionImpact: saved?.missionImpact || '',
+    skills: getSkillNames(saved?.skills || []),
+    languages: saved?.languages || [],
+    weeklyHours: saved?.weeklyHours || '',
+    duration: saved?.duration || '',
+    location: saved?.location || '',
+    workMode: saved?.workMode || '',
+    status: 'saved',
+  }
+}
+
 function getNextStudentCategory(categoryId) {
   const index = STUDENT_INTERVIEW_CATEGORIES.findIndex(category => category.id === categoryId)
   const next = STUDENT_INTERVIEW_CATEGORIES[Math.min(index + 1, STUDENT_INTERVIEW_CATEGORIES.length - 1)]
   return next?.id || 'opening'
 }
 
-function getStudentQuestionTarget(answer) {
-  const words = answer.trim().split(/\s+/).filter(Boolean)
-  const hasSpecificSignal = /\b(project|because|example|learned|built|created|helped|worked|team|result|impact|challenge|support|feedback)\b/i.test(answer)
-  return words.length >= 45 && hasSpecificSignal ? 2 : 3
+function getStudentCategoryTarget(categoryId) {
+  return ['skills', 'mission', 'scenario'].includes(categoryId) ? 3 : 2
 }
 
 function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
@@ -498,10 +535,16 @@ function makeStudentExampleAnswer(role, profile, categoryId) {
 
 function StudentView() {
   const { user, profile } = useApp()
+  const navigate = useNavigate()
+  const { applicationId, opportunityId } = useParams()
+  const isPracticeRoute = Boolean(applicationId || opportunityId)
   const [apps, setApps] = useState([])
+  const [savedRoles, setSavedRoles] = useState([])
   const [roleDetails, setRoleDetails] = useState({})
   const [loading, setLoading] = useState(true)
+  const [roleSource, setRoleSource] = useState('applied')
   const [selectedAppId, setSelectedAppId] = useState(null)
+  const [selectedSavedId, setSelectedSavedId] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
   const [practiceFinished, setPracticeFinished] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -519,13 +562,25 @@ function StudentView() {
   const messageIdRef = useRef(0)
   const questionCardRef = useRef(null)
   const coachPanelRef = useRef(null)
+  const answerTextareaRef = useRef(null)
 
   useEffect(() => {
     if (!user?.id) return
-    withTimeout(fetchStudentApplications(user.id), 10000, 'fetchStudentApplications')
-      .then(async loadedApps => {
+    Promise.all([
+      withTimeout(fetchStudentApplications(user.id), 10000, 'fetchStudentApplications').catch(err => {
+        console.error('Failed to load applications:', err.message)
+        return []
+      }),
+      withTimeout(fetchSavedOpportunities(user.id), 10000, 'fetchSavedOpportunities').catch(err => {
+        console.error('Failed to load saved opportunities:', err.message)
+        return []
+      }),
+    ])
+      .then(async ([loadedApps, loadedSavedRoles]) => {
         const nextApps = Array.isArray(loadedApps) ? loadedApps : []
+        const nextSavedRoles = Array.isArray(loadedSavedRoles) ? loadedSavedRoles : []
         setApps(nextApps)
+        setSavedRoles(nextSavedRoles)
 
         const detailEntries = await Promise.all(
           nextApps.map(async app => {
@@ -536,27 +591,51 @@ function StudentView() {
         )
         setRoleDetails(Object.fromEntries(detailEntries))
       })
-      .catch(err => {
-        console.error('Failed to load applications:', err.message)
-        setApps([])
-      })
       .finally(() => setLoading(false))
   }, [user?.id])
 
   useEffect(() => {
-    return () => recognitionRef.current?.stop?.()
+    return () => {
+      recognitionRef.current?.stop?.()
+      window.speechSynthesis?.cancel?.()
+    }
   }, [])
 
   useEffect(() => {
-    if (selectedAppId || apps.length === 0) return
-    setSelectedAppId(apps[0].id)
-  }, [apps, selectedAppId])
+    if (opportunityId) {
+      if (savedRoles.some(role => String(role.opportunityId) === String(opportunityId))) {
+        setRoleSource('saved')
+        setSelectedSavedId(opportunityId)
+      }
+      return
+    }
+    if (applicationId) {
+      if (apps.some(app => String(app.id) === String(applicationId))) {
+        setRoleSource('applied')
+        setSelectedAppId(applicationId)
+      }
+      return
+    }
+    if (roleSource === 'applied' && !selectedAppId && apps.length > 0) setSelectedAppId(apps[0].id)
+    if (roleSource === 'saved' && !selectedSavedId && savedRoles.length > 0) setSelectedSavedId(savedRoles[0].opportunityId)
+    if (apps.length === 0 && savedRoles.length > 0) {
+      setRoleSource('saved')
+      setSelectedSavedId(savedRoles[0].opportunityId)
+    }
+  }, [applicationId, opportunityId, apps, savedRoles, roleSource, selectedAppId, selectedSavedId])
 
-  const selectedApp = apps.find(a => a.id === selectedAppId)
-  const selectedRole = selectedApp ? buildStudentRole(selectedApp, roleDetails[selectedApp.id]) : null
-  const currentAiMessage = [...transcript].reverse().find(message => message.from === 'ai')
+  const selectedApp = apps.find(a => String(a.id) === String(selectedAppId))
+  const selectedSaved = savedRoles.find(role => String(role.opportunityId) === String(selectedSavedId))
+  const selectedRole = roleSource === 'saved'
+    ? (selectedSaved ? buildSavedStudentRole(selectedSaved) : null)
+    : (selectedApp ? buildStudentRole(selectedApp, roleDetails[selectedApp.id]) : null)
+  const currentAiMessage = [...transcript].reverse().find(message => message.from === 'ai' && message.category === activeCategory)
   const currentQuestion = currentAiMessage?.text || (selectedRole ? makeStudentInterviewQuestion(selectedRole, profile, activeCategory) : '')
   const activeCategoryInfo = STUDENT_INTERVIEW_CATEGORIES.find(category => category.id === activeCategory) || STUDENT_INTERVIEW_CATEGORIES[0]
+  const categoryMessages = transcript.filter(message => message.category === activeCategory)
+  const lastCategoryMessage = categoryMessages[categoryMessages.length - 1]
+  const currentQuestionMsg = lastCategoryMessage?.from === 'ai' ? lastCategoryMessage : categoryMessages[categoryMessages.length - 2]
+  const categoryHasQuestion = Boolean(currentQuestionMsg)
   const questionCoach = selectedRole ? explainStudentQuestion(currentQuestion, selectedRole, profile, activeCategory) : null
   const exampleAnswer = selectedRole ? makeStudentExampleAnswer(selectedRole, profile, activeCategory) : ''
   const answeredCount = transcript.filter(message => message.from === 'student').length
@@ -566,6 +645,13 @@ function StudentView() {
     { id: 'phases', label: 'What to know', icon: Lightbulb },
     { id: 'questions', label: 'Questions to practice', icon: MessageCircle },
   ] : []
+
+  useEffect(() => {
+    const textarea = answerTextareaRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 224)}px`
+  }, [draftAnswer, categoryHasQuestion])
 
   function nextMessageId(prefix) {
     messageIdRef.current += 1
@@ -582,7 +668,18 @@ function StudentView() {
   }
 
   function selectRole(appId) {
+    setRoleSource('applied')
     setSelectedAppId(appId)
+    resetStudentPracticeState()
+  }
+
+  function selectSavedRole(nextOpportunityId) {
+    setRoleSource('saved')
+    setSelectedSavedId(nextOpportunityId)
+    resetStudentPracticeState()
+  }
+
+  function resetStudentPracticeState() {
     setPracticeStarted(false)
     setPracticeFinished(false)
     setShowSummary(false)
@@ -594,6 +691,13 @@ function StudentView() {
     setExplainOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
+  }
+
+  function switchRoleSource(source) {
+    setRoleSource(source)
+    if (source === 'applied' && !selectedAppId && apps[0]) setSelectedAppId(apps[0].id)
+    if (source === 'saved' && !selectedSavedId && savedRoles[0]) setSelectedSavedId(savedRoles[0].opportunityId)
+    resetStudentPracticeState()
   }
 
   async function handleDeleteApp(appId) {
@@ -622,11 +726,7 @@ function StudentView() {
     }
   }
 
-  function openPractice() {
-    if (!selectedAppId) return
-    const app = apps.find(item => item.id === selectedAppId)
-    if (!app) return
-    const role = buildStudentRole(app, roleDetails[app.id])
+  function startPracticeSession(role) {
     const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0)
 
     setPracticeStarted(true)
@@ -642,10 +742,36 @@ function StudentView() {
     setOpenPrepQuestionStage(null)
   }
 
+  function openPractice() {
+    if (!selectedRole) return
+    if (!isPracticeRoute) {
+      if (roleSource === 'saved') navigate(`/interviews/practice/saved/${selectedRole.opportunityId}`)
+      else navigate(`/interviews/practice/${selectedAppId}`)
+      return
+    }
+    startPracticeSession(selectedRole)
+  }
+
+  function backToInterviewGuide() {
+    setPracticeStarted(false)
+    setPracticeFinished(false)
+    setShowSummary(false)
+    setTranscript([])
+    setDraftAnswer('')
+    setExplainOpen(false)
+    setOpenInsightKeys(new Set())
+    navigate('/interviews')
+  }
+
+  useEffect(() => {
+    if (!isPracticeRoute || loading || practiceStarted || showSummary || !selectedRole) return
+    startPracticeSession(selectedRole)
+  }, [isPracticeRoute, loading, practiceStarted, selectedRole, showSummary])
+
   function openQuestionCoach() {
     setExplainOpen(true)
     window.setTimeout(() => {
-      coachPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      smoothScrollIntoView(coachPanelRef.current, 750)
     }, 80)
   }
 
@@ -656,8 +782,38 @@ function StudentView() {
     }, 80)
   }
 
-  // The AI drives category progression — the student answers, it decides what's next.
-  // The category list is a read-only progress trail, not something the student can jump around in.
+  function getCategoryQuestionCount(categoryId) {
+    return transcript.filter(message => message.from === 'ai' && message.category === categoryId).length
+  }
+
+  function getCategoryAnswerCount(categoryId) {
+    return transcript.filter(message => message.from === 'student' && message.category === categoryId).length
+  }
+
+  function isCategoryComplete(categoryId) {
+    return getCategoryAnswerCount(categoryId) >= getStudentCategoryTarget(categoryId)
+  }
+
+  function startCategoryQuestion(categoryId = activeCategory) {
+    if (!selectedRole) return
+    const seed = getCategoryQuestionCount(categoryId)
+    const question = makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed)
+
+    setTranscript(prev => [
+      ...prev,
+      { id: nextMessageId('ai'), from: 'ai', category: categoryId, text: question },
+    ])
+    setActiveCategory(categoryId)
+    setDraftAnswer('')
+    setExplainOpen(false)
+  }
+
+  function selectPracticeCategory(categoryId) {
+    setActiveCategory(categoryId)
+    setDraftAnswer('')
+    setExplainOpen(false)
+  }
+
   function sendAnswer() {
     const answer = draftAnswer.trim()
     if (!answer || !selectedRole) return
@@ -665,7 +821,7 @@ function StudentView() {
     const answeredCategory = activeCategory
     const answersInCategory = transcript.filter(message => message.from === 'student' && message.category === answeredCategory).length + 1
     const questionsInCategory = transcript.filter(message => message.from === 'ai' && message.category === answeredCategory).length
-    const questionTarget = getStudentQuestionTarget(answer)
+    const questionTarget = getStudentCategoryTarget(answeredCategory)
     const shouldStayInCategory = answersInCategory < questionTarget
     const isLastCategory = activeCategory === 'close'
 
@@ -695,8 +851,8 @@ function StudentView() {
     setExplainOpen(false)
   }
 
-  // Skips the current question with no answer recorded — the category still advances,
-  // it just shows up in the summary as "not answered" instead of covered.
+  // Skip leaves the current section entirely. Students answer their way through
+  // the mini-round; skipping is the escape hatch to move on.
   function skipQuestion() {
     if (!selectedRole) return
 
@@ -709,7 +865,8 @@ function StudentView() {
     }
 
     const nextCategory = getNextStudentCategory(activeCategory)
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, transcript.length + 1)
+    const nextSeed = getCategoryQuestionCount(nextCategory)
+    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed)
 
     setTranscript(prev => [
       ...prev,
@@ -754,21 +911,76 @@ function StudentView() {
     recognition.start()
   }
 
+  function speakCurrentQuestion() {
+    if (!currentQuestionMsg?.text || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(currentQuestionMsg.text)
+    utterance.rate = 0.95
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
+  }
+
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2, 3, 4, 5].map(item => (
-          <div
-            key={item}
-            className="h-[260px] animate-pulse rounded-[32px] border bg-white"
-            style={{ borderColor: 'rgba(26,115,232,0.10)' }} />
-        ))}
+      <div className={isPracticeRoute ? 'grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]' : 'grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]'}>
+        {isPracticeRoute ? (
+          <>
+            <div className="h-[620px] animate-pulse rounded-[30px] border border-white/70 bg-white/70 shadow-[0_24px_70px_rgba(26,115,232,0.10)] backdrop-blur-2xl" />
+            <div className="h-[620px] animate-pulse rounded-[30px] border border-white/70 bg-white/60 shadow-[0_18px_46px_rgba(26,115,232,0.08)] backdrop-blur-2xl" />
+          </>
+        ) : (
+          <>
+            <aside className="h-[600px] rounded-[32px] border border-white/70 bg-white/70 p-4 shadow-[0_18px_46px_rgba(26,115,232,0.08)] backdrop-blur-2xl">
+              <div className="mb-5 flex items-center justify-between gap-3 px-1">
+                <div className="space-y-2">
+                  <div className="h-3 w-28 animate-pulse rounded-full bg-[#D7E6FF]" />
+                  <div className="h-3 w-20 animate-pulse rounded-full bg-[#E8F0FE]" />
+                </div>
+                <div className="h-11 w-11 animate-pulse rounded-2xl bg-[#E8F0FE]" />
+              </div>
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map(item => (
+                  <div key={item} className="rounded-[22px] border border-white/70 bg-white/58 px-4 py-4 shadow-[0_8px_20px_rgba(26,115,232,0.04)]">
+                    <div className="h-4 w-4/5 animate-pulse rounded-full bg-[#E8F0FE]" />
+                    <div className="mt-3 h-3 w-2/3 animate-pulse rounded-full bg-[#F1F5F9]" />
+                  </div>
+                ))}
+              </div>
+            </aside>
+
+            <section className="min-h-[560px] rounded-[32px] border border-white/70 bg-white/70 p-6 shadow-[0_24px_70px_rgba(26,115,232,0.10)] backdrop-blur-2xl lg:p-8">
+              <div className="rounded-[30px] bg-[linear-gradient(135deg,rgba(248,251,255,0.92)_0%,rgba(255,255,255,0.72)_52%,rgba(232,240,254,0.82)_100%)] px-6 py-6 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset]">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-4 h-3 w-32 animate-pulse rounded-full bg-[#D7E6FF]" />
+                    <div className="h-9 w-3/5 animate-pulse rounded-2xl bg-[#E8F0FE]" />
+                    <div className="mt-4 h-4 w-4/5 animate-pulse rounded-full bg-[#F1F5F9]" />
+                  </div>
+                  <div className="h-12 w-44 animate-pulse rounded-full bg-[#D7E6FF]" />
+                </div>
+              </div>
+
+              <div className="mt-11 flex flex-wrap gap-3">
+                {[0, 1, 2].map(item => (
+                  <div key={item} className="h-11 w-36 animate-pulse rounded-full border border-white/70 bg-white/64 shadow-[0_8px_20px_rgba(26,115,232,0.05)]" />
+                ))}
+              </div>
+
+              <div className="mt-8 max-w-4xl space-y-4">
+                <div className="h-6 w-52 animate-pulse rounded-full bg-[#E8F0FE]" />
+                <div className="h-4 w-full animate-pulse rounded-full bg-[#F1F5F9]" />
+                <div className="h-4 w-5/6 animate-pulse rounded-full bg-[#F1F5F9]" />
+                <div className="h-4 w-2/3 animate-pulse rounded-full bg-[#F1F5F9]" />
+              </div>
+            </section>
+          </>
+        )}
       </div>
     )
   }
 
-  if (apps.length === 0) {
+  if (apps.length === 0 && savedRoles.length === 0) {
     return (
       <section
         className="rounded-[32px] border bg-white px-6 py-16 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
@@ -776,9 +988,9 @@ function StudentView() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#E8F0FE] text-[#1A73E8]">
           <Briefcase size={28} />
         </div>
-        <h2 className="text-[1.35rem] font-semibold text-[#202124]">No applications yet</h2>
+        <h2 className="text-[1.35rem] font-semibold text-[#202124]">No roles ready yet</h2>
         <p className="mx-auto mt-3 max-w-md text-[0.92rem] leading-7 text-[#5F6368]">
-          Apply to a role first, then Hive will turn that role into a practice interview room.
+          Apply to a role or save one you like, then Hive will turn it into a practice interview room.
         </p>
       </section>
     )
@@ -792,39 +1004,122 @@ function StudentView() {
         transition={{ duration: 0.24 }}
         className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside
-          className="overflow-y-auto rounded-[32px] border bg-white p-4 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-          style={{ height: '600px', borderColor: 'rgba(26,115,232,0.10)' }}>
+          className="overflow-y-auto rounded-[30px] border border-white/75 bg-white/68 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
+          style={{ height: '600px' }}>
           <div className="mb-4 flex items-center justify-between gap-3 px-1">
             <div>
-              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Applied roles</p>
-              <p className="mt-1 text-[0.84rem] text-[#5F6368]">{apps.length} role{apps.length !== 1 ? 's' : ''} available</p>
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Practice roles</p>
+              <p className="mt-1 text-[0.84rem] text-[#5F6368]">
+                {roleSource === 'applied'
+                  ? `${apps.length} applied role${apps.length !== 1 ? 's' : ''}`
+                  : `${savedRoles.length} saved role${savedRoles.length !== 1 ? 's' : ''}`}
+              </p>
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-              <Briefcase size={18} />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
+              {roleSource === 'applied' ? <Briefcase size={18} /> : <Heart size={18} />}
             </div>
           </div>
 
+          <div className="mb-4 rounded-full border border-white/80 bg-white/58 p-1 shadow-[0_12px_28px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl">
+            {[
+              { id: 'applied', label: 'Applied', count: apps.length, icon: Briefcase },
+              { id: 'saved', label: 'Saved', count: savedRoles.length, icon: Heart },
+            ].map(option => {
+              const active = roleSource === option.id
+              const Icon = option.icon
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => switchRoleSource(option.id)}
+                  className={`inline-flex h-10 w-1/2 items-center justify-center gap-2 rounded-full text-[0.8rem] font-semibold transition-all ${
+                    active
+                      ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.9)_inset]'
+                      : 'text-[#6B7280] hover:bg-white/72 hover:text-[#1A73E8]'
+                  }`}>
+                  <Icon size={14} />
+                  <span>{option.label}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[0.68rem] ${active ? 'bg-white/80 text-[#1A73E8]' : 'bg-white/70 text-[#8A94A3]'}`}>
+                    {option.count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
           <div className="space-y-3">
-            {apps.map(app => {
+            {roleSource === 'applied' && apps.length === 0 && (
+              <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-white/62 px-5 py-8 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
+                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                  <Briefcase size={18} />
+                </div>
+                <p className="text-[0.9rem] font-semibold text-[#202124]">No applied jobs yet</p>
+                <p className="mt-1.5 text-[0.78rem] leading-5 text-[#5F6368]">Saved jobs are still ready for interview practice.</p>
+              </div>
+            )}
+
+            {roleSource === 'saved' && savedRoles.length === 0 && (
+              <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-white/62 px-5 py-8 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
+                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                  <Heart size={18} />
+                </div>
+                <p className="text-[0.9rem] font-semibold text-[#202124]">No saved jobs yet</p>
+                <p className="mt-1.5 text-[0.78rem] leading-5 text-[#5F6368]">Save a role from Opportunities and practice it here.</p>
+              </div>
+            )}
+
+            {roleSource === 'applied' && apps.map(app => {
               const role = buildStudentRole(app, roleDetails[app.id])
               const active = String(app.id) === String(selectedAppId)
               return (
                 <button
                   key={app.id}
                   onClick={() => selectRole(app.id)}
-                  className={`group w-full rounded-[22px] border px-4 py-3.5 text-left transition-all ${
+                  className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
                     active
-                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_12px_28px_rgba(26,115,232,0.12)]'
-                      : 'border-[#E5EEFB] bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE]'
+                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
+                      : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
                   }`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                        {role.title}
-                      </p>
-                      <p className="mt-1.5 text-[0.76rem] text-[#5F6368]">
-                        {[role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
-                      </p>
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="flex min-w-0 gap-3">
+                      <GradientAvatar name={role.orgName || role.title || 'Interview'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
+                      <div className="min-w-0">
+                        <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                          {role.title}
+                        </p>
+                        <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
+                          {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
+                  </div>
+                </button>
+              )
+            })}
+
+            {roleSource === 'saved' && savedRoles.map(saved => {
+              const role = buildSavedStudentRole(saved)
+              const active = String(saved.opportunityId) === String(selectedSavedId)
+              return (
+                <button
+                  key={saved.opportunityId}
+                  onClick={() => selectSavedRole(saved.opportunityId)}
+                  className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+                    active
+                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
+                      : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+                  }`}>
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="flex min-w-0 gap-3">
+                      <GradientAvatar name={role.orgName || role.title || 'Saved role'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
+                      <div className="min-w-0">
+                        <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                          {role.title}
+                        </p>
+                        <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
+                          {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                        </p>
+                      </div>
                     </div>
                     <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                   </div>
@@ -849,8 +1144,8 @@ function StudentView() {
                   <Briefcase size={22} />
                 </div>
                 <p className="text-[1rem] font-semibold text-[#202124]">Choose a role</p>
-                <p className="mt-2 max-w-sm text-[0.86rem] leading-6 text-[#5F6368]">
-                  Select an applied role on the left to start practicing interviews.
+                  <p className="mt-2 max-w-sm text-[0.86rem] leading-6 text-[#5F6368]">
+                  Select an applied or saved role on the left to start practicing interviews.
                 </p>
               </div>
             ) : (
@@ -1009,13 +1304,20 @@ function StudentView() {
               </AnimatePresence>
 
                 <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    onClick={() => handleDeleteApp(selectedApp.id)}
-                    disabled={deletingAppId === selectedApp.id}
-                    className="inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-[#C5221F] transition-colors hover:underline disabled:opacity-50">
-                    <Trash2 size={13} />
-                    {deletingAppId === selectedApp.id ? 'Deleting…' : 'Delete this application'}
-                  </button>
+                  {roleSource === 'applied' && selectedApp ? (
+                    <button
+                      onClick={() => handleDeleteApp(selectedApp.id)}
+                      disabled={deletingAppId === selectedApp.id}
+                      className="inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-[#C5221F] transition-colors hover:underline disabled:opacity-50">
+                      <Trash2 size={13} />
+                      {deletingAppId === selectedApp.id ? 'Deleting…' : 'Delete this application'}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-[#5F6368]">
+                      <Heart size={13} />
+                      Saved role
+                    </span>
+                  )}
                   <button
                     onClick={openPractice}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
@@ -1051,23 +1353,8 @@ function StudentView() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mx-auto max-w-6xl space-y-6">
+        className="relative mx-auto max-w-6xl space-y-6">
         <div>
-          <button
-            onClick={() => {
-              setPracticeStarted(false)
-              setPracticeFinished(false)
-              setShowSummary(false)
-              setTranscript([])
-              setDraftAnswer('')
-              setExplainOpen(false)
-              setOpenInsightKeys(new Set())
-            }}
-            className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]"
-            aria-label="Back to interview guide"
-            title="Back to interview guide">
-            <ArrowLeft size={19} />
-          </button>
           <div className="min-w-0">
             <h2 className="text-[1.75rem] font-semibold tracking-[-0.03em] text-[#202124]">Interview summary</h2>
             <p className="truncate text-[0.9rem] text-[#5F6368]">{selectedRole.orgName} · {selectedRole.title}</p>
@@ -1085,8 +1372,7 @@ function StudentView() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-              className="group relative min-h-[190px] overflow-hidden rounded-[24px] border bg-white p-5 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
-              style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
               <span
                 className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
@@ -1128,11 +1414,10 @@ function StudentView() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: 0.05 * index }}
-              className="group overflow-hidden rounded-[24px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:shadow-[0_18px_40px_rgba(17,24,39,0.07)]"
-              style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
-              <span className="block h-px bg-[#E8EBF0]" />
-              <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F4F7FB] text-[#4B6382] ring-1 ring-[#E6EAF0] transition-transform duration-200 group-hover:scale-110">
+              className="group overflow-hidden rounded-[28px] border border-white/75 bg-white/66 shadow-[0_18px_50px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:bg-white/76 hover:shadow-[0_24px_64px_rgba(26,115,232,0.12)]">
+              <span className="block h-px bg-white/70" />
+              <div className="flex items-center gap-3 border-b border-white/70 bg-white/42 px-6 py-4 backdrop-blur-xl">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90 transition-transform duration-200 group-hover:scale-110">
                   <CategoryIcon size={18} strokeWidth={2.15} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1169,7 +1454,7 @@ function StudentView() {
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-[18px] border border-dashed border-[#E5EEFB] bg-[#FBFCFE] px-4 py-4">
+                    <div className="rounded-[20px] border border-dashed border-[#D7E6FF] bg-white/54 px-4 py-4 shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
                       <p className="text-[0.86rem] leading-6 text-[#5F6368]">{category.coach.purpose}</p>
                       <p className="mt-2 text-[0.78rem] font-medium text-[#1A73E8]">
                         Try covering this step in your next practice run.
@@ -1181,8 +1466,7 @@ function StudentView() {
                 <div className="min-w-0">
                   <div className="space-y-3">
                     <div
-                      className="overflow-hidden rounded-[18px] border transition-colors"
-                      style={{ borderColor: shownOpen ? '#C9D5E6' : '#E6EAF0', background: shownOpen ? '#FFFFFF' : '#F8FAFC' }}>
+                      className="overflow-hidden rounded-[20px] border border-white/75 bg-white/52 shadow-[0_8px_22px_rgba(26,115,232,0.05)] transition-colors">
                       <button
                         onClick={() => toggleInsight(shownKey)}
                         className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
@@ -1201,7 +1485,7 @@ function StudentView() {
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.18 }}
-                            className="overflow-hidden border-t border-[#E6EAF0]">
+                            className="overflow-hidden border-t border-white/70">
                             <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
                               {category.covered
                                 ? category.coach.purpose
@@ -1213,8 +1497,7 @@ function StudentView() {
                     </div>
 
                     <div
-                      className="overflow-hidden rounded-[18px] border transition-colors"
-                      style={{ borderColor: improveOpen ? '#C9D5E6' : '#E6EAF0', background: improveOpen ? '#FFFFFF' : '#F8FAFC' }}>
+                      className="overflow-hidden rounded-[20px] border border-white/75 bg-white/52 shadow-[0_8px_22px_rgba(26,115,232,0.05)] transition-colors">
                       <button
                         onClick={() => toggleInsight(improveKey)}
                         className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left">
@@ -1233,7 +1516,7 @@ function StudentView() {
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.18 }}
-                            className="overflow-hidden border-t border-[#E6EAF0]">
+                            className="overflow-hidden border-t border-white/70">
                             <div className="space-y-2 px-3.5 py-3">
                               {(category.coach.tips || []).map(tip => (
                                 <p key={tip} className="flex gap-2 text-[0.82rem] leading-6 text-[#5F6368]">
@@ -1261,15 +1544,8 @@ function StudentView() {
             Practice again
           </button>
           <button
-            onClick={() => {
-              setPracticeStarted(false)
-              setPracticeFinished(false)
-              setShowSummary(false)
-              setTranscript([])
-              setDraftAnswer('')
-              setExplainOpen(false)
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+            onClick={backToInterviewGuide}
+            className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/64 px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white">
             Back to prep
           </button>
         </div>
@@ -1279,45 +1555,44 @@ function StudentView() {
 
   const currentCategoryIndex = STUDENT_INTERVIEW_CATEGORIES.findIndex(category => category.id === activeCategory)
   const isLastCategory = currentCategoryIndex === STUDENT_INTERVIEW_CATEGORIES.length - 1
-  const nextCategoryInfo = STUDENT_INTERVIEW_CATEGORIES[currentCategoryIndex + 1]
-  const questionsAskedInCategory = transcript.filter(message => message.from === 'ai' && message.category === activeCategory).length
+  const answersGivenInCategory = transcript.filter(message => message.from === 'student' && message.category === activeCategory).length
+  const activeCategoryTarget = getStudentCategoryTarget(activeCategory)
 
   // Only the current category's question is shown — no answer bubble, no transcript log,
   // just the question in front of the student until they answer or skip it.
-  const categoryMessages = transcript.filter(message => message.category === activeCategory)
-  const lastCategoryMessage = categoryMessages[categoryMessages.length - 1]
-  const currentQuestionMsg = lastCategoryMessage?.from === 'ai' ? lastCategoryMessage : categoryMessages[categoryMessages.length - 2]
+  const activeCategoryComplete = answersGivenInCategory >= activeCategoryTarget
 
   return (
     <motion.div
       key={selectedRole.id}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      transition={{ duration: 0.25 }}
+      className="relative">
+      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="relative">
       <section
-        className="relative flex min-h-[700px] flex-col overflow-hidden rounded-[20px] border border-[#E3E7EE] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.06)] xl:h-[calc(100vh-96px)]">
-        <div className="relative border-b border-[#E8EBF0] bg-white px-4 py-3 sm:px-5">
+        className="relative flex min-h-[620px] flex-col overflow-hidden rounded-[30px] border border-white/70 bg-white/72 shadow-[0_24px_70px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.75)_inset] backdrop-blur-2xl xl:h-[calc(100vh-132px)]">
+        <div className="relative border-b border-white/70 bg-white/58 px-4 py-3 shadow-[0_1px_0_rgba(255,255,255,0.70)_inset] backdrop-blur-xl sm:px-5">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-            <div className="grid min-w-0 grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] items-center rounded-2xl bg-white px-1 py-1">
+            <div className="grid min-w-0 grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] items-center rounded-[24px] border border-white/80 bg-white/54 px-1.5 py-1.5 shadow-[0_10px_30px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-xl">
               {STUDENT_INTERVIEW_CATEGORIES.map((category, index) => {
                 const isActive = activeCategory === category.id
-                const isDone = askedCategories.has(category.id) && !isActive
+                const isDone = isCategoryComplete(category.id) && !isActive
                 const stepButton = (
                   <button
-                    onClick={() => setActiveCategory(category.id)}
-                    className={`mx-auto inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[0.72rem] font-semibold transition-all lg:gap-2 lg:px-3.5 lg:text-[0.78rem] ${
+                    onClick={() => selectPracticeCategory(category.id)}
+                    className={`mx-auto inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[0.72rem] font-semibold transition-all lg:gap-2 lg:px-3.5 lg:text-[0.78rem] ${
                       isActive
-                        ? 'bg-[#E8F0FE] text-[#1A73E8] ring-1 ring-[#C9DAF8]'
+                        ? 'bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(230,244,234,0.94))] text-[#188038] shadow-[0_10px_22px_rgba(24,128,56,0.14),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#B7E1C1]'
                         : isDone
-                        ? 'text-[#3C4043] hover:bg-[#F8FAFC]'
-                        : 'text-[#6B7280] hover:bg-[#F8FAFC] hover:text-[#3C4043]'
+                        ? 'text-[#1A73E8] hover:bg-white/70'
+                        : 'text-[#6B7280] hover:bg-white/62 hover:text-[#3C4043]'
                     }`}>
                     <span
                       className={`flex h-2 w-2 shrink-0 rounded-full ring-[3px] lg:h-2.5 lg:w-2.5 lg:ring-4 ${
                         isActive
-                          ? 'bg-[#1A73E8] ring-[#D8E7FE]'
+                          ? 'bg-[#188038] ring-[#DFF3E6]'
                           : isDone
                           ? 'bg-[#1A73E8] ring-[#EEF4FF]'
                           : 'bg-[#C4CBD6] ring-[#F3F6FA]'
@@ -1333,7 +1608,7 @@ function StudentView() {
                     <div key={`${category.id}-line`} className="px-1.5">
                       <span
                         className={`block h-px w-full min-w-5 rounded-full ${
-                          isActive || isDone ? 'bg-[#1A73E8]/30' : 'bg-[#D8DEE8]'
+                          isActive ? 'bg-[#188038]/24' : isDone ? 'bg-[#1A73E8]/25' : 'bg-white/80'
                         }`}
                         aria-hidden="true"
                       />
@@ -1348,25 +1623,53 @@ function StudentView() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           {/* Current exchange only — the room shows where you are, not a scrolling log */}
-          <div className="relative flex-1 overflow-y-auto bg-[#FAFBFD] px-4 py-5 sm:px-6">
-            <div className="mx-auto flex h-full min-h-[180px] max-w-2xl flex-col items-center justify-center text-center">
+          <div className="relative flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.84)_46%,rgba(248,251,255,0.92)_100%)] px-4 py-5 sm:px-6">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.98),rgba(255,255,255,0.76)_36%,rgba(232,240,254,0.34)_68%,transparent_88%)]" aria-hidden="true" />
+            {categoryHasQuestion && !practiceFinished && (
+              <button
+                onClick={speakCurrentQuestion}
+                className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/82 px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_14px_30px_rgba(26,115,232,0.15)] sm:right-6 sm:top-5">
+                <Volume2 size={15} />
+                Hear question
+              </button>
+            )}
+            <div className="relative mx-auto flex h-full min-h-[180px] max-w-xl flex-col items-center justify-center text-center">
               {!practiceFinished && (
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    ref={questionCardRef}
-                    key={`${activeCategory}-${currentQuestionMsg?.id}`}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -16 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="rounded-[20px] border border-[#E8EBF0] bg-white px-7 py-8 text-center shadow-[0_6px_22px_rgba(15,23,42,0.04)]">
-                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">
-                      {activeCategoryInfo.label}
-                    </p>
-                    <p className="mt-4 text-[1.42rem] font-semibold leading-snug tracking-[-0.01em] text-[#202124]">
-                      {currentQuestionMsg?.text}
-                    </p>
-                  </motion.div>
+                  {categoryHasQuestion ? (
+                    <motion.div
+                      ref={questionCardRef}
+                      key={`${activeCategory}-${currentQuestionMsg?.id}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      className="relative px-4 py-5 text-center">
+                      <p className="mx-auto max-w-[34rem] text-[clamp(1.28rem,1.9vw,1.7rem)] font-semibold leading-snug text-[#202124] drop-shadow-[0_1px_0_rgba(255,255,255,0.65)]">
+                        {currentQuestionMsg?.text}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      ref={questionCardRef}
+                      key={`${activeCategory}-starter`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="relative overflow-hidden rounded-[26px] border border-white/80 bg-white/70 px-7 py-8 text-center shadow-[0_18px_48px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl">
+                      <p className="text-[1.25rem] font-semibold text-[#202124]">{activeCategoryInfo.label}</p>
+                      <p className="mx-auto mt-2 max-w-sm text-[0.88rem] leading-6 text-[#5F6368]">
+                        The NGO wants to understand your fit for this part of the interview. Start the section when you are ready.
+                      </p>
+                      <button
+                        onClick={() => startCategoryQuestion(activeCategory)}
+                        className="mt-5 inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] px-5 py-2.5 text-[0.84rem] font-semibold text-white shadow-[0_12px_26px_rgba(26,115,232,0.26)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(26,115,232,0.32)]">
+                        <PlayCircle size={16} />
+                        Start questions
+                      </button>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               )}
 
@@ -1374,32 +1677,38 @@ function StudentView() {
           </div>
 
           {!practiceFinished && (
-            <div className="border-t border-[#E8EBF0] bg-white px-4 py-4 sm:px-5">
+            <div className="border-t border-white/70 bg-white/68 px-4 py-4 shadow-[0_-18px_40px_rgba(26,115,232,0.05)] backdrop-blur-xl sm:px-5">
               {/* Unified composer — mic lives inside the input, matching the NGO practice room */}
-              <div className="rounded-[16px] bg-[#F8FAFC] p-1.5 ring-1 ring-[#E6EAF0] transition-all focus-within:bg-white focus-within:shadow-[0_8px_20px_rgba(26,115,232,0.08)] focus-within:ring-[#1A73E8]/35">
+              <div className="rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-xl transition-all focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35">
                 <div className="flex items-end gap-1">
                   <button
                     onClick={handleVoiceToggle}
+                    disabled={!categoryHasQuestion || activeCategoryComplete}
                     aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-                      isRecording ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'text-[#9AA0A6] hover:bg-[#F1F3F4] hover:text-[#5F6368]'
-                    }`}>
-                    {isRecording ? <StopCircle size={15} /> : <Mic size={15} />}
+                    className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
+                      isRecording
+                        ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_0_0_6px_rgba(26,115,232,0.10),0_10px_22px_rgba(26,115,232,0.14)] ring-1 ring-[#BFD7FF]'
+                        : 'bg-white/72 text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 hover:bg-white hover:shadow-[0_12px_26px_rgba(26,115,232,0.14)]'
+                    } disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[#7B8492] disabled:hover:shadow-none`}>
+                    {isRecording ? <StopCircle size={17} /> : <Mic size={17} />}
+                    <span className="hidden sm:inline">{isRecording ? 'Stop' : 'Record'}</span>
                   </button>
                   <textarea
+                    ref={answerTextareaRef}
                     value={draftAnswer}
                     onChange={event => setDraftAnswer(event.target.value)}
                     rows={1}
-                    placeholder={isRecording ? 'Listening...' : 'Type your answer here...'}
-                    className="max-h-24 min-h-[32px] flex-1 resize-none bg-transparent py-1 text-[0.84rem] leading-6 text-[#202124] outline-none placeholder:text-[#9AA0A6]"
+                    disabled={!categoryHasQuestion || activeCategoryComplete}
+                    placeholder={!categoryHasQuestion ? 'Start this section first...' : isRecording ? 'Listening...' : 'Type your answer here...'}
+                    className="max-h-56 min-h-[44px] flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-[0.92rem] leading-6 text-[#202124] outline-none placeholder:text-[#8A94A3] disabled:opacity-50"
                   />
                   <button
                     onClick={sendAnswer}
-                    disabled={!draftAnswer.trim()}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1A73E8] text-white shadow-[0_4px_12px_rgba(26,115,232,0.25)] transition-all hover:scale-105 hover:bg-[#1765CC] disabled:scale-100 disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
+                    disabled={!draftAnswer.trim() || !categoryHasQuestion || activeCategoryComplete}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                     aria-label="Send answer">
-                    <Send size={14} />
+                    <Send size={16} />
                   </button>
                 </div>
               </div>
@@ -1407,18 +1716,20 @@ function StudentView() {
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <button
                   onClick={explainOpen ? closeQuestionCoach : openQuestionCoach}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.76rem] font-semibold ring-1 transition-colors ${
+                  disabled={!categoryHasQuestion}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[0.76rem] font-semibold ring-1 transition-all ${
                     explainOpen
-                      ? 'bg-[#E8F0FE] text-[#1A73E8] ring-[#C8DAF8]'
-                      : 'bg-white text-[#5F6368] ring-[#E5EEFB] hover:bg-[#F8FAFF] hover:text-[#1A73E8]'
-                  }`}>
+                      ? 'bg-white text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.14)] ring-[#BFD7FF]'
+                      : 'bg-white/86 text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-white/90 hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]'
+                  } disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-white/86 disabled:hover:text-[#4B6382] disabled:hover:shadow-none`}>
                   <Info size={14} />
                   Explain question
                 </button>
                 <button
                   onClick={skipQuestion}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.76rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#F8FAFF] hover:text-[#1A73E8]">
-                  {isLastCategory ? 'Skip' : `Skip to ${nextCategoryInfo?.label}`}
+                  disabled={!categoryHasQuestion}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-white/86 disabled:hover:text-[#4B6382] disabled:hover:shadow-none">
+                  {isLastCategory ? 'Finish section' : 'Skip section'}
                   <ArrowRight size={12} />
                 </button>
               </div>
@@ -1436,7 +1747,7 @@ function StudentView() {
             exit={{ height: 0, opacity: 0, y: -6 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="mt-3 overflow-hidden">
-            <div className="rounded-[16px] border border-[#E1E7F0] bg-white p-4 text-left shadow-[0_8px_22px_rgba(15,23,42,0.045)]">
+            <div className="rounded-[24px] border border-white/75 bg-white/74 p-4 text-left shadow-[0_18px_46px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Question coach</p>
@@ -1444,7 +1755,7 @@ function StudentView() {
                 </div>
                 <button
                   onClick={closeQuestionCoach}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#5F6368] transition hover:bg-[#F8FAFC] hover:text-[#1A73E8]"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#5F6368] transition hover:bg-white hover:text-[#1A73E8]"
                   aria-label="Close question coach">
                   <X size={15} />
                 </button>
@@ -1467,13 +1778,13 @@ function StudentView() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-[#E1E7F0] bg-[#FAFBFD] p-3.5">
+              <div className="mt-4 rounded-[18px] border border-[#D7E6FF] bg-white/66 p-3.5 shadow-[0_10px_24px_rgba(26,115,232,0.06)]">
                 <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Example answer</p>
                 <p className="mt-2 text-[0.84rem] leading-6 text-[#3C4043]">{exampleAnswer}</p>
                 <div className="mt-3 flex justify-end">
                   <button
                     onClick={() => setDraftAnswer(exampleAnswer)}
-                    className="inline-flex items-center rounded-md bg-[#1A73E8] px-2.5 py-1.5 text-[0.7rem] font-semibold text-white transition-opacity hover:opacity-95">
+                    className="inline-flex items-center rounded-full bg-[#1A73E8] px-3 py-1.5 text-[0.7rem] font-semibold text-white shadow-[0_8px_18px_rgba(26,115,232,0.20)] transition-opacity hover:opacity-95">
                     Insert answer
                   </button>
                 </div>
@@ -1485,9 +1796,9 @@ function StudentView() {
       </div>
 
       <aside
-        className="relative flex max-h-none flex-col overflow-hidden rounded-[20px] border border-[#E3E7EE] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)] xl:sticky xl:top-6 xl:h-[calc(100vh-96px)]">
-        <div className="relative flex shrink-0 items-center gap-3 border-b border-[#E8EBF0] px-4 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#4B6382] ring-1 ring-[#E6EAF0]">
+        className="relative flex max-h-none flex-col overflow-hidden rounded-[30px] border border-white/70 bg-white/66 shadow-[0_24px_70px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl xl:sticky xl:top-6 xl:h-[calc(100vh-132px)]">
+        <div className="relative flex shrink-0 items-center gap-3 border-b border-white/70 bg-white/48 px-4 py-4 backdrop-blur-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
             <Layers size={16} strokeWidth={2.15} />
           </span>
           <div className="min-w-0">
@@ -1495,19 +1806,19 @@ function StudentView() {
             <p className="text-[1rem] font-semibold text-[#202124]">Practice context</p>
           </div>
         </div>
-        <div className="relative z-10 min-h-0 flex-1 space-y-2 overflow-y-auto bg-[#FAFBFD] p-3">
+        <div className="relative z-10 min-h-0 flex-1 space-y-2 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,251,255,0.68),rgba(255,255,255,0.42))] p-3">
           <div
             className={`rounded-2xl border transition-colors ${
-              descriptionOpen ? 'border-[#C9D5E6] bg-white' : 'border-[#E6EAF0] bg-[#F8FAFC]'
+              descriptionOpen ? 'border-[#BFD7FF] bg-white/82 shadow-[0_12px_28px_rgba(26,115,232,0.08)]' : 'border-white/80 bg-white/54'
             }`}>
             <button
               onClick={() => setDescriptionOpen(!descriptionOpen)}
               className={`sticky top-0 z-10 flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white ${
-                descriptionOpen ? 'rounded-t-2xl bg-white' : 'rounded-2xl bg-[#F8FAFC]'
+                descriptionOpen ? 'rounded-t-2xl bg-white/86' : 'rounded-2xl bg-white/54'
               }`}>
               <span className="flex items-center gap-2.5 text-[0.84rem] font-semibold text-[#202124]">
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                  descriptionOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-white text-[#4B6382]'
+                  descriptionOpen ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-white/74 text-[#4B6382]'
                 }`}>
                   <FileText size={14} />
                 </span>
@@ -2750,9 +3061,12 @@ function NGOView({ onPracticeChange }) {
 
 export default function Interviews() {
   const { user } = useApp()
+  const navigate = useNavigate()
+  const { applicationId, opportunityId } = useParams()
   const isNGO = user?.role === 'ngo'
+  const inStudentPractice = !isNGO && Boolean(applicationId || opportunityId)
   const [practiceInfo, setPracticeInfo] = useState({ active: false, title: '' })
-  const inPractice = isNGO && practiceInfo.active
+  const inPractice = (isNGO && practiceInfo.active) || inStudentPractice
   const mainRef = useRef(null)
 
   useEffect(() => {
@@ -2772,14 +3086,14 @@ export default function Interviews() {
         >
           {inPractice && (
             <button
-              onClick={() => practiceInfo.onBack?.()}
+              onClick={() => isNGO ? practiceInfo.onBack?.() : navigate('/interviews')}
               className="mb-3 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
               <ArrowLeft size={14} />
               Interview guide
             </button>
           )}
           <h1 className={inPractice ? 'text-[1.35rem] font-semibold leading-tight text-[#202124]' : 'text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]'}>
-            {inPractice ? `Interview practice: ${practiceInfo.title}` : 'Interviews'}
+            {inPractice ? (isNGO ? `Interview practice: ${practiceInfo.title}` : 'Interview practice') : 'Interviews'}
           </h1>
           {!inPractice && (
             <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">

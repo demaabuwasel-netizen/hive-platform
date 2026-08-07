@@ -476,24 +476,35 @@ export default function StudentProfile() {
   }
 
   return (
-    <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
-      <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8">
-        <motion.header
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="mb-7"
-        >
-          <div>
-            <h1 className="text-[3.25rem] font-semibold leading-tight text-[#202124]">
-              Profile
-            </h1>
-            <p className="mt-3 max-w-2xl text-[0.98rem] leading-7 text-[#5F6368]">
-              Keep your skills, education, causes, and links in one clear view for NGOs and stronger matches.
-            </p>
-          </div>
-        </motion.header>
+    <main className="relative flex-1 overflow-y-auto bg-[#EEF4FF]">
+      <div className="pointer-events-none absolute inset-0 min-h-full bg-[linear-gradient(180deg,#EEF4FF_0%,#F3F7FF_46%,#EEF4FF_100%),radial-gradient(circle_at_18%_4%,rgba(26,115,232,0.10),transparent_46%),radial-gradient(circle_at_86%_0%,rgba(255,255,255,0.68),transparent_48%)]" />
+      <svg
+        className="pointer-events-none absolute right-[-9rem] top-6 h-80 w-[72rem] opacity-100"
+        viewBox="0 0 760 230"
+        fill="none"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 56%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 56%, transparent 100%)',
+        }}
+      >
+        <path
+          d="M78 108 C178 48 246 66 338 112 C444 166 538 148 760 42 L760 230 L78 230 Z"
+          fill="#E8F0FE"
+          opacity="0.62"
+        />
+        <path
+          d="M150 146 C250 90 326 112 420 154 C522 200 606 184 760 112 L760 230 L150 230 Z"
+          fill="#D7E6FF"
+          opacity="0.38"
+        />
+        <path d="M54 104 C154 42 236 64 334 110 C444 162 538 144 744 46" stroke="#1A73E8" strokeWidth="3.2" strokeLinecap="round" opacity="0.18" />
+        <path d="M146 148 C244 92 324 114 416 154 C520 198 600 182 748 112" stroke="#4C9AEF" strokeWidth="2.5" strokeLinecap="round" opacity="0.13" />
+        <path d="M292 182 C386 138 460 158 542 188 C622 216 684 198 752 160" stroke="#34A853" strokeWidth="2.2" strokeLinecap="round" opacity="0.075" />
+      </svg>
+      <div className="relative mx-auto max-w-6xl px-6 pb-10 pt-10 lg:px-8">
+        <div className="h-5" aria-hidden="true" />
 
         <motion.section
           initial={{ opacity: 0, y: 16 }}
