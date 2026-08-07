@@ -3,13 +3,19 @@ import {
   ArrowRight, Heart, Users, Zap, Target, Sparkles,
   ShieldCheck, Handshake, CheckCircle2,
 } from 'lucide-react'
-import { FadeUp, SectionLabel, SiteHeader, SiteFooter } from '../components/MarketingUI'
+import { FadeUp, SectionLabel, SiteHeader, SiteFooter, HiveWaves } from '../components/MarketingUI'
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'For Students', to: '/for-students' },
   { label: 'For NGOs', to: '/for-ngos' },
   { label: 'About Us', to: '/about' },
+]
+
+const NAME_STORY = [
+  'A single bee doesn\'t make honey. It takes a whole hive — thousands of individuals, each doing their own small part, trusting that together it adds up to something bigger than any one of them could build alone.',
+  'That\'s exactly the gap we kept seeing. A student with a free afternoon and a cause they cared about. An NGO running on the effort of a handful of committed people. Everyone already doing meaningful work — just with no easy way to find each other.',
+  'So we built Hive: a place where every small contribution — a skill, a few hours a week, a cause someone believes in — finds exactly where it fits into something bigger. No two bees do the same job. No two people on Hive follow the same path. But together, that\'s how a hive feeds an entire ecosystem.',
 ]
 
 const VALUES = [
@@ -74,9 +80,12 @@ export default function About() {
       <SiteHeader navLinks={NAV_LINKS} />
 
       <main>
-        <section className="relative">
+        <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(11,132,255,0.06),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.04),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(11,132,255,0.03),transparent_26%)]" />
-          <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
+          {/* Sits at the bottom edge only, as a divider into the next section
+              — kept well clear of the heading/paragraph above it. */}
+          <HiveWaves className="bottom-0 z-0 h-28 sm:h-36" />
+          <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
             <div className="max-w-3xl">
               <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6EAF0] bg-[#EAF2FF] px-4 py-2 text-sm font-semibold text-[#0B84FF]">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#0B84FF]" />
@@ -93,6 +102,31 @@ export default function About() {
                 Hive is on a mission to bridge the gap between students seeking meaningful impact and organizations creating real change — with AI that looks at who you are, not just what's on paper.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* ── Why the name "Hive"? ─────────────────────────────────────────── */}
+        <section className="px-5 pb-20 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-3xl">
+            <FadeUp>
+              <SectionLabel>Why &quot;Hive&quot;?</SectionLabel>
+              <h2 className="text-3xl font-bold leading-[1.15] tracking-[-0.01em] text-[#202124] sm:text-4xl">
+                Every bee has a job.<br />
+                <span className="text-[#0B84FF]">So does everyone here.</span>
+              </h2>
+            </FadeUp>
+            <FadeUp delay={0.06} className="mt-8 space-y-5">
+              {NAME_STORY.map(paragraph => (
+                <p key={paragraph} className="text-base leading-7 text-[#5F6368]">{paragraph}</p>
+              ))}
+            </FadeUp>
+            <FadeUp delay={0.12}>
+              <div className="mt-8 rounded-[1.75rem] border-l-4 border-[#0B84FF] bg-[#F8FAFF] px-6 py-5">
+                <p className="text-base font-semibold italic leading-7 text-[#202124]">
+                  &ldquo;Every bee matters. So does every hour you give.&rdquo;
+                </p>
+              </div>
+            </FadeUp>
           </div>
         </section>
 
@@ -187,8 +221,9 @@ export default function About() {
           </div>
         </section>
 
-        <section className="px-5 py-20 sm:px-8 lg:px-10">
-          <div className="mx-auto max-w-5xl text-center">
+        <section className="relative overflow-hidden px-5 py-20 sm:px-8 lg:px-10">
+          <HiveWaves className="bottom-0 z-0 h-24 opacity-50 sm:h-32" flip />
+          <div className="relative z-10 mx-auto max-w-5xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8A8F98]">
               Join the movement
             </p>

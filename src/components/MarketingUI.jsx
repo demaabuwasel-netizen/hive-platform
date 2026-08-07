@@ -7,6 +7,38 @@ import { motion } from 'framer-motion'
 import { ArrowRight, ChevronDown, ChevronUp, Mail, ExternalLink } from 'lucide-react'
 import HiveLogo from './HiveLogo'
 
+// Soft, low-opacity wave accent for section backgrounds — same blue/green
+// palette used everywhere else on the marketing pages, just faded into the
+// background instead of being a UI element. `flip` mirrors it vertically so
+// it can bookend the top and bottom of a page. Purely decorative.
+export function HiveWaves({ className = '', flip = false }) {
+  return (
+    <svg
+      className={`pointer-events-none absolute inset-x-0 w-full select-none ${flip ? 'rotate-180' : ''} ${className}`}
+      viewBox="0 0 1440 320"
+      fill="none"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="hiveWaveA" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0B84FF" stopOpacity="0" />
+          <stop offset="0.35" stopColor="#0B84FF" stopOpacity="0.12" />
+          <stop offset="0.7" stopColor="#10B981" stopOpacity="0.09" />
+          <stop offset="1" stopColor="#10B981" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="hiveWaveB" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0B84FF" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#0B84FF" stopOpacity="0.07" />
+          <stop offset="1" stopColor="#0B84FF" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="M0,160 C240,220 480,80 720,120 C960,160 1200,240 1440,140 L1440,320 L0,320 Z" fill="url(#hiveWaveA)" />
+      <path d="M0,200 C280,140 520,260 760,190 C1000,120 1240,220 1440,180 L1440,320 L0,320 Z" fill="url(#hiveWaveB)" />
+    </svg>
+  )
+}
+
 export function FadeUp({ children, delay = 0, className = '' }) {
   return (
     <motion.div
