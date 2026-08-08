@@ -163,7 +163,7 @@ export default function NGOOnboarding() {
       try {
         const profile = {
           name: data.name?.trim() || null,
-          location: data.city?.trim() || null,
+          location: data.country?.trim() || null,
           phone: data.phone?.trim() || null,
           description: data.about?.trim() || null,
           mission: data.mission?.trim() || null,

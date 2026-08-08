@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   submitApplication,
@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Briefcase, Users, Search,
   MapPin, Bookmark as BookmarkIcon, Plus, Send, Sparkles, RefreshCw,
-  X, CheckCircle2, Clock, ChevronRight, ArrowRight, Globe, Trash2, PencilLine,
+  X, CheckCircle2, Clock, ChevronRight, ChevronDown, ArrowRight, Globe, Trash2, PencilLine,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
@@ -18,8 +18,86 @@ import { fetchActiveOpportunities, fetchNgoOpportunities, deleteOpportunity } fr
 import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/saved'
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
+import opportunitiesStudentSun from '../assets/opportunities student sun.PNG'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
+
+function previewText(text, limit = 210) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim()
+  if (!clean || clean.length <= limit) return { text: clean, hasMore: false }
+  const slice = clean.slice(0, limit)
+  const breakAt = slice.lastIndexOf(' ')
+  const end = breakAt > limit * 0.65 ? breakAt : limit
+  return { text: `${slice.slice(0, end).trim()}...`, hasMore: true }
+}
+
+function GlassDropdown({ label, value, onChange, options }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const selected = options.find(option => option.value === value) || options[0]
+
+  useEffect(() => {
+    if (!open) return
+    function closeOnOutside(event) {
+      if (!ref.current?.contains(event.target)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutside)
+    return () => document.removeEventListener('pointerdown', closeOnOutside)
+  }, [open])
+
+  return (
+    <div ref={ref} className={`relative ${open ? 'z-[90]' : 'z-10'}`}>
+      <button
+        type="button"
+        onClick={() => setOpen(current => !current)}
+      className="flex w-full items-center justify-between gap-3 rounded-[20px] border border-[#DCE7F7]/72 bg-white/88 px-3.5 py-2 text-left shadow-[0_10px_24px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.88)_inset] outline-none backdrop-blur-2xl transition-all hover:border-[#C9DBF4]/82 hover:bg-white/96 focus:border-[#1A73E8] focus:shadow-[0_12px_28px_rgba(26,115,232,0.10),0_0_0_3px_rgba(26,115,232,0.10)]"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="min-w-0">
+          <span className="block text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#8A8F98]">
+            {label}
+          </span>
+          <span className="mt-0.5 block truncate text-[0.86rem] font-semibold text-[#202124]">
+            {selected?.label}
+          </span>
+        </span>
+        <ChevronDown size={16} className={`shrink-0 text-[#1A73E8] transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-[calc(100%+8px)] z-[120] max-h-64 w-full min-w-52 overflow-y-auto overscroll-contain rounded-[20px] border border-white/85 bg-white/95 p-1.5 shadow-[0_18px_46px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl"
+          role="listbox"
+        >
+          {options.map(option => {
+            const active = option.value === value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-[15px] px-3 py-2 text-left text-[0.82rem] font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#E8F0FE] text-[#1A73E8]'
+                    : 'text-[#3C4043] hover:bg-[#F8FBFF] hover:text-[#1A73E8]'
+                }`}
+                role="option"
+                aria-selected={active}
+              >
+                <span className="truncate">{option.label}</span>
+                {active && <CheckCircle2 size={14} className="shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function OpportunityCardSkeleton({ index }) {
   return (
@@ -86,16 +164,16 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
   return (
     <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(15,23,42,0.42)', backdropFilter:'blur(14px)' }}
+      style={{ background:'rgba(232,240,254,0.36)', backdropFilter:'blur(10px)' }}
       onClick={onClose}>
       <motion.div initial={{ opacity:0, scale:0.95, y:30 }} animate={{ opacity:1, scale:1, y:0 }}
         exit={{ opacity:0, scale:0.95 }} transition={{ type:'spring', stiffness:360, damping:30 }}
-        className="flex w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-[#DDE3EC] bg-white"
-        style={{ boxShadow:'0 24px 80px rgba(15,23,42,0.22)', maxHeight:'92vh' }}
+        className="flex w-full max-w-[56rem] flex-col overflow-hidden rounded-[32px] border border-[#DCE7F7]/72 bg-white/95 shadow-[0_30px_90px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#EEF4FF]/60 backdrop-blur-2xl"
+        style={{ maxHeight:'92vh' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header Section */}
-        <div className="sticky top-0 z-10 border-b border-[#E6EAF0] bg-white px-5 py-4 sm:px-6">
+        <div className="sticky top-0 z-10 border-b border-[#DCE7F7]/70 bg-white/94 px-5 py-5 shadow-[0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl sm:px-6">
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <div className="min-w-0">
               <p className="mb-2 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-[#1A73E8]">
@@ -118,17 +196,16 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
             <div className="flex items-center gap-2 sm:justify-end">
               <Link to={`/ngo-profile/${opp.ngoId}`}
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#D7E6FF] bg-white px-3.5 py-2 text-[0.72rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF] whitespace-nowrap">
+                className="inline-flex items-center rounded-full border border-[#8AB4F8]/55 bg-[linear-gradient(135deg,rgba(26,115,232,0.94),rgba(26,115,232,0.78))] px-4 py-2 text-[0.74rem] font-semibold text-white shadow-[0_12px_24px_rgba(26,115,232,0.20),0_1px_0_rgba(255,255,255,0.28)_inset] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_15px_30px_rgba(26,115,232,0.24),0_1px_0_rgba(255,255,255,0.32)_inset] whitespace-nowrap">
                 View NGO Profile
-                <ArrowRight size={13} />
               </Link>
-              <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E6EAF0] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FAFC]">
+              <button onClick={onClose} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D7E6FF]/75 bg-white/82 text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.06)] transition-colors hover:bg-white hover:text-[#1A73E8]">
                 <X size={17}/>
               </button>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#F1F3F6] pt-3 text-[0.72rem] font-medium text-[#5F6368]">
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#E8F0FE]/78 pt-3 text-[0.72rem] font-medium text-[#5F6368]">
             {opp.location && (
               <span className="inline-flex items-center gap-1.5">
                 <MapPin size={13} className="text-[#9AA0A6]" />
@@ -157,13 +234,13 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto bg-[#FAFBFD]">
-          <div className="mx-auto max-w-4xl space-y-5 px-6 py-8 sm:px-8">
+        <div className="flex-1 overflow-y-auto bg-white/88">
+          <div className="mx-auto max-w-[50rem] space-y-4 px-5 py-6 sm:px-7">
 
             {/* ━━━━━━━━━━━━━━━━━━ ABOUT THIS ROLE ━━━━━━━━━━━━━━━━━━ */}
             {(opp.description || opp.missionImpact) && (
-              <div className="relative overflow-hidden rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
-                <span className="absolute inset-y-7 left-0 w-1 rounded-r-full bg-[#1A73E8]" />
+              <div className="relative overflow-hidden rounded-[24px] border border-[#DCE7F7]/68 bg-white/92 p-6 shadow-[0_14px_34px_rgba(26,115,232,0.04),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl sm:p-7">
+                <span className="absolute inset-y-6 left-0 w-1 rounded-r-full bg-[#1A73E8]/35" />
                 <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Role overview</p>
                 <h2 className="mb-4 text-[1.15rem] font-semibold text-[#202124]">About this role</h2>
                 <p className="whitespace-pre-wrap text-[0.92rem] leading-7 text-[#5F6368]">
@@ -174,7 +251,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
             {/* ━━━━━━━━━━━━━━━━━━ MISSION & IMPACT ━━━━━━━━━━━━━━━━━━ */}
             {opp.missionImpact && opp.description && (
-              <div className="relative overflow-hidden rounded-[20px] border border-[#D7E6FF] bg-[#F8FBFF] p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+              <div className="relative overflow-hidden rounded-[24px] border border-[#DCE7F7]/68 bg-white/92 p-6 shadow-[0_14px_34px_rgba(26,115,232,0.04),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl sm:p-7">
                 <p className="relative mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Impact</p>
                 <h2 className="relative mb-4 text-[1.15rem] font-semibold text-[#202124]">Why this matters</h2>
                 <p className="whitespace-pre-wrap text-[0.92rem] leading-7 text-[#5F6368]">{opp.missionImpact}</p>
@@ -184,35 +261,35 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
             {/* ━━━━━━━━━━━━━━━━━━ QUICK INFO CARDS ━━━━━━━━━━━━━━━━━━ */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {opp.location && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <MapPin size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Location</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.location}</p>
                 </div>
               )}
               {opp.workMode && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <Globe size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Work Mode</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.workMode}</p>
                 </div>
               )}
               {opp.weeklyHours && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <Clock size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Hours/Week</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.weeklyHours}</p>
                 </div>
               )}
               {opp.duration && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <Briefcase size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Duration</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.duration}</p>
                 </div>
               )}
               {opp.deadline && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <Clock size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Deadline</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">
@@ -221,7 +298,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
                 </div>
               )}
               {(opp.category || opp.field) && (
-                <div className="rounded-[16px] border border-[#E6EAF0] bg-white p-4">
+                <div className="rounded-[18px] border border-[#DCE7F7]/62 bg-white/90 p-4 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl">
                   <Briefcase size={15} className="mb-3 text-[#1A73E8]" />
                   <p className="mb-2 text-[0.64rem] font-semibold uppercase tracking-[0.15em] text-[#9AA0A6]">Category</p>
                   <p className="text-[0.88rem] font-semibold text-[#202124]">{opp.category || opp.field || 'Not specified'}</p>
@@ -231,7 +308,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
             {/* ━━━━━━━━━━━━━━━━━━ REQUIRED SKILLS ━━━━━━━━━━━━━━━━━━ */}
             {opp.skills && opp.skills.length > 0 && (
-              <div className="rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+              <div className="rounded-[24px] border border-[#DCE7F7]/68 bg-white/92 p-6 shadow-[0_14px_34px_rgba(26,115,232,0.035),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl sm:p-7">
                 <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">What helps here</p>
                 <h2 className="mb-5 text-[1.15rem] font-semibold text-[#202124]">Required skills</h2>
                 <div className="flex flex-wrap gap-3">
@@ -257,7 +334,7 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
                     if (!skillName) return null
                     return (
-                      <span key={i} className="rounded-full border border-[#D7E6FF] bg-[#F8FBFF] px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8]">
+                      <span key={i} className="rounded-full border border-[#D7E6FF]/80 bg-white/76 px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_1px_0_rgba(255,255,255,0.92)_inset]">
                         {skillLevel ? `${skillName} · ${skillLevel}` : skillName}
                       </span>
                     )
@@ -268,12 +345,12 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
 
             {/* ━━━━━━━━━━━━━━━━━━ LANGUAGES ━━━━━━━━━━━━━━━━━━ */}
             {opp.languages && opp.languages.length > 0 && (
-              <div className="rounded-[20px] border border-[#E1E7F0] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+              <div className="rounded-[24px] border border-[#DCE7F7]/68 bg-white/92 p-6 shadow-[0_14px_34px_rgba(26,115,232,0.035),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl sm:p-7">
                 <p className="mb-2 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Communication</p>
                 <h2 className="mb-5 text-[1.15rem] font-semibold text-[#202124]">Required languages</h2>
                 <div className="flex flex-wrap gap-3">
                   {opp.languages.map((lang, i) => (
-                    <span key={i} className="rounded-full border border-[#E6EAF0] bg-[#F8FAFC] px-4 py-2 text-[0.78rem] font-semibold text-[#3C4043]">
+                    <span key={i} className="rounded-full border border-white/80 bg-white/70 px-4 py-2 text-[0.78rem] font-semibold text-[#3C4043] shadow-[0_1px_0_rgba(255,255,255,0.92)_inset]">
                       {lang}
                     </span>
                   ))}
@@ -286,13 +363,9 @@ function OpportunityDetailModal({ opp, onClose, onApply }) {
         </div>
 
         {/* Footer - Sticky with gradient */}
-        <div className="sticky bottom-0 flex gap-3 border-t border-[#E8EBF0] bg-white px-8 py-5 shadow-[0_-10px_28px_rgba(15,23,42,0.05)]">
-          <button onClick={onClose}
-            className="flex-1 rounded-full border border-[#E6EAF0] px-6 py-3.5 text-[0.86rem] font-semibold text-[#5F6368] transition-colors hover:bg-[#F8FAFC]">
-            Cancel
-          </button>
+        <div className="sticky bottom-0 flex justify-center border-t border-[#DCE7F7]/70 bg-white/94 px-6 py-5 shadow-[0_-14px_34px_rgba(26,115,232,0.05),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl sm:px-8">
           <button onClick={onApply}
-            className="flex-1 rounded-full bg-[#1A73E8] px-6 py-3.5 text-[0.86rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95 active:scale-95">
+            className="min-w-[280px] rounded-full bg-[#1A73E8] px-14 py-3.5 text-[0.9rem] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.22)] transition hover:-translate-y-0.5 hover:bg-[#1765CC] active:scale-95">
             Apply now
           </button>
         </div>
@@ -734,7 +807,7 @@ export default function Opportunities() {
   return (
     <>
       <div className="relative min-h-screen bg-[#F5F7FB]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(52,168,83,0.05),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_88%_0%,rgba(255,255,255,0.72),transparent_42%),radial-gradient(circle_at_50%_10%,rgba(161,66,244,0.03),transparent_38%)]" />
       <div className="relative mx-auto max-w-[1520px] px-6 pb-8 pt-10 lg:px-10">
 
         {isNGO ? (
@@ -1233,17 +1306,17 @@ export default function Opportunities() {
                   Browse roles that fit your skills, interests, and goals.
                 </p>
               </div>
-              <div className="flex w-fit items-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-3 py-2 text-[0.84rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(17,24,39,0.035)]">
-                {loading ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                {loading
-                  ? 'Loading roles'
-                  : `${sortedOpportunities.length} role${sortedOpportunities.length === 1 ? '' : 's'}`}
-              </div>
             </motion.div>
 
-            <section className="rounded-[32px] border border-[#D7E6FF] bg-white p-5 shadow-[0_14px_38px_rgba(17,24,39,0.035)] sm:p-6">
+            <div className="relative z-30">
+              <img
+                src={opportunitiesStudentSun}
+                alt=""
+                className="pointer-events-none absolute bottom-[calc(100%-112px)] right-2 z-0 h-auto w-[315px] max-w-[66vw] sm:right-4 sm:w-[420px] lg:w-[525px]"
+              />
+              <section className="relative z-10 rounded-[30px] border border-[#DCE7F7]/72 bg-white/94 p-4 shadow-[0_22px_58px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl sm:p-5">
               <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_220px_220px]">
-                <label className="flex items-center gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-3 transition focus-within:border-[#1A73E8] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1A73E8]/10">
+                <label className="flex items-center gap-3 rounded-[20px] border border-[#DCE7F7]/72 bg-white/88 px-3.5 py-2.5 shadow-[0_10px_24px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl transition focus-within:border-[#1A73E8] focus-within:bg-white/98 focus-within:ring-4 focus-within:ring-[#1A73E8]/10">
                   <Search size={17} className="shrink-0 text-[#1A73E8]"/>
                   <input
                     value={q}
@@ -1253,45 +1326,34 @@ export default function Opportunities() {
                   />
                 </label>
 
-                <label className="rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-2.5">
-                  <span className="block text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#8A8F98]">
-                    Category
-                  </span>
-                  <select
-                    value={cat}
-                    onChange={e => setCat(e.target.value)}
-                    className="mt-1 w-full bg-transparent text-[0.9rem] font-semibold text-[#202124] outline-none"
-                  >
-                    {CATEGORIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </label>
+                <GlassDropdown
+                  label="Category"
+                  value={cat}
+                  onChange={setCat}
+                  options={CATEGORIES.map(c => ({ value: c, label: c }))}
+                />
 
-                <label className="rounded-[22px] border border-[#E5EEFB] bg-[#FAFBFC] px-4 py-2.5">
-                  <span className="block text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#8A8F98]">
-                    Sort
-                  </span>
-                  <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value)}
-                    className="mt-1 w-full bg-transparent text-[0.9rem] font-semibold text-[#202124] outline-none"
-                  >
-                    <option value="match">Best match first</option>
-                    <option value="newest">Newest first</option>
-                    <option value="hours">Lowest hours first</option>
-                    <option value="title">A to Z</option>
-                  </select>
-                </label>
+                <GlassDropdown
+                  label="Sort"
+                  value={sortBy}
+                  onChange={setSortBy}
+                  options={[
+                    { value: 'match', label: 'Best match first' },
+                    { value: 'newest', label: 'Newest first' },
+                    { value: 'hours', label: 'Lowest hours first' },
+                    { value: 'title', label: 'A to Z' },
+                  ]}
+                />
               </div>
-            </section>
+              </section>
+            </div>
 
             {loading ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {[0,1,2,3,4,5].map(i => <OpportunityCardSkeleton key={i} index={i} />)}
               </div>
             ) : sortedOpportunities.length === 0 ? (
-              <div className="rounded-[32px] border border-[#D7E6FF] bg-white px-6 py-20 text-center shadow-[0_14px_38px_rgba(17,24,39,0.035)]">
+              <div className="rounded-[32px] border border-white/85 bg-white/88 px-6 py-20 text-center shadow-[0_22px_58px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.96)_inset] backdrop-blur-2xl">
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[#E8F0FE] text-[#1A73E8]">
                   <Briefcase size={28} />
                 </div>
@@ -1312,88 +1374,116 @@ export default function Opportunities() {
                   const orgName = ngo.orgName || ngo.name || 'Organization'
                   const category = ngo.category || ngo.cat || 'Opportunity'
                   const description = ngo.description || ngo.missionImpact || ngo.desc || ''
+                  const descriptionPreview = previewText(description, 150)
                   const skills = (ngo.skills || []).map(skillName).filter(Boolean).slice(0, 3)
+                  const visibleSkills = skills.slice(0, 2)
+                  const extraSkillCount = Math.max(skills.length - visibleSkills.length, 0)
                   return (
                   <motion.div key={ngo.id}
                     initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
                     transition={{ delay:i*0.05, duration:0.3 }}
                     onClick={() => setViewingOpp(ngo)}
-                    className="group flex min-h-[330px] cursor-pointer flex-col rounded-[32px] border border-[#D7E6FF] bg-white p-6 shadow-[0_14px_38px_rgba(17,24,39,0.035)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BBD4FF] hover:shadow-[0_18px_44px_rgba(26,115,232,0.09)]">
+                    className="group relative flex h-[462px] cursor-pointer flex-col overflow-hidden rounded-[32px] border border-[#DCE7F7]/72 bg-white/99 p-6 shadow-[0_22px_54px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.92)_inset] ring-1 ring-[#EEF4FF]/50 backdrop-blur-2xl transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.01] hover:border-[#C9DBF4]/82 hover:bg-white hover:shadow-[0_30px_68px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset]">
+                    <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[#F6FAFF]/80" />
+                    <div className="pointer-events-none absolute inset-0 bg-white/36" />
 
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0 rounded-2xl bg-[#E8F0FE] p-1">
+                    <div className="relative z-10 flex items-start gap-4">
+                      <div className="shrink-0 rounded-2xl border border-white/85 bg-white/82 p-1 shadow-[0_12px_26px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.98)_inset]">
                         <GradientAvatar name={orgName} size={50} radius="0.8rem"/>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          {ngo.match !== null && ngo.match !== undefined && (
-                            <span className="rounded-full bg-[#E8F0FE] px-3 py-1 text-[0.76rem] font-semibold text-[#1A73E8]">
-                              {ngo.match}% match
-                            </span>
-                          )}
-                          <span className="rounded-full bg-[#FAFBFC] px-3 py-1 text-[0.74rem] font-semibold text-[#5F6368]">
-                            {category}
-                          </span>
-                        </div>
+                      <div className="min-w-0 flex-1 pr-11">
                         <h3 className="line-clamp-2 text-[1.06rem] font-semibold leading-snug tracking-[-0.02em] text-[#202124] transition-colors group-hover:text-[#1A73E8]">
                           {ngo.title || category}
                         </h3>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
-                          className="mt-1 text-[0.84rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
-                          {orgName}
-                        </button>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/ngo-profile/${ngo.ngoId}`) }}
+                            className="min-w-0 truncate text-[0.84rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]">
+                            {orgName}
+                          </button>
+                          {ngo.match !== null && ngo.match !== undefined && (
+                            <span
+                              className="inline-flex shrink-0 items-center rounded-full bg-[#D2E3FC] px-2.5 py-1 text-[0.68rem] font-semibold leading-none text-[#174EA6] shadow-[0_7px_14px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.86)_inset]"
+                              aria-label={`${ngo.match}% match`}
+                            >
+                              {ngo.match}% Match
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSave(ngo) }}
                         disabled={toggling === ngo.id}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5EEFB] bg-white text-[#5F6368] transition-colors hover:bg-[#F8FBFF] disabled:opacity-40">
-                        <BookmarkIcon size={18} className={
+                        className="absolute right-0 top-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D7E6FF]/70 bg-white/82 text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.98)_inset] transition-colors hover:bg-white hover:text-[#1A73E8] disabled:opacity-40"
+                        aria-label={savedIds.has(ngo.id) ? 'Unsave role' : 'Save role'}
+                      >
+                        <BookmarkIcon size={16} className={
                           savedIds.has(ngo.id) ? 'fill-[#1A73E8] text-[#1A73E8]' : ''
                         }/>
-                      </button>
+                        </button>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap gap-2 text-[0.78rem] font-medium text-[#5F6368]">
-                        {ngo.location && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
-                            <MapPin size={13} className="text-[#1A73E8]" />
-                            {ngo.location}
-                          </span>
-                        )}
-                        {ngo.workMode && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
-                            <Globe size={13} className="text-[#1A73E8]" />
-                            {ngo.workMode}
-                          </span>
-                        )}
-                        {ngo.weeklyHours && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-[#FAFBFC] px-3 py-1.5">
-                            <Clock size={13} className="text-[#1A73E8]" />
-                            {ngo.weeklyHours} hrs/week
-                          </span>
-                        )}
+                    <div className="relative z-10 mt-5 rounded-[22px] border border-white/86 bg-white/88 p-3 shadow-[0_10px_24px_rgba(26,115,232,0.03),0_1px_0_rgba(255,255,255,0.98)_inset]">
+                      <div className="mb-2 flex min-h-[24px] items-center">
+                        <span className="rounded-full bg-white/82 px-2.5 py-1 text-[0.7rem] font-semibold text-[#5F6368]">
+                          {category}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-3 gap-y-2 text-[0.73rem] font-semibold text-[#5F6368]">
+                          {ngo.location && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#E8F0FE]/88 text-[#1A73E8]">
+                                <MapPin size={12} />
+                              </span>
+                              {ngo.location}
+                            </span>
+                          )}
+                          {ngo.workMode && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#E8F0FE]/88 text-[#1A73E8]">
+                                <Globe size={12} />
+                              </span>
+                              {ngo.workMode}
+                            </span>
+                          )}
+                          {ngo.weeklyHours && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#E8F0FE]/88 text-[#1A73E8]">
+                                <Clock size={12} />
+                              </span>
+                              {ngo.weeklyHours} hrs/week
+                            </span>
+                          )}
+                      </div>
                     </div>
 
                     {description && (
-                      <p className="mt-5 line-clamp-3 flex-1 text-[0.92rem] leading-7 text-[#5F6368]">
-                        {description}
+                      <p className="relative z-10 mt-4 h-[126px] overflow-hidden rounded-[22px] bg-white/72 p-4 text-[0.92rem] leading-7 text-[#5F6368] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">
+                        {descriptionPreview.text}
                       </p>
                     )}
 
-                    <div className="mt-5 border-t border-[#EEF3FB] pt-4">
-                      {skills.length > 0 && (
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          {skills.map(skill => (
-                            <span key={skill} className="rounded-full border border-[#D7E6FF] bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8]">
+                    <div className="relative z-10 mt-auto border-t border-[#E8F0FE]/70 pt-4">
+                      <div className="mb-4 flex h-[34px] items-center gap-2 overflow-hidden">
+                        {skills.length > 0 && (
+                          <>
+                          {visibleSkills.map(skill => (
+                            <span key={skill} className="max-w-[46%] truncate rounded-full border border-[#D7E6FF]/70 bg-white/68 px-2.5 py-1.5 text-[0.74rem] font-semibold text-[#1A73E8] shadow-[0_1px_0_rgba(255,255,255,0.92)_inset]">
                               {skill}
                             </span>
                           ))}
-                        </div>
-                      )}
+                          {extraSkillCount > 0 && (
+                            <span className="rounded-full border border-[#D7E6FF]/70 bg-white/68 px-2.5 py-1.5 text-[0.74rem] font-semibold text-[#1A73E8] shadow-[0_1px_0_rgba(255,255,255,0.92)_inset]">
+                              +{extraSkillCount}
+                            </span>
+                          )}
+                          </>
+                        )}
+                      </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setViewingOpp(ngo) }}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-4 py-3 text-[0.88rem] font-semibold text-white shadow-[0_8px_20px_rgba(26,115,232,0.18)] transition hover:-translate-y-0.5"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#8AB4F8]/55 bg-[linear-gradient(135deg,rgba(26,115,232,0.94),rgba(26,115,232,0.78))] px-4 py-3 text-[0.88rem] font-semibold text-white shadow-[0_14px_30px_rgba(26,115,232,0.22),0_1px_0_rgba(255,255,255,0.32)_inset] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#1765CC]"
                       >
                         View role
                         <ChevronRight size={16} />

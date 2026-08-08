@@ -220,9 +220,9 @@ Best regards`
                     <span className="font-semibold text-[#0D183D]">University:</span> {profile.university}
                   </p>
                 )}
-                {profile?.city && (
+                {profile?.country && (
                   <p className="text-[#4B6382]">
-                    <span className="font-semibold text-[#0D183D]">Location:</span> {profile.city}
+                    <span className="font-semibold text-[#0D183D]">Country:</span> {profile.country}
                   </p>
                 )}
               </div>

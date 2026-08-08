@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import applicationEmptyIllustration from '../assets/img1.jpg'
+import applicationsSun from '../assets/applications sun.PNG'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -15,7 +16,6 @@ import {
   XCircle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import GradientAvatar from '../components/GradientAvatar'
 import { fetchStudentApplications, deleteApplication } from '../services/applications'
 import { computeMatch } from '../services/matching'
 import { supabase } from '../services/supabase'
@@ -90,6 +90,7 @@ export default function Applications() {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAppId, setSelectedAppId] = useState(null)
+  const [applicationView, setApplicationView] = useState('active')
   const [detail, setDetail] = useState({ id: null, data: null, error: null })
   const [deletingId, setDeletingId] = useState(null)
 
@@ -178,6 +179,16 @@ export default function Applications() {
   }, [selectedAppId, apps])
 
   const selectedApp = apps.find(a => a.id === selectedAppId) || null
+  const activeApps = apps.filter(app => app.status !== 'completed')
+  const completedApps = apps.filter(app => app.status === 'completed')
+  const applicationFilters = [
+    { id: 'active', label: 'Active', count: activeApps.length },
+    { id: 'completed', label: 'Completed', count: completedApps.length },
+  ]
+  const visibleApps =
+    applicationView === 'completed'
+      ? completedApps
+      : activeApps
   const selectedOpp = selectedApp && detail.id === selectedApp.opportunityId ? detail.data : null
   const selectedError = selectedApp && detail.id === selectedApp.opportunityId ? detail.error : null
   const isDetailLoading = Boolean(selectedApp?.opportunityId) && !selectedOpp && !selectedError
@@ -209,10 +220,16 @@ export default function Applications() {
   ] : []
   const skillLabels = (selectedOpp?.skills || []).map(formatSkill).filter(Boolean)
 
+  useEffect(() => {
+    if (loading || apps.length === 0) return
+    if (visibleApps.some(app => app.id === selectedAppId)) return
+    setSelectedAppId(visibleApps[0]?.id ?? null)
+  }, [applicationView, apps, loading, selectedAppId, visibleApps])
+
   return (
     <main className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_12%_8%,rgba(26,115,232,0.08),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(232,240,254,0.64),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.62),rgba(245,247,251,0))]" aria-hidden="true" />
-      <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-10 lg:px-10">
+      <div className="relative mx-auto max-w-[1480px] px-6 pb-8 pt-16 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -234,19 +251,47 @@ export default function Applications() {
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.28 }}
-            className="overflow-y-auto rounded-[30px] border border-white/75 bg-white/68 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl md:sticky md:top-6"
+            className="overflow-y-auto rounded-[30px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(248,251,255,0.34))] p-4 shadow-[0_24px_64px_rgba(26,115,232,0.085),0_1px_0_rgba(255,255,255,0.96)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl md:sticky md:top-6"
             style={{ height: '600px' }}
           >
             <div className="mb-4 flex items-center justify-between gap-3 px-1">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">Your applications</p>
                 <p className="mt-1 text-[0.84rem] text-[#5F6368]">
-                  {loading ? 'Loading...' : `${apps.length} application${apps.length !== 1 ? 's' : ''}`}
+                  {loading ? 'Loading...' : `${visibleApps.length} ${applicationView === 'completed' ? 'completed' : 'active'}`}
                 </p>
               </div>
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
                 <Briefcase size={17} />
               </span>
+            </div>
+
+            <div className="mb-4 rounded-full border border-white/80 bg-white/58 p-1 shadow-[0_12px_28px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl">
+              {applicationFilters.map(option => {
+                const active = applicationView === option.id
+                const Icon = option.id === 'completed' ? CheckCircle2 : Briefcase
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setApplicationView(option.id)}
+                    className={`inline-flex h-10 w-1/2 items-center justify-center gap-2 rounded-full text-[0.8rem] font-semibold transition-all ${
+                      active
+                        ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.9)_inset]'
+                        : 'text-[#6B7280] hover:bg-white/72 hover:text-[#1A73E8]'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    <span>{option.label}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[0.68rem] ${
+                      active ? 'bg-white/80 text-[#1A73E8]' : 'bg-white/70 text-[#8A94A3]'
+                    }`}>
+                      {option.count}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
 
             <div className="space-y-3">
@@ -270,8 +315,22 @@ export default function Applications() {
                     Browse opportunities <ArrowRight size={12} />
                   </Link>
                 </div>
+              ) : visibleApps.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-white/62 px-5 py-8 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
+                  <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+                    {applicationView === 'completed' ? <CheckCircle2 size={18} /> : applicationView === 'in_progress' ? <Clock size={18} /> : <Briefcase size={18} />}
+                  </div>
+                  <p className="text-[0.9rem] font-semibold text-[#202124]">
+                    {applicationView === 'completed' ? 'No completed roles yet' : 'No active applications'}
+                  </p>
+                  <p className="mt-1.5 text-[0.78rem] leading-5 text-[#5F6368]">
+                    {applicationView === 'completed'
+                      ? 'Completed roles will appear here once an NGO marks the work done.'
+                      : 'Applications you are waiting on or actively working on will appear here.'}
+                  </p>
+                </div>
               ) : (
-                apps.map((app, index) => {
+                visibleApps.map((app, index) => {
                   const cfg = getStatusMeta(app.status)
                   const selected = selectedAppId === app.id
 
@@ -282,23 +341,20 @@ export default function Applications() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
-                      className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+                      className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
                         selected
-                          ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
-                          : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+                          ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
+                          : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
                       }`}
                     >
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="flex min-w-0 gap-3">
-                          <GradientAvatar name={app.ngoName || app.role || 'Application'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
-                          <div className="min-w-0">
+                      <div className="relative z-10 flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
                           <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${selected ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
                             {app.role || 'Position'}
                           </p>
                           <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
                             {app.ngoName || 'Organization'}
                           </p>
-                          </div>
                         </div>
                         <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${selected ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                       </div>
@@ -309,13 +365,19 @@ export default function Applications() {
             </div>
           </motion.aside>
 
-          <motion.section
-            key={selectedAppId || 'empty'}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col overflow-hidden rounded-[34px] border border-white/75 bg-white/68 shadow-[0_26px_72px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
-          >
+          <div className="relative z-20">
+            <img
+              src={applicationsSun}
+              alt=""
+              className="pointer-events-none absolute bottom-[calc(100%-144px)] right-[-18px] z-0 h-auto w-[385px] max-w-[70vw] select-none sm:right-[-8px] sm:w-[495px] lg:right-[-4px] lg:w-[590px]"
+            />
+            <motion.section
+              key={selectedAppId || 'empty'}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative z-10 flex flex-col overflow-hidden rounded-[34px] border border-[#DCE7F7]/72 bg-white/88 shadow-[0_26px_72px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl"
+            >
             {!selectedApp ? (
               <div className="flex min-h-[360px] items-center justify-center px-8 py-16">
                 <div className="max-w-lg text-center">
@@ -327,29 +389,20 @@ export default function Applications() {
               </div>
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
-                <div className="relative shrink-0 overflow-hidden border-b border-[#D7E6FF] bg-[#F8FBFF] px-10 py-9">
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(232,240,254,0.62))]" aria-hidden="true" />
-                  <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between sm:gap-16">
-                    <div className="relative flex min-w-0 items-start gap-4">
-                      <GradientAvatar name={selectedNgoName} size={58} radius="1.15rem" className="mt-1 shrink-0 shadow-sm ring-4 ring-white/90" />
+                <div className="relative shrink-0 overflow-hidden border-b border-[#DCE7F7]/70 bg-white/92 px-8 py-8 sm:px-10">
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-12">
+                    <div className="relative min-w-0">
                       <div className="min-w-0">
-                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-[#D7E6FF] bg-white/78 px-3 py-1.5 text-[0.72rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] backdrop-blur-xl">
-                            Applied role
-                          </span>
-                          {selectedCategory && (
-                            <span className="rounded-full border border-white/80 bg-white/58 px-3 py-1.5 text-[0.72rem] font-semibold text-[#5F6368] shadow-[0_8px_18px_rgba(26,115,232,0.06)] backdrop-blur-xl">
-                              {selectedCategory}
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="text-[clamp(2rem,3.5vw,2.75rem)] font-semibold leading-tight tracking-[-0.035em] text-[#202124]">
+                        <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#1A73E8]">
+                          Application details
+                        </p>
+                        <h2 className="text-[clamp(1.65rem,3vw,2.25rem)] font-semibold leading-tight tracking-[-0.035em] text-[#202124]">
                           {selectedApp.role || 'Position'}
                         </h2>
                         {selectedNgoId ? (
                           <Link
                             to={`/ngo-profile/${selectedNgoId}`}
-                            className="mt-2 inline-flex text-[0.98rem] font-medium text-[#5F6368] transition-colors hover:text-[#1A73E8]"
+                          className="mt-2 inline-flex text-[0.92rem] font-semibold text-[#5F6368] transition-colors hover:text-[#1A73E8]"
                           >
                             {selectedNgoName}
                           </Link>
@@ -361,9 +414,9 @@ export default function Applications() {
                       </div>
                     </div>
 
-                    <div className="relative flex shrink-0 items-center gap-4 pt-1">
+                    <div className="relative flex shrink-0 items-center gap-3 pt-1">
                       {statusMeta && (
-                        <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/75 px-3 py-1.5 text-[0.82rem] font-semibold shadow-[0_8px_18px_rgba(26,115,232,0.08)] ${statusMeta.bg} ${statusMeta.color}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border border-[#D7E6FF]/75 bg-white/76 px-3 py-1.5 text-[0.78rem] font-semibold shadow-[0_8px_18px_rgba(26,115,232,0.06)] text-[#1A73E8]`}>
                           <StatusIcon size={14} />
                           {statusMeta.label}
                         </span>
@@ -371,14 +424,14 @@ export default function Applications() {
                       <button
                         onClick={() => handleDeleteApplication(selectedApp.id)}
                         disabled={deletingId === selectedApp.id}
-                        className="rounded-full border border-white/75 bg-white/58 p-2 text-[#C5221F] shadow-[0_8px_18px_rgba(197,34,31,0.06)] transition hover:bg-[#FCE8E6] disabled:opacity-50">
+                        className="rounded-full border border-[#D7E6FF]/75 bg-white/76 p-2 text-[#C5221F] shadow-[0_8px_18px_rgba(197,34,31,0.045)] transition hover:bg-[#FCE8E6] disabled:opacity-50">
                         <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="px-10 py-9">
+                <div className="px-8 py-8 sm:px-10">
                   {!selectedApp.opportunityId ? (
                     <NoticeCard>This application is not linked to a published opportunity yet.</NoticeCard>
                   ) : isDetailLoading ? (
@@ -391,7 +444,7 @@ export default function Applications() {
                     <NoticeCard tone="error">Could not load the opportunity details.</NoticeCard>
                   ) : (
                     <>
-                      <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         {primaryDetails.map(item => (
                           <MetricCard key={item.label} label={item.label} value={item.value} icon={item.icon} tint={item.tint} accent={item.accent} />
                         ))}
@@ -414,7 +467,8 @@ export default function Applications() {
                 </div>
               </div>
             )}
-          </motion.section>
+            </motion.section>
+          </div>
         </section>
       </div>
     </main>
@@ -436,15 +490,11 @@ function NoticeCard({ children, tone = 'default' }) {
 function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
     <div
-      className="group relative flex min-h-[132px] flex-col overflow-hidden rounded-[24px] border bg-white p-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+      className="group relative flex min-h-[126px] flex-col overflow-hidden rounded-[24px] border bg-white p-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-[#BFD7FF] hover:bg-white hover:shadow-[0_18px_42px_rgba(26,115,232,0.12)]"
       style={{ borderColor: 'rgba(26,115,232,0.10)' }}
     >
-      <span
-        className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        style={{ background: `linear-gradient(90deg, ${accent}, ${tint})` }}
-      />
       <svg
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
         viewBox="0 0 300 100"
         preserveAspectRatio="none"
         aria-hidden="true"
@@ -460,19 +510,17 @@ function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A7
           opacity="0.85"
         />
       </svg>
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
-          style={{ background: tint, color: accent }}
-        >
-          {Icon && <Icon size={18} />}
-        </span>
-      </div>
-      <div className="relative z-10 mt-auto">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#5F6368]">
+      <span
+        className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-[#1A73E8] shadow-[0_10px_20px_rgba(26,115,232,0.08)] ring-1 ring-white/80 transition-transform duration-200 group-hover:scale-105"
+        style={{ background: tint, color: accent }}
+      >
+        {Icon && <Icon size={16} />}
+      </span>
+      <div className="relative z-10 mt-auto min-w-0">
+        <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#8A94A3]">
           {label}
         </p>
-        <p className="mt-2 max-w-full truncate text-[1.08rem] font-semibold tracking-[-0.02em] text-[#202124]">
+        <p className="mt-1.5 line-clamp-2 max-w-full text-[0.84rem] font-semibold leading-snug tracking-normal text-[#202124]">
           {value}
         </p>
       </div>
@@ -482,7 +530,7 @@ function MetricCard({ label, value, icon: Icon, tint = '#E8F0FE', accent = '#1A7
 
 function DetailSection({ title, children }) {
   return (
-    <section className="mt-7 border-t border-white/70 pt-7">
+    <section className="mt-6 rounded-[26px] border border-[#DCE7F7]/68 bg-white/82 p-6 shadow-[0_14px_34px_rgba(26,115,232,0.04),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl">
       <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#8A94A3]">
         {title}
       </h3>

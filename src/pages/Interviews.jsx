@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Clock, Sparkles, AlertCircle, Lightbulb, Briefcase, ArrowRight,
   ArrowLeft, ChevronDown, ChevronUp, Send, UserRound,
-  Languages, Mic, PlayCircle, StopCircle, Heart,
+  Languages, Mic, PlayCircle, StopCircle, Bookmark,
   FileText, CheckCircle2, Target, MessageCircle, Info, Layers, Volume2,
   X, Trash2,
 } from 'lucide-react'
@@ -406,8 +406,24 @@ function getStudentCategoryTarget(categoryId) {
   return ['skills', 'mission', 'scenario'].includes(categoryId) ? 3 : 2
 }
 
-function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
-  const firstName = profile?.name?.split(' ')[0] || 'there'
+function getStudentFirstName(profile, user) {
+  const rawName =
+    profile?.name ||
+    profile?.fullName ||
+    profile?.full_name ||
+    profile?.displayName ||
+    profile?.display_name ||
+    user?.name ||
+    user?.fullName ||
+    user?.full_name ||
+    user?.email?.split('@')[0] ||
+    ''
+  const firstName = String(rawName).trim().split(/\s+/)[0]
+  return firstName || 'there'
+}
+
+function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0, user = null) {
+  const firstName = getStudentFirstName(profile, user)
   const profileSkills = getStudentProfileSkills(profile)
   const roleSkill = role.skills[seed % Math.max(role.skills.length, 1)] || profileSkills[0] || 'one of your strengths'
   const field = profile?.field || role.field || role.category || 'your field'
@@ -416,31 +432,31 @@ function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0) {
     opening: [
       `Hi ${firstName}, thanks for joining. To start, can you tell me a little about yourself and what drew you to the ${role.title} role at ${role.orgName}?`,
       `Welcome, ${firstName}. Give me the short version of who you are, what you study, and why this opportunity caught your eye.`,
-      `What is one thing from your background that would help you contribute to ${role.title}?`,
+      `${firstName}, what is one thing from your background that would help you contribute to ${role.title}?`,
     ],
     motivation: [
-      `Why does ${role.orgName}'s work feel meaningful to you, and how does this role connect to what you want to learn?`,
+      `${firstName}, why does ${role.orgName}'s work feel meaningful to you, and how does this role connect to what you want to learn?`,
       `When you applied for ${role.title}, what part of the mission or role made you think, "I want to help with this"?`,
       `What would make this opportunity feel successful for you personally?`,
     ],
     skills: [
       `Can you walk me through a specific example where you used ${roleSkill}, and what your personal contribution was?`,
-      `This role may need ${roleSkill}. What would you feel confident doing right away, and where would you ask for support?`,
+      `${firstName}, this role may need ${roleSkill}. What would you feel confident doing right away, and where would you ask for support?`,
       `If the team asked you to use ${roleSkill} next week, how would you approach the task?`,
     ],
     mission: [
       `How would you make sure your work in ${role.title} is useful for the people ${role.orgName} serves?`,
-      `Tell me about a time you had to understand someone else's needs before building or suggesting a solution.`,
+      `${firstName}, tell me about a time you had to understand someone else's needs before building or suggesting a solution.`,
       `How would you check that your work is helping the NGO's actual goals?`,
     ],
     scenario: [
-      `Imagine you are given an unclear task in this role and the deadline is close. What would you do first?`,
+      `${firstName}, imagine you are given an unclear task in this role and the deadline is close. What would you do first?`,
       `If you got stuck while working on ${role.title}, how would you communicate that to the NGO team?`,
       `If feedback changed the direction of your work, how would you respond and adjust?`,
     ],
     close: [
       `What support would help you do your best work in this role, and what questions would you ask the team before starting?`,
-      `Before we finish, what should I remember about you as a ${field} student applying for ${role.title}?`,
+      `Before we finish, ${firstName}, what should I remember about you as a ${field} student applying for ${role.title}?`,
       `Is there anything about your availability, goals, or learning needs that you would want the team to know?`,
     ],
   }
@@ -515,8 +531,8 @@ function explainStudentQuestion(question, role, profile, categoryId) {
   }
 }
 
-function makeStudentExampleAnswer(role, profile, categoryId) {
-  const firstName = profile?.name?.split(' ')[0] || 'I'
+function makeStudentExampleAnswer(role, profile, categoryId, user = null) {
+  const firstName = getStudentFirstName(profile, user)
   const field = profile?.field || role?.field || role?.category || 'my field'
   const skill = role?.skills?.[0] || getStudentProfileSkills(profile)[0] || 'communication'
   const orgName = role?.orgName || 'your organization'
@@ -531,6 +547,70 @@ function makeStudentExampleAnswer(role, profile, categoryId) {
   }
 
   return examples[categoryId] || examples.opening
+}
+
+function pickQuestionVoice(voices = []) {
+  const englishVoices = voices.filter(voice => /^en[-_]/i.test(voice.lang || ''))
+  const candidates = englishVoices.length ? englishVoices : voices
+  const preferredNames = [
+    'microsoft ava online',
+    'microsoft emma online',
+    'microsoft aria online',
+    'microsoft jenny online',
+    'google uk english female',
+    'google us english',
+    'samantha',
+    'ava',
+    'victoria',
+    'karen',
+    'moira',
+    'tessa',
+    'jenny',
+    'aria',
+    'sonia',
+    'zoe',
+    'microsoft zira',
+  ]
+  const avoidNames = ['alex', 'daniel', 'fred', 'ralph', 'compact', 'legacy']
+
+  return candidates
+    .map(voice => {
+      const name = voice.name.toLowerCase()
+      const preferredIndex = preferredNames.findIndex(preferred => name.includes(preferred))
+      const preferredBonus = preferredIndex >= 0 ? 80 - preferredIndex : 0
+      const naturalBonus = /(premium|natural|enhanced|neural|online)/i.test(voice.name) ? 24 : 0
+      const localBonus = voice.localService ? 6 : 10
+      const englishBonus = /^en[-_](us|gb|au|ca)/i.test(voice.lang || '') ? 8 : 0
+      const avoidPenalty = avoidNames.some(avoid => name.includes(avoid)) ? -40 : 0
+
+      return { voice, score: preferredBonus + naturalBonus + localBonus + englishBonus + avoidPenalty }
+    })
+    .sort((a, b) => b.score - a.score)[0]?.voice || null
+}
+
+function prepareQuestionSpeech(text) {
+  return String(text || '')
+    .replace(/\bNGO\b/g, 'N G O')
+    .replace(/\bAI\b/g, 'A I')
+    .replace(/\bUI\b/g, 'U I')
+    .replace(/\bUX\b/g, 'U X')
+    .replace(/\bSQL\b/g, 'S Q L')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function splitSpeechSegments(text) {
+  const clean = prepareQuestionSpeech(text)
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean]
+
+  return sentences.flatMap(sentence => {
+    const trimmed = sentence.trim()
+    if (trimmed.length <= 130) return [trimmed]
+    return trimmed
+      .split(/,\s+/)
+      .map(part => part.trim())
+      .filter(Boolean)
+  }).filter(Boolean)
 }
 
 function StudentView() {
@@ -552,6 +632,8 @@ function StudentView() {
   const [transcript, setTranscript] = useState([])
   const [draftAnswer, setDraftAnswer] = useState('')
   const [isRecording, setIsRecording] = useState(false)
+  const [isQuestionSpeaking, setIsQuestionSpeaking] = useState(false)
+  const [speechVoices, setSpeechVoices] = useState([])
   const [explainOpen, setExplainOpen] = useState(false)
   const [openInsightKeys, setOpenInsightKeys] = useState(() => new Set())
   const [descriptionOpen, setDescriptionOpen] = useState(false)
@@ -559,6 +641,9 @@ function StudentView() {
   const [openPrepQuestionStage, setOpenPrepQuestionStage] = useState(null)
   const [deletingAppId, setDeletingAppId] = useState(null)
   const recognitionRef = useRef(null)
+  const questionAudioRef = useRef(null)
+  const questionAudioRequestRef = useRef(0)
+  const questionSpeechTimeoutRef = useRef(null)
   const messageIdRef = useRef(0)
   const questionCardRef = useRef(null)
   const coachPanelRef = useRef(null)
@@ -597,7 +682,27 @@ function StudentView() {
   useEffect(() => {
     return () => {
       recognitionRef.current?.stop?.()
+      questionAudioRef.current?.pause?.()
+      window.clearTimeout(questionSpeechTimeoutRef.current)
       window.speechSynthesis?.cancel?.()
+    }
+  }, [])
+
+  useEffect(() => {
+    const synth = window.speechSynthesis
+    if (!synth?.getVoices) return
+
+    function loadVoices() {
+      setSpeechVoices(synth.getVoices())
+    }
+
+    loadVoices()
+    synth.addEventListener?.('voiceschanged', loadVoices)
+    const timer = window.setTimeout(loadVoices, 450)
+
+    return () => {
+      synth.removeEventListener?.('voiceschanged', loadVoices)
+      window.clearTimeout(timer)
     }
   }, [])
 
@@ -630,14 +735,14 @@ function StudentView() {
     ? (selectedSaved ? buildSavedStudentRole(selectedSaved) : null)
     : (selectedApp ? buildStudentRole(selectedApp, roleDetails[selectedApp.id]) : null)
   const currentAiMessage = [...transcript].reverse().find(message => message.from === 'ai' && message.category === activeCategory)
-  const currentQuestion = currentAiMessage?.text || (selectedRole ? makeStudentInterviewQuestion(selectedRole, profile, activeCategory) : '')
+  const currentQuestion = currentAiMessage?.text || (selectedRole ? makeStudentInterviewQuestion(selectedRole, profile, activeCategory, 0, user) : '')
   const activeCategoryInfo = STUDENT_INTERVIEW_CATEGORIES.find(category => category.id === activeCategory) || STUDENT_INTERVIEW_CATEGORIES[0]
   const categoryMessages = transcript.filter(message => message.category === activeCategory)
   const lastCategoryMessage = categoryMessages[categoryMessages.length - 1]
   const currentQuestionMsg = lastCategoryMessage?.from === 'ai' ? lastCategoryMessage : categoryMessages[categoryMessages.length - 2]
   const categoryHasQuestion = Boolean(currentQuestionMsg)
   const questionCoach = selectedRole ? explainStudentQuestion(currentQuestion, selectedRole, profile, activeCategory) : null
-  const exampleAnswer = selectedRole ? makeStudentExampleAnswer(selectedRole, profile, activeCategory) : ''
+  const exampleAnswer = selectedRole ? makeStudentExampleAnswer(selectedRole, profile, activeCategory, user) : ''
   const answeredCount = transcript.filter(message => message.from === 'student').length
   const askedCategories = new Set(transcript.filter(message => message.from === 'ai').map(message => message.category))
   const studentGuideSections = selectedRole ? [
@@ -680,6 +785,7 @@ function StudentView() {
   }
 
   function resetStudentPracticeState() {
+    stopQuestionAudio()
     setPracticeStarted(false)
     setPracticeFinished(false)
     setShowSummary(false)
@@ -727,7 +833,8 @@ function StudentView() {
   }
 
   function startPracticeSession(role) {
-    const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0)
+    stopQuestionAudio()
+    const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0, user)
 
     setPracticeStarted(true)
     setPracticeFinished(false)
@@ -753,6 +860,7 @@ function StudentView() {
   }
 
   function backToInterviewGuide() {
+    stopQuestionAudio()
     setPracticeStarted(false)
     setPracticeFinished(false)
     setShowSummary(false)
@@ -796,8 +904,9 @@ function StudentView() {
 
   function startCategoryQuestion(categoryId = activeCategory) {
     if (!selectedRole) return
+    stopQuestionAudio()
     const seed = getCategoryQuestionCount(categoryId)
-    const question = makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed)
+    const question = makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed, user)
 
     setTranscript(prev => [
       ...prev,
@@ -809,6 +918,7 @@ function StudentView() {
   }
 
   function selectPracticeCategory(categoryId) {
+    stopQuestionAudio()
     setActiveCategory(categoryId)
     setDraftAnswer('')
     setExplainOpen(false)
@@ -817,6 +927,7 @@ function StudentView() {
   function sendAnswer() {
     const answer = draftAnswer.trim()
     if (!answer || !selectedRole) return
+    stopQuestionAudio()
 
     const answeredCategory = activeCategory
     const answersInCategory = transcript.filter(message => message.from === 'student' && message.category === answeredCategory).length + 1
@@ -839,7 +950,7 @@ function StudentView() {
 
     const nextCategory = shouldStayInCategory ? answeredCategory : getNextStudentCategory(activeCategory)
     const nextSeed = shouldStayInCategory ? questionsInCategory : transcript.length + 1
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed)
+    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed, user)
 
     setTranscript(prev => [
       ...prev,
@@ -855,6 +966,7 @@ function StudentView() {
   // the mini-round; skipping is the escape hatch to move on.
   function skipQuestion() {
     if (!selectedRole) return
+    stopQuestionAudio()
 
     if (activeCategory === 'close') {
       setDraftAnswer('')
@@ -866,7 +978,7 @@ function StudentView() {
 
     const nextCategory = getNextStudentCategory(activeCategory)
     const nextSeed = getCategoryQuestionCount(nextCategory)
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed)
+    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed, user)
 
     setTranscript(prev => [
       ...prev,
@@ -911,13 +1023,59 @@ function StudentView() {
     recognition.start()
   }
 
-  function speakCurrentQuestion() {
-    if (!currentQuestionMsg?.text || !window.speechSynthesis) return
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(currentQuestionMsg.text)
-    utterance.rate = 0.95
-    utterance.pitch = 1
-    window.speechSynthesis.speak(utterance)
+  function stopQuestionAudio() {
+    questionAudioRequestRef.current += 1
+    questionAudioRef.current?.pause?.()
+    if (questionAudioRef.current?.src) URL.revokeObjectURL(questionAudioRef.current.src)
+    questionAudioRef.current = null
+    window.clearTimeout(questionSpeechTimeoutRef.current)
+    questionSpeechTimeoutRef.current = null
+    window.speechSynthesis?.cancel?.()
+    setIsQuestionSpeaking(false)
+  }
+
+  async function speakCurrentQuestion() {
+    if (!currentQuestionMsg?.text) return
+    if (isQuestionSpeaking) {
+      stopQuestionAudio()
+      return
+    }
+
+    stopQuestionAudio()
+    const requestId = questionAudioRequestRef.current + 1
+    questionAudioRequestRef.current = requestId
+    setIsQuestionSpeaking(true)
+
+    if (!window.speechSynthesis || questionAudioRequestRef.current !== requestId) {
+      setIsQuestionSpeaking(false)
+      return
+    }
+
+    const segments = splitSpeechSegments(currentQuestionMsg.text)
+    const voice = pickQuestionVoice(speechVoices.length ? speechVoices : window.speechSynthesis.getVoices?.() || [])
+
+    function speakSegment(index = 0) {
+      if (questionAudioRequestRef.current !== requestId) return
+      if (index >= segments.length) {
+        setIsQuestionSpeaking(false)
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(segments[index])
+      if (voice) utterance.voice = voice
+      utterance.lang = voice?.lang || 'en-US'
+      utterance.rate = index === 0 ? 0.88 : 0.91
+      utterance.pitch = 1.04
+      utterance.volume = 0.95
+      utterance.onend = () => {
+        if (questionAudioRequestRef.current !== requestId) return
+        questionSpeechTimeoutRef.current = window.setTimeout(() => speakSegment(index + 1), 120)
+      }
+      utterance.onerror = () => setIsQuestionSpeaking(false)
+      window.speechSynthesis.speak(utterance)
+    }
+
+    speakSegment()
   }
 
 
@@ -1016,14 +1174,14 @@ function StudentView() {
               </p>
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90">
-              {roleSource === 'applied' ? <Briefcase size={18} /> : <Heart size={18} />}
+              {roleSource === 'applied' ? <Briefcase size={18} /> : <Bookmark size={18} />}
             </div>
           </div>
 
           <div className="mb-4 rounded-full border border-white/80 bg-white/58 p-1 shadow-[0_12px_28px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl">
             {[
               { id: 'applied', label: 'Applied', count: apps.length, icon: Briefcase },
-              { id: 'saved', label: 'Saved', count: savedRoles.length, icon: Heart },
+              { id: 'saved', label: 'Saved', count: savedRoles.length, icon: Bookmark },
             ].map(option => {
               const active = roleSource === option.id
               const Icon = option.icon
@@ -1060,7 +1218,7 @@ function StudentView() {
             {roleSource === 'saved' && savedRoles.length === 0 && (
               <div className="rounded-[24px] border border-dashed border-[#D7E6FF] bg-white/62 px-5 py-8 text-center shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
                 <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
-                  <Heart size={18} />
+                  <Bookmark size={18} />
                 </div>
                 <p className="text-[0.9rem] font-semibold text-[#202124]">No saved jobs yet</p>
                 <p className="mt-1.5 text-[0.78rem] leading-5 text-[#5F6368]">Save a role from Opportunities and practice it here.</p>
@@ -1249,8 +1407,8 @@ function StudentView() {
                         {STUDENT_INTERVIEW_CATEGORIES.map((category, i) => {
                           const isOpen = openPrepQuestionStage === category.id
                           const questions = [
-                            makeStudentInterviewQuestion(selectedRole, profile, category.id, 0),
-                            makeStudentInterviewQuestion(selectedRole, profile, category.id, 1),
+                            makeStudentInterviewQuestion(selectedRole, profile, category.id, 0, user),
+                            makeStudentInterviewQuestion(selectedRole, profile, category.id, 1, user),
                           ]
                           return (
                             <div key={category.id} className="overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
@@ -1307,7 +1465,7 @@ function StudentView() {
                     </button>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-[#5F6368]">
-                      <Heart size={13} />
+                      <Bookmark size={13} />
                       Saved role
                     </span>
                   )}
@@ -1365,11 +1523,7 @@ function StudentView() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
-              <span
-                className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
-              />
+              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-[#DDE8F8]/65 bg-white/72 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.72)_inset,0_0_0_1px_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/84 hover:shadow-[0_26px_68px_rgba(26,115,232,0.12),0_0_0_1px_rgba(26,115,232,0.035)_inset]">
               <svg
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
                 viewBox="0 0 300 100"
@@ -1621,9 +1775,14 @@ function StudentView() {
             {categoryHasQuestion && !practiceFinished && (
               <button
                 onClick={speakCurrentQuestion}
-                className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/90 bg-white/82 px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_14px_30px_rgba(26,115,232,0.15)] sm:right-6 sm:top-5">
-                <Volume2 size={15} />
-                Hear question
+                aria-label={isQuestionSpeaking ? 'Stop reading question' : 'Read question aloud'}
+                title={isQuestionSpeaking ? 'Stop reading' : 'Read question'}
+                className={`absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-2xl transition-all hover:-translate-y-0.5 sm:right-6 sm:top-5 ${
+                  isQuestionSpeaking
+                    ? 'border-[#BFD7FF]/90 bg-[#E8F0FE]/90 text-[#1A73E8] shadow-[0_0_0_7px_rgba(26,115,232,0.10),0_14px_30px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.9)_inset]'
+                    : 'border-white/90 bg-white/84 text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] hover:bg-white hover:shadow-[0_14px_30px_rgba(26,115,232,0.15)]'
+                }`}>
+                {isQuestionSpeaking ? <StopCircle size={17} /> : <Volume2 size={17} />}
               </button>
             )}
             <div className="relative mx-auto flex h-full min-h-[180px] max-w-xl flex-col items-center justify-center text-center">
@@ -2412,11 +2571,7 @@ function NGOView({ onPracticeChange }) {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-	              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
-	              <span
-	                className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-	                style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
-	              />
+	              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-[#DDE8F8]/65 bg-white/72 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.72)_inset,0_0_0_1px_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/84 hover:shadow-[0_26px_68px_rgba(26,115,232,0.12),0_0_0_1px_rgba(26,115,232,0.035)_inset]">
 	              <svg
 	                className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
 	                viewBox="0 0 300 100"
@@ -2438,8 +2593,7 @@ function NGOView({ onPracticeChange }) {
 	            initial={{ opacity: 0, y: 14 }}
 	            animate={{ opacity: 1, y: 0 }}
 	            transition={{ duration: 0.28, delay: 0.1 }}
-	            className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
-	            <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#A142F4,#F3E8FD)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+	            className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-[#DDE8F8]/65 bg-white/72 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.72)_inset,0_0_0_1px_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/84 hover:shadow-[0_26px_68px_rgba(26,115,232,0.12),0_0_0_1px_rgba(26,115,232,0.035)_inset]">
 	            <svg
 	              className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
 	              viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true">
@@ -2721,6 +2875,7 @@ function NGOView({ onPracticeChange }) {
   const askedStages = new Set(transcript.map(message => message.stage))
   const stageHasMessages = askedStages.has(activeStage)
   const featuredQuestion = (activeStage === 'opening' && !stageHasMessages) ? firstQuestion : exampleQuestion
+  const stageReadyToMove = questionsAskedInStage >= 2 && !isStudentResponding
 
   // Only the current stage's latest exchange is shown — each new question replaces the last,
   // and switching categories starts a clean slate so the room reflects where you are, not where you've been
@@ -2858,27 +3013,21 @@ function NGOView({ onPracticeChange }) {
                     transition={{ duration: 0.35, ease: 'easeOut' }}
                     className="space-y-5 px-4 py-5 sm:px-5">
 
-                    {/* Question — compact, interviewer voice, tinted by the current stage */}
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E8F0FE] text-[#1A73E8]">
-                          <MessageCircle size={15} strokeWidth={2.15} />
-                        </div>
-                      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-[#F1F5F9] px-5 py-4">
-                        <p className="mb-0.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#1A73E8]">You asked</p>
-                        <p className="text-[0.9rem] leading-6 text-[#3C4043]">{currentQuestionMsg?.text}</p>
-                      </div>
-                    </div>
-
                     {/* Answer — the main event, avatar-led and elevated */}
                       <div className="flex items-start gap-3">
                         <GradientAvatar name={mockStudent.name} size={36} radius="0.7rem" className="mt-1 shrink-0 shadow-sm" />
-                      <div className="min-w-0 flex-1 overflow-hidden rounded-2xl rounded-tl-md border border-[#E8EBF0] bg-white px-5 pb-5 pt-4">
+                      <div className="min-w-0 flex-1 overflow-hidden rounded-[26px] rounded-tl-md border border-white/80 bg-white/86 px-5 pb-5 pt-4 shadow-[0_18px_46px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset] backdrop-blur-2xl">
                         {currentAnswerMsg ? (
                           <>
-                            <p className="mb-2 flex items-center gap-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
-                              {mockStudent.name}
-                              <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
-                            </p>
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                              <p className="flex items-center gap-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
+                                {mockStudent.name}
+                                <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
+                              </p>
+                              <span className="rounded-full bg-[#F8FBFF] px-3 py-1 text-[0.68rem] font-medium text-[#5F6368]">
+                                {activeStageInfo.label}
+                              </span>
+                            </div>
                             <p className="text-[1.05rem] font-medium leading-8 text-[#202124]">{currentAnswerMsg.text}</p>
                           </>
                         ) : (
@@ -2893,6 +3042,41 @@ function NGOView({ onPracticeChange }) {
                         )}
                       </div>
                     </div>
+
+                    <AnimatePresence>
+                      {currentAnswerMsg && stageReadyToMove && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                          transition={{ duration: 0.24, ease: 'easeOut' }}
+                          className="ml-12 rounded-[24px] border border-[#D7E6FF]/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(232,240,254,0.62))] p-4 shadow-[0_16px_38px_rgba(26,115,232,0.11),0_1px_0_rgba(255,255,255,0.94)_inset] backdrop-blur-2xl">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-[0.9rem] font-semibold text-[#202124]">
+                                {activeStageInfo.label} is covered
+                              </p>
+                              <p className="mt-1 text-[0.78rem] leading-5 text-[#5F6368]">
+                                Keep going, or move to {isLastStage ? 'summary' : nextStage?.label.toLowerCase()}.
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 gap-2">
+                              <button
+                                onClick={suggestQuestion}
+                                className="inline-flex items-center rounded-full bg-white/86 px-3.5 py-2 text-[0.74rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
+                                Keep asking
+                              </button>
+                              <button
+                                onClick={goToNextStage}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-[#1A73E8] px-3.5 py-2 text-[0.74rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC]">
+                                {isLastStage ? 'Finish' : 'Next section'}
+                                <ArrowRight size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 </AnimatePresence>
               </div>

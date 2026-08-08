@@ -116,7 +116,7 @@ export default function EditNGOProfile() {
     avatar:      src.avatar || src.imageUrl || '',
     name:        src.name || user?.name || '',
     phone:       src.phone || '',
-    location:    src.location || '',
+    location:    src.location || src.country || '',
     summary:     src.summary || '',
     description: src.description || '',
     helpNeeded:  src.helpNeeded || '',
@@ -223,9 +223,9 @@ export default function EditNGOProfile() {
               {errors.name && <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>}
             </Field>
 
-            <Field label="Location">
+            <Field label="Country">
               <TextInput value={form.location} onChange={e => set('location', e.target.value)}
-                placeholder="e.g. Tel Aviv, Jerusalem" {...fo('location')}/>
+                placeholder="e.g. Palestine, Jordan" {...fo('location')}/>
             </Field>
 
             <Field label="Tagline / Summary" hint="A short sentence that captures your mission.">

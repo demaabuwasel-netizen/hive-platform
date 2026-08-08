@@ -60,8 +60,7 @@ function dbToStudent(row) {
     links:             row.links               ?? {},
     bio:               row.bio,
     phone:             row.phone,
-    country:           row.country             ?? null,
-    city:              row.city                ?? null,
+    country:           row.country             ?? row.links?.country ?? null,
   }
 }
 
@@ -101,11 +100,13 @@ function studentToDb(userId, profile) {
     start_year:        profile.startYear        ?? null,
     start_immediately: profile.startImmediately ?? false,
     preferred_roles:   profile.preferredRoles   ?? null,
-    links:             profile.links            ?? {},
+    links:             {
+      ...(profile.links ?? {}),
+      ...(profile.country?.trim() ? { country: profile.country.trim() } : {}),
+    },
     bio:               profile.bio?.trim()              || null,
     phone:             profile.phone?.trim()           || null,
     country:           profile.country?.trim()          || null,
-    city:              profile.city?.trim()             || null,
     updated_at:        new Date().toISOString(),
   }
 }
@@ -129,10 +130,9 @@ export async function saveStudentProfile(userId, profile) {
 
     // Some profile columns are additive migrations. If a local database is behind,
     // retry without them so the rest of the profile can still save.
-    if (error && /country|city|projects/.test(error.message) && /column/i.test(error.message)) {
-      const { country, city, projects, ...fallbackPayload } = payload
+    if (error && /country|projects/.test(error.message) && /column/i.test(error.message)) {
+      const { country, projects, ...fallbackPayload } = payload
       void country
-      void city
       void projects
       ;({ error } = await supabase
         .from('student_profiles')

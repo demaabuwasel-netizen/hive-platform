@@ -265,12 +265,12 @@ export default function StudentPublicProfile() {
                       <span>{profile.university}</span>
                     </>
                   )}
-                  {profile.city && (
+                  {profile.country && (
                     <>
                       <span className="text-[#9AA0A6]">·</span>
                       <span className="inline-flex items-center gap-1">
                         <MapPin size={13} />
-                        {profile.city}
+                        {profile.country}
                       </span>
                     </>
                   )}

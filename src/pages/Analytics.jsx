@@ -131,7 +131,7 @@ function CardHeader({ icon: Icon, title, subtitle, tint = '#E8F0FE', accent = '#
   )
 }
 
-function GlassDropdown({ value, onChange, options, className = '', buttonClassName = '' }) {
+function GlassDropdown({ value, onChange, options, className = '', buttonClassName = '', menuClassName = '' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const selected = options.find(option => option.value === value) || options[0]
@@ -153,7 +153,7 @@ function GlassDropdown({ value, onChange, options, className = '', buttonClassNa
   }, [open])
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div ref={ref} className={`relative ${open ? 'z-[120]' : 'z-10'} ${className}`}>
       <button
         type="button"
         onClick={() => setOpen(current => !current)}
@@ -167,7 +167,7 @@ function GlassDropdown({ value, onChange, options, className = '', buttonClassNa
 
       {open && (
         <div
-          className="absolute right-0 top-[calc(100%+8px)] z-50 max-h-64 w-full min-w-48 overflow-y-auto overscroll-contain rounded-[18px] border border-white/85 bg-white/95 p-1.5 shadow-[0_18px_46px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl"
+          className={`absolute right-0 top-[calc(100%+8px)] z-[140] max-h-64 w-full overflow-y-auto overscroll-contain rounded-[18px] border border-white/85 bg-white/95 p-1.5 shadow-[0_18px_46px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl ${menuClassName || 'min-w-48'}`}
           role="listbox"
         >
           {options.map(option => {
@@ -699,7 +699,7 @@ export default function Analytics() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.11),transparent_43%),radial-gradient(circle_at_88%_4%,rgba(255,255,255,0.96),transparent_22%),radial-gradient(circle_at_82%_8%,rgba(26,115,232,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.68),rgba(245,247,251,0))]" />
 
       <div className="relative mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
-        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-[300] mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-[clamp(2.35rem,5vw,4.1rem)] font-semibold leading-none tracking-[-0.055em] text-[#202124]">
               Analytics
@@ -734,8 +734,8 @@ export default function Analytics() {
         )}
 
         {loading ? (
-          <div className="space-y-10">
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="relative z-0 space-y-10">
+            <section className="relative z-0 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[0, 1, 2, 3].map(item => (
                 <div key={item} className="h-[140px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
               ))}
@@ -767,12 +767,8 @@ export default function Analytics() {
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.28, delay: index * 0.05 }}
-                    className="group relative overflow-hidden rounded-[24px] border border-white/90 bg-white/95 p-5 shadow-[0_16px_42px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:border-white hover:bg-white hover:shadow-[0_22px_52px_rgba(26,115,232,0.095),0_1px_0_rgba(255,255,255,1)_inset]"
+                    className="group relative overflow-hidden rounded-[24px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,255,255,0.86))] p-5 shadow-[0_16px_42px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.98)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset] ring-1 ring-white/55 backdrop-blur-2xl transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.018] hover:border-white hover:bg-white hover:shadow-[0_26px_62px_rgba(26,115,232,0.105),0_1px_0_rgba(255,255,255,1)_inset,0_-1px_0_rgba(26,115,232,0.02)_inset]"
                   >
-                    <span
-                      className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                      style={{ background: `linear-gradient(90deg, ${style.accent}, ${style.tint})` }}
-                    />
                     <svg
                       className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
                       viewBox="0 0 300 100"
@@ -1076,6 +1072,7 @@ export default function Analytics() {
                     onChange={setApplicantView}
                     options={applicantViewOptions}
                     buttonClassName="h-9 min-w-40 px-3.5 text-[0.78rem]"
+                    menuClassName="min-w-40"
                   />
                 </div>
                 {activeTop ? (

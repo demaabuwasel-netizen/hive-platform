@@ -414,17 +414,22 @@ function toSkillObjects(raw) {
   return (raw ?? []).map(parseSkillString)
 }
 
+function profilePlace(prof = {}) {
+  const country = prof.country ?? prof.links?.country ?? ''
+  return String(country || '').trim()
+}
+
 // NGO: rich applicant list — joins applications, users, student_profiles, opportunities
-// Loads student profiles for a set of ids. Tries to include country/city/educations
+// Loads student profiles for a set of ids. Tries to include country/educations
 // (newer columns); if a migration hasn't run yet on this environment and a column
 // doesn't exist, Supabase rejects the whole select — so retry with narrower column
 // sets until one succeeds, so the rest of the profile still loads.
 async function fetchStudentProfilesFor(studentIds) {
   const baseColumns = 'user_id, field, university, skills, languages, bio, interests, links, experience, goals'
   const columnSets = [
-    `${baseColumns}, country, city, educations, projects`,
-    `${baseColumns}, country, city, educations`,
-    `${baseColumns}, country, city`,
+    `${baseColumns}, country, educations, projects`,
+    `${baseColumns}, country, educations`,
+    `${baseColumns}, country`,
     baseColumns,
   ]
   for (const columns of columnSets) {
@@ -509,7 +514,7 @@ export async function fetchNgoApplicants(ngoId) {
       skillMatches:      matchResult.skillMatches,
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
-      studentLocation:  [prof.city, prof.country].filter(Boolean).join(', '),
+      studentLocation:  profilePlace(prof),
     }
   })
 }
@@ -673,6 +678,7 @@ export async function fetchOpportunityApplicantsWithMatches(opportunityId, ngoId
       skillMatches:      matchResult.skillMatches,
       breakdown:        matchResult.breakdown,
       location:         app.opportunities?.location ?? '',
+      studentLocation:  profilePlace(prof),
     }
   })
 }
