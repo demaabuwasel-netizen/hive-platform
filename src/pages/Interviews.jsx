@@ -961,7 +961,7 @@ function StudentView() {
                 </div>
               </div>
 
-              <div className="mt-11 flex flex-wrap gap-3">
+              <div className="mt-9 grid w-full grid-cols-1 gap-2 rounded-[24px] border border-white/90 bg-white/95 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl sm:grid-cols-3">
                 {[0, 1, 2].map(item => (
                   <div key={item} className="h-11 w-36 animate-pulse rounded-full border border-white/70 bg-white/64 shadow-[0_8px_20px_rgba(26,115,232,0.05)]" />
                 ))}
@@ -1004,7 +1004,7 @@ function StudentView() {
         transition={{ duration: 0.24 }}
         className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside
-          className="overflow-y-auto rounded-[30px] border border-white/75 bg-white/68 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
+          className="overflow-y-auto rounded-[30px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(248,251,255,0.34))] p-4 shadow-[0_24px_64px_rgba(26,115,232,0.085),0_1px_0_rgba(255,255,255,0.96)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl"
           style={{ height: '600px' }}>
           <div className="mb-4 flex items-center justify-between gap-3 px-1">
             <div>
@@ -1074,22 +1074,19 @@ function StudentView() {
                 <button
                   key={app.id}
                   onClick={() => selectRole(app.id)}
-                  className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+                  className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
                     active
-                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
-                      : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+                      ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
+                      : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
                   }`}>
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="flex min-w-0 gap-3">
-                      <GradientAvatar name={role.orgName || role.title || 'Interview'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
-                      <div className="min-w-0">
-                        <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                          {role.title}
-                        </p>
-                        <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
-                          {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
-                        </p>
-                      </div>
+                  <div className="relative z-10 flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {role.title}
+                      </p>
+                      <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
+                        {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                      </p>
                     </div>
                     <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                   </div>
@@ -1104,22 +1101,19 @@ function StudentView() {
                 <button
                   key={saved.opportunityId}
                   onClick={() => selectSavedRole(saved.opportunityId)}
-                  className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+                  className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
                     active
-                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
-                      : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+                      ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
+                      : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
                   }`}>
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="flex min-w-0 gap-3">
-                      <GradientAvatar name={role.orgName || role.title || 'Saved role'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
-                      <div className="min-w-0">
-                        <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                          {role.title}
-                        </p>
-                        <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
-                          {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
-                        </p>
-                      </div>
+                  <div className="relative z-10 flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {role.title}
+                      </p>
+                      <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
+                        {role.orgName || [role.workMode, role.location].filter(Boolean).join(' · ') || role.category || 'Flexible role'}
+                      </p>
                     </div>
                     <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                   </div>
@@ -1136,8 +1130,7 @@ function StudentView() {
             className="pointer-events-none absolute -top-[187px] right-8 z-10 w-full max-w-md"
           />
           <section
-            className="min-h-[560px] rounded-[32px] border bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
-            style={{ borderColor: 'rgba(26,115,232,0.10)' }}>
+            className="min-h-[560px] overflow-hidden rounded-[32px] border border-white/75 bg-white/76 shadow-[0_24px_70px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
             {!selectedRole ? (
               <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -1150,7 +1143,7 @@ function StudentView() {
               </div>
             ) : (
               <div className="p-6 lg:p-8">
-              <div className="rounded-[30px] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_52%,#EEF4FF_100%)] px-6 py-6">
+              <div className="relative overflow-hidden rounded-[30px] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82)_0%,rgba(248,251,255,0.66)_52%,rgba(232,240,254,0.54)_100%)] px-6 py-6 shadow-[0_18px_48px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">
@@ -1163,14 +1156,14 @@ function StudentView() {
                   </div>
                   <button
                     onClick={openPractice}
-                    className="flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    className="flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_18px_38px_rgba(26,115,232,0.28)]">
                     <PlayCircle size={20} />
                     Practice interview
                   </button>
                 </div>
               </div>
 
-              <div className="mt-11 flex flex-wrap gap-3">
+              <div className="mt-9 grid w-full grid-cols-1 gap-2 rounded-[24px] border border-white/90 bg-white/95 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl sm:grid-cols-3">
                 {studentGuideSections.map(section => {
                   const Icon = section.icon
                   const active = activePrepSection === section.id
@@ -1178,10 +1171,10 @@ function StudentView() {
                     <button
                       key={section.id}
                       onClick={() => setActivePrepSection(section.id)}
-                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-[0.85rem] font-semibold tracking-[0.01em] transition-all duration-300 ${
+                      className={`inline-flex h-12 items-center justify-center gap-2 rounded-[18px] px-4 text-[0.84rem] font-semibold transition-all duration-300 ${
                         active
-                          ? 'bg-gradient-to-b from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_8px_20px_rgba(26,115,232,0.28)]'
-                          : 'border border-[#E5EEFB] bg-white text-[#5F6368] shadow-[0_1px_3px_rgba(16,24,40,0.04)] hover:border-[#BFD7FF] hover:text-[#1A73E8] hover:shadow-[0_4px_14px_rgba(26,115,232,0.12)]'
+                          ? 'bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.86))] text-[#1A73E8] shadow-[0_12px_26px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.92)_inset]'
+                          : 'bg-white/42 text-[#5F6368] ring-1 ring-white/50 hover:bg-white/72 hover:text-[#1A73E8]'
                       }`}>
                       <Icon size={15} />
                       {section.label}
@@ -1226,7 +1219,7 @@ function StudentView() {
                         {STUDENT_INTERVIEW_CATEGORIES.map((category, i) => {
                           const coach = explainStudentQuestion('', selectedRole, profile, category.id)
                           return (
-                            <div key={category.id} className="flex gap-4 rounded-[22px] border border-[#E5EEFB] bg-white p-5 shadow-[0_2px_10px_rgba(17,24,39,0.03)]">
+                            <div key={category.id} className="flex gap-4 rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] p-5 shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
                                 {String(i + 1).padStart(2, '0')}
                               </div>
@@ -1260,10 +1253,10 @@ function StudentView() {
                             makeStudentInterviewQuestion(selectedRole, profile, category.id, 1),
                           ]
                           return (
-                            <div key={category.id} className="overflow-hidden rounded-[22px] border border-[#E5EEFB]">
+                            <div key={category.id} className="overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                               <button
                                 onClick={() => setOpenPrepQuestionStage(isOpen ? null : category.id)}
-                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8FBFF]">
+                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-white/70">
                                 <div className="flex items-center gap-3.5">
                                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
                                     {i + 1}
@@ -1283,7 +1276,7 @@ function StudentView() {
                                     exit={{ height: 0, opacity: 0 }}
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden">
-                                    <div className="space-y-3.5 border-t border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
+                                    <div className="space-y-3.5 border-t border-white/70 bg-white/52 backdrop-blur-xl px-5 py-4">
                                       {questions.map((question, qi) => (
                                         <div key={qi} className="flex gap-3">
                                           <span className="mt-0.5 text-[0.84rem] font-bold text-[#1A73E8]">{qi + 1}.</span>
@@ -1303,7 +1296,7 @@ function StudentView() {
                 </motion.div>
               </AnimatePresence>
 
-                <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 border-t border-white/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
                   {roleSource === 'applied' && selectedApp ? (
                     <button
                       onClick={() => handleDeleteApp(selectedApp.id)}
@@ -1320,7 +1313,7 @@ function StudentView() {
                   )}
                   <button
                     onClick={openPractice}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_12px_26px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_16px_34px_rgba(26,115,232,0.28)]">
                     Start practice
                     <ArrowRight size={15} />
                   </button>
@@ -1372,7 +1365,7 @@ function StudentView() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
+              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
               <span
                 className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
@@ -1414,7 +1407,7 @@ function StudentView() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: 0.05 * index }}
-              className="group overflow-hidden rounded-[28px] border border-white/75 bg-white/66 shadow-[0_18px_50px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:bg-white/76 hover:shadow-[0_24px_64px_rgba(26,115,232,0.12)]">
+              className="group overflow-hidden rounded-[28px] border border-white/75 bg-white/66 shadow-[0_18px_50px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:bg-white/76 hover:shadow-[0_24px_64px_rgba(26,115,232,0.12)]">
               <span className="block h-px bg-white/70" />
               <div className="flex items-center gap-3 border-b border-white/70 bg-white/42 px-6 py-4 backdrop-blur-xl">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90 transition-transform duration-200 group-hover:scale-110">
@@ -1545,7 +1538,7 @@ function StudentView() {
           </button>
           <button
             onClick={backToInterviewGuide}
-            className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/64 px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white">
+            className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/64 px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:-translate-y-0.5 hover:bg-white">
             Back to prep
           </button>
         </div>
@@ -1628,7 +1621,7 @@ function StudentView() {
             {categoryHasQuestion && !practiceFinished && (
               <button
                 onClick={speakCurrentQuestion}
-                className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/82 px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_14px_30px_rgba(26,115,232,0.15)] sm:right-6 sm:top-5">
+                className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/90 bg-white/82 px-4 py-2 text-[0.78rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_14px_30px_rgba(26,115,232,0.15)] sm:right-6 sm:top-5">
                 <Volume2 size={15} />
                 Hear question
               </button>
@@ -1679,7 +1672,7 @@ function StudentView() {
           {!practiceFinished && (
             <div className="border-t border-white/70 bg-white/68 px-4 py-4 shadow-[0_-18px_40px_rgba(26,115,232,0.05)] backdrop-blur-xl sm:px-5">
               {/* Unified composer — mic lives inside the input, matching the NGO practice room */}
-              <div className="rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-xl transition-all focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35">
+              <div className="rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-2xl transition-all hover:-translate-y-0.5 focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35">
                 <div className="flex items-end gap-1">
                   <button
                     onClick={handleVoiceToggle}
@@ -1808,8 +1801,10 @@ function StudentView() {
         </div>
         <div className="relative z-10 min-h-0 flex-1 space-y-2 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,251,255,0.68),rgba(255,255,255,0.42))] p-3">
           <div
-            className={`rounded-2xl border transition-colors ${
-              descriptionOpen ? 'border-[#BFD7FF] bg-white/82 shadow-[0_12px_28px_rgba(26,115,232,0.08)]' : 'border-white/80 bg-white/54'
+            className={`rounded-2xl border backdrop-blur-xl transition-colors ${
+              descriptionOpen
+                ? 'border-[#BFD7FF] bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(232,240,254,0.54))] shadow-[0_10px_22px_rgba(26,115,232,0.075),0_1px_0_rgba(255,255,255,0.94)_inset,0_-1px_0_rgba(26,115,232,0.035)_inset]'
+                : 'border-[#D7E6FF] bg-[linear-gradient(135deg,rgba(255,255,255,0.66),rgba(232,240,254,0.34))] shadow-[0_7px_18px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.84)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset]'
             }`}>
             <button
               onClick={() => setDescriptionOpen(!descriptionOpen)}
@@ -2100,7 +2095,7 @@ function NGOView({ onPracticeChange }) {
             ))}
           </div>
         </aside>
-        <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white p-7 shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+        <section className="min-h-[560px] rounded-[34px] border border-white/75 bg-white/76 p-7 shadow-[0_24px_70px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
           <div className="mb-4 h-8 w-2/5 animate-pulse rounded-full bg-[#EEF4FF]" />
           <div className="mb-8 h-4 w-3/5 animate-pulse rounded-full bg-[#F1F4F9]" />
           <div className="grid gap-4 lg:grid-cols-2">
@@ -2119,7 +2114,7 @@ function NGOView({ onPracticeChange }) {
 
   if (ngoOpportunities.length === 0) {
     return (
-      <div className="rounded-[28px] border border-[#E5EEFB] bg-white px-6 py-16 text-center shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+      <div className="rounded-[28px] border border-white/75 bg-white/76 px-6 py-16 text-center shadow-[0_24px_70px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
           <Briefcase size={22}/>
         </div>
@@ -2137,7 +2132,7 @@ function NGOView({ onPracticeChange }) {
         transition={{ duration: 0.24 }}
         className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside
-          className="overflow-y-auto rounded-[30px] border border-white/75 bg-white/68 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
+          className="overflow-y-auto rounded-[30px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(248,251,255,0.34))] p-4 shadow-[0_24px_64px_rgba(26,115,232,0.085),0_1px_0_rgba(255,255,255,0.96)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl"
           style={{ height: '600px' }}>
           <div className="mb-4 flex items-center justify-between gap-3 px-1">
             <div>
@@ -2156,22 +2151,19 @@ function NGOView({ onPracticeChange }) {
                 <button
                   key={opp.id}
                   onClick={() => openRole(opp.id)}
-                  className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+                  className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
                     active
-                      ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
-                      : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+                      ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
+                      : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
                   }`}>
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="flex min-w-0 gap-3">
-                      <GradientAvatar name={opp.orgName || opp.title || 'Role'} size={44} radius="0.95rem" className="shrink-0 shadow-sm ring-2 ring-white/80" />
-                      <div className="min-w-0">
-                        <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
-                          {opp.title}
-                        </p>
-                        <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
-                          {opp.category || [opp.workMode, opp.location].filter(Boolean).join(' · ') || 'Flexible role'}
-                        </p>
-                      </div>
+                  <div className="relative z-10 flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`line-clamp-1 text-[0.98rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
+                        {opp.title}
+                      </p>
+                      <p className="mt-1.5 truncate text-[0.78rem] text-[#5F6368]">
+                        {opp.category || [opp.workMode, opp.location].filter(Boolean).join(' · ') || 'Flexible role'}
+                      </p>
                     </div>
                     <ArrowRight size={16} className={`mt-1 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
                   </div>
@@ -2187,7 +2179,7 @@ function NGOView({ onPracticeChange }) {
             alt=""
             className="pointer-events-none absolute -top-[187px] right-8 z-10 w-full max-w-md"
           />
-          <section className="min-h-[560px] rounded-[34px] border border-[#E5EEFB] bg-white shadow-[0_12px_34px_rgba(17,24,39,0.04)]">
+          <section className="min-h-[560px] overflow-hidden rounded-[34px] border border-white/75 bg-white/76 shadow-[0_24px_70px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
           {!selectedOpp ? (
             <div className="flex min-h-[560px] flex-col items-center justify-center px-6 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
@@ -2200,7 +2192,7 @@ function NGOView({ onPracticeChange }) {
             </div>
           ) : (
             <div className="p-6 lg:p-8">
-              <div className="rounded-[30px] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_52%,#EEF4FF_100%)] px-6 py-6">
+              <div className="relative overflow-hidden rounded-[30px] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82)_0%,rgba(248,251,255,0.66)_52%,rgba(232,240,254,0.54)_100%)] px-6 py-6 shadow-[0_18px_48px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#1A73E8]">
@@ -2215,14 +2207,14 @@ function NGOView({ onPracticeChange }) {
                   </div>
                   <button
                     onClick={openPracticeRoom}
-                    className="flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                    className="flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#1A73E8] px-8 py-4 text-[1rem] font-semibold text-white shadow-[0_12px_28px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_18px_38px_rgba(26,115,232,0.28)]">
                     <PlayCircle size={20} />
                     Practice interview
                   </button>
                 </div>
               </div>
 
-              <div className="mt-11 flex flex-wrap gap-3">
+              <div className="mt-9 grid w-full grid-cols-1 gap-2 rounded-[24px] border border-white/90 bg-white/95 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl sm:grid-cols-3">
                 {guideSections.map(section => {
                   const Icon = section.icon
                   const active = activeGuideSection === section.id
@@ -2230,10 +2222,10 @@ function NGOView({ onPracticeChange }) {
                     <button
                       key={section.id}
                       onClick={() => setActiveGuideSection(section.id)}
-                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-[0.85rem] font-semibold tracking-[0.01em] transition-all duration-300 ${
+                      className={`inline-flex h-12 items-center justify-center gap-2 rounded-[18px] px-4 text-[0.84rem] font-semibold transition-all duration-300 ${
                         active
-                          ? 'bg-gradient-to-b from-[#3B8AF2] to-[#1A73E8] text-white shadow-[0_8px_20px_rgba(26,115,232,0.28)]'
-                          : 'border border-[#E5EEFB] bg-white text-[#5F6368] shadow-[0_1px_3px_rgba(16,24,40,0.04)] hover:border-[#BFD7FF] hover:text-[#1A73E8] hover:shadow-[0_4px_14px_rgba(26,115,232,0.12)]'
+                          ? 'bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.86))] text-[#1A73E8] shadow-[0_12px_26px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.92)_inset]'
+                          : 'bg-white/42 text-[#5F6368] ring-1 ring-white/50 hover:bg-white/72 hover:text-[#1A73E8]'
                       }`}>
                       <Icon size={15} />
                       {section.label}
@@ -2278,7 +2270,7 @@ function NGOView({ onPracticeChange }) {
                       </div>
                       <div className="mt-5 space-y-3">
                         {NGO_INTERVIEW_STAGES.map((stage, i) => (
-                          <div key={stage.id} className="flex gap-4 rounded-[22px] border border-[#E5EEFB] bg-white p-5 shadow-[0_2px_10px_rgba(17,24,39,0.03)]">
+                          <div key={stage.id} className="flex gap-4 rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] p-5 shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
                               {String(i + 1).padStart(2, '0')}
                             </div>
@@ -2310,10 +2302,10 @@ function NGOView({ onPracticeChange }) {
                           const isOpen = openQuestionStage === stage.id
                           const questions = makeStageQuestions(selectedOpp, mockStudent, stage.id)
                           return (
-                            <div key={stage.id} className="overflow-hidden rounded-[22px] border border-[#E5EEFB]">
+                            <div key={stage.id} className="overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                               <button
                                 onClick={() => setOpenQuestionStage(isOpen ? null : stage.id)}
-                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8FBFF]">
+                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-white/70">
                                 <div className="flex items-center gap-3.5">
                                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
                                     {i + 1}
@@ -2333,7 +2325,7 @@ function NGOView({ onPracticeChange }) {
                                     exit={{ height: 0, opacity: 0 }}
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden">
-                                    <div className="space-y-3.5 border-t border-[#E5EEFB] bg-[#FBFCFE] px-5 py-4">
+                                    <div className="space-y-3.5 border-t border-white/70 bg-white/52 backdrop-blur-xl px-5 py-4">
                                       {questions.map((question, qi) => (
                                         <div key={qi} className="flex gap-3">
                                           <span className="mt-0.5 text-[0.84rem] font-bold text-[#1A73E8]">{qi + 1}.</span>
@@ -2354,16 +2346,16 @@ function NGOView({ onPracticeChange }) {
                 </motion.div>
               </AnimatePresence>
 
-              <div className="flex flex-col gap-3 border-t border-[#E5EEFB] pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-t border-white/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   onClick={() => navigate(`/opportunities?opportunity=${encodeURIComponent(selectedOpp.id)}`)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D7E6FF] bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-[#F8FBFF]">
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/75 bg-white/72 px-4 py-2.5 shadow-[0_8px_18px_rgba(32,33,36,0.045),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl text-[0.82rem] font-semibold text-[#1A73E8] transition-colors hover:bg-white/70">
                   View role details
                   <ArrowRight size={15} />
                 </button>
                 <button
                   onClick={openPracticeRoom}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.2)] transition-opacity hover:opacity-95">
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.84rem] font-semibold text-white shadow-[0_12px_26px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_16px_34px_rgba(26,115,232,0.28)]">
                   Start practice
                   <ArrowRight size={15} />
                 </button>
@@ -2420,7 +2412,7 @@ function NGOView({ onPracticeChange }) {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: 0.05 * statIndex }}
-	              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
+	              className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
 	              <span
 	                className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
 	                style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.tint})` }}
@@ -2446,7 +2438,7 @@ function NGOView({ onPracticeChange }) {
 	            initial={{ opacity: 0, y: 14 }}
 	            animate={{ opacity: 1, y: 0 }}
 	            transition={{ duration: 0.28, delay: 0.1 }}
-	            className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
+	            className="group relative min-h-[190px] overflow-hidden rounded-[28px] border border-white/75 bg-white/68 p-5 text-left shadow-[0_20px_54px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:-translate-y-1 hover:bg-white/82 hover:shadow-[0_26px_68px_rgba(26,115,232,0.14)]">
 	            <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#A142F4,#F3E8FD)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 	            <svg
 	              className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
@@ -2480,7 +2472,7 @@ function NGOView({ onPracticeChange }) {
 	              initial={{ opacity: 0, y: 10 }}
 	              animate={{ opacity: 1, y: 0 }}
 	              transition={{ duration: 0.25, delay: 0.05 * index }}
-	              className="group overflow-hidden rounded-[28px] border border-white/75 bg-white/66 shadow-[0_18px_50px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all duration-200 hover:bg-white/76 hover:shadow-[0_24px_64px_rgba(26,115,232,0.12)]">
+	              className="group overflow-hidden rounded-[28px] border border-white/75 bg-white/66 shadow-[0_18px_50px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.82)_inset] backdrop-blur-2xl transition-all hover:-translate-y-0.5 duration-200 hover:bg-white/76 hover:shadow-[0_24px_64px_rgba(26,115,232,0.12)]">
 	              <span className="block h-px bg-white/70" />
 	              <div className="flex items-center gap-3 border-b border-white/70 bg-white/42 px-6 py-4 backdrop-blur-xl">
 	                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#FFFFFF,#E8F0FE)] text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-1 ring-white/90 transition-transform duration-200 group-hover:scale-110">
@@ -2608,7 +2600,7 @@ function NGOView({ onPracticeChange }) {
           </button>
 	          <button
 	            onClick={backToNgoGuide}
-	            className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/64 px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white">
+	            className="inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/64 px-6 py-3 text-[0.88rem] font-semibold text-[#1A73E8] shadow-[0_10px_24px_rgba(26,115,232,0.10)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:-translate-y-0.5 hover:bg-white">
 	            Back to guide
 	          </button>
         </div>
@@ -2927,7 +2919,7 @@ function NGOView({ onPracticeChange }) {
               </div>
             </div>
 
-            <div className={`rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-xl transition-all ${
+            <div className={`rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
               isStudentResponding ? 'opacity-60' : 'focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35'
             }`}>
               <div className="flex items-end gap-1">
@@ -3049,8 +3041,10 @@ function NGOView({ onPracticeChange }) {
             return (
 	              <div
 	                key={panel.id}
-	                className={`rounded-2xl border transition-colors ${
-	                  isOpen ? 'border-[#BFD7FF] bg-white/82 shadow-[0_12px_28px_rgba(26,115,232,0.08)]' : 'border-white/80 bg-white/54'
+	                className={`rounded-2xl border backdrop-blur-xl transition-colors ${
+	                  isOpen
+                      ? 'border-[#BFD7FF] bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(232,240,254,0.54))] shadow-[0_10px_22px_rgba(26,115,232,0.075),0_1px_0_rgba(255,255,255,0.94)_inset,0_-1px_0_rgba(26,115,232,0.035)_inset]'
+                      : 'border-[#D7E6FF] bg-[linear-gradient(135deg,rgba(255,255,255,0.66),rgba(232,240,254,0.34))] shadow-[0_7px_18px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.84)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset]'
 	                }`}>
                 <button
 	                  onClick={() => setOpenPanel(isOpen ? '' : panel.id)}

@@ -754,7 +754,7 @@ export default function Opportunities() {
               <motion.aside
                 initial={false}
                 animate={{ opacity: 1 }}
-                className="sticky top-6 h-fit rounded-[30px] border border-white/75 bg-white/70 p-4 shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.85)_inset] backdrop-blur-2xl"
+                className="sticky top-6 h-fit rounded-[30px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(248,251,255,0.34))] p-4 shadow-[0_24px_64px_rgba(26,115,232,0.085),0_1px_0_rgba(255,255,255,0.96)_inset,0_-1px_0_rgba(26,115,232,0.025)_inset] backdrop-blur-2xl"
               >
                 <div className="flex items-start justify-between gap-3 pb-4">
                   <div>
@@ -774,7 +774,7 @@ export default function Opportunities() {
                 <button
                   type="button"
                   onClick={() => navigate('/opportunities/new')}
-                  className="mb-4 flex w-full items-center gap-3 rounded-[24px] border border-[#BFD7FF] bg-[#F8FBFF] px-4 py-4 text-left shadow-[0_14px_34px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_18px_40px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.9)_inset]"
+                  className="mb-4 flex w-full items-center gap-3 rounded-[24px] border border-[#AECBFA] bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(232,240,254,0.64))] px-4 py-4 text-left shadow-[0_12px_28px_rgba(26,115,232,0.12),0_1px_0_rgba(255,255,255,0.95)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset] transition-all hover:-translate-y-0.5 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(232,240,254,0.72))] hover:shadow-[0_16px_34px_rgba(26,115,232,0.15),0_1px_0_rgba(255,255,255,0.97)_inset]"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#1A73E8] text-white shadow-[0_10px_22px_rgba(26,115,232,0.18)]">
                     <Plus size={18} />
@@ -806,33 +806,25 @@ export default function Opportunities() {
 	                      const filled = (normalized.status || '').toLowerCase() === 'paused'
 	                      const isDraft = (normalized.status || '').toLowerCase() === 'draft'
 	                      const subtitle = normalized.category || normalized.location || normalized.workMode || `${normalized.applicantCount ?? 0} applicants`
-	                      const avatarName = normalized.orgName || 'Organization'
 	                      return (
 	                        <button
 	                          key={opp.id}
 	                          onClick={() => setSelectedOppId(opp.id)}
-	                          className={`group w-full rounded-[24px] border px-4 py-5 text-left transition-all ${
+	                          className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
 	                            active
-	                              ? 'border-[#BFD7FF] bg-[#E8F0FE] shadow-[0_14px_30px_rgba(26,115,232,0.13),0_1px_0_rgba(255,255,255,0.86)_inset]'
-	                              : 'border-white/75 bg-white hover:border-[#BFD7FF] hover:bg-[#FBFCFE] hover:shadow-[0_12px_28px_rgba(26,115,232,0.08)]'
+	                              ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
+	                              : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
 	                          }`}
 	                        >
-	                          <div className="flex items-start justify-between gap-3">
-	                            <div className="flex min-w-0 gap-3">
-	                              <GradientAvatar
-	                                name={avatarName}
-	                                size={40}
-	                                radius="0.95rem"
-	                                className="shadow-[0_10px_22px_rgba(26,115,232,0.10)] ring-2 ring-white/80"
-	                              />
-	                              <div className="min-w-0">
-	                              <p className="line-clamp-2 text-[0.95rem] font-semibold leading-snug text-[#202124]">
+	                          <div className="relative z-10 flex items-start justify-between gap-3">
+	                            <div className="min-w-0">
+	                              <p className={`line-clamp-2 text-[0.95rem] font-semibold leading-snug ${active ? 'text-[#1A73E8]' : 'text-[#202124]'}`}>
 	                                {normalized.title}
 	                              </p>
 	                              <p className="mt-1.5 flex items-center gap-2 text-[0.76rem] text-[#5F6368]">
 	                                <span className="truncate">{subtitle}</span>
 	                                {filled && (
-	                                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E6F4EA] text-[#188038]">
+	                                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[#1A73E8]">
 	                                    <CheckCircle2 size={12} />
 	                                  </span>
 	                                )}
@@ -842,7 +834,6 @@ export default function Opportunities() {
 	                                  </span>
 	                                )}
 	                              </p>
-	                              </div>
 	                            </div>
 	                            <ArrowRight size={16} className={`mt-2 shrink-0 transition-transform ${active ? 'text-[#1A73E8]' : 'text-[#9AA0A6] group-hover:translate-x-0.5 group-hover:text-[#1A73E8]'}`} />
 	                          </div>

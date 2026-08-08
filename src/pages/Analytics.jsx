@@ -1,8 +1,8 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2,
+  AlertCircle, AlertTriangle, BarChart3, Briefcase, Calendar, Camera, CheckCircle2, ChevronDown,
   Code2, Database, DollarSign, FileText, Globe, GraduationCap, HeartHandshake, Layers,
   Lightbulb, MapPin, Megaphone, MessageCircle, MessageSquare, Moon, PenTool, Percent, Search,
   Sparkles, Target, Users, Video,
@@ -101,8 +101,8 @@ function getRoleSuggestion(role) {
 
 function EmptyState() {
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-[rgba(26,115,232,0.10)] bg-white px-8 py-16 text-center shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(26,115,232,0.06),transparent_55%)]" />
+    <div className="relative overflow-hidden rounded-[32px] border border-white/90 bg-white/95 px-8 py-16 text-center shadow-[0_20px_54px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(26,115,232,0.11),transparent_52%),linear-gradient(135deg,rgba(255,255,255,0.72),rgba(232,240,254,0.24))]" />
       <img src={analyticsIllustration} alt="" className="relative mx-auto w-52 mb-5 select-none" />
       <p className="relative text-[1.1rem] font-semibold text-[#202124]">Analytics will appear once roles get activity</p>
       <p className="relative mx-auto mt-2 max-w-md text-[0.88rem] leading-6 text-[#5F6368]">
@@ -117,9 +117,9 @@ function EmptyState() {
 
 function CardHeader({ icon: Icon, title, subtitle, tint = '#E8F0FE', accent = '#1A73E8' }) {
   return (
-    <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-4">
+    <div className="flex items-center gap-3 border-b border-white/80 bg-white/72 px-6 py-4">
       {Icon && (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl" style={{ background: tint, color: accent }}>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/70 shadow-[0_8px_18px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.88)_inset]" style={{ background: `linear-gradient(135deg, ${tint}, rgba(255,255,255,0.82))`, color: accent }}>
           <Icon size={16} strokeWidth={2.15} />
         </span>
       )}
@@ -127,6 +127,74 @@ function CardHeader({ icon: Icon, title, subtitle, tint = '#E8F0FE', accent = '#
         <h2 className="text-[0.95rem] font-semibold text-[#202124]">{title}</h2>
         {subtitle && <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">{subtitle}</p>}
       </div>
+    </div>
+  )
+}
+
+function GlassDropdown({ value, onChange, options, className = '', buttonClassName = '' }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const selected = options.find(option => option.value === value) || options[0]
+
+  useEffect(() => {
+    if (!open) return
+    function closeOnOutside(event) {
+      if (!ref.current?.contains(event.target)) setOpen(false)
+    }
+    function closeOnEscape(event) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen(current => !current)}
+        className={`flex items-center justify-between gap-3 rounded-full border border-white/85 bg-white/88 text-left font-semibold text-[#202124] shadow-[0_7px_18px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.98)_inset] outline-none transition-all hover:bg-white/95 focus:border-[#1A73E8] focus:shadow-[0_9px_22px_rgba(26,115,232,0.10),0_0_0_3px_rgba(26,115,232,0.10)] ${buttonClassName}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="min-w-0 truncate">{selected?.label}</span>
+        <ChevronDown size={15} className={`shrink-0 text-[#1A73E8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-[calc(100%+8px)] z-50 max-h-64 w-full min-w-48 overflow-y-auto overscroll-contain rounded-[18px] border border-white/85 bg-white/95 p-1.5 shadow-[0_18px_46px_rgba(26,115,232,0.14),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl"
+          role="listbox"
+        >
+          {options.map(option => {
+            const active = option.value === value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-[14px] px-3 py-2 text-left text-[0.82rem] font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#E8F0FE] text-[#1A73E8]'
+                    : 'text-[#3C4043] hover:bg-[#F8FBFF] hover:text-[#1A73E8]'
+                }`}
+                role="option"
+                aria-selected={active}
+              >
+                <span className="min-w-0 truncate">{option.label}</span>
+                {active && <CheckCircle2 size={14} className="shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -246,13 +314,13 @@ export function ApplicantMap({ locations }) {
         })}
       </svg>
 
-      <div className="mt-6 border-t border-[#F1F3F4] pt-5">
+      <div className="mt-6 border-t border-white/70 pt-5">
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9AA0A6]">Top countries</p>
         {listTop.length > 0 ? (
           <div className="mt-3 grid gap-x-8 gap-y-3 sm:grid-cols-2">
             {listTop.map((bubble, index) => (
               <div key={bubble.label} className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FE] text-[#1A73E8]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/70 bg-white/70 text-[#1A73E8] shadow-[0_5px_12px_rgba(26,115,232,0.08)]">
                   <MapPin size={13} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -279,7 +347,7 @@ export function ApplicantMap({ locations }) {
         {other.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             {other.slice(0, 6).map(item => (
-              <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F3F4] px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368]">
+              <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/62 px-3 py-1.5 text-[0.72rem] font-medium text-[#5F6368] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">
                 {item.label} · {item.count}
               </span>
             ))}
@@ -299,7 +367,7 @@ export function ApplicantMap({ locations }) {
 // Horizontal bar on a shared scale — single hue with a light→dark gradient, rounded data-end
 function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7', delay = 0, label }) {
   return (
-    <div className={`${height} w-full overflow-hidden rounded-full bg-[#F1F3F4]`} title={label}>
+    <div className={`${height} w-full overflow-hidden rounded-full bg-white/72 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-white/65`} title={label}>
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${percent}%` }}
@@ -314,7 +382,7 @@ function Bar({ percent, color = '#1A73E8', colorDark = '#1765CC', height = 'h-7'
 // Standing column — a real bar anchored to a shared baseline, on a soft full-height track
 function VerticalBar({ percent, color = '#8AB4F8', colorDark = '#1A73E8', width = 'w-14', delay = 0, label }) {
   return (
-    <div className={`relative flex h-full ${width} items-end justify-center overflow-hidden rounded-t-[10px] bg-[#F4F7FC]`}>
+    <div className={`relative flex h-full ${width} items-end justify-center overflow-hidden rounded-t-[10px] bg-white/70 shadow-[0_1px_0_rgba(255,255,255,0.95)_inset] ring-1 ring-white/70`}>
       <motion.div
         initial={{ height: 0 }}
         animate={{ height: `${Math.max(percent, 2)}%` }}
@@ -404,7 +472,7 @@ function SectionGroup({ icon: Icon, title, description, children }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3.5">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8]">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/75 bg-white/72 text-[#1A73E8] shadow-[0_12px_28px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
           <Icon size={19} />
         </span>
         <div className="min-w-0">
@@ -584,6 +652,14 @@ export default function Analytics() {
   const activeRest = activeView.pool.slice(1, 5)
   const maxActiveRest = Math.max(...activeRest.map(item => item.count), 1)
   const rowIcon = name => (activeView.icon ? activeView.icon : skillIcon(name))
+  const roleOptions = [
+    { value: 'all', label: 'All roles' },
+    ...roles.map(role => ({ value: role.id, label: role.title || 'Untitled role' })),
+  ]
+  const applicantViewOptions = Object.entries(APPLICANT_VIEWS).map(([key, view]) => ({
+    value: key,
+    label: view.label,
+  }))
 
   const maxCategoryCount = Math.max(...orgInsights.categoryPool.map(cat => cat.count), 1)
 
@@ -620,7 +696,7 @@ export default function Analytics() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F5F7FB]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_10%_0%,rgba(26,115,232,0.07),transparent_45%),radial-gradient(circle_at_90%_5%,rgba(161,66,244,0.05),transparent_42%),radial-gradient(circle_at_50%_15%,rgba(52,168,83,0.04),transparent_38%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_12%_0%,rgba(26,115,232,0.11),transparent_43%),radial-gradient(circle_at_88%_4%,rgba(255,255,255,0.96),transparent_22%),radial-gradient(circle_at_82%_8%,rgba(26,115,232,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.68),rgba(245,247,251,0))]" />
 
       <div className="relative mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -634,27 +710,24 @@ export default function Analytics() {
           </div>
 
           {(loading || roles.length > 0) && (
-            <label className="w-full max-w-xs rounded-2xl border border-[rgba(26,115,232,0.10)] bg-white px-4 py-3 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+            <div className="w-full max-w-xs rounded-2xl border border-white/90 bg-white/95 px-4 py-3 shadow-[0_14px_32px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
               <span className="mb-1 block text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#5F6368]">Role</span>
               {loading ? (
                 <div className="mt-2 h-5 w-32 animate-pulse rounded-full bg-[#F1F3F4]" />
               ) : (
-                <select
+                <GlassDropdown
                   value={selectedRoleId}
-                  onChange={event => setSelectedRoleId(event.target.value)}
-                  className="w-full bg-transparent text-[0.88rem] font-medium text-[#202124] outline-none">
-                  <option value="all">All roles</option>
-                  {roles.map(role => (
-                    <option key={role.id} value={role.id}>{role.title}</option>
-                  ))}
-                </select>
+                  onChange={setSelectedRoleId}
+                  options={roleOptions}
+                  buttonClassName="h-10 w-full px-4 text-[0.88rem]"
+                />
               )}
-            </label>
+            </div>
           )}
         </div>
 
         {error && (
-          <div className="mb-5 flex items-center gap-3 rounded-2xl border border-[#FAD2CF] bg-[#FEF7F6] px-4 py-3 text-[0.86rem] font-medium text-[#B3261E]">
+          <div className="mb-5 flex items-center gap-3 rounded-2xl border border-[#FAD2CF]/80 bg-white/78 px-4 py-3 text-[0.86rem] font-medium text-[#B3261E] shadow-[0_12px_30px_rgba(179,38,30,0.06),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
             <AlertCircle size={16} />
             {error}
           </div>
@@ -664,19 +737,19 @@ export default function Analytics() {
           <div className="space-y-10">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[0, 1, 2, 3].map(item => (
-                <div key={item} className="h-[140px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+                <div key={item} className="h-[140px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
               ))}
             </section>
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-              <div className="h-[360px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
-              <div className="h-[360px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+              <div className="h-[360px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
+              <div className="h-[360px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
             </div>
             <div className="space-y-6">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
-                <div className="h-[300px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
-                <div className="h-[300px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+                <div className="h-[300px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
+                <div className="h-[300px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
               </div>
-              <div className="h-[260px] animate-pulse rounded-[24px] border border-[rgba(26,115,232,0.08)] bg-white" />
+              <div className="h-[260px] animate-pulse rounded-[24px] border border-white/90 bg-white/95 shadow-[0_16px_38px_rgba(26,115,232,0.05)] backdrop-blur-2xl" />
             </div>
           </div>
         ) : !hasActivity ? (
@@ -694,7 +767,7 @@ export default function Analytics() {
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.28, delay: index * 0.05 }}
-                    className="group relative overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white p-5 shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,24,39,0.09)]"
+                    className="group relative overflow-hidden rounded-[24px] border border-white/90 bg-white/95 p-5 shadow-[0_16px_42px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-1 hover:border-white hover:bg-white hover:shadow-[0_22px_52px_rgba(26,115,232,0.095),0_1px_0_rgba(255,255,255,1)_inset]"
                   >
                     <span
                       className="absolute inset-x-0 top-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
@@ -706,13 +779,13 @@ export default function Analytics() {
                       preserveAspectRatio="none"
                       aria-hidden="true"
                     >
-                      <path d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z" fill={style.tint} opacity="0.55" />
-                      <path d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z" fill={style.tint} opacity="0.85" />
+                      <path d="M0,55 C60,80 90,25 150,45 C210,65 240,30 300,50 L300,100 L0,100 Z" fill={style.tint} opacity="0.36" />
+                      <path d="M0,70 C70,50 110,85 170,65 C220,48 260,78 300,68 L300,100 L0,100 Z" fill={style.tint} opacity="0.58" />
                     </svg>
                     <div className="relative z-10 flex items-start justify-between">
                       <span
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"
-                        style={{ background: style.tint, color: style.accent }}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/70 shadow-[0_9px_20px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] transition-transform duration-200 group-hover:scale-110"
+                        style={{ background: `linear-gradient(135deg, ${style.tint}, rgba(255,255,255,0.84))`, color: style.accent }}
                       >
                         <Icon size={18} strokeWidth={2.15} />
                       </span>
@@ -728,21 +801,18 @@ export default function Analytics() {
             <SectionGroup icon={Layers} title="Your roles" description="How your own postings are performing">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
                 {/* Role health — glassy applicant-mix donut, inline match bar, status chips */}
-                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                <section className="overflow-visible rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
                   <CardHeader icon={Target} title="Role health" subtitle="See how each role is doing" tint="#E8F0FE" accent="#1A73E8" />
 
-                  <div className="flex items-center gap-3 border-b border-[#F1F3F4] px-6 py-3">
+                  <div className="flex items-center gap-3 border-b border-white/80 bg-white/72 px-6 py-3">
                     <span className="shrink-0 text-[0.72rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Role</span>
-                    <select
+                    <GlassDropdown
                       value={selectedRoleId}
-                      onChange={event => setSelectedRoleId(event.target.value)}
-                      className="w-0 flex-1 truncate rounded-full border border-[#E5EEFB] bg-white px-3.5 py-1.5 text-[0.82rem] font-medium text-[#202124] outline-none"
-                    >
-                      <option value="all">All roles</option>
-                      {roles.map(role => (
-                        <option key={role.id} value={role.id}>{role.title || 'Untitled role'}</option>
-                      ))}
-                    </select>
+                      onChange={setSelectedRoleId}
+                      options={roleOptions}
+                      className="min-w-0 flex-1"
+                      buttonClassName="h-9 w-full px-3.5 text-[0.82rem]"
+                    />
                   </div>
 
                   {data.roleHealth.length > 0 ? (
@@ -776,7 +846,7 @@ export default function Analytics() {
 
                         <div className="flex flex-col justify-center gap-3">
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3EFFC] text-[#7C6BC4]">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/70 bg-white/68 text-[#7C6BC4] shadow-[0_5px_14px_rgba(124,107,196,0.08)]">
                               <Users size={14} />
                             </span>
                             <div>
@@ -785,7 +855,7 @@ export default function Analytics() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EBF8F1] text-[#3C9C6C]">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/70 bg-white/68 text-[#3C9C6C] shadow-[0_5px_14px_rgba(60,156,108,0.08)]">
                               <Percent size={14} />
                             </span>
                             <div>
@@ -800,12 +870,12 @@ export default function Analytics() {
                         const cfg = HEALTH_CONFIG[overallHealth]
                         const Icon = cfg.icon
                         return (
-                          <div className="mt-7 border-t border-[#F1F3F4] pt-6">
+                          <div className="mt-7 border-t border-white/70 pt-6">
                             {selectedRoleId === 'all' && (
                               <p className="mb-2 text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[#9AA0A6]">Average status across all your roles</p>
                             )}
                             <div className="flex items-start gap-3">
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: cfg.tint, color: cfg.accent }}>
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/70 shadow-[0_6px_14px_rgba(26,115,232,0.08)]" style={{ background: `linear-gradient(135deg, ${cfg.tint}, rgba(255,255,255,0.82))`, color: cfg.accent }}>
                                 <Icon size={16} />
                               </span>
                               <div className="min-w-0">
@@ -831,7 +901,7 @@ export default function Analytics() {
                 </section>
 
                 {/* Role focus — the NGO's own posting patterns, independent of the role filter */}
-                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                <section className="overflow-hidden rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
                   <CardHeader icon={Layers} title="Role focus" subtitle="What kind of roles you post most" tint="#F3E8FD" accent="#A142F4" />
                   {orgInsights.categoryPool.length > 0 ? (
                     <div className="px-6 py-5">
@@ -840,13 +910,13 @@ export default function Analytics() {
                           const CatIcon = skillIcon(cat.name)
                           return (
                             <div key={cat.name} className="flex items-center gap-3">
-                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FD] text-[#A142F4]">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/70 bg-white/68 text-[#A142F4] shadow-[0_5px_14px_rgba(161,66,244,0.08)]">
                                 <CatIcon size={14} />
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="mb-1 flex items-center justify-between gap-3">
                                   <p className="truncate text-[0.8rem] text-[#3C4043]">{cat.name}</p>
-                                  <span className="shrink-0 rounded-full bg-[#F3E8FD] px-2 py-0.5 text-[0.72rem] font-bold text-[#A142F4]">{cat.count}</span>
+                                  <span className="shrink-0 rounded-full border border-white/70 bg-white/64 px-2 py-0.5 text-[0.72rem] font-bold text-[#A142F4] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">{cat.count}</span>
                                 </div>
                                 <Bar
                                   percent={Math.max((cat.count / maxCategoryCount) * 100, 4)}
@@ -861,9 +931,9 @@ export default function Analytics() {
                         })}
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2 border-t border-[#F1F3F4] pt-4">
+                      <div className="mt-4 flex flex-wrap gap-2 border-t border-white/70 pt-4">
                         {Object.entries(orgInsights.workModes).filter(([, count]) => count > 0).map(([mode, count]) => (
-                          <span key={mode} className="inline-flex items-center gap-1.5 rounded-full bg-[#F3E8FD] px-3 py-1.5 text-[0.72rem] font-medium text-[#A142F4]">
+                          <span key={mode} className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/62 px-3 py-1.5 text-[0.72rem] font-medium text-[#A142F4] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">
                             <MapPin size={11} />
                             {mode} · {count}
                           </span>
@@ -883,13 +953,13 @@ export default function Analytics() {
             <SectionGroup icon={Users} title="Your applicants" description="What you're learning from the students applying">
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
               {/* Where applicants live — bubble map, size follows count */}
-              <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+              <section className="overflow-visible rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
                 <CardHeader icon={MapPin} title="Where applicants live" subtitle="Locations across your candidate pool" tint="#FEF7E0" accent="#F29900" />
                 <ApplicantMap locations={data.applicants.map(applicant => applicant.studentLocation)} />
               </section>
 
                 {/* Match quality — radial gauge + score bands, gives instant read on candidate fit */}
-                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                <section className="overflow-hidden rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
                   <CardHeader icon={Percent} title="Match quality" subtitle="Candidate fit across your pool" tint="#E6F4EA" accent="#188038" />
                   {data.applicants.length > 0 ? (
                     <div className="flex flex-col items-center px-6 py-6">
@@ -932,7 +1002,7 @@ export default function Analytics() {
 
               <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(340px,1.1fr)]">
                 {/* Hiring funnel — icon per stage, gradient fill, common scale */}
-                <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
+                <section className="overflow-hidden rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
                   <CardHeader
                     icon={BarChart3}
                     title="Hiring funnel"
@@ -970,7 +1040,7 @@ export default function Analytics() {
                         return (
                           <div key={stage.label} className="flex w-16 flex-col items-center text-center">
                             <div className="flex items-center gap-1.5">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#E8F0FE] text-[#1A73E8]">
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/70 bg-white/68 text-[#1A73E8] shadow-[0_4px_10px_rgba(26,115,232,0.08)]">
                                 <StageIcon size={11} />
                               </span>
                               <p className="text-[0.8rem] font-medium text-[#202124]">{stage.label}</p>
@@ -990,10 +1060,10 @@ export default function Analytics() {
                 </section>
 
               {/* About your applicants — switch between skills / fields of study / languages */}
-              <section className="overflow-hidden rounded-[24px] border border-[rgba(26,115,232,0.10)] bg-white shadow-[0_1px_0_rgba(17,24,39,0.02),0_8px_24px_rgba(17,24,39,0.04)]">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F1F3F4] px-6 py-4">
+              <section className="overflow-hidden rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_48px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.98)_inset] backdrop-blur-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/80 bg-white/72 px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#F3E8FD] text-[#A142F4]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-[linear-gradient(135deg,#F3E8FD,rgba(255,255,255,0.84))] text-[#A142F4] shadow-[0_8px_18px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.88)_inset]">
                       <Sparkles size={16} strokeWidth={2.15} />
                     </span>
                     <div className="min-w-0">
@@ -1001,15 +1071,12 @@ export default function Analytics() {
                       <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">What your candidate pool looks like</p>
                     </div>
                   </div>
-                  <select
+                  <GlassDropdown
                     value={applicantView}
-                    onChange={event => setApplicantView(event.target.value)}
-                    className="rounded-full border border-[#DADCE0] bg-white px-3.5 py-1.5 text-[0.78rem] font-medium text-[#202124] outline-none transition-colors hover:border-[#BFD7FF] focus:border-[#1A73E8]"
-                  >
-                    {Object.entries(APPLICANT_VIEWS).map(([key, view]) => (
-                      <option key={key} value={key}>{view.label}</option>
-                    ))}
-                  </select>
+                    onChange={setApplicantView}
+                    options={applicantViewOptions}
+                    buttonClassName="h-9 min-w-40 px-3.5 text-[0.78rem]"
+                  />
                 </div>
                 {activeTop ? (
                   <div className="px-6 py-5">
@@ -1017,9 +1084,9 @@ export default function Analytics() {
                       key={applicantView}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-4 flex items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#EEF4FF] to-[#F8FBFF] p-4 ring-1 ring-[#E1ECFF]"
+                      className="mb-4 flex items-center gap-4 rounded-[22px] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(232,240,254,0.48))] p-4 shadow-[0_14px_34px_rgba(26,115,232,0.07),0_1px_0_rgba(255,255,255,0.94)_inset] backdrop-blur-2xl"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#1A73E8] shadow-[0_4px_12px_rgba(26,115,232,0.15)]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/75 bg-white/78 text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.11),0_1px_0_rgba(255,255,255,0.92)_inset]">
                         {(() => { const TopIcon = rowIcon(activeTop.name); return <TopIcon size={22} strokeWidth={1.9} /> })()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1038,7 +1105,7 @@ export default function Analytics() {
                           const Icon = rowIcon(item.name)
                           return (
                             <div key={item.name} className="flex items-center gap-3">
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F1F3F4] text-[#5F6368]">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/70 bg-white/62 text-[#5F6368] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset]">
                                 <Icon size={13} />
                               </span>
                               <div className="min-w-0 flex-1">
