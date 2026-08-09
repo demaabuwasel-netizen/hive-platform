@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft, MapPin, GraduationCap, Briefcase, FileText, Target,
   ExternalLink, Calendar, Globe, Award, Layers, Link2,
@@ -8,6 +8,7 @@ import {
 import { loadStudentProfile } from '../services/storage'
 import { groupSkills } from '../data/skills'
 import GradientAvatar from '../components/GradientAvatar'
+import { InterviewInviteModal } from '../components/ApplicantDetail'
 
 function hasContent(obj) {
   return obj && (typeof obj === 'string' ? obj.trim().length > 0 : Array.isArray(obj) ? obj.length > 0 : false)
@@ -97,6 +98,7 @@ export default function StudentPublicProfile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false)
 
   const backTo = searchParams.get('backTo')
   const opportunityId = searchParams.get('opportunity')
@@ -223,6 +225,7 @@ export default function StudentPublicProfile() {
   ].filter(Boolean)
 
   return (
+    <>
     <main className="relative flex-1 overflow-x-hidden overflow-y-auto bg-[#F5F7FB]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[430px] bg-[radial-gradient(circle_at_88%_4%,rgba(255,255,255,0.96),transparent_23%),radial-gradient(circle_at_80%_8%,rgba(26,115,232,0.13),transparent_42%),radial-gradient(circle_at_14%_0%,rgba(26,115,232,0.08),transparent_42%)]" />
       <ProfileWaves />
@@ -283,7 +286,7 @@ export default function StudentPublicProfile() {
 
             <div className="flex shrink-0 flex-col items-stretch gap-4 lg:w-[320px]">
               <button
-                onClick={() => navigate(`/interview-message/${studentId}`, { state: { fromProfile: true } })}
+                onClick={() => setInterviewModalOpen(true)}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1A73E8] px-5 py-3 text-[0.88rem] font-semibold text-white shadow-[0_12px_26px_rgba(26,115,232,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#1765CC] hover:shadow-[0_16px_34px_rgba(26,115,232,0.28)]"
               >
                 <Calendar size={15} strokeWidth={2}/>
@@ -482,5 +485,16 @@ export default function StudentPublicProfile() {
         </div>
       </div>
     </main>
+    <AnimatePresence>
+      {interviewModalOpen && (
+        <InterviewInviteModal
+          applicant={{ ...profile, studentId, roleTitle: 'this role' }}
+          mode="interview"
+          onClose={() => setInterviewModalOpen(false)}
+          onSent={() => setInterviewModalOpen(false)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   )
 }

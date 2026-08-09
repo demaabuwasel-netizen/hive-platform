@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import SkillPicker from '../components/SkillPicker'
+import { askHiveAI } from '../services/openai'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -171,6 +172,71 @@ function buildAiDraft(prompt, profile, user) {
   }
 }
 
+function normalizeAiRoleDraft(raw, prompt, profile, user) {
+  const fallback = buildAiDraft(prompt, profile, user)
+  const source = raw && typeof raw === 'object' ? raw : {}
+  const category = CATEGORIES.includes(source.category) ? source.category : inferCategory(prompt)
+  const skills = Array.isArray(source.skills)
+    ? source.skills
+        .map(skill => typeof skill === 'string' ? { name: skill, level: '' } : { name: skill?.name || '', level: '' })
+        .filter(skill => skill.name)
+        .slice(0, 8)
+    : fallback.skills
+  const languages = Array.isArray(source.languages)
+    ? source.languages
+        .map(lang => typeof lang === 'string' ? lang : lang?.lang || lang?.name || '')
+        .filter(lang => LANGUAGE_OPTIONS.includes(lang))
+        .slice(0, 4)
+    : fallback.languages
+
+  return {
+    ...fallback,
+    title: typeof source.title === 'string' && source.title.trim() ? source.title.trim().slice(0, 72) : fallback.title,
+    orgName: profile?.name || user?.name || fallback.orgName,
+    category,
+    categoryChoice: category,
+    field: typeof source.field === 'string' && source.field.trim() ? source.field.trim() : category,
+    description: typeof source.description === 'string' && source.description.trim() ? source.description.trim() : fallback.description,
+    missionImpact: typeof source.missionImpact === 'string' && source.missionImpact.trim() ? source.missionImpact.trim() : fallback.missionImpact,
+    skills,
+    languages,
+    weeklyHours: HOURS_OPTIONS.includes(source.weeklyHours) ? source.weeklyHours : fallback.weeklyHours,
+    duration: DURATION_OPTIONS.includes(source.duration) ? source.duration : fallback.duration,
+    workMode: WORK_MODES.some(mode => mode.id === source.workMode) ? source.workMode : fallback.workMode,
+    location: typeof source.location === 'string' && source.location.trim() ? source.location.trim() : fallback.location,
+    deadline: '',
+  }
+}
+
+async function generateAiRoleDraft(prompt, profile, user) {
+  const result = await askHiveAI({
+    messages: [
+      {
+        role: 'system',
+        content: `You generate student-friendly NGO volunteer role drafts for Hive. Return only valid JSON with these keys: title, category, field, description, missionImpact, skills, languages, weeklyHours, duration, workMode, location. Use existing category/language/hour/duration/workMode options only. Skills must be an array of useful skill names. Work mode must be remote, hybrid, or onsite. The role must sound like a student opportunity, not a corporate job post.`,
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          ngoName: profile?.name || user?.name || '',
+          ngoLocation: profile?.location || '',
+          prompt,
+          categoryOptions: CATEGORIES,
+          languageOptions: LANGUAGE_OPTIONS,
+          hoursOptions: HOURS_OPTIONS,
+          durationOptions: DURATION_OPTIONS,
+          workModeOptions: WORK_MODES.map(mode => mode.id),
+        }),
+      },
+    ],
+    maxOutputTokens: 900,
+  })
+
+  const text = result?.text || ''
+  const jsonText = text.match(/\{[\s\S]*\}/)?.[0] || text
+  return normalizeAiRoleDraft(JSON.parse(jsonText), prompt, profile, user)
+}
+
 // ─── Slide variants ───────────────────────────────────────────────────────────
 
 const slide = {
@@ -301,10 +367,20 @@ export default function CreateOpportunity() {
     setErrors(e => ({ ...e, category: undefined }))
   }
 
-  function applyAiDraft() {
+  async function applyAiDraft() {
     if (!aiPrompt.trim()) return
     setAiDrafting(true)
-    window.setTimeout(() => {
+    try {
+      const draft = await generateAiRoleDraft(aiPrompt, profile, user)
+      hasUserEdited.current = true
+      setForm(current => ({
+        ...current,
+        ...draft,
+        orgName: current.orgName || draft.orgName,
+        location: current.location || draft.location,
+      }))
+      setErrors({})
+    } catch {
       const draft = buildAiDraft(aiPrompt, profile, user)
       hasUserEdited.current = true
       setForm(current => ({
@@ -314,8 +390,9 @@ export default function CreateOpportunity() {
         location: current.location || draft.location,
       }))
       setErrors({})
+    } finally {
       setAiDrafting(false)
-    }, 650)
+    }
   }
 
   function toggleLang(lang) {

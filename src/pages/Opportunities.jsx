@@ -19,6 +19,7 @@ import { fetchSavedIds, saveOpportunity, unsaveOpportunity } from '../services/s
 import { computeMatch } from '../services/matching'
 import { withTimeout } from '../utils/withTimeout'
 import opportunitiesStudentSun from '../assets/opportunities student sun.PNG'
+import applicationsSun from '../assets/applications sun.PNG'
 
 const CATEGORIES = ['All','Technology','Education','Environment','Healthcare','Youth Services','Accessibility']
 
@@ -811,8 +812,8 @@ export default function Opportunities() {
       <div className="relative mx-auto max-w-[1520px] px-6 pb-8 pt-10 lg:px-10">
 
         {isNGO ? (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="relative space-y-6">
+            <div className="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl translate-x-2 translate-y-3">
                 <h1 className="text-4xl font-bold tracking-[-0.04em] text-[#202124] sm:text-5xl">
                   Roles
@@ -823,7 +824,7 @@ export default function Opportunities() {
               </div>
             </div>
 
-            <div className="grid translate-x-2 translate-y-8 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <div className="relative z-10 grid translate-x-2 translate-y-8 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
               <motion.aside
                 initial={false}
                 animate={{ opacity: 1 }}
@@ -859,7 +860,7 @@ export default function Opportunities() {
                   <ArrowRight size={16} className="ml-auto shrink-0 text-[#1A73E8]" />
                 </button>
 
-                <div className="max-h-[calc(100vh-306px)] space-y-2 overflow-y-auto pr-1">
+                <div className="-mx-1 max-h-[calc(100vh-306px)] space-y-2 overflow-y-auto px-1 pr-2">
                   {loading ? (
                     [1, 2, 3].map(i => (
                       <div
@@ -883,10 +884,10 @@ export default function Opportunities() {
 	                        <button
 	                          key={opp.id}
 	                          onClick={() => setSelectedOppId(opp.id)}
-	                          className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.62),transparent_34%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
+	                          className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-5 text-left after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.24),transparent_44%)] ring-1 ring-white/55 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
 	                            active
-	                              ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.98),rgba(210,227,252,0.84))] shadow-[0_14px_32px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.92)_inset,0_-1px_0_rgba(26,115,232,0.04)_inset]'
-	                              : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.66))] shadow-[0_10px_24px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.94)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,255,255,0.78))] hover:shadow-[0_13px_30px_rgba(32,33,36,0.065),0_1px_0_rgba(255,255,255,0.97)_inset]'
+	                              ? 'border-transparent bg-[linear-gradient(135deg,rgba(232,240,254,0.86),rgba(220,234,255,0.62))] shadow-[0_10px_24px_rgba(26,115,232,0.075),0_1px_0_rgba(255,255,255,0.9)_inset]'
+	                              : 'border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(255,255,255,0.62))] shadow-[0_7px_18px_rgba(32,33,36,0.032),0_1px_0_rgba(255,255,255,0.9)_inset] hover:border-white/90 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(255,255,255,0.72))] hover:shadow-[0_9px_22px_rgba(32,33,36,0.045),0_1px_0_rgba(255,255,255,0.94)_inset]'
 	                          }`}
 	                        >
 	                          <div className="relative z-10 flex items-start justify-between gap-3">
@@ -917,10 +918,15 @@ export default function Opportunities() {
                 </div>
               </motion.aside>
 
-              <section className="space-y-6">
+              <section className="relative -translate-y-6 space-y-6">
+                <img
+                  src={applicationsSun}
+                  alt=""
+                  className="pointer-events-none absolute right-[-34px] top-[-218px] z-[5] h-auto w-[350px] max-w-[64vw] select-none sm:right-[-20px] sm:w-[465px] lg:right-[-10px] lg:w-[585px]"
+                />
                 {loading ? (
                   <div
-                    className="rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
+                    className="relative z-10 rounded-[36px] border bg-white p-8 shadow-[0_1px_0_rgba(17,24,39,0.02),0_12px_36px_rgba(17,24,39,0.04)]"
                     style={{ borderColor: 'rgba(26,115,232,0.10)' }}
                   >
                     <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -985,7 +991,7 @@ export default function Opportunities() {
                     </div>
                   </div>
                 ) : !selectedOpp ? (
-	                  <div className="rounded-[32px] border border-white/75 bg-white/80 p-8 text-center shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
+	                  <div className="relative z-10 rounded-[32px] border border-white/75 bg-white/80 p-8 text-center shadow-[0_22px_60px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
 	                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F0FE] text-[#1A73E8] shadow-[0_14px_32px_rgba(26,115,232,0.14)]">
 	                      <Briefcase size={24} />
 	                    </div>
@@ -1003,55 +1009,6 @@ export default function Opportunities() {
                   </div>
                 ) : (
                   <div className="relative">
-	                    <div className="pointer-events-none absolute -top-[8rem] right-[-1rem] z-0 hidden h-64 w-full max-w-[660px] select-none overflow-hidden xl:block" aria-hidden="true">
-                      <svg
-                        className="h-full w-full"
-                        viewBox="0 0 660 256"
-                        fill="none"
-                        preserveAspectRatio="none"
-                      >
-                        <defs>
-                          <linearGradient id="opportunityWaveFill" x1="160" y1="18" x2="628" y2="218" gradientUnits="userSpaceOnUse">
-                            <stop offset="0" stopColor="#E8F0FE" stopOpacity="0" />
-	                            <stop offset="0.32" stopColor="#D7E6FF" stopOpacity="0.72" />
-	                            <stop offset="0.66" stopColor="#FFFFFF" stopOpacity="0.74" />
-                            <stop offset="1" stopColor="#F5F7FB" stopOpacity="0" />
-                          </linearGradient>
-                          <linearGradient id="opportunityWaveLine" x1="92" y1="0" x2="660" y2="0" gradientUnits="userSpaceOnUse">
-                            <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
-                            <stop offset="0.26" stopColor="#1A73E8" stopOpacity="0.24" />
-	                            <stop offset="0.58" stopColor="#1A73E8" stopOpacity="0.12" />
-	                            <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                        <path
-                          d="M112 128 C196 70 250 82 328 122 C410 164 494 152 660 62 L660 256 L112 256 Z"
-                          fill="url(#opportunityWaveFill)"
-                          opacity="0.92"
-                        />
-                        <path
-                          d="M76 110 C168 42 238 58 320 100 C406 144 496 140 646 42"
-                          stroke="url(#opportunityWaveLine)"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          opacity="0.88"
-                        />
-                        <path
-                          d="M162 148 C246 92 304 112 372 146 C448 184 516 174 650 98"
-                          stroke="#1A73E8"
-                          strokeWidth="2.6"
-                          strokeLinecap="round"
-                          opacity="0.13"
-                        />
-                        <path
-                          d="M238 184 C304 146 358 164 418 190 C486 218 544 204 632 154"
-                          stroke="#34A853"
-                          strokeWidth="2.6"
-                          strokeLinecap="round"
-                          opacity="0.12"
-                        />
-                      </svg>
-                    </div>
                     <motion.div
                     key={selectedOpp.id}
                     initial={false}

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { AvatarDisplay } from '../components/Avatar'
+import { COUNTRIES } from '../utils/countries'
 
 const SKILLS_LIST = {
   Programming: ['Python', 'JavaScript', 'React', 'Java', 'SQL', 'Node.js', 'TypeScript', 'C++'],
@@ -180,6 +181,9 @@ export default function StudentProfile() {
 
   const [editingAbout, setEditingAbout] = useState(false)
   const [aboutDraft, setAboutDraft] = useState(profile?.bio || '')
+  const [editingCountry, setEditingCountry] = useState(false)
+  const [countryDraft, setCountryDraft] = useState(profile?.country || profile?.links?.country || '')
+  const [savingCountry, setSavingCountry] = useState(false)
 
   const [educations, setEducations] = useState(
     Array.isArray(profile?.educations) && profile.educations.length > 0
@@ -229,6 +233,7 @@ export default function StudentProfile() {
       setSkills(normalizedSkills)
       setSkillsDraft(normalizedSkills)
       setAboutDraft(profile?.bio || '')
+      setCountryDraft(profile?.country || profile?.links?.country || '')
       setLanguagesDraft(toArray(profile?.languages))
       setInterestsDraft(toArray(profile?.interests))
       setLinksDraft({
@@ -315,11 +320,33 @@ export default function StudentProfile() {
   const primaryEducation = educations[0]
   const profileTitle = profile?.field || primaryEducation?.field || 'Student profile'
   const universitySummary = profile?.university || primaryEducation?.university || ''
+  const countrySummary = profile?.country || profile?.links?.country || ''
   const profileFacts = [
     { label: 'Skills', value: `${visibleSkills.length}` },
     { label: 'Education', value: educations.length ? `${educations.length}` : '0' },
     { label: 'Languages', value: `${languagesDraft.length}` },
   ]
+
+  const handleSaveCountry = async () => {
+    const nextCountry = countryDraft.trim()
+    setSavingCountry(true)
+    try {
+      await updateProfile({
+        ...profile,
+        country: nextCountry || null,
+        links: {
+          ...(profile?.links ?? {}),
+          country: nextCountry || null,
+        },
+      })
+      setEditingCountry(false)
+    } catch (err) {
+      setCountryDraft(profile?.country || profile?.links?.country || '')
+      alert('Failed to save country: ' + (err.message || 'Unknown error'))
+    } finally {
+      setSavingCountry(false)
+    }
+  }
   const saveSkills = async updated => {
     setSkills(updated)
     setSavingSkills(true)
@@ -536,12 +563,12 @@ export default function StudentProfile() {
                       <span>{universitySummary}</span>
                     </>
                   )}
-                  {profile?.country && (
+                  {countrySummary && (
                     <>
                       <span className="text-[#9AA0A6]">·</span>
                       <span className="inline-flex items-center gap-1">
                         <MapPin size={13} />
-                        {profile.country}
+                        {countrySummary}
                       </span>
                     </>
                   )}
@@ -552,13 +579,81 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="grid w-full shrink-0 grid-cols-3 gap-3 rounded-[22px] bg-white/40 p-3 ring-1 ring-white/50 backdrop-blur-md sm:w-[280px]">
-              {profileFacts.map(fact => (
-                <div key={fact.label} className="rounded-2xl bg-white/45 px-3 py-3 text-center ring-1 ring-white/60">
-                  <p className="text-[1.25rem] font-semibold text-[#202124]">{fact.value}</p>
-                  <p className="mt-1 text-[0.72rem] font-semibold text-[#5F6368]">{fact.label}</p>
-                </div>
-              ))}
+            <div className="flex w-full shrink-0 flex-col gap-3 sm:w-[300px]">
+              <div className="grid grid-cols-3 gap-3 rounded-[22px] bg-white/40 p-3 ring-1 ring-white/50 backdrop-blur-md">
+                {profileFacts.map(fact => (
+                  <div key={fact.label} className="rounded-2xl bg-white/45 px-3 py-3 text-center ring-1 ring-white/60">
+                    <p className="text-[1.25rem] font-semibold text-[#202124]">{fact.value}</p>
+                    <p className="mt-1 text-[0.72rem] font-semibold text-[#5F6368]">{fact.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-[20px] border border-white/65 bg-white/44 p-2 shadow-[0_8px_22px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.84)_inset] backdrop-blur-xl">
+                {editingCountry ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <MapPin size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#1A73E8]" />
+                      <input
+                        list="student-profile-country-options"
+                        className="w-full rounded-[16px] border border-white/80 bg-white/78 py-2.5 pl-9 pr-3 text-[0.84rem] font-semibold text-[#202124] shadow-[0_6px_16px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.9)_inset] outline-none transition placeholder:text-[#9AA0A6] focus:border-[#1A73E8]/45 focus:bg-white/92 focus:ring-2 focus:ring-[#1A73E8]/12"
+                        placeholder="Search country"
+                        autoComplete="off"
+                        spellCheck="false"
+                        value={countryDraft}
+                        onChange={event => setCountryDraft(event.target.value)}
+                        disabled={savingCountry}
+                      />
+                      <datalist id="student-profile-country-options">
+                        {COUNTRIES.map(country => (
+                          <option key={country.name} value={country.name} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#1A73E8] px-3 text-[0.78rem] font-semibold text-white shadow-[0_8px_18px_rgba(26,115,232,0.22)] transition hover:bg-[#1765CC] disabled:cursor-not-allowed disabled:opacity-45"
+                        onClick={handleSaveCountry}
+                        disabled={savingCountry}
+                      >
+                        <Check size={13} />
+                        {savingCountry ? 'Saving' : 'Save'}
+                      </button>
+                      <button
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-white/75 bg-white/66 px-3 text-[0.78rem] font-semibold text-[#1A73E8] backdrop-blur-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                        onClick={() => {
+                          setCountryDraft(countrySummary)
+                          setEditingCountry(false)
+                        }}
+                        disabled={savingCountry}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingCountry(true)}
+                    className="flex w-full items-center justify-between gap-2.5 rounded-[17px] bg-white/52 px-3 py-2.5 text-left ring-1 ring-white/70 transition-all hover:-translate-y-0.5 hover:bg-white/76 hover:shadow-[0_10px_24px_rgba(26,115,232,0.075)]"
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[14px] bg-[#E8F0FE] text-[#1A73E8] ring-1 ring-white/80">
+                        <MapPin size={15} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Country</span>
+                        <span className="block truncate text-[0.86rem] font-semibold text-[#202124]">
+                          {countrySummary || 'Add your country'}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/72 text-[#1A73E8] ring-1 ring-white/80">
+                      <Edit3 size={13} />
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </motion.section>

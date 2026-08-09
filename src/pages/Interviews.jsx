@@ -14,6 +14,7 @@ import { fetchStudentApplications, deleteApplication } from '../services/applica
 import { fetchNgoOpportunities, fetchOpportunity } from '../services/opportunities'
 import { fetchSavedOpportunities } from '../services/saved'
 import { withTimeout } from '../utils/withTimeout'
+import { askHiveAI, createHiveSpeech } from '../services/openai'
 import ngoInterviewImg from '../assets/ngo interview.PNG'
 
 const STUDENT_INTERVIEW_CATEGORIES = [
@@ -194,6 +195,488 @@ function skillDisplayName(skill) {
 
 function getSkillNames(skills = []) {
   return skills.map(skillDisplayName).filter(Boolean)
+}
+
+function parseAiJson(text, fallback = null) {
+  try {
+    return JSON.parse(text)
+  } catch {
+    try {
+      return JSON.parse(String(text || '').match(/\{[\s\S]*\}/)?.[0] || '')
+    } catch {
+      return fallback
+    }
+  }
+}
+
+function roleAiContext(role = {}) {
+  return {
+    title: role.title || '',
+    orgName: role.orgName || '',
+    category: role.category || '',
+    field: role.field || '',
+    description: role.description || '',
+    missionImpact: role.missionImpact || '',
+    skills: getSkillNames(role.skills || []),
+    languages: role.languages || [],
+    weeklyHours: role.weeklyHours || '',
+    duration: role.duration || '',
+    workMode: role.workMode || '',
+    location: role.location || '',
+  }
+}
+
+function compactTranscript(transcript = []) {
+  return transcript.slice(-10).map(message => ({
+    from: message.from,
+    stage: message.stage || message.category || '',
+    text: message.text || '',
+  }))
+}
+
+function latestTranscriptMessage(transcript = [], from, stageId = null) {
+  return [...transcript]
+    .reverse()
+    .find(message => message.from === from && (!stageId || message.stage === stageId || message.category === stageId))
+}
+
+function cleanStudentMention(value = '') {
+  const cleaned = String(value)
+    .replace(/[.!?].*$/, '')
+    .replace(/\b(?:and|but|because|where|which|that|so|then|for|to|with|when)\b.*$/i, '')
+    .replace(/^(?:about|around|regarding|related to|focused on|based on|for|on|in)\s+/i, '')
+    .replace(/\b(?:a|an|the|my|our|project|app|website|platform|initiative|campaign|course)\b/gi, ' ')
+    .replace(/^(?:about|around|regarding|related to|focused on|based on|for|on|in)\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (cleaned.length < 3) return ''
+  return cleaned
+    .split(' ')
+    .slice(0, 5)
+    .map(word => /^[A-Z0-9]{2,}$/.test(word) ? word : `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join(' ')
+}
+
+function extractStudentAnswerMention(answer = '') {
+  const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ')
+  if (!cleanAnswer) return ''
+
+  const quotedName = cleanAnswer.match(/["']([^"']{2,60})["']/)?.[1]
+  if (quotedName) return cleanStudentMention(quotedName)
+
+  const patterns = [
+    /\b(?:called|named|titled)\s+([^,.!?]{2,60})/i,
+    /\b(?:project|app|website|platform|initiative|campaign|course)\s+(?:called|named|titled)\s+([^,.!?]{2,60})/i,
+    /\b(?:my|our)\s+(?:project|app|website|platform|initiative|campaign|course)\s+(?:was|is)\s+([^,.!?]{2,60})/i,
+    /\b(?:built|created|made|developed|designed|launched|worked on)\s+(?:(?:a|an|the|my|our)\s+)?(?:(?:project|app|website|platform|initiative|campaign|course)\s+)?(?:(?:called|named|titled)\s+)?([^,.!?]{2,60})/i,
+  ]
+
+  for (const pattern of patterns) {
+    const mention = cleanStudentMention(cleanAnswer.match(pattern)?.[1] || '')
+    if (mention) return mention
+  }
+
+  return ''
+}
+
+function analyzeStudentPracticeAnswer(answer = '') {
+  const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ')
+  const lower = cleanAnswer.toLowerCase()
+  const wordCount = cleanAnswer.split(/\s+/).filter(Boolean).length
+
+  const saysNoExample =
+    /\b(?:no|not really|don't|do not|dont|haven't|have not|never)\b.{0,45}\b(?:example|experience|project|done|did)\b/i.test(cleanAnswer) ||
+    /\b(?:not really|no example|don't have an example|dont have an example|i have no example)\b/i.test(cleanAnswer)
+
+  const unsure =
+    /\b(?:i don't know|i dont know|idk|not sure|no idea|can't think|cant think|lowkey|loki|i'm unsure|im unsure)\b/i.test(lower)
+
+  const hesitant = saysNoExample || unsure || wordCount <= 5
+
+  return {
+    saysNoExample,
+    unsure,
+    hesitant,
+    extractedMention: extractStudentAnswerMention(cleanAnswer),
+    wordCount,
+  }
+}
+
+async function askAiJson(messages, fallback) {
+  const result = await askHiveAI({ messages, maxOutputTokens: 900 })
+  return parseAiJson(result?.text, fallback) || fallback
+}
+
+async function generateStudentGuideAi(role, profile, user) {
+  return askAiJson([
+    { role: 'system', content: 'Generate concise interview prep content for Hive. Return only JSON.' },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        task: 'student-interview-guide',
+        role: roleAiContext(role),
+        student: {
+          name: getStudentFirstName(profile, user),
+          field: profile?.field || '',
+          skills: getStudentProfileSkills(profile),
+          projects: profile?.projects || '',
+          experience: profile?.experience || '',
+        },
+        requiredShape: {
+          summary: 'string',
+          whatToKnow: [{ id: 'opening|skills|mission|scenario|close', purpose: 'string', simpler: 'string', tips: ['string'] }],
+          questions: { opening: ['string'], skills: ['string'], mission: ['string'], scenario: ['string'], close: ['string'] },
+        },
+      }),
+    },
+  ], null)
+}
+
+async function generateNgoGuideAi(role, student) {
+  return askAiJson([
+    { role: 'system', content: 'Generate concise NGO interviewer prep content for Hive. Return only JSON.' },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        task: 'ngo-interview-guide',
+        role: roleAiContext(role),
+        student,
+        requiredShape: {
+          summary: 'string',
+          whatToKnow: [{ title: 'string', text: 'string', items: ['string'] }],
+          questions: { opening: ['string'], skills: ['string'], impact: ['string'], scenario: ['string'], close: ['string'] },
+        },
+      }),
+    },
+  ], null)
+}
+
+async function generateStudentPracticeQuestionAi({
+  role,
+  profile,
+  user,
+  categoryId,
+  transcript,
+  fallback,
+  latestStudentAnswer = '',
+  previousQuestion = '',
+  previousCategoryId = '',
+  categoryCoverage = null,
+}) {
+  const lastStudentMessage = latestTranscriptMessage(transcript, 'student')
+  const lastAiInPreviousCategory = previousCategoryId ? latestTranscriptMessage(transcript, 'ai', previousCategoryId) : null
+  const lastAiMessage = latestTranscriptMessage(transcript, 'ai')
+  const answerToUse = latestStudentAnswer || lastStudentMessage?.text || ''
+  const questionToUse = previousQuestion || lastAiInPreviousCategory?.text || lastAiMessage?.text || ''
+  const answerAnalysis = analyzeStudentPracticeAnswer(answerToUse)
+  const answerMention = answerAnalysis.extractedMention
+  const result = await askHiveAI({
+    messages: [
+      {
+        role: 'system',
+        content: [
+          'You are a warm, natural NGO interviewer helping a student practice.',
+          'Return exactly one interview question only, with no labels.',
+          'Always keep the role and job description in mind. The question should feel like it could be asked by this NGO for this exact role, not a generic interview.',
+          'Connect follow-ups to at least one relevant role detail when possible: responsibilities, required skills, mission impact, work mode, hours, or support needs.',
+          'The student answer is more important than the current interview category.',
+          'If the student has just answered, the next question must clearly build on one concrete detail from that answer, even if the detail belongs to a different category.',
+          'If the student names a project, organization, tool, course, or initiative, use that exact name in the follow-up instead of vague phrases like "that project".',
+          'If the detail is phrased like "about green energy", clean it to "Green Energy"; do not say "About Green Energy".',
+          'Avoid repetitive phrases like "You mentioned..."; ask naturally, like "For Green Energy, what was your role?"',
+          'If the student says they do not know, do not have an example, or are unsure, do not ask for the same example again. Reframe gently with a smaller question, a hypothetical, or an easy starting point.',
+          'For example, if they mention a project, tool, challenge, result, teammate, mistake, or decision, ask a follow-up about that specific thing.',
+          'Do not force the category checklist and do not ask a generic scripted question when a student answer is available.',
+          'Keep it concise, human, role-specific, and useful for interview practice.',
+        ].join(' '),
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          role: roleAiContext(role),
+          student: {
+            name: getStudentFirstName(profile, user),
+            field: profile?.field || '',
+            skills: getStudentProfileSkills(profile),
+            projects: profile?.projects || '',
+            experience: profile?.experience || '',
+          },
+          jobDescriptionContext: {
+            title: role?.title || '',
+            organization: role?.orgName || '',
+            description: role?.description || '',
+            missionImpact: role?.missionImpact || '',
+            responsibilities: role?.responsibilities || '',
+            requiredSkills: getSkillNames(role?.skills || []),
+            workMode: role?.workMode || '',
+            weeklyHours: role?.weeklyHours || '',
+          },
+          currentCategory: categoryId,
+          previousCategory: previousCategoryId || categoryId,
+          previousQuestion: questionToUse,
+          latestStudentAnswer: answerToUse,
+          extractedStudentMention: answerMention,
+          answerAnalysis,
+          categoryCoverage,
+          transcript: compactTranscript(transcript),
+          priority: answerToUse
+            ? 'Follow the latestStudentAnswer first. If extractedStudentMention is present, use that exact phrase in the next question, but phrase the sentence naturally. Use currentCategory only as light context after the answer has been acknowledged.'
+            : 'Use currentCategory to choose the first question.',
+          instruction: answerToUse
+            ? 'Ask the next question as a direct, natural follow-up to the latest student answer. Tie the question back to the jobDescriptionContext wherever natural. If categoryCoverage is incomplete, ask for the missing information in a natural way while still responding to the answer. If answerAnalysis says the student is unsure or has no example, respond supportively and ask an easier alternative, not another demand for an example. If extractedStudentMention is present, name it directly in the question without adding filler words before it. If moving to a new category, bridge from that answer first, then ask one question.'
+            : 'Ask a specific first question for this category. Keep it concise and specific to the jobDescriptionContext.',
+        }),
+      },
+    ],
+    maxOutputTokens: 220,
+  })
+  return result?.text?.trim() || fallback
+}
+
+async function assessStudentCategoryCoverageAi({
+  role,
+  profile,
+  user,
+  categoryId,
+  transcript,
+  latestStudentAnswer,
+  fallback,
+}) {
+  return askAiJson([
+    {
+      role: 'system',
+      content: [
+        'You evaluate a student practice interview section for Hive.',
+        'Return only JSON.',
+        'Mark complete true only when the student has provided enough useful information for the current section.',
+        'Do not mark complete just because two or three questions were asked.',
+        'If the student says they do not know, lacks an example, gives a very vague answer, or avoids the question, complete must be false.',
+      ].join(' '),
+    },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        task: 'student-category-coverage',
+        currentCategory: categoryId,
+        categoryGoal: getStudentCategoryCoverageGoal(categoryId),
+        role: roleAiContext(role),
+        jobDescriptionContext: {
+          title: role?.title || '',
+          organization: role?.orgName || '',
+          description: role?.description || '',
+          missionImpact: role?.missionImpact || '',
+          responsibilities: role?.responsibilities || '',
+          requiredSkills: getSkillNames(role?.skills || []),
+          workMode: role?.workMode || '',
+          weeklyHours: role?.weeklyHours || '',
+        },
+        student: {
+          name: getStudentFirstName(profile, user),
+          field: profile?.field || '',
+          skills: getStudentProfileSkills(profile),
+          projects: profile?.projects || '',
+          experience: profile?.experience || '',
+        },
+        latestStudentAnswer,
+        answerAnalysis: analyzeStudentPracticeAnswer(latestStudentAnswer),
+        transcript: compactTranscript(transcript),
+        requiredShape: {
+          complete: 'boolean',
+          reason: 'short reason based on the transcript',
+          missing: 'what still needs to be asked if incomplete',
+        },
+      }),
+    },
+  ], fallback)
+}
+
+async function generateStudentNextTurnAi({
+  role,
+  profile,
+  user,
+  currentCategory,
+  transcript,
+  latestStudentAnswer,
+  previousQuestion,
+  fallback,
+}) {
+  const nextCategoryIfComplete = getNextStudentCategory(currentCategory)
+  const answerAnalysis = analyzeStudentPracticeAnswer(latestStudentAnswer)
+  const result = await askHiveAI({
+    messages: [
+      {
+        role: 'system',
+        content: [
+          'You are a warm, natural NGO interviewer for Hive student interview practice.',
+          'Return only valid JSON.',
+          'Decide whether the current category has enough useful student information, then write the next interview question.',
+          'Do not complete a category just because a certain number of questions were asked.',
+          'If the answer is vague, unsure, off-topic, or says there is no example, keep the same category and ask a smaller, supportive follow-up.',
+          'If the category is incomplete, nextCategory must stay as currentCategory.',
+          'If the category is complete, nextCategory should be nextCategoryIfComplete.',
+          'Always keep the exact role, NGO, and job description in mind.',
+          'The next question must respond to the student answer first, then connect naturally to the role or category.',
+          'If the student names a project, organization, tool, course, or initiative, use the clean exact name directly.',
+          'Avoid clunky phrasing like "You said" or quoting the full answer back.',
+          'Keep the question concise, human, and realistic.',
+        ].join(' '),
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          task: 'student-next-interview-turn',
+          currentCategory,
+          nextCategoryIfComplete,
+          categoryGoal: getStudentCategoryCoverageGoal(currentCategory),
+          role: roleAiContext(role),
+          student: {
+            name: getStudentFirstName(profile, user),
+            field: profile?.field || '',
+            skills: getStudentProfileSkills(profile),
+            projects: profile?.projects || '',
+            experience: profile?.experience || '',
+          },
+          jobDescriptionContext: {
+            title: role?.title || '',
+            organization: role?.orgName || '',
+            description: role?.description || '',
+            missionImpact: role?.missionImpact || '',
+            responsibilities: role?.responsibilities || '',
+            requiredSkills: getSkillNames(role?.skills || []),
+            workMode: role?.workMode || '',
+            weeklyHours: role?.weeklyHours || '',
+          },
+          previousQuestion,
+          latestStudentAnswer,
+          extractedStudentMention: answerAnalysis.extractedMention,
+          answerAnalysis,
+          transcript: compactTranscript(transcript),
+          requiredShape: {
+            categoryComplete: 'boolean',
+            nextCategory: 'opening|skills|mission|scenario|close',
+            reason: 'short reason',
+            missing: 'what still needs to be learned if incomplete',
+            question: 'one concise next interview question',
+          },
+        }),
+      },
+    ],
+    maxOutputTokens: 360,
+  })
+
+  const parsed = parseAiJson(result?.text, fallback) || fallback
+  const categoryComplete = Boolean(parsed?.categoryComplete ?? parsed?.complete)
+  const nextCategory = categoryComplete ? nextCategoryIfComplete : currentCategory
+  return {
+    categoryComplete,
+    nextCategory,
+    reason: parsed?.reason || fallback.reason,
+    missing: parsed?.missing || fallback.missing,
+    question: String(parsed?.question || fallback.question || '').trim(),
+  }
+}
+
+async function generateNgoStudentReplyAi({ role, student, stageId, transcript, interviewerQuestion, fallback }) {
+  const result = await askHiveAI({
+    messages: [
+      {
+        role: 'system',
+        content: [
+          'Simulate a realistic student candidate in an NGO interview.',
+          'Return only the student answer. No labels, markdown, or setup.',
+          'Answer the exact NGO question directly using the student profile, role, stage, and recent transcript.',
+          'Sound natural, specific, and believable, not scripted.',
+          'Keep it short: 1 to 2 sentences.',
+        ].join(' '),
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          role: {
+            title: role?.title || '',
+            orgName: role?.orgName || '',
+            description: role?.description || '',
+            skills: getSkillNames(role?.skills || []).slice(0, 4),
+            languages: role?.languages || [],
+          },
+          student: {
+            name: student?.name || '',
+            headline: student?.headline || '',
+            skills: (student?.skills || []).slice(0, 4),
+            projects: (student?.projects || []).slice(0, 2),
+            about: student?.about || '',
+          },
+          currentStage: stageId,
+          interviewerQuestion,
+          transcript: compactTranscript(transcript).slice(-4),
+          instruction: 'Generate the next student answer now. Be brief, responsive, and connected to this specific role.',
+        }),
+      },
+    ],
+    maxOutputTokens: 95,
+  })
+  return result?.text?.trim() || fallback
+}
+
+async function generateStepCoachAi({ role, userType, stageId, question, transcript, fallback }) {
+  return askAiJson([
+    {
+      role: 'system',
+      content: [
+        'Generate concise, student-friendly interview coaching for an existing Hive explain panel.',
+        'Return only JSON.',
+        'Make the coaching specific to the exact question, current role, current category, and recent transcript.',
+        'Use simple language, like a helpful ChatGPT interview coach.',
+        'Keep each text field short and practical.',
+      ].join(' '),
+    },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        role: roleAiContext(role),
+        userType,
+        currentStage: stageId,
+        categoryGoal: getStudentCategoryCoverageGoal(stageId),
+        question,
+        transcript: compactTranscript(transcript),
+        requiredShape: {
+          categorySummary: '1 short sentence explaining what this category is trying to get from the student',
+          simpleQuestion: 'explain the exact question in simple words',
+          whyNgoAsks: 'why the NGO is asking this exact question',
+          tips: ['short tip on how to answer', 'short tip on what detail to include', 'short tip on tone or structure'],
+          exampleAnswer: 'short realistic example answer from the student perspective, tailored to the role and question',
+          purpose: 'same as whyNgoAsks for backward compatibility',
+          simpler: 'same as simpleQuestion for backward compatibility',
+        },
+      }),
+    },
+  ], fallback)
+}
+
+async function generateInterviewSummaryAi({ role, userType, transcript, sections }) {
+  return askAiJson([
+    { role: 'system', content: 'Generate concise interview summary feedback for existing Hive summary cards. Return only JSON.' },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        role: roleAiContext(role),
+        userType,
+        transcript: compactTranscript(transcript),
+        sections,
+        requiredShape: {
+          sections: {
+            sectionId: {
+              whatHappened: 'specific text based on transcript',
+              wentWell: 'specific encouraging text',
+              couldImprove: 'specific practical text',
+              tips: ['short practical next advice'],
+            },
+          },
+        },
+      }),
+    },
+  ], null)
 }
 
 function makeMockStudent(role) {
@@ -402,8 +885,59 @@ function getNextStudentCategory(categoryId) {
   return next?.id || 'opening'
 }
 
-function getStudentCategoryTarget(categoryId) {
-  return ['skills', 'mission', 'scenario'].includes(categoryId) ? 3 : 2
+function getStudentCategoryCoverageGoal(categoryId) {
+  const goals = {
+    opening: 'The NGO wants to understand who you are, why this role interests you, and what kind of student they are meeting.',
+    skills: 'The NGO wants to understand what you can already do, how you have used your skills, and where you may need support.',
+    mission: 'The NGO wants to understand whether you care about the mission and how you think about the people the work supports.',
+    scenario: 'The NGO wants to understand how you think, communicate, and make decisions when the work is unclear.',
+    close: 'The NGO wants to understand your expectations, support needs, availability, and final questions.',
+  }
+
+  return goals[categoryId] || goals.opening
+}
+
+function assessStudentCategoryCoverageLocal({ categoryId, transcript = [], latestStudentAnswer = '' }) {
+  const answerAnalysis = analyzeStudentPracticeAnswer(latestStudentAnswer)
+  if (answerAnalysis.saysNoExample || answerAnalysis.unsure) {
+    return {
+      complete: false,
+      reason: 'The student is unsure or does not have an example yet.',
+      missing: 'Ask an easier, smaller question before moving on.',
+    }
+  }
+
+  const categoryAnswers = transcript
+    .filter(message => message.from === 'student' && message.category === categoryId)
+    .map(message => String(message.text || '').trim())
+    .filter(Boolean)
+
+  const combined = categoryAnswers.join(' ').toLowerCase()
+  const meaningfulAnswers = categoryAnswers.filter(answer => {
+    const analysis = analyzeStudentPracticeAnswer(answer)
+    return !analysis.hesitant && answer.split(/\s+/).filter(Boolean).length >= 8
+  })
+
+  const enoughDepth = meaningfulAnswers.length >= 1 && combined.split(/\s+/).filter(Boolean).length >= 14
+  const hasSkillDetail = /\b(skill|used|built|created|made|worked|project|tool|designed|developed|organized|managed|wrote|researched|helped|learned)\b/i.test(combined)
+  const hasMissionDetail = /\b(mission|impact|community|people|help|serve|ngo|goal|meaningful|care|support|change|learn)\b/i.test(combined)
+  const hasScenarioDetail = /\b(would|first|then|ask|clarify|communicate|plan|handle|approach|team|deadline|feedback|problem)\b/i.test(combined)
+  const hasCloseDetail = /\b(support|available|availability|question|learn|expect|need|schedule|remember|goal)\b/i.test(combined)
+
+  const completeByCategory = {
+    opening: enoughDepth,
+    skills: enoughDepth && hasSkillDetail,
+    mission: enoughDepth && hasMissionDetail,
+    scenario: enoughDepth && hasScenarioDetail,
+    close: enoughDepth && hasCloseDetail,
+  }
+
+  const complete = Boolean(completeByCategory[categoryId])
+  return {
+    complete,
+    reason: complete ? 'The current section has enough useful information.' : 'The current section still needs more useful detail.',
+    missing: complete ? '' : getStudentCategoryCoverageGoal(categoryId),
+  }
 }
 
 function getStudentFirstName(profile, user) {
@@ -463,6 +997,45 @@ function makeStudentInterviewQuestion(role, profile, categoryId, seed = 0, user 
 
   const categoryQuestions = questions[categoryId] || questions.opening
   return categoryQuestions[seed % categoryQuestions.length]
+}
+
+function makeStudentAnswerFollowUp(answer, role) {
+  const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ')
+  if (!cleanAnswer) return ''
+
+  const roleTitle = role?.title || 'this role'
+  const answerAnalysis = analyzeStudentPracticeAnswer(cleanAnswer)
+  const projectName = answerAnalysis.extractedMention
+  const projectWords = /\b(project|built|created|made|developed|designed|launched|worked on)\b/i
+  const challengeWords = /\b(challenge|problem|difficult|hard|struggle|blocked|mistake|failed)\b/i
+  const teamWords = /\b(team|teammate|group|partner|collaborat|worked with)\b/i
+  const impactWords = /\b(result|impact|helped|improved|changed|outcome|learned)\b/i
+
+  if (answerAnalysis.saysNoExample || answerAnalysis.unsure) {
+    return `That's okay. Let's make it easier: if you had to start ${roleTitle} next week, what is one small task you think you could try first?`
+  }
+
+  if (projectWords.test(cleanAnswer)) {
+    const projectLabel = projectName ? `${projectName}` : 'that project'
+    return projectName
+      ? `For ${projectLabel}, what was your specific role, and how would that experience help you in ${roleTitle}?`
+      : `What was your specific part in creating that project, and how would that experience help you in ${roleTitle}?`
+  }
+  if (challengeWords.test(cleanAnswer)) {
+    return `You mentioned that there was a challenge. What did you do in that moment, and what did you learn from it?`
+  }
+  if (teamWords.test(cleanAnswer)) {
+    return `You brought up working with others. What role did you play in the team, and how did you handle communication?`
+  }
+  if (impactWords.test(cleanAnswer)) {
+    return `You mentioned the result of your work. How did you know it was successful, and what would you do differently next time?`
+  }
+
+  if (answerAnalysis.hesitant) {
+    return `No worries. What is one part of ${roleTitle} that feels easiest for you to talk about: your skills, your interest in the NGO, or how you would approach the work?`
+  }
+
+  return `What part of that answer would you want the NGO to understand more clearly, and why does it matter for ${roleTitle}?`
 }
 
 function explainStudentQuestion(question, role, profile, categoryId) {
@@ -527,7 +1100,11 @@ function explainStudentQuestion(question, role, profile, categoryId) {
 
   return {
     question,
+    categorySummary: getStudentCategoryCoverageGoal(categoryId),
+    simpleQuestion: explainers[categoryId]?.simpler || explainers.opening.simpler,
+    whyNgoAsks: explainers[categoryId]?.purpose || explainers.opening.purpose,
     ...(explainers[categoryId] || explainers.opening),
+    exampleAnswer: makeStudentExampleAnswer(role, profile, categoryId),
   }
 }
 
@@ -557,10 +1134,17 @@ function pickQuestionVoice(voices = []) {
     'microsoft emma online',
     'microsoft aria online',
     'microsoft jenny online',
+    'microsoft serena online',
+    'microsoft sonia online',
     'google uk english female',
     'google us english',
+    'samantha enhanced',
     'samantha',
+    'ava enhanced',
     'ava',
+    'allison',
+    'nicky',
+    'susan',
     'victoria',
     'karen',
     'moira',
@@ -578,12 +1162,13 @@ function pickQuestionVoice(voices = []) {
       const name = voice.name.toLowerCase()
       const preferredIndex = preferredNames.findIndex(preferred => name.includes(preferred))
       const preferredBonus = preferredIndex >= 0 ? 80 - preferredIndex : 0
-      const naturalBonus = /(premium|natural|enhanced|neural|online)/i.test(voice.name) ? 24 : 0
-      const localBonus = voice.localService ? 6 : 10
+      const naturalBonus = /(premium|natural|enhanced|neural|online)/i.test(voice.name) ? 30 : 0
+      const femaleNameBonus = /(samantha|ava|emma|aria|jenny|serena|sonia|allison|nicky|victoria|karen|moira|tessa|zoe|susan|zira)/i.test(voice.name) ? 14 : 0
+      const localBonus = voice.localService ? 8 : 10
       const englishBonus = /^en[-_](us|gb|au|ca)/i.test(voice.lang || '') ? 8 : 0
       const avoidPenalty = avoidNames.some(avoid => name.includes(avoid)) ? -40 : 0
 
-      return { voice, score: preferredBonus + naturalBonus + localBonus + englishBonus + avoidPenalty }
+      return { voice, score: preferredBonus + naturalBonus + femaleNameBonus + localBonus + englishBonus + avoidPenalty }
     })
     .sort((a, b) => b.score - a.score)[0]?.voice || null
 }
@@ -605,7 +1190,7 @@ function splitSpeechSegments(text) {
 
   return sentences.flatMap(sentence => {
     const trimmed = sentence.trim()
-    if (trimmed.length <= 130) return [trimmed]
+    if (trimmed.length <= 180) return [trimmed]
     return trimmed
       .split(/,\s+/)
       .map(part => part.trim())
@@ -640,13 +1225,22 @@ function StudentView() {
   const [activePrepSection, setActivePrepSection] = useState('summary')
   const [openPrepQuestionStage, setOpenPrepQuestionStage] = useState(null)
   const [deletingAppId, setDeletingAppId] = useState(null)
+  const [studentGuideAi, setStudentGuideAi] = useState(null)
+  const [studentCoachAi, setStudentCoachAi] = useState(null)
+  const [studentCoachStatus, setStudentCoachStatus] = useState('idle')
+  const [studentSummaryAi, setStudentSummaryAi] = useState(null)
+  const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false)
   const recognitionRef = useRef(null)
+  const answerSubmittingRef = useRef(false)
   const answerRecordingBaseRef = useRef('')
   const answerFinalTranscriptRef = useRef('')
   const answerSilenceTimerRef = useRef(null)
   const questionAudioRef = useRef(null)
+  const questionAudioBlobCacheRef = useRef(new Map())
   const questionAudioRequestRef = useRef(0)
   const questionSpeechTimeoutRef = useRef(null)
+  const shouldAutoSpeakNextQuestionRef = useRef(false)
+  const autoSpeakDelayMsRef = useRef(0)
   const messageIdRef = useRef(0)
   const questionCardRef = useRef(null)
   const coachPanelRef = useRef(null)
@@ -746,7 +1340,10 @@ function StudentView() {
   const currentQuestionMsg = lastCategoryMessage?.from === 'ai' ? lastCategoryMessage : categoryMessages[categoryMessages.length - 2]
   const categoryHasQuestion = Boolean(currentQuestionMsg)
   const questionCoach = selectedRole ? explainStudentQuestion(currentQuestion, selectedRole, profile, activeCategory) : null
-  const exampleAnswer = selectedRole ? makeStudentExampleAnswer(selectedRole, profile, activeCategory, user) : ''
+  const categoryCoachSummary = studentCoachAi?.categorySummary || questionCoach?.categorySummary || getStudentCategoryCoverageGoal(activeCategory)
+  const aiQuestionCoach = studentCoachAi
+  const displayQuestionCoach = aiQuestionCoach || questionCoach
+  const exampleAnswer = displayQuestionCoach?.exampleAnswer || ''
   const answeredCount = transcript.filter(message => message.from === 'student').length
   const askedCategories = new Set(transcript.filter(message => message.from === 'ai').map(message => message.category))
   const studentGuideSections = selectedRole ? [
@@ -761,6 +1358,62 @@ function StudentView() {
     textarea.style.height = 'auto'
     textarea.style.height = `${Math.min(textarea.scrollHeight, 224)}px`
   }, [draftAnswer, categoryHasQuestion])
+
+  useEffect(() => {
+    let cancelled = false
+    setStudentGuideAi(null)
+    if (!selectedRole) return
+
+    generateStudentGuideAi(selectedRole, profile, user)
+      .then(guide => { if (!cancelled) setStudentGuideAi(guide) })
+      .catch(() => { if (!cancelled) setStudentGuideAi(null) })
+
+    return () => { cancelled = true }
+  }, [selectedRole?.id, selectedRole?.opportunityId, profile, user?.id])
+
+  useEffect(() => {
+    let cancelled = false
+    setStudentCoachAi(null)
+    setStudentCoachStatus('idle')
+    if (!explainOpen || !selectedRole || !currentQuestion) return
+
+    setStudentCoachStatus('loading')
+    generateStepCoachAi({
+      role: selectedRole,
+      userType: 'student',
+      stageId: activeCategory,
+      question: currentQuestion,
+      transcript,
+      fallback: null,
+    })
+      .then(coach => {
+        if (cancelled) return
+        setStudentCoachAi(coach)
+        setStudentCoachStatus(coach ? 'ready' : 'error')
+      })
+      .catch(() => {
+        if (!cancelled) setStudentCoachStatus('error')
+      })
+
+    return () => { cancelled = true }
+  }, [explainOpen, selectedRole?.id, selectedRole?.opportunityId, activeCategory, currentQuestion])
+
+  useEffect(() => {
+    let cancelled = false
+    setStudentSummaryAi(null)
+    if (!showSummary || !selectedRole) return
+
+    generateInterviewSummaryAi({
+      role: selectedRole,
+      userType: 'student',
+      transcript,
+      sections: STUDENT_INTERVIEW_CATEGORIES.map(category => ({ id: category.id, label: category.label })),
+    })
+      .then(summary => { if (!cancelled) setStudentSummaryAi(summary?.sections || null) })
+      .catch(() => { if (!cancelled) setStudentSummaryAi(null) })
+
+    return () => { cancelled = true }
+  }, [showSummary, selectedRole?.id, selectedRole?.opportunityId])
 
   function nextMessageId(prefix) {
     messageIdRef.current += 1
@@ -791,6 +1444,8 @@ function StudentView() {
   function resetStudentPracticeState() {
     stopAnswerRecording()
     stopQuestionAudio()
+    shouldAutoSpeakNextQuestionRef.current = false
+    autoSpeakDelayMsRef.current = 0
     setPracticeStarted(false)
     setPracticeFinished(false)
     setShowSummary(false)
@@ -802,6 +1457,9 @@ function StudentView() {
     setExplainOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
+    setStudentCoachAi(null)
+    setStudentCoachStatus('idle')
+    setStudentSummaryAi(null)
   }
 
   function switchRoleSource(source) {
@@ -840,7 +1498,10 @@ function StudentView() {
   function startPracticeSession(role) {
     stopAnswerRecording()
     stopQuestionAudio()
+    shouldAutoSpeakNextQuestionRef.current = true
+    autoSpeakDelayMsRef.current = 1000
     const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0, user)
+    getQuestionSpeechBlob(opening).catch(() => null)
 
     setPracticeStarted(true)
     setPracticeFinished(false)
@@ -853,6 +1514,8 @@ function StudentView() {
     setExplainOpen(false)
     setActivePrepSection('summary')
     setOpenPrepQuestionStage(null)
+    setStudentCoachAi(null)
+    setStudentCoachStatus('idle')
   }
 
   function openPractice() {
@@ -868,12 +1531,16 @@ function StudentView() {
   function backToInterviewGuide() {
     stopAnswerRecording()
     stopQuestionAudio()
+    shouldAutoSpeakNextQuestionRef.current = false
+    autoSpeakDelayMsRef.current = 0
     setPracticeStarted(false)
     setPracticeFinished(false)
     setShowSummary(false)
     setTranscript([])
     setDraftAnswer('')
     setExplainOpen(false)
+    setStudentCoachAi(null)
+    setStudentCoachStatus('idle')
     setOpenInsightKeys(new Set())
     navigate('/interviews')
   }
@@ -892,6 +1559,8 @@ function StudentView() {
 
   function closeQuestionCoach() {
     setExplainOpen(false)
+    setStudentCoachAi(null)
+    setStudentCoachStatus('idle')
     window.setTimeout(() => {
       questionCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 80)
@@ -917,20 +1586,71 @@ function StudentView() {
     return makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed, user)
   }
 
-  function getCategoryAnswerCount(categoryId) {
-    return transcript.filter(message => message.from === 'student' && message.category === categoryId).length
+  async function makeFreshStudentQuestionWithAi(categoryId, seed = 0, existingTranscript = transcript, context = {}) {
+    const answerFollowUp = context.latestStudentAnswer
+      ? makeStudentAnswerFollowUp(context.latestStudentAnswer, selectedRole)
+      : ''
+    const fallback = answerFollowUp || makeFreshStudentQuestion(categoryId, seed, existingTranscript)
+    try {
+      return await generateStudentPracticeQuestionAi({
+        role: selectedRole,
+        profile,
+        user,
+        categoryId,
+        transcript: existingTranscript,
+        fallback,
+        ...context,
+      })
+    } catch (error) {
+      console.warn('Student interview AI question fell back to local prompt:', error.message)
+      return fallback
+    }
   }
 
   function isCategoryComplete(categoryId) {
-    return getCategoryAnswerCount(categoryId) >= getStudentCategoryTarget(categoryId)
+    const latestAnswer = latestTranscriptMessage(transcript, 'student', categoryId)?.text || ''
+    return assessStudentCategoryCoverageLocal({
+      categoryId,
+      transcript,
+      latestStudentAnswer: latestAnswer,
+    }).complete
   }
 
-  function startCategoryQuestion(categoryId = activeCategory) {
+  async function assessCurrentStudentCategoryCoverage(categoryId, nextTranscript, latestStudentAnswer) {
+    const fallback = assessStudentCategoryCoverageLocal({
+      categoryId,
+      transcript: nextTranscript,
+      latestStudentAnswer,
+    })
+
+    try {
+      const result = await assessStudentCategoryCoverageAi({
+        role: selectedRole,
+        profile,
+        user,
+        categoryId,
+        transcript: nextTranscript,
+        latestStudentAnswer,
+        fallback,
+      })
+
+      return {
+        complete: Boolean(result?.complete),
+        reason: result?.reason || fallback.reason,
+        missing: result?.missing || fallback.missing,
+      }
+    } catch (error) {
+      console.warn('Student interview category coverage fell back to local check:', error.message)
+      return fallback
+    }
+  }
+
+  async function startCategoryQuestion(categoryId = activeCategory) {
     if (!selectedRole) return
     stopAnswerRecording()
     stopQuestionAudio()
     const seed = getCategoryQuestionCount(categoryId)
-    const question = makeFreshStudentQuestion(categoryId, seed)
+    const question = await makeFreshStudentQuestionWithAi(categoryId, seed)
 
     setTranscript(prev => [
       ...prev,
@@ -949,52 +1669,90 @@ function StudentView() {
     setExplainOpen(false)
   }
 
-  function sendAnswer() {
+  async function sendAnswer() {
+    if (answerSubmittingRef.current || isAnswerSubmitting) return
     const answer = draftAnswer.trim()
     if (!answer || !selectedRole) return
+    answerSubmittingRef.current = true
+    setIsAnswerSubmitting(true)
     stopAnswerRecording()
     stopQuestionAudio()
 
     const answeredCategory = activeCategory
-    const answersInCategory = transcript.filter(message => message.from === 'student' && message.category === answeredCategory).length + 1
-    const questionsInCategory = transcript.filter(message => message.from === 'ai' && message.category === answeredCategory).length
-    const questionTarget = getStudentCategoryTarget(answeredCategory)
-    const shouldStayInCategory = answersInCategory < questionTarget
-    const isLastCategory = activeCategory === 'close'
-
-    if (isLastCategory && !shouldStayInCategory) {
-      setTranscript(prev => [
-        ...prev,
-        { id: nextMessageId('student'), from: 'student', text: answer, category: answeredCategory },
-      ])
-      setDraftAnswer('')
-      setExplainOpen(false)
-      setPracticeFinished(true)
-      setShowSummary(true)
-      return
-    }
-
-    const nextCategory = shouldStayInCategory ? answeredCategory : getNextStudentCategory(activeCategory)
-    const nextSeed = transcript.filter(message => message.from === 'ai' && message.category === nextCategory).length
-    const nextTranscript = [
-      ...transcript,
-      { id: 'pending-student-answer', from: 'student', text: answer, category: answeredCategory },
-    ]
-    const nextQuestion = makeFreshStudentQuestion(nextCategory, nextSeed, nextTranscript)
-
-    setTranscript(prev => [
-      ...prev,
-      { id: nextMessageId('student'), from: 'student', text: answer, category: answeredCategory },
-      { id: nextMessageId('ai'), from: 'ai', category: nextCategory, text: nextQuestion },
-    ])
-    setActiveCategory(nextCategory)
+    const studentMessage = { id: nextMessageId('student'), from: 'student', text: answer, category: answeredCategory }
+    const nextTranscript = [...transcript, studentMessage]
+    setTranscript(prev => [...prev, studentMessage])
     setDraftAnswer('')
     setExplainOpen(false)
+
+    try {
+      const localCoverage = assessStudentCategoryCoverageLocal({
+        categoryId: answeredCategory,
+        transcript: nextTranscript,
+        latestStudentAnswer: answer,
+      })
+      const previousQuestion = latestTranscriptMessage(transcript, 'ai', answeredCategory)?.text || currentQuestion
+      const fallbackCategory = localCoverage.complete ? getNextStudentCategory(answeredCategory) : answeredCategory
+      const fallbackSeed = nextTranscript.filter(message => message.from === 'ai' && message.category === fallbackCategory).length
+      const answerFollowUp = localCoverage.complete ? '' : makeStudentAnswerFollowUp(answer, selectedRole)
+      const fallbackQuestion = answerFollowUp || makeFreshStudentQuestion(fallbackCategory, fallbackSeed, nextTranscript)
+      const fallbackTurn = {
+        categoryComplete: localCoverage.complete,
+        nextCategory: fallbackCategory,
+        reason: localCoverage.reason,
+        missing: localCoverage.missing,
+        question: fallbackQuestion,
+      }
+      let nextTurn = fallbackTurn
+
+      try {
+        nextTurn = await generateStudentNextTurnAi({
+          role: selectedRole,
+          profile,
+          user,
+          currentCategory: answeredCategory,
+          transcript: nextTranscript,
+          latestStudentAnswer: answer,
+          previousQuestion,
+          fallback: fallbackTurn,
+        })
+      } catch (error) {
+        console.warn('Student interview next turn fell back to local prompt:', error.message)
+      }
+
+      const isLastCategory = answeredCategory === 'close'
+      const coverage = {
+        complete: Boolean(nextTurn.categoryComplete),
+        reason: nextTurn.reason,
+        missing: nextTurn.missing,
+      }
+
+      if (isLastCategory && coverage.complete) {
+        setPracticeFinished(true)
+        setShowSummary(true)
+        return
+      }
+
+      const nextCategory = coverage.complete ? getNextStudentCategory(answeredCategory) : answeredCategory
+      const nextSeed = nextTranscript.filter(message => message.from === 'ai' && message.category === nextCategory).length
+      const nextQuestion = nextTurn.question || makeFreshStudentQuestion(nextCategory, nextSeed, nextTranscript)
+
+      shouldAutoSpeakNextQuestionRef.current = true
+      autoSpeakDelayMsRef.current = 0
+      setTranscript(prev => [
+        ...prev,
+        { id: nextMessageId('ai'), from: 'ai', category: nextCategory, text: nextQuestion },
+      ])
+      setActiveCategory(nextCategory)
+    } finally {
+      answerSubmittingRef.current = false
+      setIsAnswerSubmitting(false)
+    }
   }
 
   // Skip leaves the current section entirely. Students answer their way through
   // the mini-round; skipping is the escape hatch to move on.
-  function skipQuestion() {
+  async function skipQuestion() {
     if (!selectedRole) return
     stopAnswerRecording()
     stopQuestionAudio()
@@ -1009,7 +1767,7 @@ function StudentView() {
 
     const nextCategory = getNextStudentCategory(activeCategory)
     const nextSeed = getCategoryQuestionCount(nextCategory)
-    const nextQuestion = makeFreshStudentQuestion(nextCategory, nextSeed)
+    const nextQuestion = await makeFreshStudentQuestionWithAi(nextCategory, nextSeed)
 
     setTranscript(prev => [
       ...prev,
@@ -1069,9 +1827,6 @@ function StudentView() {
       ].filter(Boolean).join(' ')
       setDraftAnswer(nextText)
 
-      answerSilenceTimerRef.current = window.setTimeout(() => {
-        recognition.stop()
-      }, 2200)
     }
     recognition.onend = () => {
       window.clearTimeout(answerSilenceTimerRef.current)
@@ -1096,18 +1851,7 @@ function StudentView() {
     setIsQuestionSpeaking(false)
   }
 
-  async function speakCurrentQuestion() {
-    if (!currentQuestionMsg?.text) return
-    if (isQuestionSpeaking) {
-      stopQuestionAudio()
-      return
-    }
-
-    stopQuestionAudio()
-    const requestId = questionAudioRequestRef.current + 1
-    questionAudioRequestRef.current = requestId
-    setIsQuestionSpeaking(true)
-
+  function speakQuestionWithBrowserSpeech(requestId) {
     if (!window.speechSynthesis || questionAudioRequestRef.current !== requestId) {
       setIsQuestionSpeaking(false)
       return
@@ -1126,12 +1870,12 @@ function StudentView() {
       const utterance = new SpeechSynthesisUtterance(segments[index])
       if (voice) utterance.voice = voice
       utterance.lang = voice?.lang || 'en-US'
-      utterance.rate = index === 0 ? 0.88 : 0.91
-      utterance.pitch = 1.04
+      utterance.rate = index === 0 ? 0.94 : 0.96
+      utterance.pitch = 1.02
       utterance.volume = 0.95
       utterance.onend = () => {
         if (questionAudioRequestRef.current !== requestId) return
-        questionSpeechTimeoutRef.current = window.setTimeout(() => speakSegment(index + 1), 120)
+        questionSpeechTimeoutRef.current = window.setTimeout(() => speakSegment(index + 1), 75)
       }
       utterance.onerror = () => setIsQuestionSpeaking(false)
       window.speechSynthesis.speak(utterance)
@@ -1139,6 +1883,66 @@ function StudentView() {
 
     speakSegment()
   }
+
+  async function getQuestionSpeechBlob(text) {
+    const cleanText = String(text || '').trim()
+    if (!cleanText) return null
+    const cachedBlob = questionAudioBlobCacheRef.current.get(cleanText)
+    if (cachedBlob) return cachedBlob
+
+    const audioBlob = await createHiveSpeech({ input: cleanText })
+    questionAudioBlobCacheRef.current.set(cleanText, audioBlob)
+    return audioBlob
+  }
+
+  async function speakCurrentQuestion() {
+    if (!currentQuestionMsg?.text) return
+    if (isQuestionSpeaking) {
+      stopQuestionAudio()
+      return
+    }
+
+    stopQuestionAudio()
+    const requestId = questionAudioRequestRef.current + 1
+    questionAudioRequestRef.current = requestId
+    setIsQuestionSpeaking(true)
+
+    try {
+      const text = currentQuestionMsg.text
+      const audioBlob = await getQuestionSpeechBlob(text)
+      if (questionAudioRequestRef.current !== requestId) {
+        setIsQuestionSpeaking(false)
+        return
+      }
+
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      questionAudioRef.current = audio
+      audio.onended = () => {
+        if (questionAudioRequestRef.current === requestId) setIsQuestionSpeaking(false)
+        URL.revokeObjectURL(audioUrl)
+        if (questionAudioRef.current === audio) questionAudioRef.current = null
+      }
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl)
+        if (questionAudioRequestRef.current === requestId) speakQuestionWithBrowserSpeech(requestId)
+      }
+      await audio.play()
+    } catch {
+      speakQuestionWithBrowserSpeech(requestId)
+    }
+  }
+
+  useEffect(() => {
+    if (!shouldAutoSpeakNextQuestionRef.current || !currentQuestionMsg?.id || practiceFinished) return
+    shouldAutoSpeakNextQuestionRef.current = false
+    const delay = autoSpeakDelayMsRef.current
+    autoSpeakDelayMsRef.current = 0
+    const timer = window.setTimeout(() => {
+      speakCurrentQuestion()
+    }, delay)
+    return () => window.clearTimeout(timer)
+  }, [currentQuestionMsg?.id, practiceFinished])
 
 
   if (loading) {
@@ -1416,7 +2220,7 @@ function StudentView() {
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI interview summary</h3>
                       <p className="mt-1.5 text-[0.82rem] text-[#9AA0A6]">A quick overview of what this role interview is likely to test.</p>
                       <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
-                        {makeRoleSummary(selectedRole, selectedRole.skills)}
+                        {studentGuideAi?.summary || makeRoleSummary(selectedRole, selectedRole.skills)}
                       </p>
                       <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
                         Practice is split into five steps: opening, skills fit, mission fit, scenario, and close. The AI interviewer starts each step with a question, then you answer as the student.
@@ -1437,7 +2241,7 @@ function StudentView() {
                       </div>
                       <div className="mt-5 space-y-3">
                         {STUDENT_INTERVIEW_CATEGORIES.map((category, i) => {
-                          const coach = explainStudentQuestion('', selectedRole, profile, category.id)
+                          const coach = studentGuideAi?.whatToKnow?.find(item => item.id === category.id) || explainStudentQuestion('', selectedRole, profile, category.id)
                           return (
                             <div key={category.id} className="flex gap-4 rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] p-5 shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
@@ -1468,7 +2272,7 @@ function StudentView() {
                       <div className="mt-5 space-y-4">
                         {STUDENT_INTERVIEW_CATEGORIES.map((category, i) => {
                           const isOpen = openPrepQuestionStage === category.id
-                          const questions = [
+                          const questions = studentGuideAi?.questions?.[category.id] || [
                             makeStudentInterviewQuestion(selectedRole, profile, category.id, 0, user),
                             makeStudentInterviewQuestion(selectedRole, profile, category.id, 1, user),
                           ]
@@ -1616,6 +2420,7 @@ function StudentView() {
           const improveKey = `${category.id}-improve`
           const shownOpen = openInsightKeys.has(shownKey)
           const improveOpen = openInsightKeys.has(improveKey)
+          const aiFeedback = studentSummaryAi?.[category.id] || null
           const CategoryIcon = category.icon
           return (
             <motion.section
@@ -1664,7 +2469,7 @@ function StudentView() {
                     </div>
                   ) : (
                     <div className="rounded-[20px] border border-dashed border-[#D7E6FF] bg-white/54 px-4 py-4 shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
-                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{category.coach.purpose}</p>
+                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{aiFeedback?.whatHappened || category.coach.purpose}</p>
                       <p className="mt-2 text-[0.78rem] font-medium text-[#1A73E8]">
                         Try covering this step in your next practice run.
                       </p>
@@ -1697,7 +2502,7 @@ function StudentView() {
                             className="overflow-hidden border-t border-white/70">
                             <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
                               {category.covered
-                                ? category.coach.purpose
+                                ? (aiFeedback?.wentWell || category.coach.purpose)
                                 : `When you answer this step, show: ${category.coach.simpler}`}
                             </p>
                           </motion.div>
@@ -1727,7 +2532,7 @@ function StudentView() {
                             transition={{ duration: 0.18 }}
                             className="overflow-hidden border-t border-white/70">
                             <div className="space-y-2 px-3.5 py-3">
-                              {(category.coach.tips || []).map(tip => (
+                              {((aiFeedback?.tips?.length ? aiFeedback.tips : null) || (aiFeedback?.couldImprove ? [aiFeedback.couldImprove] : category.coach.tips) || []).map(tip => (
                                 <p key={tip} className="flex gap-2 text-[0.82rem] leading-6 text-[#5F6368]">
                                   <CheckCircle2 size={14} className="mt-1 shrink-0 text-[#1A73E8]" />
                                   <span>{tip}</span>
@@ -1764,12 +2569,10 @@ function StudentView() {
 
   const currentCategoryIndex = STUDENT_INTERVIEW_CATEGORIES.findIndex(category => category.id === activeCategory)
   const isLastCategory = currentCategoryIndex === STUDENT_INTERVIEW_CATEGORIES.length - 1
-  const answersGivenInCategory = transcript.filter(message => message.from === 'student' && message.category === activeCategory).length
-  const activeCategoryTarget = getStudentCategoryTarget(activeCategory)
 
   // Only the current category's question is shown — no answer bubble, no transcript log,
   // just the question in front of the student until they answer or skip it.
-  const activeCategoryComplete = answersGivenInCategory >= activeCategoryTarget
+  const activeCategoryComplete = false
 
   return (
     <motion.div
@@ -1897,7 +2700,7 @@ function StudentView() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={handleVoiceToggle}
-                    disabled={!categoryHasQuestion || activeCategoryComplete}
+                    disabled={!categoryHasQuestion || activeCategoryComplete || isAnswerSubmitting}
                     aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
                     className={`inline-flex h-11 shrink-0 self-center items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
@@ -1913,13 +2716,13 @@ function StudentView() {
                     value={draftAnswer}
                     onChange={event => setDraftAnswer(event.target.value)}
                     rows={1}
-                    disabled={!categoryHasQuestion || activeCategoryComplete}
-                    placeholder={!categoryHasQuestion ? 'Start this section first...' : isRecording ? 'Listening...' : 'Type your answer here...'}
+                    disabled={!categoryHasQuestion || activeCategoryComplete || isAnswerSubmitting}
+                    placeholder={!categoryHasQuestion ? 'Start this section first...' : isAnswerSubmitting ? 'Sending...' : isRecording ? 'Listening...' : 'Type your answer here...'}
                     className="max-h-56 min-h-[44px] flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-[0.92rem] leading-6 text-[#202124] outline-none placeholder:text-[#8A94A3] disabled:opacity-50"
                   />
                   <button
                     onClick={sendAnswer}
-                    disabled={!draftAnswer.trim() || !categoryHasQuestion || activeCategoryComplete}
+                    disabled={!draftAnswer.trim() || !categoryHasQuestion || activeCategoryComplete || isAnswerSubmitting}
                     className="flex h-10 w-10 shrink-0 self-center items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                     aria-label="Send answer">
                     <Send size={16} />
@@ -1930,7 +2733,7 @@ function StudentView() {
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <button
                   onClick={explainOpen ? closeQuestionCoach : openQuestionCoach}
-                  disabled={!categoryHasQuestion}
+                  disabled={!categoryHasQuestion || isAnswerSubmitting}
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[0.76rem] font-semibold ring-1 transition-all ${
                     explainOpen
                       ? 'bg-white text-[#1A73E8] shadow-[0_10px_22px_rgba(26,115,232,0.14)] ring-[#BFD7FF]'
@@ -1941,6 +2744,7 @@ function StudentView() {
                 </button>
                 <button
                   onClick={skipQuestion}
+                  disabled={isAnswerSubmitting}
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
                   {isLastCategory ? 'Finish section' : 'Skip section'}
                   <ArrowRight size={12} />
@@ -1964,7 +2768,6 @@ function StudentView() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Question coach</p>
-                  <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">{questionCoach.simpler}</p>
                 </div>
                 <button
                   onClick={closeQuestionCoach}
@@ -1975,33 +2778,53 @@ function StudentView() {
               </div>
 
               <div className="mt-4">
-                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">What to show</p>
-                <p className="mt-1 text-[0.84rem] leading-6 text-[#3C4043]">{questionCoach.purpose}</p>
+                <p className="text-[0.95rem] font-semibold text-[#1A73E8]">{activeCategoryInfo.label}</p>
+                <p className="mt-1.5 max-w-[42rem] text-[0.82rem] leading-6 text-[#4B6382]">{categoryCoachSummary}</p>
               </div>
 
-              <div className="mt-4">
-                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">How to answer</p>
-                <div className="mt-1.5 space-y-1.5">
-                  {questionCoach.tips?.map(tip => (
-                    <p key={tip} className="flex gap-2 text-[0.84rem] leading-6 text-[#3C4043]">
-                      <CheckCircle2 size={14} className="mt-1 shrink-0 text-[#1A73E8]" />
-                      <span>{tip}</span>
-                    </p>
-                  ))}
+              {studentCoachStatus === 'loading' && (
+                <div className="mt-4 rounded-[18px] bg-white/46 px-4 py-4 text-[0.84rem] font-medium text-[#4B6382] ring-1 ring-white/72">
+                  Generating AI coaching for this exact question...
                 </div>
-              </div>
+              )}
 
-              <div className="mt-4 rounded-[18px] border border-[#D7E6FF] bg-white/66 p-3.5 shadow-[0_10px_24px_rgba(26,115,232,0.06)]">
-                <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Example answer</p>
-                <p className="mt-2 text-[0.84rem] leading-6 text-[#3C4043]">{exampleAnswer}</p>
-                <div className="mt-3 flex justify-end">
-                  <button
-                    onClick={() => setDraftAnswer(exampleAnswer)}
-                    className="inline-flex items-center rounded-full bg-[#1A73E8] px-3 py-1.5 text-[0.7rem] font-semibold text-white shadow-[0_8px_18px_rgba(26,115,232,0.20)] transition-opacity hover:opacity-95">
-                    Insert answer
-                  </button>
+              {displayQuestionCoach && studentCoachStatus !== 'loading' && (
+              <div className="mt-4 divide-y divide-[#E6EAF0]/80">
+                <div className="py-3.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Simple version</p>
+                  <p className="mt-1.5 text-[0.84rem] leading-6 text-[#3C4043]">{displayQuestionCoach.simpleQuestion || displayQuestionCoach.simpler}</p>
+                </div>
+
+                <div className="py-3.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Why the NGO asks</p>
+                  <p className="mt-1.5 text-[0.84rem] leading-6 text-[#3C4043]">{displayQuestionCoach.whyNgoAsks || displayQuestionCoach.purpose}</p>
+                </div>
+
+                <div className="py-3.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Tips to answer</p>
+                  <div className="mt-1.5 space-y-1.5">
+                    {displayQuestionCoach.tips?.map(tip => (
+                      <p key={tip} className="flex gap-2 text-[0.84rem] leading-6 text-[#3C4043]">
+                        <CheckCircle2 size={14} className="mt-1 shrink-0 text-[#1A73E8]" />
+                        <span>{tip}</span>
+                      </p>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="py-3.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Example answer</p>
+                  <p className="mt-2 text-[0.84rem] leading-6 text-[#3C4043]">{exampleAnswer}</p>
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      onClick={() => setDraftAnswer(exampleAnswer)}
+                      className="inline-flex items-center rounded-full bg-[#1A73E8] px-3.5 py-1.5 text-[0.72rem] font-semibold text-white shadow-[0_8px_18px_rgba(26,115,232,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(26,115,232,0.22)]">
+                      Insert answer
+                    </button>
+                  </div>
                 </div>
               </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -2070,9 +2893,18 @@ function NGOView({ onPracticeChange }) {
   const { ngoOpportunityId } = useParams()
   const isPracticeRoute = Boolean(ngoOpportunityId)
   const recognitionRef = useRef(null)
+  const questionRecordingBaseRef = useRef('')
+  const questionFinalTranscriptRef = useRef('')
   const questionTextareaRef = useRef(null)
   const messageIdRef = useRef(0)
   const practiceBoxRef = useRef(null)
+  const stepCoachRef = useRef(null)
+  const stepCoachPanelRef = useRef(null)
+  const studentAnswerAudioRef = useRef(null)
+  const studentAnswerAudioRequestRef = useRef(0)
+  const studentAnswerAudioBlobCacheRef = useRef(new Map())
+  const studentAnswerAudioPromiseCacheRef = useRef(new Map())
+  const shouldAutoSpeakStudentAnswerRef = useRef(false)
   const [ngoOpportunities, setNgoOpportunities] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
   const [practiceStarted, setPracticeStarted] = useState(false)
@@ -2081,6 +2913,7 @@ function NGOView({ onPracticeChange }) {
   const [activeGuideSection, setActiveGuideSection] = useState('summary')
   const [openQuestionStage, setOpenQuestionStage] = useState(null)
   const [activeStage, setActiveStage] = useState('opening')
+  const [dismissedReadyStages, setDismissedReadyStages] = useState(() => new Set())
   const [openPanel, setOpenPanel] = useState('')
   const [aiGuidanceOpen, setAiGuidanceOpen] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -2088,6 +2921,10 @@ function NGOView({ onPracticeChange }) {
   const [exampleQuestionIndex, setExampleQuestionIndex] = useState(0)
   const [draftQuestion, setDraftQuestion] = useState('')
   const [transcript, setTranscript] = useState([])
+  const [isStudentAnswerSpeaking, setIsStudentAnswerSpeaking] = useState(false)
+  const [ngoGuideAi, setNgoGuideAi] = useState(null)
+  const [ngoCoachAi, setNgoCoachAi] = useState(null)
+  const [ngoSummaryAi, setNgoSummaryAi] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -2113,7 +2950,10 @@ function NGOView({ onPracticeChange }) {
   }, [ngoOpportunityId, ngoOpportunities, selectedRole])
 
   useEffect(() => {
-    return () => recognitionRef.current?.stop?.()
+    return () => {
+      stopQuestionRecording()
+      stopStudentAnswerAudio()
+    }
   }, [])
 
   const selectedOpp = ngoOpportunities.find(o => String(o.id) === String(selectedRole))
@@ -2121,6 +2961,7 @@ function NGOView({ onPracticeChange }) {
   useEffect(() => {
     onPracticeChange?.({
       active: practiceStarted || isPracticeRoute,
+      summary: showSummary,
       title: selectedOpp?.title || '',
       onBack: () => {
         if (isPracticeRoute) {
@@ -2131,7 +2972,7 @@ function NGOView({ onPracticeChange }) {
         setShowSummary(false)
       },
     })
-  }, [isPracticeRoute, navigate, practiceStarted, selectedOpp?.title, onPracticeChange])
+  }, [isPracticeRoute, navigate, practiceStarted, selectedOpp?.title, showSummary, onPracticeChange])
 
   useEffect(() => {
     if (!practiceStarted) return
@@ -2156,7 +2997,57 @@ function NGOView({ onPracticeChange }) {
   ] : []
   const stageGuidance = selectedOpp && mockStudent ? makeStageGuidance(selectedOpp, mockStudent, activeStage) : ''
   const stageQuestions = selectedOpp && mockStudent ? makeStageQuestions(selectedOpp, mockStudent, activeStage) : []
-  const exampleQuestion = stageQuestions[exampleQuestionIndex % Math.max(stageQuestions.length, 1)] || firstQuestion
+  const aiStageQuestions = ngoGuideAi?.questions?.[activeStage]
+  const exampleQuestion = (aiStageQuestions?.[exampleQuestionIndex % Math.max(aiStageQuestions.length, 1)] || stageQuestions[exampleQuestionIndex % Math.max(stageQuestions.length, 1)] || firstQuestion)
+  const effectiveStageGuidance = ngoCoachAi?.purpose || stageGuidance
+
+  useEffect(() => {
+    let cancelled = false
+    setNgoGuideAi(null)
+    if (!selectedOpp || !mockStudent) return
+
+    generateNgoGuideAi(selectedOpp, mockStudent)
+      .then(guide => { if (!cancelled) setNgoGuideAi(guide) })
+      .catch(() => { if (!cancelled) setNgoGuideAi(null) })
+
+    return () => { cancelled = true }
+  }, [selectedOpp?.id])
+
+  useEffect(() => {
+    let cancelled = false
+    setNgoCoachAi(null)
+    if (!aiGuidanceOpen || !selectedOpp) return
+
+    generateStepCoachAi({
+      role: selectedOpp,
+      userType: 'ngo',
+      stageId: activeStage,
+      question: exampleQuestion,
+      transcript,
+      fallback: { purpose: stageGuidance, simpler: `What to get out of ${activeStageInfo.label.toLowerCase()}`, tips: [activeStageInfo.lookFor] },
+    })
+      .then(coach => { if (!cancelled) setNgoCoachAi(coach) })
+      .catch(() => { if (!cancelled) setNgoCoachAi(null) })
+
+    return () => { cancelled = true }
+  }, [aiGuidanceOpen, selectedOpp?.id, activeStage, exampleQuestion])
+
+  useEffect(() => {
+    let cancelled = false
+    setNgoSummaryAi(null)
+    if (!showSummary || !selectedOpp) return
+
+    generateInterviewSummaryAi({
+      role: selectedOpp,
+      userType: 'ngo',
+      transcript,
+      sections: NGO_INTERVIEW_STAGES.map(stage => ({ id: stage.id, label: stage.label })),
+    })
+      .then(summary => { if (!cancelled) setNgoSummaryAi(summary?.sections || null) })
+      .catch(() => { if (!cancelled) setNgoSummaryAi(null) })
+
+    return () => { cancelled = true }
+  }, [showSummary, selectedOpp?.id])
 
   function nextMessageId(prefix) {
     messageIdRef.current += 1
@@ -2164,11 +3055,14 @@ function NGOView({ onPracticeChange }) {
   }
 
   function openRole(roleId) {
+    stopQuestionRecording()
+    stopStudentAnswerAudio()
     setSelectedRole(roleId)
     setPracticeStarted(false)
     setShowSummary(false)
     setActiveGuideSection('summary')
     setActiveStage('opening')
+    setDismissedReadyStages(new Set())
     setOpenPanel('')
     setAiGuidanceOpen(false)
     setIsRecording(false)
@@ -2176,14 +3070,19 @@ function NGOView({ onPracticeChange }) {
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setTranscript([])
+    setNgoCoachAi(null)
+    setNgoSummaryAi(null)
   }
 
   function startPracticeRoom() {
     if (!selectedOpp) return
+    stopQuestionRecording()
+    stopStudentAnswerAudio()
     setPracticeStarted(true)
     setShowSummary(false)
     setOpenInsightKeys(new Set())
     setActiveStage('opening')
+    setDismissedReadyStages(new Set())
     setOpenPanel('')
     setAiGuidanceOpen(false)
     setIsRecording(false)
@@ -2191,6 +3090,8 @@ function NGOView({ onPracticeChange }) {
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setTranscript([])
+    setNgoCoachAi(null)
+    setNgoSummaryAi(null)
   }
 
   function openPracticeRoom() {
@@ -2203,27 +3104,53 @@ function NGOView({ onPracticeChange }) {
   }
 
   function backToNgoGuide() {
+    stopQuestionRecording()
+    stopStudentAnswerAudio()
     setPracticeStarted(false)
     setShowSummary(false)
     if (isPracticeRoute) navigate('/interviews')
   }
 
-  function sendQuestion() {
+  async function sendQuestion() {
     const text = draftQuestion.trim()
     if (!text || isStudentResponding) return
+    stopQuestionRecording()
+    stopStudentAnswerAudio()
     const stage = activeStage
-    setTranscript(prev => [...prev, { id: nextMessageId('q'), from: 'ngo', text, stage }])
+    const nextTranscript = [...transcript, { id: nextMessageId('q'), from: 'ngo', text, stage }]
+    setTranscript(nextTranscript)
     setExampleQuestionIndex(0)
     setDraftQuestion('')
     setIsRecording(false)
     setIsStudentResponding(true)
-    window.setTimeout(() => {
+    try {
+      const reply = await generateNgoStudentReplyAi({
+        role: selectedOpp,
+        student: mockStudent,
+        stageId: stage,
+        transcript: nextTranscript,
+        interviewerQuestion: text,
+        fallback: makeStudentReply(selectedOpp, mockStudent, stage),
+      })
+      shouldAutoSpeakStudentAnswerRef.current = false
+      getStudentAnswerSpeechBlob(reply).catch(() => null)
       setTranscript(prev => [
         ...prev,
-        { id: nextMessageId('a'), from: 'student', text: makeStudentReply(selectedOpp, mockStudent, stage), stage },
+        { id: nextMessageId('a'), from: 'student', text: reply, stage },
       ])
+      window.setTimeout(() => speakStudentAnswer(reply), 0)
+    } catch {
+      const fallbackReply = makeStudentReply(selectedOpp, mockStudent, stage)
+      shouldAutoSpeakStudentAnswerRef.current = false
+      getStudentAnswerSpeechBlob(fallbackReply).catch(() => null)
+      setTranscript(prev => [
+        ...prev,
+        { id: nextMessageId('a'), from: 'student', text: fallbackReply, stage },
+      ])
+      window.setTimeout(() => speakStudentAnswer(fallbackReply), 0)
+    } finally {
       setIsStudentResponding(false)
-    }, 700)
+    }
   }
 
   function goToNextStage() {
@@ -2231,11 +3158,19 @@ function NGOView({ onPracticeChange }) {
     const next = NGO_INTERVIEW_STAGES[idx + 1]
     if (next) {
       setActiveStage(next.id)
+      setDismissedReadyStages(prev => {
+        const nextDismissed = new Set(prev)
+        nextDismissed.delete(next.id)
+        return nextDismissed
+      })
       setExampleQuestionIndex(0)
       setDraftQuestion('')
     } else {
       setShowSummary(true)
     }
+    window.setTimeout(() => {
+      practiceBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
   }
 
   function toggleInsight(key) {
@@ -2256,10 +3191,106 @@ function NGOView({ onPracticeChange }) {
     generateExampleQuestion()
   }
 
+  function keepAskingCurrentStage() {
+    setDismissedReadyStages(prev => new Set(prev).add(activeStage))
+  }
+
+  function stopQuestionRecording() {
+    recognitionRef.current?.stop?.()
+    recognitionRef.current = null
+    setIsRecording(false)
+  }
+
+  function stopStudentAnswerAudio() {
+    studentAnswerAudioRequestRef.current += 1
+    studentAnswerAudioRef.current?.pause?.()
+    if (studentAnswerAudioRef.current?.src) URL.revokeObjectURL(studentAnswerAudioRef.current.src)
+    studentAnswerAudioRef.current = null
+    window.speechSynthesis?.cancel?.()
+    setIsStudentAnswerSpeaking(false)
+  }
+
+  async function getStudentAnswerSpeechBlob(text) {
+    const cleanText = String(text || '').trim()
+    if (!cleanText) return null
+    const cachedBlob = studentAnswerAudioBlobCacheRef.current.get(cleanText)
+    if (cachedBlob) return cachedBlob
+    const cachedPromise = studentAnswerAudioPromiseCacheRef.current.get(cleanText)
+    if (cachedPromise) return cachedPromise
+
+    const audioPromise = createHiveSpeech({ input: cleanText })
+      .then(audioBlob => {
+        studentAnswerAudioBlobCacheRef.current.set(cleanText, audioBlob)
+        studentAnswerAudioPromiseCacheRef.current.delete(cleanText)
+        return audioBlob
+      })
+      .catch(error => {
+        studentAnswerAudioPromiseCacheRef.current.delete(cleanText)
+        throw error
+      })
+    studentAnswerAudioPromiseCacheRef.current.set(cleanText, audioPromise)
+    return audioPromise
+  }
+
+  function speakStudentAnswerWithBrowserSpeech(text, requestId) {
+    if (!window.speechSynthesis || studentAnswerAudioRequestRef.current !== requestId) {
+      setIsStudentAnswerSpeaking(false)
+      return
+    }
+
+    const utterance = new SpeechSynthesisUtterance(prepareQuestionSpeech(text))
+    utterance.lang = 'en-US'
+    utterance.rate = 0.97
+    utterance.pitch = 1.02
+    utterance.volume = 0.95
+    utterance.onend = () => {
+      if (studentAnswerAudioRequestRef.current === requestId) setIsStudentAnswerSpeaking(false)
+    }
+    utterance.onerror = () => setIsStudentAnswerSpeaking(false)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  async function speakStudentAnswer(text = currentAnswerMsg?.text) {
+    const cleanText = String(text || '').trim()
+    if (!cleanText) return
+    if (isStudentAnswerSpeaking) {
+      stopStudentAnswerAudio()
+      return
+    }
+
+    stopStudentAnswerAudio()
+    const requestId = studentAnswerAudioRequestRef.current + 1
+    studentAnswerAudioRequestRef.current = requestId
+    setIsStudentAnswerSpeaking(true)
+
+    try {
+      const audioBlob = await getStudentAnswerSpeechBlob(cleanText)
+      if (studentAnswerAudioRequestRef.current !== requestId) {
+        setIsStudentAnswerSpeaking(false)
+        return
+      }
+
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      studentAnswerAudioRef.current = audio
+      audio.onended = () => {
+        if (studentAnswerAudioRequestRef.current === requestId) setIsStudentAnswerSpeaking(false)
+        URL.revokeObjectURL(audioUrl)
+        if (studentAnswerAudioRef.current === audio) studentAnswerAudioRef.current = null
+      }
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl)
+        if (studentAnswerAudioRequestRef.current === requestId) speakStudentAnswerWithBrowserSpeech(cleanText, requestId)
+      }
+      await audio.play()
+    } catch {
+      speakStudentAnswerWithBrowserSpeech(cleanText, requestId)
+    }
+  }
+
   function handleVoiceToggle() {
     if (isRecording) {
-      recognitionRef.current?.stop?.()
-      setIsRecording(false)
+      stopQuestionRecording()
       return
     }
 
@@ -2273,19 +3304,49 @@ function NGOView({ onPracticeChange }) {
     const recognition = new SpeechRecognition()
     recognition.lang = 'en-US'
     recognition.interimResults = true
-    recognition.continuous = false
+    recognition.continuous = true
+    questionRecordingBaseRef.current = draftQuestion.trim()
+    questionFinalTranscriptRef.current = ''
     recognition.onresult = event => {
-      const spokenText = Array.from(event.results)
-        .map(result => result[0]?.transcript)
-        .filter(Boolean)
-        .join(' ')
-      setDraftQuestion(spokenText)
+      let finalText = ''
+      let interimText = ''
+      Array.from(event.results).forEach(result => {
+        const transcript = result[0]?.transcript?.trim()
+        if (!transcript) return
+        if (result.isFinal) finalText += `${transcript} `
+        else interimText += `${transcript} `
+      })
+
+      questionFinalTranscriptRef.current = finalText.trim()
+      const nextText = [
+        questionRecordingBaseRef.current,
+        questionFinalTranscriptRef.current,
+        interimText.trim(),
+      ].filter(Boolean).join(' ')
+      setDraftQuestion(nextText)
     }
-    recognition.onend = () => setIsRecording(false)
-    recognition.onerror = () => setIsRecording(false)
+    recognition.onend = () => {
+      setIsRecording(false)
+      recognitionRef.current = null
+    }
+    recognition.onerror = () => stopQuestionRecording()
     recognitionRef.current = recognition
     setIsRecording(true)
     recognition.start()
+  }
+
+  function toggleStepCoach() {
+    setAiGuidanceOpen(open => {
+      const nextOpen = !open
+      window.setTimeout(() => {
+        if (nextOpen) {
+          stepCoachPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        } else {
+          practiceBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, nextOpen ? 260 : 80)
+      return nextOpen
+    })
   }
 
   useEffect(() => {
@@ -2294,6 +3355,16 @@ function NGOView({ onPracticeChange }) {
     textarea.style.height = 'auto'
     textarea.style.height = `${Math.min(textarea.scrollHeight, 224)}px`
   }, [draftQuestion, isStudentResponding])
+
+  const latestActiveStudentAnswer = [...transcript]
+    .reverse()
+    .find(message => message.stage === activeStage && message.from === 'student')
+
+  useEffect(() => {
+    if (!shouldAutoSpeakStudentAnswerRef.current || !latestActiveStudentAnswer?.id || isStudentResponding) return
+    shouldAutoSpeakStudentAnswerRef.current = false
+    speakStudentAnswer(latestActiveStudentAnswer.text)
+  }, [latestActiveStudentAnswer?.id, isStudentResponding])
 
   if (loading) {
     return (
@@ -2467,7 +3538,7 @@ function NGOView({ onPracticeChange }) {
                       <h3 className="text-[1.25rem] font-semibold text-[#202124]">AI role summary</h3>
                       <p className="mt-1.5 text-[0.82rem] text-[#9AA0A6]">A quick AI-generated summary of the role — read this if you only have a minute.</p>
                       <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
-                        {roleSummary}
+                        {ngoGuideAi?.summary || roleSummary}
                       </p>
                       {prepSections[2]?.text && (
                         <p className="mt-6 max-w-3xl text-[0.95rem] leading-8 text-[#5F6368]">
@@ -2489,7 +3560,9 @@ function NGOView({ onPracticeChange }) {
                         </div>
                       </div>
                       <div className="mt-5 space-y-3">
-                        {NGO_INTERVIEW_STAGES.map((stage, i) => (
+                        {NGO_INTERVIEW_STAGES.map((stage, i) => {
+                          const aiPhase = ngoGuideAi?.whatToKnow?.[i]
+                          return (
                           <div key={stage.id} className="flex gap-4 rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] p-5 shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8F0FE] text-[0.78rem] font-bold text-[#1A73E8]">
                               {String(i + 1).padStart(2, '0')}
@@ -2497,11 +3570,11 @@ function NGOView({ onPracticeChange }) {
                             <div className="min-w-0">
                               <p className="text-[1.05rem] font-bold text-[#202124]">{stage.label}</p>
                               <p className="mt-1.5 text-[0.92rem] leading-7 text-[#4B5058]">
-                                {mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : ''}
+                                {aiPhase?.text || aiPhase?.items?.join(' ') || (mockStudent ? makeStageGuidance(selectedOpp, mockStudent, stage.id) : '')}
                               </p>
                             </div>
                           </div>
-                        ))}
+                        )})}
                       </div>
                     </section>
                   )}
@@ -2520,7 +3593,7 @@ function NGOView({ onPracticeChange }) {
                       <div className="mt-5 space-y-4">
                         {NGO_INTERVIEW_STAGES.map((stage, i) => {
                           const isOpen = openQuestionStage === stage.id
-                          const questions = makeStageQuestions(selectedOpp, mockStudent, stage.id)
+                          const questions = ngoGuideAi?.questions?.[stage.id] || makeStageQuestions(selectedOpp, mockStudent, stage.id)
                           return (
                             <div key={stage.id} className="overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(255,255,255,0.62))] shadow-[0_12px_28px_rgba(32,33,36,0.05),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl">
                               <button
@@ -2625,7 +3698,7 @@ function NGOView({ onPracticeChange }) {
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { label: 'Questions asked', value: questionsAsked, icon: MessageCircle, tint: '#E8F0FE', accent: '#1A73E8' },
-            { label: 'Answers given', value: answersGiven, icon: UserRound, tint: '#E6F4EA', accent: '#188038' },
+            { label: 'Answers given', value: answersGiven, icon: UserRound, tint: '#F1F5F9', accent: '#4B6382' },
           ].map((stat, statIndex) => (
             <motion.div
               key={stat.label}
@@ -2658,13 +3731,13 @@ function NGOView({ onPracticeChange }) {
 	            <svg
 	              className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full transition-transform duration-300 group-hover:translate-y-[-2px]"
 	              viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true">
-	              <path d="M0,30 C62,58 96,8 154,28 C214,48 242,12 300,32 L300,100 L0,100 Z" fill="#F3E8FD" opacity="0.55" />
-	              <path d="M0,48 C66,26 112,60 172,42 C224,26 258,54 300,46 L300,100 L0,100 Z" fill="#F3E8FD" opacity="0.82" />
+	              <path d="M0,30 C62,58 96,8 154,28 C214,48 242,12 300,32 L300,100 L0,100 Z" fill="#E6F4EA" opacity="0.55" />
+	              <path d="M0,48 C66,26 112,60 172,42 C224,26 258,54 300,46 L300,100 L0,100 Z" fill="#E6F4EA" opacity="0.82" />
 	            </svg>
 	            <div className="relative z-10">
 	              <div className="flex items-start justify-between">
 	                <p className="text-[0.82rem] font-semibold text-[#5F6368]">Stages covered</p>
-	                <CompletionRing value={coveredStages.length} total={NGO_INTERVIEW_STAGES.length} color="#A142F4" />
+	                <CompletionRing value={coveredStages.length} total={NGO_INTERVIEW_STAGES.length} color="#188038" />
 	              </div>
 	              <p className="mt-4 text-[2.45rem] font-semibold leading-none tracking-[-0.03em] text-[#202124]">
 	                {coveredStages.length}<span className="text-[1.1rem] font-medium text-[#9AA0A6]">/{NGO_INTERVIEW_STAGES.length}</span>
@@ -2680,6 +3753,7 @@ function NGOView({ onPracticeChange }) {
           const improveKey = `${stage.id}-improve`
           const learnedOpen = openInsightKeys.has(learnedKey)
           const improveOpen = openInsightKeys.has(improveKey)
+          const aiFeedback = ngoSummaryAi?.[stage.id] || null
           const StageIcon = stage.icon
           return (
 	            <motion.section
@@ -2728,7 +3802,7 @@ function NGOView({ onPracticeChange }) {
 	                    </div>
 	                  ) : (
 	                    <div className="rounded-[20px] border border-dashed border-[#D7E6FF] bg-white/54 px-4 py-4 shadow-[0_10px_24px_rgba(26,115,232,0.05)]">
-	                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{stage.prompt}</p>
+	                      <p className="text-[0.86rem] leading-6 text-[#5F6368]">{aiFeedback?.whatHappened || stage.prompt}</p>
 	                      <p className="mt-2 text-[0.78rem] font-medium text-[#1A73E8]">
 	                        Try covering this stage in your next practice run.
 	                      </p>
@@ -2760,7 +3834,7 @@ function NGOView({ onPracticeChange }) {
 	                            transition={{ duration: 0.18 }}
 	                            className="overflow-hidden border-t border-white/70">
                             <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
-                              {stage.covered ? stage.lookFor : `Once you ask about this, listen for: ${stage.lookFor}`}
+                              {stage.covered ? (aiFeedback?.wentWell || stage.lookFor) : `Once you ask about this, listen for: ${stage.lookFor}`}
                             </p>
                           </motion.div>
                         )}
@@ -2790,9 +3864,9 @@ function NGOView({ onPracticeChange }) {
 	                            className="overflow-hidden border-t border-white/70">
                             <p className="px-3.5 py-3 text-[0.82rem] leading-6 text-[#5F6368]">
                               {stage.covered
-                                ? (stage.suggestedFollowUp
+                                ? (aiFeedback?.couldImprove || (stage.suggestedFollowUp
                                   ? `Consider also asking: "${stage.suggestedFollowUp}"`
-                                  : 'You asked a full round of questions here — nice and thorough.')
+                                  : 'You asked a full round of questions here — nice and thorough.'))
                                 : stage.prompt}
                             </p>
                           </motion.div>
@@ -2936,7 +4010,7 @@ function NGOView({ onPracticeChange }) {
   const askedStages = new Set(transcript.map(message => message.stage))
   const stageHasMessages = askedStages.has(activeStage)
   const featuredQuestion = (activeStage === 'opening' && !stageHasMessages) ? firstQuestion : exampleQuestion
-  const stageReadyToMove = questionsAskedInStage >= 2 && !isStudentResponding
+  const stageReadyToMove = questionsAskedInStage >= 2 && !isStudentResponding && !dismissedReadyStages.has(activeStage)
 
   // Only the current stage's latest exchange is shown — each new question replaces the last,
   // and switching categories starts a clean slate so the room reflects where you are, not where you've been
@@ -3077,10 +4151,22 @@ function NGOView({ onPracticeChange }) {
                     {/* Answer — the main event, avatar-led and elevated */}
                       <div className="flex items-start gap-3">
                         <GradientAvatar name={mockStudent.name} size={36} radius="0.7rem" className="mt-1 shrink-0 shadow-sm" />
-                      <div className="min-w-0 flex-1 overflow-hidden rounded-[26px] rounded-tl-md border border-white/80 bg-white/86 px-5 pb-5 pt-4 shadow-[0_18px_46px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset] backdrop-blur-2xl">
+                      <div className="relative min-w-0 flex-1 overflow-hidden rounded-[26px] rounded-tl-md border border-white/80 bg-white/86 px-5 pb-5 pt-4 shadow-[0_18px_46px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset] backdrop-blur-2xl">
                         {currentAnswerMsg ? (
                           <>
-                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => speakStudentAnswer(currentAnswerMsg.text)}
+                              className={`absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 transition-all ${
+                                isStudentAnswerSpeaking
+                                  ? 'bg-[#E8F0FE] text-[#1A73E8] ring-[#BFD7FF]'
+                                  : 'bg-white/86 text-[#1A73E8] ring-white/90 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]'
+                              }`}
+                              aria-label={isStudentAnswerSpeaking ? 'Stop student answer audio' : 'Listen to student answer'}
+                              title={isStudentAnswerSpeaking ? 'Stop audio' : 'Listen'}>
+                              {isStudentAnswerSpeaking ? <StopCircle size={16} /> : <Volume2 size={16} />}
+                            </button>
+                            <div className="mb-3 flex flex-wrap items-center gap-2 pr-12">
                               <p className="flex items-center gap-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#9AA0A6]">
                                 {mockStudent.name}
                                 <span className="rounded-full bg-[#F1F3F4] px-1.5 py-[3px] text-[0.58rem] font-semibold normal-case tracking-normal text-[#9AA0A6]">Simulated</span>
@@ -3123,7 +4209,7 @@ function NGOView({ onPracticeChange }) {
                             </div>
                             <div className="flex shrink-0 gap-2">
                               <button
-                                onClick={suggestQuestion}
+                                onClick={keepAskingCurrentStage}
                                 className="inline-flex items-center rounded-full bg-white/86 px-3.5 py-2 text-[0.74rem] font-semibold text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
                                 Keep asking
                               </button>
@@ -3167,13 +4253,13 @@ function NGOView({ onPracticeChange }) {
             <div className={`rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-2xl transition-all hover:-translate-y-0.5 ${
               isStudentResponding ? 'opacity-60' : 'focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35'
             }`}>
-              <div className="flex items-end gap-1">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={handleVoiceToggle}
                   disabled={isStudentResponding}
                   aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                   title={isRecording ? 'Stop recording' : 'Start recording'}
-                  className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
+                  className={`inline-flex h-11 shrink-0 self-center items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
                     isRecording
                       ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_0_0_6px_rgba(26,115,232,0.10),0_10px_22px_rgba(26,115,232,0.14)] ring-1 ring-[#BFD7FF]'
                       : 'bg-white/72 text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 hover:bg-white hover:shadow-[0_12px_26px_rgba(26,115,232,0.14)]'
@@ -3199,7 +4285,7 @@ function NGOView({ onPracticeChange }) {
                 <button
                   onClick={sendQuestion}
                   disabled={!draftQuestion.trim() || isStudentResponding}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
+                  className="flex h-10 w-10 shrink-0 self-center items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                   aria-label="Send question">
                   <Send size={16} />
                 </button>
@@ -3208,7 +4294,7 @@ function NGOView({ onPracticeChange }) {
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <button
-                onClick={() => setAiGuidanceOpen(open => !open)}
+                onClick={toggleStepCoach}
                 disabled={isStudentResponding}
 	                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[0.76rem] font-semibold ring-1 transition-all ${
 	                  aiGuidanceOpen
@@ -3237,20 +4323,20 @@ function NGOView({ onPracticeChange }) {
             exit={{ height: 0, opacity: 0, y: -6 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="mt-3 overflow-hidden">
-            <div className="rounded-[24px] border border-white/75 bg-white/74 p-4 text-left shadow-[0_18px_46px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
+            <div ref={stepCoachPanelRef} className="scroll-mb-4 rounded-[24px] border border-white/75 bg-white/74 p-4 text-left shadow-[0_18px_46px_rgba(26,115,232,0.10),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[#1A73E8]">Step coach</p>
                   <p className="mt-1 text-[0.82rem] leading-6 text-[#5F6368]">What to get out of {activeStageInfo.label.toLowerCase()}</p>
                 </div>
                 <button
-                  onClick={() => setAiGuidanceOpen(false)}
+                  onClick={toggleStepCoach}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#5F6368] transition hover:bg-white hover:text-[#1A73E8]"
                   aria-label="Close step coach">
                   <X size={15} />
                 </button>
               </div>
-              <p className="mt-4 text-[0.84rem] leading-6 text-[#3C4043]">{stageGuidance}</p>
+              <p ref={stepCoachRef} className="mt-4 scroll-mt-6 text-[0.84rem] leading-6 text-[#3C4043]">{effectiveStageGuidance}</p>
               <div className="mt-4 rounded-[18px] border border-[#D7E6FF] bg-white/66 p-3.5 shadow-[0_10px_24px_rgba(26,115,232,0.06)]">
                 <p className="text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-[#9AA0A6]">Suggested question</p>
                 <p className="mt-2 text-[0.84rem] leading-6 text-[#3C4043]">{featuredQuestion}</p>
@@ -3310,11 +4396,11 @@ function NGOView({ onPracticeChange }) {
                   {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="overflow-hidden rounded-b-2xl border-t border-[#E6EAF0]">
-                      <div className="px-4 py-4">
+	                            animate={{ height: 'auto', opacity: 1 }}
+	                            exit={{ height: 0, opacity: 0 }}
+	                            transition={{ duration: 0.18 }}
+	                            className="overflow-hidden rounded-b-2xl border-t border-[#E6EAF0]">
+                      <div className="max-h-[min(58vh,540px)] overflow-y-auto overscroll-contain px-4 py-4">
                         {panel.content}
                       </div>
                     </motion.div>
@@ -3382,9 +4468,11 @@ export default function Interviews() {
               Interview guide
             </button>
           )}
-          <h1 className={inPractice ? 'text-[1.35rem] font-semibold leading-tight text-[#202124]' : 'text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]'}>
-            {inPractice ? (isNGO ? `Interview practice: ${practiceInfo.title}` : 'Interview practice') : 'Interviews'}
-          </h1>
+          {!(isNGO && practiceInfo.summary) && (
+            <h1 className={inPractice ? 'text-[1.35rem] font-semibold leading-tight text-[#202124]' : 'text-[clamp(2.15rem,4vw,3.4rem)] font-semibold leading-[1.02] text-[#202124]'}>
+              {inPractice ? (isNGO ? `Interview practice: ${practiceInfo.title}` : 'Interview practice') : 'Interviews'}
+            </h1>
+          )}
           {!inPractice && (
             <p className="mt-4 max-w-3xl text-[1.02rem] leading-8 text-[#5F6368]">
               {isNGO

@@ -10,11 +10,13 @@ import { useApp } from '../context/AppContext'
 import MatchScoreBadge from '../components/MatchScoreBadge'
 import EmptyState from '../components/EmptyState'
 import GradientAvatar from '../components/GradientAvatar'
+import { InterviewInviteModal } from '../components/ApplicantDetail'
 import { fetchActiveOpportunities, fetchNgoOpportunities, parseSkillString } from '../services/opportunities'
 import { computeMatch } from '../services/matching'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 import matchesIllustration from '../assets/matches.png'
+import matchesNgoSun from '../assets/matches ngo sun.PNG'
 
 // ─── Opportunity → match card shape ───────────────────────────────────────────
 
@@ -429,11 +431,6 @@ function NgoStudentMatchCard({ match, onViewProfile, onReachOut }) {
         <span className="hidden shrink-0 text-[0.78rem] font-semibold text-[#1A73E8] sm:block">
           {expanded ? 'Hide details' : 'View details'}
         </span>
-        {!expanded && (
-          <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F8FBFF] text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] sm:flex">
-            <ChevronRight size={15} />
-          </span>
-        )}
         <ChevronDown
           size={17}
           className={`shrink-0 text-[#5F6368] transition-transform ${expanded ? 'rotate-180 text-[#1A73E8]' : ''}`}
@@ -703,6 +700,7 @@ export default function MatchResults() {
   const [ngoLoading, setNgoLoading] = useState(true)
   const [ngoError, setNgoError] = useState(null)
   const [selectedNgoRoleId, setSelectedNgoRoleId] = useState(null)
+  const [reachOutStudent, setReachOutStudent] = useState(null)
 
   const isNgo = user?.role === 'ngo'
 
@@ -808,12 +806,13 @@ export default function MatchResults() {
   }
 
   function handleReachOut(studentId) {
-    navigate(`/interview-message/${studentId}`, {
-      state: {
-        fromMatches: true,
-        roleId: selectedNgoRole?.id,
-        roleTitle: selectedNgoRole?.title,
-      },
+    const student = ngoStudents.find(item => String(item.id) === String(studentId))
+    if (!student) return
+    setReachOutStudent({
+      ...student,
+      studentId: student.id,
+      roleTitle: selectedNgoRole?.title,
+      opportunityTitle: selectedNgoRole?.title,
     })
   }
 
@@ -821,41 +820,6 @@ export default function MatchResults() {
     return (
       <div className="relative min-h-screen overflow-x-hidden bg-[#F5F7FB]">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[430px] bg-[radial-gradient(circle_at_88%_4%,rgba(255,255,255,0.96),transparent_23%),radial-gradient(circle_at_80%_8%,rgba(26,115,232,0.13),transparent_42%),radial-gradient(circle_at_14%_0%,rgba(26,115,232,0.08),transparent_42%)]" />
-        <div className="pointer-events-none absolute right-[-7rem] top-14 hidden h-64 w-[620px] select-none overflow-hidden lg:block" aria-hidden="true">
-          <svg className="h-full w-full" viewBox="0 0 620 250" fill="none" preserveAspectRatio="none">
-            <path
-              d="M40 120 C132 54 208 68 294 112 C384 158 478 148 620 62 L620 250 L40 250 Z"
-              fill="url(#ngoMatchesWaveFill)"
-              opacity="0.86"
-            />
-            <path
-              d="M8 108 C112 38 202 56 292 100 C386 146 478 138 606 48"
-              stroke="url(#ngoMatchesWaveLine)"
-              strokeWidth="4"
-              strokeLinecap="round"
-              opacity="0.72"
-            />
-            <path
-              d="M112 154 C214 96 284 120 360 154 C444 194 520 182 612 120"
-              stroke="#1A73E8"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              opacity="0.12"
-            />
-            <defs>
-              <linearGradient id="ngoMatchesWaveFill" x1="82" y1="28" x2="596" y2="210" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#E8F0FE" stopOpacity="0" />
-                <stop offset="0.38" stopColor="#D7E6FF" stopOpacity="0.72" />
-                <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="ngoMatchesWaveLine" x1="0" y1="0" x2="620" y2="0" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#1A73E8" stopOpacity="0" />
-                <stop offset="0.45" stopColor="#1A73E8" stopOpacity="0.25" />
-                <stop offset="1" stopColor="#1A73E8" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
 
         <div className="relative mx-auto max-w-[1520px] px-6 py-10 lg:px-10">
           <div className="relative mb-8">
@@ -870,10 +834,15 @@ export default function MatchResults() {
                     : 'Top students for each role, ranked by matching skills and languages.'}
                 </p>
               </div>
+              <img
+                src={matchesNgoSun}
+                alt=""
+                className="pointer-events-none relative z-0 w-full max-w-xl translate-x-4 select-none drop-shadow-[0_22px_34px_rgba(26,115,232,0.10)] lg:-mt-24 lg:max-w-2xl lg:translate-x-8"
+              />
             </div>
           </div>
 
-          <div className="relative z-10 -mt-8">
+          <div className="relative z-10 -mt-[12.75rem]">
             <NgoMatchesView
               roles={ngoRoles}
               loading={ngoLoading}
@@ -888,6 +857,16 @@ export default function MatchResults() {
             />
           </div>
         </div>
+        <AnimatePresence>
+          {reachOutStudent && (
+            <InterviewInviteModal
+              applicant={reachOutStudent}
+              mode="interview"
+              onClose={() => setReachOutStudent(null)}
+              onSent={() => setReachOutStudent(null)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     )
   }

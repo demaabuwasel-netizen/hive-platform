@@ -32,7 +32,6 @@ import EditNGOProfile from './pages/EditNGOProfile'
 import OpportunityDetail from './pages/OpportunityDetail'
 import PublicNGOProfile from './pages/PublicNGOProfile'
 import StudentPublicProfile from './pages/StudentPublicProfile'
-import InterviewMessage from './pages/InterviewMessage'
 import DashboardLayout from './components/DashboardLayout'
 import { AppProvider, useApp } from './context/AppContext'
 import HiveLogo from './components/HiveLogo'
@@ -258,7 +257,6 @@ function AppRoutes() {
       <Route path="/opportunities/:id"    element={<OpportunityDetail />} />
       <Route path="/ngo-profile/:ngoId"   element={<PublicNGOProfile />} />
       <Route path="/student-profile/:studentId" element={<RequireAuth><StudentPublicProfile /></RequireAuth>} />
-      <Route path="/interview-message/:studentId" element={<RequireAuth><InterviewMessage /></RequireAuth>} />
 
       {/* ── Dashboard shell — sidebar persists across all child routes ── */}
       <Route element={<ProtectedDashboard />}>

@@ -14,7 +14,7 @@ import {
 } from '../services/applications'
 import { fetchNgoOpportunities, setOpportunityStatus } from '../services/opportunities'
 import { withTimeout } from '../utils/withTimeout'
-import ngoApplicantsImg from '../assets/ngo applicants.PNG'
+import ngoApplicantsImg from '../assets/applicants ngo sun.PNG'
 
 function toUiStatus(dbStatus) {
   if (dbStatus === 'submitted' || dbStatus === 'under_review') return 'new'
@@ -311,7 +311,7 @@ export default function Applicants() {
           <img
             src={ngoApplicantsImg}
             alt=""
-            className="pointer-events-none relative z-0 w-full max-w-sm select-none drop-shadow-[0_22px_34px_rgba(26,115,232,0.10)] lg:-mt-6 lg:max-w-md"
+            className="pointer-events-none relative z-0 w-full max-w-xl translate-x-4 select-none drop-shadow-[0_22px_34px_rgba(26,115,232,0.10)] lg:-mt-28 lg:max-w-2xl lg:translate-x-8"
           />
         </div>
       </div>
@@ -326,7 +326,7 @@ export default function Applicants() {
         </div>
       )}
 
-      <div className="relative z-10 -mt-8">
+      <div className="relative z-10 -mt-[13.5rem]">
       <RolesList
         roles={roles}
         selectedRoleId={selectedRoleId}

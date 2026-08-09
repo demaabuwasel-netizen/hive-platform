@@ -1,15 +1,5 @@
 // Hive matching engine
-// Weights confirmed: skills 40, interests 25, languages 15,
-// location 10, field 5, text (experience+goals) 5
-
-const W = {
-  skills:       40,
-  interests:    25,
-  languages:    15,
-  location:     10,
-  field:         5,
-  text:          5,
-}
+// Matching is intentionally based only on stored skills and languages.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -18,11 +8,47 @@ function norm(s = '') {
 }
 
 function skillName(s) {
-  return typeof s === 'string' ? s : (s?.name ?? '')
+  if (typeof s !== 'string') return s?.name ?? ''
+  try {
+    const parsed = JSON.parse(s)
+    if (typeof parsed?.name === 'string' && parsed.name.trim().startsWith('{')) {
+      try {
+        const nested = JSON.parse(parsed.name)
+        return nested?.name || parsed.name || s
+      } catch {
+        return parsed.name || s
+      }
+    }
+    return parsed?.name || s
+  } catch {
+    return s
+  }
 }
 
-function skillLevel(s) {
-  return typeof s === 'string' ? '' : ((s?.level ?? '')).toLowerCase()
+function languageName(language) {
+  if (typeof language === 'string') return language
+  return language?.lang || language?.name || ''
+}
+
+function languageLevel(language) {
+  return typeof language === 'string' ? '' : language?.level || ''
+}
+
+function requirementKey(name) {
+  return norm(name)
+}
+
+function uniqueByName(items = [], getName = value => value) {
+  const seen = new Set()
+  return items
+    .map(item => {
+      const name = getName(item)
+      const key = requirementKey(name)
+      if (!key || seen.has(key)) return null
+      seen.add(key)
+      return { raw: item, name, key }
+    })
+    .filter(Boolean)
 }
 
 // True if two skill strings refer to the same skill
@@ -37,202 +63,68 @@ function skillsMatch(a, b) {
   return false
 }
 
-const STOPWORDS = new Set([
-  'the','and','for','this','that','with','have','from','they','will','your',
-  'been','more','their','about','which','when','also','into','over','other',
-  'some','like','what','make','just','than','only','such','very','both','much',
-  'take','even','most','back','well','still','need','work','help','real','good',
-  'time','people','were','then','these','there','where','after','those','year',
-  'each','many','want','used','doing','being','can','get','has','its','are',
-  'was','had','not','but','our','who','all','one','would','could','should',
-])
-
-function tokens(text = '') {
-  return norm(text).split(' ').filter(w => w.length >= 4 && !STOPWORDS.has(w))
-}
-
-// ─── Dimension 1: Skills (35 pts) ────────────────────────────────────────────
-
-const PROFICIENCY = {
-  expert: 1.5, native: 1.5, advanced: 1.3, fluent: 1.3,
-  intermediate: 1.0, '': 0.9, unknown: 0.9,
-  basic: 0.7, beginner: 0.6,
+function languagesMatch(a, b) {
+  const na = norm(a), nb = norm(b)
+  if (!na || !nb) return false
+  return na === nb || na.includes(nb) || nb.includes(na)
 }
 
 function scoreSkills(studentSkills, oppSkills) {
-  const oSkills = (oppSkills ?? [])
-  if (!oSkills.length) {
-    return { score: W.skills * 0.7, matched: [], missing: [], partial: [] }
-  }
+  const requiredSkills = uniqueByName(oppSkills, skillName)
+  if (!requiredSkills.length) return { ratio: null, matched: [], missing: [], partial: [], total: 0 }
 
   const matched = [], missing = [], partial = []
-  let totalRaw = 0
-  const perSkill = W.skills / oSkills.length
 
-  for (const os of oSkills) {
-    const oName = skillName(os)
+  for (const required of requiredSkills) {
+    const oName = required.name
     const found = (studentSkills ?? []).find(ss => skillsMatch(skillName(ss), oName))
     if (found) {
-      const lvl = skillLevel(found)
-      const mult = PROFICIENCY[lvl] ?? 0.9
-      totalRaw += perSkill * mult
       matched.push({ oppSkill: oName, studentSkill: skillName(found), level: found?.level ?? '' })
     } else {
-      // partial: student has a related skill (first word of opp skill appears in any student skill)
       const oWord = norm(oName).split(' ')[0]
       const related = (studentSkills ?? []).find(ss => norm(skillName(ss)).includes(oWord))
       if (related) {
-        totalRaw += perSkill * 0.4
         partial.push({ oppSkill: oName, relatedSkill: skillName(related) })
-      } else {
-        missing.push(oName)
       }
+      missing.push(oName)
     }
   }
 
-  return { score: Math.min(totalRaw, W.skills), matched, missing, partial }
-}
-
-// ─── Dimension 2: Interests / mission fit (20 pts) ───────────────────────────
-
-function scoreInterests(studentInterests, category, missionImpact, description) {
-  const interests = studentInterests ?? []
-  if (!interests.length) return { score: 0, matched: [] }
-
-  const missionText = norm([category, missionImpact, description].filter(Boolean).join(' '))
-  const matched = []
-  let score = 0
-
-  for (const interest of interests) {
-    const ni = norm(interest)
-    const words = ni.split(' ').filter(w => w.length >= 4)
-
-    // Category exact / close match (8 pts each, but capped at full weight)
-    if (category && (norm(category) === ni || norm(category).includes(ni.split(' ')[0]) || ni.includes(norm(category).split(' ')[0]))) {
-      score += 8
-      matched.push(interest)
-      continue
-    }
-
-    // Keyword overlap with mission text (up to 4 pts per interest)
-    const hits = words.filter(w => missionText.includes(w)).length
-    if (hits >= 2) { score += 4; matched.push(interest) }
-    else if (hits === 1) { score += 2; matched.push(interest) }
-
-    if (score >= W.interests) break
+  return {
+    ratio: matched.length / requiredSkills.length,
+    matched,
+    missing,
+    partial,
+    total: requiredSkills.length,
   }
-
-  return { score: Math.min(score, W.interests), matched }
 }
-
-// ─── Dimension 3: Languages (15 pts) ─────────────────────────────────────────
-
-const LANG_W = { native: 1.0, fluent: 0.9, intermediate: 0.5, basic: 0.2, '': 0.7 }
 
 function scoreLanguages(studentLangs, requiredLangs) {
-  const required = requiredLangs ?? []
-  if (!required.length) return { score: W.languages, matched: [], missing: [] }
+  const required = uniqueByName(requiredLangs, languageName)
+  if (!required.length) return { ratio: null, matched: [], missing: [], total: 0 }
 
   const matched = [], missing = []
-  let totalWeight = 0, matchedWeight = 0
 
   for (const req of required) {
-    const reqName = norm(typeof req === 'string' ? req : req.lang ?? req)
-    totalWeight += 1
-    const found = (studentLangs ?? []).find(sl => {
-      const name = norm(typeof sl === 'string' ? sl : sl.lang ?? '')
-      return name === reqName || name.includes(reqName) || reqName.includes(name)
-    })
+    const found = (studentLangs ?? []).find(sl => languagesMatch(languageName(sl), req.name))
     if (found) {
-      const lvl = (typeof found === 'string' ? '' : found.level ?? '').toLowerCase()
-      matchedWeight += LANG_W[lvl] ?? 0.7
-      matched.push({ lang: typeof found === 'string' ? found : found.lang, level: typeof found === 'string' ? '' : found.level })
+      matched.push({ lang: languageName(found), level: languageLevel(found) })
     } else {
-      missing.push(typeof req === 'string' ? req : req.lang ?? req)
+      missing.push(req.name)
     }
   }
 
-  const ratio = totalWeight > 0 ? matchedWeight / totalWeight : 1
-  return { score: Math.round(ratio * W.languages * 10) / 10, matched, missing }
-}
-
-// ─── Dimension 4: Location / work mode (10 pts) ───────────────────────────────
-
-function scoreLocation(workMode, location) {
-  const m = norm(workMode ?? '')
-  if (m.includes('remote')) return { score: W.location, note: 'Remote — works from anywhere' }
-  if (m.includes('hybrid')) return { score: Math.round(W.location * 0.7), note: `Hybrid in ${location || 'office'}` }
-  return { score: Math.round(W.location * 0.4), note: `On-site in ${location || 'office'}` }
-}
-
-// ─── Dimension 5: Field of study (5 pts) ─────────────────────────────────────
-
-// Maps normalised field fragments → mission keywords that indicate relevance
-const FIELD_KEYWORDS = {
-  'computer science':     ['tech','digital','software','data','platform','system','coding','web','app'],
-  'software':             ['tech','digital','software','web','app','development','platform'],
-  'information systems':  ['data','system','digital','platform','tech','database'],
-  'data science':         ['data','statistics','analysis','research','impact','machine'],
-  'artificial intelligence': ['ai','machine','data','research','technology'],
-  'cybersecurity':        ['security','tech','digital','data','system'],
-  'graphic design':       ['design','visual','brand','content','creative','ui','ux','canva'],
-  'ux':                   ['design','user','product','interface','accessibility','research'],
-  'marketing':            ['social','content','marketing','campaign','digital','brand','media'],
-  'communications':       ['content','social','writing','brand','outreach','media','pr'],
-  'journalism':           ['writing','content','media','research','communication','story'],
-  'social work':          ['community','youth','welfare','support','services','social'],
-  'psychology':           ['mental','counseling','community','support','wellbeing','health'],
-  'public health':        ['health','community','research','population','medical','wellbeing'],
-  'nursing':              ['health','medical','care','hospital','wellbeing','community'],
-  'education':            ['teaching','learning','curriculum','school','literacy','training','youth'],
-  'economics':            ['finance','research','analysis','data','impact','policy','budget'],
-  'law':                  ['advocacy','rights','policy','legal','justice','governance'],
-  'political science':    ['policy','advocacy','governance','civic','rights','government'],
-  'environmental':        ['environment','climate','sustainability','conservation','green'],
-  'business':             ['management','operations','finance','strategy','entrepreneurship'],
-  'accounting':           ['finance','budget','audit','data','management','impact'],
-  'statistics':           ['data','research','analysis','statistics','impact','math'],
-  'applied mathematics':  ['data','statistics','analysis','research','impact','math'],
-}
-
-function scoreField(studentField, oppField, category, missionImpact) {
-  if (!studentField) return { score: 0, match: null }
-  const sf = norm(studentField)
-
-  // Exact match with opp's required field
-  if (oppField) {
-    const of_ = norm(oppField)
-    if (sf === of_ || sf.includes(of_) || of_.includes(sf.split(' ')[0])) {
-      return { score: W.field, match: 'exact' }
-    }
+  return {
+    ratio: matched.length / required.length,
+    matched,
+    missing,
+    total: required.length,
   }
-
-  // Keyword hit in mission text
-  const missionNorm = norm([category, missionImpact].filter(Boolean).join(' '))
-  const entry = Object.entries(FIELD_KEYWORDS).find(([k]) => sf.includes(k) || k.includes(sf.split(' ')[0]))
-  const keywords = entry?.[1] ?? []
-  const hits = keywords.filter(k => missionNorm.includes(k)).length
-
-  if (hits >= 4) return { score: W.field, match: 'strong' }
-  if (hits >= 2) return { score: Math.round(W.field * 0.6), match: 'moderate' }
-  if (hits >= 1) return { score: Math.round(W.field * 0.3), match: 'partial' }
-  return { score: 0, match: null }
-}
-
-// ─── Dimension 6: Experience + goals text (5 pts) ────────────────────────────
-
-function scoreText(experience, goals, description, missionImpact, title) {
-  const studentToks = new Set([...tokens(experience), ...tokens(goals)])
-  const oppToks     = new Set([...tokens(description), ...tokens(missionImpact), ...tokens(title)])
-  if (!studentToks.size || !oppToks.size) return { score: Math.round(W.text * 0.4), overlap: [] }
-
-  const overlap = [...studentToks].filter(t => oppToks.has(t))
-  return { score: Math.min(Math.round(overlap.length * 1.25 * 10) / 10, W.text), overlap }
 }
 
 // ─── Narrative builders ───────────────────────────────────────────────────────
 
-function buildReasons(p, o, sk, int, lang, field) {
+function buildReasons(p, o, sk, lang) {
   const orgName = o.orgName || o.name || 'this organisation'
   const reasons = []
 
@@ -267,30 +159,14 @@ function buildReasons(p, o, sk, int, lang, field) {
       detail: `${lang.missing.join(', ')} required — not listed in your profile.` })
   }
 
-  // Mission alignment
-  if (int.matched.length >= 2) {
-    reasons.push({ label: 'Mission alignment', strength: 'high',
-      detail: `Your interest in ${int.matched.slice(0, 2).join(' and ')} aligns with ${orgName}'s mission.` })
-  } else if (int.matched.length === 1) {
-    reasons.push({ label: 'Mission alignment', strength: 'medium',
-      detail: `Your interest in ${int.matched[0]} connects with ${orgName}'s work.` })
-  }
-
-  // Field of study
-  if (field.match === 'exact' || field.match === 'strong') {
-    reasons.push({ label: 'Field of study', strength: 'high',
-      detail: `Your ${p.field} background is a strong fit for this role.` })
-  } else if (field.match === 'moderate') {
-    reasons.push({ label: 'Field relevance', strength: 'medium',
-      detail: `Your ${p.field} background is partially relevant to this work.` })
-  }
-
   return reasons.slice(0, 4)
 }
 
-function buildHeadline(p, o, score, sk, int, lang) {
+function buildHeadline(p, o, score, sk, lang) {
   const name    = p.name?.split(' ')[0] || 'You'
   const orgName = o.orgName || o.name   || 'this NGO'
+  const possessive = name === 'You' ? 'your' : `${name}'s`
+  const verb = name === 'You' ? 'share' : 'shares'
 
   if (score >= 85) {
     if (sk.matched.length >= 3 && lang.matched.length >= 1) {
@@ -299,26 +175,23 @@ function buildHeadline(p, o, score, sk, int, lang) {
     }
     if (sk.matched.length >= 3) {
       const skills = sk.matched.slice(0, 2).map(m => m.studentSkill).join(' and ')
-      return `Exceptional skill alignment — ${name}'s ${skills} expertise fits ${orgName} precisely`
+      return `Exceptional skill alignment — ${possessive} ${skills} expertise fits ${orgName} precisely`
     }
-    return `Near-perfect match — ${name}'s profile aligns strongly with ${orgName}'s mission`
+    return `Near-perfect match — ${possessive} skills and languages align strongly with ${orgName}'s needs`
   }
   if (score >= 70) {
-    if (int.matched.length >= 2) {
-      return `Strong values alignment — shared focus on ${int.matched.slice(0, 2).join(' and ')} connects ${name} with ${orgName}`
-    }
     if (sk.matched.length >= 2) {
-      return `Good technical fit — ${name}'s ${sk.matched[0].studentSkill} skills match ${orgName}'s needs`
+      return `Good technical fit — ${possessive} ${sk.matched[0].studentSkill} skills match ${orgName}'s needs`
     }
-    return `Solid match — ${name}'s background addresses key priorities at ${orgName}`
+    return `Solid match — ${possessive} languages and skills address key requirements at ${orgName}`
   }
   if (score >= 50) {
-    return `Relevant match — ${name}'s experience overlaps meaningfully with ${orgName}'s work`
+    return `Relevant match — ${name} ${verb} some skills or language requirements with ${orgName}`
   }
-  return `Exploratory match — some alignment with ${orgName}'s mission worth exploring`
+  return `Exploratory match — limited stored skill or language overlap with ${orgName}`
 }
 
-function buildSuggestedQuestions(p, o, sk, int, lang) {
+function buildSuggestedQuestions(p, o, sk, lang) {
   const orgName = o.orgName || o.name || 'your organisation'
   const q = []
 
@@ -328,19 +201,15 @@ function buildSuggestedQuestions(p, o, sk, int, lang) {
     q.push(`What skills from your experience are most transferable to this role?`)
   }
 
-  if (int.matched.length > 0) {
-    q.push(`What first sparked your interest in ${int.matched[0]}, and how has it shaped your work so far?`)
-  } else {
-    q.push(`What draws you to ${orgName}'s mission specifically?`)
-  }
+  q.push(`Which of your skills would you use first in this role, and why?`)
 
   if (lang.matched.length > 0 && (o.languages ?? []).length > 0) {
     q.push(`This role requires ${(o.languages ?? []).join(' and ')} — can you describe a time you worked professionally in these languages?`)
   } else {
-    q.push(`How do you approach collaboration with communities different from your own background?`)
+    q.push(`Are there any additional languages or communication skills you would bring to this role?`)
   }
 
-  q.push(`Where do you see your volunteer work with ${orgName} fitting into your longer-term goals?`)
+  q.push(`Which required skill would you want to grow while working with ${orgName}?`)
   return q
 }
 
@@ -358,22 +227,24 @@ export function computeMatch(studentProfile, opportunity) {
   const o = opportunity    ?? {}
 
   const sk   = scoreSkills(p.skills, o.skills)
-  const int  = scoreInterests(p.interests, o.category, o.missionImpact, o.description)
   const lang = scoreLanguages(p.languages, o.languages)
-  const loc  = scoreLocation(o.workMode, o.location)
-  const fld  = scoreField(p.field, o.field, o.category, o.missionImpact)
-  const txt  = scoreText(p.experience, p.goals, o.description, o.missionImpact, o.title)
-
-  const rawScore = sk.score + int.score + lang.score + loc.score + fld.score + txt.score
-  const score    = Math.min(Math.max(Math.round(rawScore), 0), 100)
+  const hasSkillRequirements = sk.ratio !== null
+  const hasLanguageRequirements = lang.ratio !== null
+  const totalRequired = (hasSkillRequirements ? sk.total : 0) + (hasLanguageRequirements ? lang.total : 0)
+  const totalMatched = sk.matched.length + lang.matched.length
+  const score = totalRequired > 0
+    ? Math.min(Math.max(Math.round((totalMatched / totalRequired) * 100), 0), 100)
+    : 0
+  const skillMax = totalRequired > 0 ? Math.round((sk.total / totalRequired) * 100) : 0
+  const languageMax = totalRequired > 0 ? 100 - skillMax : 0
 
   const breakdown = {
-    skills:       { score: Math.round(sk.score),    max: W.skills,       label: 'Skills' },
-    interests:    { score: Math.round(int.score),   max: W.interests,    label: 'Mission fit' },
-    languages:    { score: Math.round(lang.score),  max: W.languages,    label: 'Languages' },
-    location:     { score: Math.round(loc.score),   max: W.location,     label: 'Work mode' },
-    field:        { score: Math.round(fld.score),   max: W.field,        label: 'Field of study' },
-    text:         { score: Math.round(txt.score),   max: W.text,         label: 'Experience' },
+    skills:       { score: totalRequired > 0 ? Math.round((sk.matched.length / totalRequired) * 100) : 0, max: skillMax,      label: 'Skills' },
+    interests:    { score: 0,                                                max: 0,              label: 'Mission fit' },
+    languages:    { score: totalRequired > 0 ? Math.round((lang.matched.length / totalRequired) * 100) : 0, max: languageMax, label: 'Languages' },
+    location:     { score: 0,                                                max: 0,              label: 'Work mode' },
+    field:        { score: 0,                                                max: 0,              label: 'Field of study' },
+    text:         { score: 0,                                                max: 0,              label: 'Experience' },
   }
 
   const strengths = []
@@ -388,31 +259,19 @@ export function computeMatch(studentProfile, opportunity) {
     partialMatches.push(`${relatedSkill} is related to required skill: ${oppSkill}`))
   sk.missing.slice(0, 3).forEach(s => missingRequirements.push(`Skill not found in your profile: ${s}`))
 
-  int.matched.slice(0, 2).forEach(i => strengths.push(`Interest in "${i}" aligns with the mission`))
-
   lang.matched.forEach(l => {
     const lvl = l.level ? ` (${l.level})` : ''
     strengths.push(`${l.lang}${lvl} — required language matched`)
   })
   lang.missing.forEach(l => missingRequirements.push(`Required language not in profile: ${l}`))
 
-  if (loc.note) {
-    if (loc.score === W.location) strengths.push(loc.note)
-    else partialMatches.push(loc.note)
-  }
-
-  if (fld.match === 'exact' || fld.match === 'strong') strengths.push(`${p.field} aligns with this role`)
-  else if (fld.match === 'moderate') partialMatches.push(`${p.field} is partially relevant to this role`)
-
-  const reasons            = buildReasons(p, o, sk, int, lang, fld)
-  const headline           = buildHeadline(p, o, score, sk, int, lang)
-  const suggestedQuestions = buildSuggestedQuestions(p, o, sk, int, lang)
+  const reasons            = buildReasons(p, o, sk, lang)
+  const headline           = buildHeadline(p, o, score, sk, lang)
+  const suggestedQuestions = buildSuggestedQuestions(p, o, sk, lang)
 
   const explanations = [
-    sk.matched.length > 0 && `✦ ${sk.matched.length}/${(o.skills ?? []).length || '?'} skills matched`,
-    int.matched.length > 0 && `❤️ "${int.matched[0]}" aligns with mission`,
-    lang.matched.length > 0 && `🌐 ${lang.matched.map(l => l.lang).join(', ')} — language fit`,
-    fld.match && `🎓 ${p.field} relevant to this role`,
+    hasSkillRequirements && `${sk.matched.length}/${sk.total} required skills matched`,
+    hasLanguageRequirements && `${lang.matched.length}/${lang.total} required languages matched`,
   ].filter(Boolean)
 
   return {
@@ -430,6 +289,15 @@ export function computeMatch(studentProfile, opportunity) {
       partial: sk.partial,
       missing: sk.missing,
       required: o.skills ?? [],
+    },
+    languageMatches: {
+      matched: lang.matched,
+      missing: lang.missing,
+      required: o.languages ?? [],
+    },
+    matchFormula: {
+      matchedRequirements: totalMatched,
+      totalRequirements: totalRequired,
     },
   }
 }

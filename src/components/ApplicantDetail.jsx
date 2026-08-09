@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, CheckCircle2, UserRound,
-  X, Send, RotateCcw, Loader,
+  X, Send, Loader,
   GraduationCap, ExternalLink, Briefcase,
   Sparkles, ArrowRight, Award, Layers3,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { sendInterviewMessage } from '../services/messages'
+import { askHiveAI } from '../services/openai'
 import { groupSkills } from '../data/skills'
 import GradientAvatar from './GradientAvatar'
 
@@ -61,9 +62,22 @@ function SectionLabel({ children, eyebrow }) {
   )
 }
 
-function buildInviteMessage(applicant) {
+function buildInviteMessage(applicant, mode = 'interview') {
   const firstName = applicant?.name?.split(' ')[0] || 'there'
   const field = applicant?.field || 'development'
+
+  if (mode === 'accepted') {
+    return `Hi ${firstName},
+
+Thank you again for taking the time to connect with us. We really appreciated learning more about your background in ${field} and the way you think about contributing to this role.
+
+We'd love to officially move forward with you for this opportunity. We think you could be a strong fit for the team and for the work ahead.
+
+I'll follow up with the next steps soon.
+
+Best regards`
+  }
+
   return `Hi ${firstName},
 
 We're excited about your application! Your background in ${field} and demonstrated skills make you a strong fit for our team.
@@ -77,11 +91,53 @@ Looking forward to connecting with you!
 Best regards`
 }
 
-function InterviewInviteModal({ applicant, onClose, onSent }) {
+async function generateInviteDraft(applicant, mode) {
+  const firstName = applicant?.name?.split(' ')[0] || 'there'
+  const roleTitle = applicant?.roleTitle || applicant?.opportunityTitle || 'this role'
+  const field = applicant?.field || 'their background'
+  const instruction = mode === 'accepted'
+    ? `Write a warm, concise acceptance message to ${firstName}. Tell them we would like to move forward with them for ${roleTitle}. Mention their ${field} background naturally. Keep it professional, human, and easy to reply to.`
+    : `Write a warm, concise interview invitation to ${firstName}. Invite them to a brief interview for ${roleTitle}. Mention their ${field} background naturally. Ask for availability next week. Keep it professional, human, and easy to reply to.`
+
+  const result = await askHiveAI({
+    messages: [
+      {
+        role: 'system',
+        content: 'You write short, friendly NGO recruiting messages. Return only the message body.',
+      },
+      {
+        role: 'user',
+        content: instruction,
+      },
+    ],
+    maxOutputTokens: 350,
+  })
+
+  return result?.text?.trim()
+}
+
+export function InterviewInviteModal({ applicant, mode = 'interview', onClose, onSent }) {
   const { user } = useApp()
-  const [message, setMessage] = useState(() => buildInviteMessage(applicant))
+  const [message, setMessage] = useState('')
+  const [generating, setGenerating] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
+  const isAcceptance = mode === 'accepted'
+
+  async function handleGenerateDraft() {
+    if (generating) return
+    setGenerating(true)
+    setError(null)
+
+    try {
+      const draft = await generateInviteDraft(applicant, mode)
+      setMessage(draft || buildInviteMessage(applicant, mode))
+    } catch {
+      setMessage(buildInviteMessage(applicant, mode))
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   async function handleSend() {
     if (!message.trim() || !user?.id || sending) return
@@ -106,23 +162,27 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(32,33,36,0.45)' }}
+      style={{ background: 'rgba(248,251,255,0.52)', backdropFilter: 'blur(10px)' }}
       onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.97, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 12 }}
         transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-        className="flex w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_24px_60px_rgba(32,33,36,0.3)]"
+        className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[30px] bg-white/88 shadow-[0_30px_80px_rgba(26,115,232,0.16),0_1px_0_rgba(255,255,255,0.96)_inset] backdrop-blur-2xl"
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pb-4 pt-6">
+        <div className="flex items-start justify-between bg-white/70 px-6 pb-4 pt-6 backdrop-blur-xl">
           <div className="flex items-start gap-3.5">
             <GradientAvatar name={applicant.name} size={40} radius="9999px" className="shrink-0"/>
             <div>
-              <h2 className="text-[1.05rem] font-medium text-[#202124]">Interview invitation</h2>
+              <h2 className="text-[1.05rem] font-semibold text-[#202124]">
+                {isAcceptance ? 'Acceptance message' : 'Interview invitation'}
+              </h2>
               <p className="mt-0.5 text-[0.82rem] text-[#5F6368]">
-                Invite {applicant.name?.split(' ')[0]} to the next step
+                {isAcceptance
+                  ? `Message ${applicant.name?.split(' ')[0]} before accepting`
+                  : `Invite ${applicant.name?.split(' ')[0]} to the next step`}
               </p>
             </div>
           </div>
@@ -133,20 +193,22 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
         </div>
 
         {/* Body */}
-        <div className="px-6">
+        <div className="bg-white/64 px-6 pt-5 backdrop-blur-xl">
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             rows={10}
-            className="w-full resize-none rounded-2xl border border-[#DADCE0] px-4 py-3.5 text-[0.87rem] leading-6 text-[#3C4043] outline-none transition-colors placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/15"
-            placeholder="Write your invitation..."
+            className="w-full resize-none rounded-2xl border border-white/90 bg-white/86 px-4 py-3.5 text-[0.87rem] leading-6 text-[#3C4043] shadow-[0_12px_32px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.96)_inset] outline-none ring-1 ring-[#E6EEF9]/55 transition-all placeholder:text-[#9AA0A6] focus:border-white focus:bg-white focus:ring-[#BFD7FF]/70"
+            placeholder={isAcceptance ? 'Write a short acceptance message...' : 'Write a short interview invitation...'}
           />
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[0.74rem] text-[#5F6368]">{message.length} characters</span>
             <button
-              onClick={() => setMessage(buildInviteMessage(applicant))}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.78rem] font-medium text-[#1A73E8] transition-colors hover:bg-[#E8F0FE]">
-              <RotateCcw size={12}/> Regenerate
+              onClick={handleGenerateDraft}
+              disabled={generating}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F0FE] px-3 py-1.5 text-[0.78rem] font-semibold text-[#1A73E8] transition-all hover:bg-[#DCEBFF] disabled:cursor-not-allowed disabled:opacity-60">
+              {generating ? <Loader size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {message ? 'Rewrite with AI' : 'Use AI draft'}
             </button>
           </div>
           {error && (
@@ -155,7 +217,7 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 pb-6 pt-4">
+        <div className="flex items-center justify-end gap-2 bg-white/70 px-6 pb-6 pt-4 backdrop-blur-xl">
           <button onClick={onClose}
             className="h-10 rounded-full px-5 text-[0.85rem] font-medium text-[#5F6368] transition-colors hover:bg-[#F1F3F4]">
             Cancel
@@ -165,7 +227,7 @@ function InterviewInviteModal({ applicant, onClose, onSent }) {
             disabled={sending || !message.trim()}
             className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1A73E8] px-6 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#1765CC] disabled:cursor-not-allowed disabled:opacity-50">
             {sending ? <Loader size={15} className="animate-spin"/> : <Send size={15} strokeWidth={2}/>}
-            {sending ? 'Sending…' : 'Send invitation'}
+            {sending ? 'Sending…' : isAcceptance ? 'Send & accept' : 'Send invitation'}
           </button>
         </div>
       </motion.div>
@@ -321,10 +383,10 @@ function DecisionPanel({ status, statusLabel, onStatusChange, onInvite }) {
 
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <button
-          onClick={isInterview ? () => onStatusChange('accepted') : onInvite}
+          onClick={() => onInvite(isInterview ? 'accepted' : 'interview')}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#1A73E8] px-4 text-[0.84rem] font-semibold text-white shadow-[0_10px_24px_rgba(26,115,232,0.20)] transition-colors hover:bg-[#1765CC]">
           {isInterview ? <CheckCircle2 size={15} strokeWidth={2}/> : <Calendar size={15} strokeWidth={2}/>}
-          {isInterview ? 'Accept student' : 'Invite to interview'}
+          {isInterview ? 'Accept & message' : 'Schedule interview'}
         </button>
         <button
           onClick={() => onStatusChange('rejected')}
@@ -360,6 +422,7 @@ function InfoRow({ icon: Icon, title, subtitle, tag, link, description }) {
 
 export default function ApplicantDetail({ applicant, loading, status, onStatusChange }) {
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteMode, setInviteMode] = useState('interview')
 
   if (loading) {
     return (
@@ -509,7 +572,10 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
         status={status}
         statusLabel={st.label}
         onStatusChange={onStatusChange}
-        onInvite={() => setInviteOpen(true)}
+        onInvite={(mode) => {
+          setInviteMode(mode)
+          setInviteOpen(true)
+        }}
       />
 
       {/* Interview invitation modal */}
@@ -517,10 +583,12 @@ export default function ApplicantDetail({ applicant, loading, status, onStatusCh
         {inviteOpen && (
           <InterviewInviteModal
             applicant={applicant}
+            mode={inviteMode}
             onClose={() => setInviteOpen(false)}
             onSent={() => {
               setInviteOpen(false)
-              if (status !== 'interview' && status !== 'accepted' && status !== 'completed') onStatusChange('interview')
+              if (inviteMode === 'accepted') onStatusChange('accepted')
+              else if (status !== 'interview' && status !== 'accepted' && status !== 'completed') onStatusChange('interview')
             }}
           />
         )}
