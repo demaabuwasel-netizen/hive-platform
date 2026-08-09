@@ -55,6 +55,17 @@ export default async function handler(req, res) {
     return
   }
 
+  if (req.method === 'GET') {
+    res.status(200).json({
+      ok: true,
+      route: 'openai-chat',
+      hasOpenAIKey: Boolean(process.env.OPENAI_API_KEY),
+      hasViteOpenAIKey: Boolean(process.env.VITE_OPENAI_API_KEY),
+      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    })
+    return
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return

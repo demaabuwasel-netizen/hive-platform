@@ -24,6 +24,18 @@ export default async function handler(req, res) {
     return
   }
 
+  if (req.method === 'GET') {
+    res.status(200).json({
+      ok: true,
+      route: 'openai-speech',
+      hasOpenAIKey: Boolean(process.env.OPENAI_API_KEY),
+      hasViteOpenAIKey: Boolean(process.env.VITE_OPENAI_API_KEY),
+      model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts',
+      voice: process.env.OPENAI_TTS_VOICE || 'nova',
+    })
+    return
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return
