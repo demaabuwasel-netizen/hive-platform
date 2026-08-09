@@ -1230,8 +1230,10 @@ function StudentView() {
   const [studentCoachStatus, setStudentCoachStatus] = useState('idle')
   const [studentSummaryAi, setStudentSummaryAi] = useState(null)
   const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false)
+  const [isSkippingSection, setIsSkippingSection] = useState(false)
   const recognitionRef = useRef(null)
   const answerSubmittingRef = useRef(false)
+  const skipSectionRef = useRef(false)
   const answerRecordingBaseRef = useRef('')
   const answerFinalTranscriptRef = useRef('')
   const answerSilenceTimerRef = useRef(null)
@@ -1753,29 +1755,38 @@ function StudentView() {
   // Skip leaves the current section entirely. Students answer their way through
   // the mini-round; skipping is the escape hatch to move on.
   async function skipQuestion() {
-    if (!selectedRole) return
+    if (!selectedRole || skipSectionRef.current) return
+    skipSectionRef.current = true
+    setIsSkippingSection(true)
     stopAnswerRecording()
     stopQuestionAudio()
+    shouldAutoSpeakNextQuestionRef.current = false
+    autoSpeakDelayMsRef.current = 0
 
-    if (activeCategory === 'close') {
+    try {
+      if (activeCategory === 'close') {
+        setDraftAnswer('')
+        setExplainOpen(false)
+        setPracticeFinished(true)
+        setShowSummary(true)
+        return
+      }
+
+      const nextCategory = getNextStudentCategory(activeCategory)
+      const nextSeed = getCategoryQuestionCount(nextCategory)
+      const nextQuestion = makeFreshStudentQuestion(nextCategory, nextSeed, transcript)
+
+      setActiveCategory(nextCategory)
       setDraftAnswer('')
       setExplainOpen(false)
-      setPracticeFinished(true)
-      setShowSummary(true)
-      return
+      setTranscript(prev => [
+        ...prev,
+        { id: nextMessageId('ai'), from: 'ai', category: nextCategory, text: nextQuestion },
+      ])
+    } finally {
+      skipSectionRef.current = false
+      setIsSkippingSection(false)
     }
-
-    const nextCategory = getNextStudentCategory(activeCategory)
-    const nextSeed = getCategoryQuestionCount(nextCategory)
-    const nextQuestion = await makeFreshStudentQuestionWithAi(nextCategory, nextSeed)
-
-    setTranscript(prev => [
-      ...prev,
-      { id: nextMessageId('ai'), from: 'ai', category: nextCategory, text: nextQuestion },
-    ])
-    setActiveCategory(nextCategory)
-    setDraftAnswer('')
-    setExplainOpen(false)
   }
 
   function stopAnswerRecording() {
@@ -2742,13 +2753,13 @@ function StudentView() {
                   <Info size={14} />
                   Explain question
                 </button>
-                <button
-                  onClick={skipQuestion}
-                  disabled={isAnswerSubmitting}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
-                  {isLastCategory ? 'Finish section' : 'Skip section'}
-                  <ArrowRight size={12} />
-                </button>
+	                <button
+	                  onClick={skipQuestion}
+	                  disabled={isAnswerSubmitting || isSkippingSection}
+	                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
+	                  {isSkippingSection ? 'Skipping...' : isLastCategory ? 'Finish section' : 'Skip section'}
+	                  <ArrowRight size={12} />
+	                </button>
               </div>
 
             </div>
