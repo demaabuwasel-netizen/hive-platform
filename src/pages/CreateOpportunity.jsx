@@ -120,7 +120,7 @@ function inferCategory(text) {
 function inferSkills(text) {
   const lower = text.toLowerCase()
   const skills = []
-  const add = (name, level = 'Intermediate') => skills.push({ name, level })
+  const add = (name) => skills.push({ name, level: '' })
 
   if (/(web|website|frontend|react|developer|app)/.test(lower)) add('Web Development')
   if (/(data|dashboard|analytics|analysis)/.test(lower)) add('Data Analysis')
@@ -231,7 +231,7 @@ export default function CreateOpportunity() {
         field:         opp.field         || '',
         description:   opp.description   || '',
         missionImpact: opp.missionImpact || '',
-        skills:        (opp.skills || []).map(s => typeof s === 'string' ? { name: s, level: '' } : s),
+        skills:        (opp.skills || []).map(s => typeof s === 'string' ? { name: s, level: '' } : { name: s?.name || '', level: '' }).filter(s => s.name),
         languages:     opp.languages     || [],
         weeklyHours:   opp.weeklyHours   || '',
         duration:      opp.duration      || '',
@@ -673,12 +673,13 @@ export default function CreateOpportunity() {
                   <div>
                     <FieldLabel>Required skills</FieldLabel>
                     <p className="text-[11px] mb-2" style={{ color: '#5F6368' }}>
-                      Search for a skill, then set the minimum level you need.
+                      Search for a skill and add it to the role.
                     </p>
                     <SkillPicker
                       value={form.skills}
                       onChange={v => set('skills', v)}
-                      levelLabel="Minimum level required"
+                      withLevel={false}
+                      accent="#1A73E8"
                     />
                     <ErrMsg msg={errors.skills} />
                   </div>

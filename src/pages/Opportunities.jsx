@@ -1314,7 +1314,7 @@ export default function Opportunities() {
                 alt=""
                 className="pointer-events-none absolute bottom-[calc(100%-112px)] right-2 z-0 h-auto w-[315px] max-w-[66vw] sm:right-4 sm:w-[420px] lg:w-[525px]"
               />
-              <section className="relative z-10 rounded-[30px] border border-[#DCE7F7]/72 bg-white/94 p-4 shadow-[0_22px_58px_rgba(26,115,232,0.06),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl sm:p-5">
+              <section className="relative z-10 rounded-[30px] border border-[#DCE7F7]/72 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(248,251,255,0.72))] p-4 shadow-[0_22px_58px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.92)_inset] backdrop-blur-2xl sm:p-5">
               <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_220px_220px]">
                 <label className="flex items-center gap-3 rounded-[20px] border border-[#DCE7F7]/72 bg-white/88 px-3.5 py-2.5 shadow-[0_10px_24px_rgba(26,115,232,0.045),0_1px_0_rgba(255,255,255,0.88)_inset] backdrop-blur-2xl transition focus-within:border-[#1A73E8] focus-within:bg-white/98 focus-within:ring-4 focus-within:ring-[#1A73E8]/10">
                   <Search size={17} className="shrink-0 text-[#1A73E8]"/>
@@ -1383,7 +1383,7 @@ export default function Opportunities() {
                     initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }}
                     transition={{ delay:i*0.05, duration:0.3 }}
                     onClick={() => setViewingOpp(ngo)}
-                    className="group relative flex h-[462px] cursor-pointer flex-col overflow-hidden rounded-[32px] border border-[#DCE7F7]/72 bg-white/99 p-6 shadow-[0_22px_54px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.92)_inset] ring-1 ring-[#EEF4FF]/50 backdrop-blur-2xl transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.01] hover:border-[#C9DBF4]/82 hover:bg-white hover:shadow-[0_30px_68px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset]">
+                    className="group relative flex h-[462px] cursor-pointer flex-col overflow-hidden rounded-[32px] border border-[#DCE7F7]/72 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(248,251,255,0.72))] p-6 shadow-[0_22px_54px_rgba(26,115,232,0.055),0_1px_0_rgba(255,255,255,0.92)_inset] ring-1 ring-[#EEF4FF]/50 backdrop-blur-2xl transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.01] hover:border-[#C9DBF4]/82 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,251,255,0.78))] hover:shadow-[0_30px_68px_rgba(26,115,232,0.09),0_1px_0_rgba(255,255,255,0.94)_inset]">
                     <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[#F6FAFF]/80" />
                     <div className="pointer-events-none absolute inset-0 bg-white/36" />
 

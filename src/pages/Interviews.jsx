@@ -641,6 +641,9 @@ function StudentView() {
   const [openPrepQuestionStage, setOpenPrepQuestionStage] = useState(null)
   const [deletingAppId, setDeletingAppId] = useState(null)
   const recognitionRef = useRef(null)
+  const answerRecordingBaseRef = useRef('')
+  const answerFinalTranscriptRef = useRef('')
+  const answerSilenceTimerRef = useRef(null)
   const questionAudioRef = useRef(null)
   const questionAudioRequestRef = useRef(0)
   const questionSpeechTimeoutRef = useRef(null)
@@ -682,6 +685,7 @@ function StudentView() {
   useEffect(() => {
     return () => {
       recognitionRef.current?.stop?.()
+      window.clearTimeout(answerSilenceTimerRef.current)
       questionAudioRef.current?.pause?.()
       window.clearTimeout(questionSpeechTimeoutRef.current)
       window.speechSynthesis?.cancel?.()
@@ -785,6 +789,7 @@ function StudentView() {
   }
 
   function resetStudentPracticeState() {
+    stopAnswerRecording()
     stopQuestionAudio()
     setPracticeStarted(false)
     setPracticeFinished(false)
@@ -833,6 +838,7 @@ function StudentView() {
   }
 
   function startPracticeSession(role) {
+    stopAnswerRecording()
     stopQuestionAudio()
     const opening = makeStudentInterviewQuestion(role, profile, 'opening', 0, user)
 
@@ -860,6 +866,7 @@ function StudentView() {
   }
 
   function backToInterviewGuide() {
+    stopAnswerRecording()
     stopQuestionAudio()
     setPracticeStarted(false)
     setPracticeFinished(false)
@@ -894,6 +901,22 @@ function StudentView() {
     return transcript.filter(message => message.from === 'ai' && message.category === categoryId).length
   }
 
+  function makeFreshStudentQuestion(categoryId, seed = 0, existingTranscript = transcript) {
+    if (!selectedRole) return ''
+    const askedInCategory = new Set(
+      existingTranscript
+        .filter(message => message.from === 'ai' && message.category === categoryId)
+        .map(message => message.text)
+    )
+
+    for (let offset = 0; offset < 6; offset += 1) {
+      const candidate = makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed + offset, user)
+      if (!askedInCategory.has(candidate)) return candidate
+    }
+
+    return makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed, user)
+  }
+
   function getCategoryAnswerCount(categoryId) {
     return transcript.filter(message => message.from === 'student' && message.category === categoryId).length
   }
@@ -904,9 +927,10 @@ function StudentView() {
 
   function startCategoryQuestion(categoryId = activeCategory) {
     if (!selectedRole) return
+    stopAnswerRecording()
     stopQuestionAudio()
     const seed = getCategoryQuestionCount(categoryId)
-    const question = makeStudentInterviewQuestion(selectedRole, profile, categoryId, seed, user)
+    const question = makeFreshStudentQuestion(categoryId, seed)
 
     setTranscript(prev => [
       ...prev,
@@ -918,6 +942,7 @@ function StudentView() {
   }
 
   function selectPracticeCategory(categoryId) {
+    stopAnswerRecording()
     stopQuestionAudio()
     setActiveCategory(categoryId)
     setDraftAnswer('')
@@ -927,6 +952,7 @@ function StudentView() {
   function sendAnswer() {
     const answer = draftAnswer.trim()
     if (!answer || !selectedRole) return
+    stopAnswerRecording()
     stopQuestionAudio()
 
     const answeredCategory = activeCategory
@@ -949,8 +975,12 @@ function StudentView() {
     }
 
     const nextCategory = shouldStayInCategory ? answeredCategory : getNextStudentCategory(activeCategory)
-    const nextSeed = shouldStayInCategory ? questionsInCategory : transcript.length + 1
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed, user)
+    const nextSeed = transcript.filter(message => message.from === 'ai' && message.category === nextCategory).length
+    const nextTranscript = [
+      ...transcript,
+      { id: 'pending-student-answer', from: 'student', text: answer, category: answeredCategory },
+    ]
+    const nextQuestion = makeFreshStudentQuestion(nextCategory, nextSeed, nextTranscript)
 
     setTranscript(prev => [
       ...prev,
@@ -966,6 +996,7 @@ function StudentView() {
   // the mini-round; skipping is the escape hatch to move on.
   function skipQuestion() {
     if (!selectedRole) return
+    stopAnswerRecording()
     stopQuestionAudio()
 
     if (activeCategory === 'close') {
@@ -978,7 +1009,7 @@ function StudentView() {
 
     const nextCategory = getNextStudentCategory(activeCategory)
     const nextSeed = getCategoryQuestionCount(nextCategory)
-    const nextQuestion = makeStudentInterviewQuestion(selectedRole, profile, nextCategory, nextSeed, user)
+    const nextQuestion = makeFreshStudentQuestion(nextCategory, nextSeed)
 
     setTranscript(prev => [
       ...prev,
@@ -989,10 +1020,17 @@ function StudentView() {
     setExplainOpen(false)
   }
 
+  function stopAnswerRecording() {
+    window.clearTimeout(answerSilenceTimerRef.current)
+    answerSilenceTimerRef.current = null
+    recognitionRef.current?.stop?.()
+    recognitionRef.current = null
+    setIsRecording(false)
+  }
+
   function handleVoiceToggle() {
     if (isRecording) {
-      recognitionRef.current?.stop?.()
-      setIsRecording(false)
+      stopAnswerRecording()
       return
     }
 
@@ -1008,16 +1046,40 @@ function StudentView() {
     const recognition = new SpeechRecognition()
     recognition.lang = 'en-US'
     recognition.interimResults = true
-    recognition.continuous = false
+    recognition.continuous = true
+    answerRecordingBaseRef.current = draftAnswer.trim()
+    answerFinalTranscriptRef.current = ''
     recognition.onresult = event => {
-      const spokenText = Array.from(event.results)
-        .map(result => result[0]?.transcript)
-        .filter(Boolean)
-        .join(' ')
-      setDraftAnswer(spokenText)
+      window.clearTimeout(answerSilenceTimerRef.current)
+
+      let finalText = ''
+      let interimText = ''
+      Array.from(event.results).forEach(result => {
+        const transcript = result[0]?.transcript?.trim()
+        if (!transcript) return
+        if (result.isFinal) finalText += `${transcript} `
+        else interimText += `${transcript} `
+      })
+
+      answerFinalTranscriptRef.current = finalText.trim()
+      const nextText = [
+        answerRecordingBaseRef.current,
+        answerFinalTranscriptRef.current,
+        interimText.trim(),
+      ].filter(Boolean).join(' ')
+      setDraftAnswer(nextText)
+
+      answerSilenceTimerRef.current = window.setTimeout(() => {
+        recognition.stop()
+      }, 2200)
     }
-    recognition.onend = () => setIsRecording(false)
-    recognition.onerror = () => setIsRecording(false)
+    recognition.onend = () => {
+      window.clearTimeout(answerSilenceTimerRef.current)
+      answerSilenceTimerRef.current = null
+      setIsRecording(false)
+      recognitionRef.current = null
+    }
+    recognition.onerror = () => stopAnswerRecording()
     recognitionRef.current = recognition
     setIsRecording(true)
     recognition.start()
@@ -1832,13 +1894,13 @@ function StudentView() {
             <div className="border-t border-white/70 bg-white/68 px-4 py-4 shadow-[0_-18px_40px_rgba(26,115,232,0.05)] backdrop-blur-xl sm:px-5">
               {/* Unified composer — mic lives inside the input, matching the NGO practice room */}
               <div className="rounded-[24px] border border-white/80 bg-white/62 p-2 shadow-[0_14px_34px_rgba(26,115,232,0.08),0_1px_0_rgba(255,255,255,0.9)_inset] ring-1 ring-[#D7E6FF]/70 backdrop-blur-2xl transition-all hover:-translate-y-0.5 focus-within:bg-white/86 focus-within:shadow-[0_18px_46px_rgba(26,115,232,0.14)] focus-within:ring-[#1A73E8]/35">
-                <div className="flex items-end gap-1">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={handleVoiceToggle}
                     disabled={!categoryHasQuestion || activeCategoryComplete}
                     aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
-                    className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
+                    className={`inline-flex h-11 shrink-0 self-center items-center justify-center gap-2 rounded-full px-4 text-[0.78rem] font-semibold transition-all ${
                       isRecording
                         ? 'bg-[#E8F0FE] text-[#1A73E8] shadow-[0_0_0_6px_rgba(26,115,232,0.10),0_10px_22px_rgba(26,115,232,0.14)] ring-1 ring-[#BFD7FF]'
                         : 'bg-white/72 text-[#1A73E8] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 hover:bg-white hover:shadow-[0_12px_26px_rgba(26,115,232,0.14)]'
@@ -1858,7 +1920,7 @@ function StudentView() {
                   <button
                     onClick={sendAnswer}
                     disabled={!draftAnswer.trim() || !categoryHasQuestion || activeCategoryComplete}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
+                    className="flex h-10 w-10 shrink-0 self-center items-center justify-center rounded-full bg-[linear-gradient(135deg,#4C9AEF,#1A73E8)] text-white shadow-[0_10px_24px_rgba(26,115,232,0.28)] transition-all hover:scale-105 hover:shadow-[0_14px_30px_rgba(26,115,232,0.34)] disabled:scale-100 disabled:bg-none disabled:bg-[#DADCE0] disabled:text-white disabled:shadow-none"
                     aria-label="Send answer">
                     <Send size={16} />
                   </button>
@@ -1879,8 +1941,7 @@ function StudentView() {
                 </button>
                 <button
                   onClick={skipQuestion}
-                  disabled={!categoryHasQuestion}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-white/86 disabled:hover:text-[#4B6382] disabled:hover:shadow-none">
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/86 px-4 py-2 text-[0.76rem] font-semibold text-[#4B6382] shadow-[0_8px_18px_rgba(26,115,232,0.08)] ring-1 ring-white/90 transition-all hover:bg-white hover:text-[#1A73E8] hover:shadow-[0_10px_22px_rgba(26,115,232,0.13)]">
                   {isLastCategory ? 'Finish section' : 'Skip section'}
                   <ArrowRight size={12} />
                 </button>
@@ -3288,7 +3349,25 @@ export default function Interviews() {
 
   return (
     <main ref={mainRef} className="relative flex-1 overflow-y-auto bg-[#F5F7FB]">
-      <div className="relative mx-auto max-w-[1520px] px-6 pb-8 pt-8 lg:px-10">
+      {inPractice && (
+        <>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[450px] bg-[radial-gradient(circle_at_78%_2%,rgba(26,115,232,0.17),transparent_34%),radial-gradient(circle_at_58%_6%,rgba(232,240,254,0.62),transparent_38%),radial-gradient(circle_at_92%_18%,rgba(161,66,244,0.06),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(245,247,251,0))]" aria-hidden="true" />
+          <svg
+            className="pointer-events-none absolute right-0 top-[-34px] h-[330px] w-[820px] max-w-[86vw] text-[#1A73E8] [mask-image:linear-gradient(90deg,transparent_0%,rgba(0,0,0,0.45)_22%,rgba(0,0,0,0.9)_58%,rgba(0,0,0,0.72)_100%)]"
+            viewBox="0 0 820 330"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M18 78 C138 18 255 27 360 88 C470 152 595 144 794 54" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" opacity="0.085" />
+            <path d="M0 128 C148 49 282 72 405 140 C525 207 642 192 820 98" stroke="currentColor" strokeWidth="1.05" strokeLinecap="round" opacity="0.078" />
+            <path d="M38 164 C170 92 302 112 430 174 C550 232 674 214 820 132" stroke="currentColor" strokeWidth="0.95" strokeLinecap="round" opacity="0.068" />
+            <path d="M72 202 C203 132 319 150 442 208 C560 264 672 250 798 176" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.058" />
+            <path d="M190 252 C302 203 420 206 528 249 C638 292 726 270 816 215" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.048" />
+            <path d="M392 32 C454 52 490 88 553 100 C623 114 684 82 760 42" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" opacity="0.05" />
+          </svg>
+        </>
+      )}
+      <div className="relative z-10 mx-auto max-w-[1520px] px-6 pb-8 pt-8 lg:px-10">
         <motion.header
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}

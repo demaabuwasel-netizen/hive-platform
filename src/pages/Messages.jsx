@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Loader, MessageCircle, Search, Send } from 'lucide-react'
 import messagesIllustration from '../assets/messages.png'
+import messagesSun from '../assets/messages sun.PNG'
 import { useApp } from '../context/AppContext'
 import GradientAvatar from '../components/GradientAvatar'
 import { getMessages, sendInterviewMessage } from '../services/messages'
@@ -278,106 +279,113 @@ export default function Messages() {
             </div>
           </motion.aside>
 
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex h-[min(720px,calc(100vh-220px))] min-h-[560px] flex-col overflow-hidden rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_14px_38px_rgba(17,24,39,0.035)]"
-          >
-            {!selectedConvId ? (
-              <div className="flex flex-1 items-center justify-center px-8 py-16 text-center">
-                <div>
-                  {conversationList.length === 0 && (
-                    <img src={messagesIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
-                  )}
-                  <h2 className="text-xl font-semibold text-[#202124]">
-                    {conversationList.length === 0 ? 'No messages yet' : 'Select a conversation'}
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-md text-[0.9rem] leading-7 text-[#5F6368]">
-                    {conversationList.length === 0
-                      ? 'Interview invitations and replies from NGOs will appear here.'
-                      : 'Choose a conversation from the left to read messages and reply.'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="shrink-0 border-b border-[#E5EEFB] px-6 py-5">
-                  <div className="flex items-center gap-3">
-                    <GradientAvatar name={selectedName} size={44} radius="0.85rem" />
-                    <div>
-                      <p className="text-[1rem] font-semibold text-[#202124]">{selectedName}</p>
-                      <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">
-                        {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
+          <div className="relative">
+            <img
+              src={messagesSun}
+              alt=""
+              className="pointer-events-none absolute bottom-[calc(100%-114px)] right-[-18px] z-0 h-auto w-[320px] max-w-[58vw] select-none sm:right-[-6px] sm:w-[420px] lg:right-[-2px] lg:w-[505px]"
+            />
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative z-10 flex h-[min(720px,calc(100vh-220px))] min-h-[560px] flex-col overflow-hidden rounded-[32px] border border-[#D7E6FF] bg-white shadow-[0_14px_38px_rgba(17,24,39,0.035)]"
+            >
+              {!selectedConvId ? (
+                <div className="flex flex-1 items-center justify-center px-8 py-16 text-center">
+                  <div>
+                    {conversationList.length === 0 && (
+                      <img src={messagesIllustration} alt="" className="mx-auto w-52 mb-5 select-none" />
+                    )}
+                    <h2 className="text-xl font-semibold text-[#202124]">
+                      {conversationList.length === 0 ? 'No messages yet' : 'Select a conversation'}
+                    </h2>
+                    <p className="mx-auto mt-3 max-w-md text-[0.9rem] leading-7 text-[#5F6368]">
+                      {conversationList.length === 0
+                        ? 'Interview invitations and replies from NGOs will appear here.'
+                        : 'Choose a conversation from the left to read messages and reply.'}
+                    </p>
                   </div>
                 </div>
-
-                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#FBFCFE] px-6 py-6">
-                  {selectedMessages.length === 0 ? (
-                    <div className="py-12 text-center">
-                      <p className="text-[0.86rem] text-[#5F6368]">No messages in this conversation</p>
+              ) : (
+                <>
+                  <div className="shrink-0 border-b border-[#E5EEFB] px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <GradientAvatar name={selectedName} size={44} radius="0.85rem" />
+                      <div>
+                        <p className="text-[1rem] font-semibold text-[#202124]">{selectedName}</p>
+                        <p className="mt-0.5 text-[0.8rem] text-[#5F6368]">
+                          {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    selectedMessages.map((msg, index) => {
-                      const mine = msg.sender_id === user?.id
+                  </div>
 
-                      return (
-                        <motion.div
-                          key={msg.id || index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[min(72%,560px)] rounded-[22px] px-4 py-3 text-[0.88rem] leading-6 shadow-[0_8px_22px_rgba(17,24,39,0.04)] ${
-                              mine
-                                ? 'rounded-br-md bg-[#1A73E8] text-white'
-                                : 'rounded-bl-md border border-[#E5EEFB] bg-white text-[#202124]'
-                            }`}
+                  <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[#FBFCFE] px-6 py-6">
+                    {selectedMessages.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <p className="text-[0.86rem] text-[#5F6368]">No messages in this conversation</p>
+                      </div>
+                    ) : (
+                      selectedMessages.map((msg, index) => {
+                        const mine = msg.sender_id === user?.id
+
+                        return (
+                          <motion.div
+                            key={msg.id || index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
                           >
-                            <p className="whitespace-pre-wrap break-words">{msg.message_body}</p>
-                            <p className={`mt-2 text-[0.7rem] ${mine ? 'text-white/70' : 'text-[#9AA0A6]'}`}>
-                              {formatTime(msg.created_at)}
-                            </p>
-                          </div>
-                        </motion.div>
-                      )
-                    })
-                  )}
-                  <div ref={bottomRef} />
-                </div>
-
-                <div className="shrink-0 border-t border-[#E5EEFB] bg-white px-6 py-4">
-                  <div className="flex gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#F8FBFF] p-2">
-                    <input
-                      ref={inputRef}
-                      value={newMessage}
-                      onChange={event => setNewMessage(event.target.value)}
-                      onKeyDown={event => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
-                          event.preventDefault()
-                          handleSendMessage()
-                        }
-                      }}
-                      placeholder="Type a message..."
-                      disabled={sending}
-                      className="min-w-0 flex-1 bg-transparent px-3 text-[0.9rem] text-[#202124] outline-none placeholder:text-[#9AA0A6] disabled:opacity-50"
-                    />
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || sending}
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.18)] transition-all hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Send message"
-                    >
-                      {sending ? <Loader size={17} className="animate-spin" /> : <Send size={17} />}
-                    </button>
+                            <div
+                              className={`max-w-[min(72%,560px)] rounded-[22px] px-4 py-3 text-[0.88rem] leading-6 shadow-[0_8px_22px_rgba(17,24,39,0.04)] ${
+                                mine
+                                  ? 'rounded-br-md bg-[#1A73E8] text-white'
+                                  : 'rounded-bl-md border border-[#E5EEFB] bg-white text-[#202124]'
+                              }`}
+                            >
+                              <p className="whitespace-pre-wrap break-words">{msg.message_body}</p>
+                              <p className={`mt-2 text-[0.7rem] ${mine ? 'text-white/70' : 'text-[#9AA0A6]'}`}>
+                                {formatTime(msg.created_at)}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )
+                      })
+                    )}
+                    <div ref={bottomRef} />
                   </div>
-                </div>
-              </>
-            )}
-          </motion.section>
+
+                  <div className="shrink-0 border-t border-[#E5EEFB] bg-white px-6 py-4">
+                    <div className="flex gap-3 rounded-[22px] border border-[#E5EEFB] bg-[#F8FBFF] p-2">
+                      <input
+                        ref={inputRef}
+                        value={newMessage}
+                        onChange={event => setNewMessage(event.target.value)}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter' && !event.shiftKey) {
+                            event.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
+                        placeholder="Type a message..."
+                        disabled={sending}
+                        className="min-w-0 flex-1 bg-transparent px-3 text-[0.9rem] text-[#202124] outline-none placeholder:text-[#9AA0A6] disabled:opacity-50"
+                      />
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!newMessage.trim() || sending}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1A73E8] text-white shadow-[0_8px_18px_rgba(26,115,232,0.18)] transition-all hover:bg-[#1558C0] disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Send message"
+                      >
+                        {sending ? <Loader size={17} className="animate-spin" /> : <Send size={17} />}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </motion.section>
+          </div>
         </section>
       </div>
     </main>

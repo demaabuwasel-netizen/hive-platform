@@ -31,6 +31,17 @@ function normalizeSkills(raw) {
   return (raw ?? []).map(parseSkillString)
 }
 
+function skillNamesOnly(raw) {
+  return (raw ?? [])
+    .map(skill => {
+      if (!skill) return ''
+      if (typeof skill === 'string') return parseSkillString(skill).name || skill
+      return skill.name || ''
+    })
+    .map(skill => String(skill).trim())
+    .filter(Boolean)
+}
+
 function dbToOpp(row) {
   if (!row) return null
   return {
@@ -64,7 +75,7 @@ function oppToDb(ngoId, form, status = 'active') {
     field:          form.field       ?? null,
     description:    form.description ?? null,
     mission_impact: form.missionImpact ?? null,
-    skills:         form.skills      ?? [],
+    skills:         skillNamesOnly(form.skills),
     languages:      form.languages   ?? [],
     weekly_hours:   form.weeklyHours ?? null,
     duration:       form.duration    ?? null,
@@ -152,7 +163,7 @@ export async function saveDraftOpportunity(ngoId, form, existingId = null) {
     field:          form.field                 || null,
     description:    form.description?.trim()   || '',
     mission_impact: form.missionImpact?.trim() || '',
-    skills:         form.skills                ?? [],
+    skills:         skillNamesOnly(form.skills),
     languages:      form.languages             ?? [],
     weekly_hours:   form.weeklyHours           || null,
     duration:       form.duration              || null,

@@ -1,6 +1,25 @@
 import { supabase } from './supabase'
 
-function skillName(s) { return typeof s === 'string' ? s : (s?.name ?? '') }
+function skillName(skill) {
+  if (!skill) return ''
+  if (typeof skill !== 'string') return skill.name || ''
+
+  const trimmed = skill.trim()
+  if (!trimmed.startsWith('{')) return trimmed
+
+  try {
+    let parsed = JSON.parse(trimmed)
+    if (typeof parsed === 'string' && parsed.trim().startsWith('{')) {
+      parsed = JSON.parse(parsed)
+    }
+    if (typeof parsed?.name === 'string' && parsed.name.trim().startsWith('{')) {
+      parsed = JSON.parse(parsed.name)
+    }
+    return parsed?.name || ''
+  } catch {
+    return trimmed
+  }
+}
 
 function dbToSaved(row) {
   const opp = row.opportunities
