@@ -1,4 +1,4 @@
-export const config = {
+const config = {
   api: {
     bodyParser: {
       sizeLimit: '64kb',
@@ -18,7 +18,7 @@ function parseBody(body) {
   }
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.status(204).end()
     return
@@ -107,3 +107,6 @@ export default async function handler(req, res) {
     res.status(502).json({ error: 'AI speech unavailable' })
   }
 }
+
+module.exports = handler
+module.exports.config = config

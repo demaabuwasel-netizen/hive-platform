@@ -1,4 +1,12 @@
 {
+  "functions": {
+    "api/openai-chat.js": {
+      "maxDuration": 30
+    },
+    "api/openai-speech.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ]
