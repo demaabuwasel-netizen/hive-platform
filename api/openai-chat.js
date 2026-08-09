@@ -1,3 +1,23 @@
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '64kb',
+    },
+  },
+  maxDuration: 30,
+}
+
+function parseBody(body) {
+  if (!body) return {}
+  if (typeof body !== 'string') return body
+
+  try {
+    return JSON.parse(body)
+  } catch {
+    return null
+  }
+}
+
 function normalizeMessages(body = {}) {
   if (typeof body.prompt === 'string' && body.prompt.trim()) {
     return [{ role: 'user', content: body.prompt.trim() }]
@@ -30,12 +50,23 @@ function extractOutputText(response = {}) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    res.status(204).end()
+    return
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
 
-  const input = normalizeMessages(req.body)
+  const body = parseBody(req.body)
+  if (!body) {
+    res.status(400).json({ error: 'Invalid JSON body' })
+    return
+  }
+
+  const input = normalizeMessages(body)
   if (!input) {
     res.status(400).json({ error: 'Send a prompt or messages array' })
     return
@@ -43,16 +74,21 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
+    if (process.env.VITE_OPENAI_API_KEY) {
+      res.status(500).json({ error: 'Use OPENAI_API_KEY on the server, not VITE_OPENAI_API_KEY' })
+      return
+    }
+
     res.status(500).json({ error: 'AI service is not configured' })
     return
   }
 
-  const model = typeof req.body?.model === 'string' && req.body.model.trim()
-    ? req.body.model.trim()
+  const model = typeof body.model === 'string' && body.model.trim()
+    ? body.model.trim()
     : process.env.OPENAI_MODEL || 'gpt-4.1-mini'
 
-  const maxOutputTokens = Number.isFinite(Number(req.body?.max_output_tokens))
-    ? Math.min(Math.max(Number(req.body.max_output_tokens), 1), 2000)
+  const maxOutputTokens = Number.isFinite(Number(body.max_output_tokens))
+    ? Math.min(Math.max(Number(body.max_output_tokens), 1), 2000)
     : 700
 
   try {
@@ -71,6 +107,12 @@ export default async function handler(req, res) {
 
     const data = await openaiResponse.json().catch(() => ({}))
     if (!openaiResponse.ok) {
+      console.error('OpenAI chat request failed', {
+        status: openaiResponse.status,
+        type: data?.error?.type,
+        code: data?.error?.code,
+        message: data?.error?.message,
+      })
       res.status(openaiResponse.status).json({ error: `AI request failed (${openaiResponse.status})` })
       return
     }
@@ -80,7 +122,10 @@ export default async function handler(req, res) {
       id: data.id ?? null,
       model: data.model ?? model,
     })
-  } catch {
+  } catch (error) {
+    console.error('OpenAI chat route unavailable', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+    })
     res.status(502).json({ error: 'AI service unavailable' })
   }
 }
